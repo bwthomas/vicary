@@ -48,6 +48,7 @@ from vicary.gazetteer import (
     notability,
     reset_cache,
 )
+from vicary.name_candidates import find_title_spans
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -265,6 +266,22 @@ def test_no_fixture_redact_span_resolves_notable(gazetteer: Gazetteer) -> None:
     assert not leaks, f"gazetteer would leak: {leaks}"
 
 
+def _asset_shelters(gazetteer: Gazetteer, sentence: str, literal: str) -> bool:
+    """Whether anything in the asset would keep ``literal`` inside ``sentence``.
+
+    Two ways it can, and the fixture has one frame of each. The span itself
+    resolves notable ("Alice Adams" is a novel). Or a *longer* phrase around it
+    does, which blocks generation across the whole span before any lookup happens
+    — "My cousin Vinny Delgado" contains the film "My Cousin Vinny", and that is
+    how the name got out. Both are the asset sheltering a private name; only the
+    mechanism differs.
+    """
+    if gazetteer.is_notable(literal):
+        return True
+    return bool(find_title_spans(sentence, gazetteer.is_title,
+                                 gazetteer.is_title_prefix, requires_capital=True))
+
+
 def test_context_redacted_spans_do_resolve_notable(gazetteer: Gazetteer) -> None:
     """The other half, and the reason the carve-out above is not a hole.
 
@@ -278,7 +295,7 @@ def test_context_redacted_spans_do_resolve_notable(gazetteer: Gazetteer) -> None
         for frame in fixture.ALL_FRAMES
         for span in frame.redact_spans
         if span.redacted_by == "context"
-        and not gazetteer.is_notable(span.literal)
+        and not _asset_shelters(gazetteer, frame.sentence, span.literal)
     ]
     assert not inert, (
         f"these frames claim to override a notability keep, but the gazetteer "

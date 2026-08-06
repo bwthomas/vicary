@@ -77,6 +77,31 @@ essay-scoring pipeline; extracting it changed the following, and nothing else.
   coincidental one. Off with `title_relation_refusal=False`, or
   `vicary-eval --no-title-relation-refusal` for the control arm.
 
+* **The override reaches the `full` tier too, on a measurement that retracts the
+  reason it did not.** The scoping was justified in writing by "overriding
+  `full` would also redact 'my hero Abraham Lincoln'". It does not: *hero*,
+  *muse*, *inspiration* and *role model* are admiration invocations, they attach
+  to a public figure as readily as to a relative, and none of them is a relation
+  cue. The hole they were protecting is **57× the title one** — 33,682
+  name-shaped keys in `full`, of which 33,269 shelter a private individual, and
+  the override recovers 33,182. Of the eight probes that would have to break for
+  the original claim to hold, seven are unchanged and the eighth is "my coach
+  Steve Kerr", which redacts and should. Pinned by two held-out frames,
+  `private-person-shadowed-by-a-real-public-figure` and
+  `admiration-invocation-before-a-public-figure`, both verified to flip when the
+  override is scoped back to `title`.
+
+* **A relation-led title no longer shelters an actual relative.** 41 keys lead
+  with a first-person relation — "My Cousin Vinny", "My Sister Eileen", "My
+  Brother Nikhil" — and the tier matches case-insensitively, so "My cousin Vinny
+  Delgado came over that summer" matched the 1992 film, blocked generation across
+  the whole phrase, and shipped the name. That is the fixture's commonest frame
+  (`kinship-possessive`) wearing a film's title. The writer supplies the
+  discriminator: a title is title-cased and a sentence about a relative is not,
+  the same orthographic evidence the heading rule reads, gated on the document
+  capitalising at all. Measured across all 41: **41/41 survive when written as a
+  title, 31/31 of the name-bearing ones are removed when written as prose.**
+
 * `Span.redacted_by` distinguishes a span the gazetteer has never heard of
   (`"absence"`) from one it vouches for that the sentence overrides
   (`"context"`). Both directions are asserted: an `"absence"` span that resolves
@@ -98,7 +123,7 @@ essay-scoring pipeline; extracting it changed the following, and nothing else.
 
 ### Gates, and one correction they forced
 
-Measured at fixture `2026-08-06.1`, the arm that clears the gate set is
+Measured at fixture `2026-08-06.3`, the arm that clears the gate set is
 `local-gazetteer-lowercase` — candidate generation, the notability oracle, **and**
 the case-insensitive route. The route was previously left off by default on the
 belief that it cost over-firing. It does not, on this fixture: it *halves* it.

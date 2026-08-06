@@ -105,12 +105,13 @@ One file, `vicary/data/notability.txt.gz`, holding five independent tiers:
 | `title` | 38,017 | published work or fictional character |
 
 A tier is a lookup, and a lookup answers about a *string*, not about the person
-in front of you. 578 keys in `title` are a common given name beside an ordinary
-US surname — "Alice Adams" is a 1921 novel and also somebody's neighbour — and no
-sitelink floor separates them from the curriculum, because Atticus Finch sits at
-17 sitelinks and the hole "Alice Adams" at 24. So a keep is overridable by the
-sentence: a **first-person relation attached to the name** — immediately before
-it, or in the appositive immediately after — beats a title-tier keep.
+in front of you. **578 keys in `title` and 33,682 in `full`** are a common given
+name beside an ordinary US surname — "Alice Adams" is a 1921 novel, "Alan Ford" a
+footballer, and both are also somebody's neighbour. No threshold separates them
+from the people students write about (Atticus Finch sits at 17 sitelinks, the
+hole "Alice Adams" at 24), so a keep is overridable by the sentence: a
+**first-person relation attached to the name** — immediately before it, or in the
+appositive immediately after — beats a `title` or `full` keep.
 
 ```
 My neighbor Alice Adams walked me to the bus stop  -> redact
@@ -122,7 +123,16 @@ Both halves are required, and the guards say why: characters are *described by*
 their relations, so a bare relation cue in the window refuses six of seven
 curriculum characters, and first person alone redacts a book whenever a student
 says who they read it with. On 27 un-scrubbed student documents the override
-fires 0 times; on the 578 name-shaped keys it recovers 508.
+fires 0 times; it recovers 508 of the 578 name-shaped title keys and 33,182 of
+the 33,269 full-name ones.
+
+What is *not* a relation, and this is the load-bearing half: **admiration
+invocations**. "My hero Abraham Lincoln", "my muse Joan Jett", "my inspiration
+Vincent van Gogh", "my role model Rosa Parks" all keep, because *hero*, *muse*,
+*inspiration* and *role model* attach to a public figure as readily as to a
+relative and are therefore evidence of nothing. That is why the cue list is
+closed and hand-written rather than "any noun between *my* and the name", and it
+is pinned by a held-out frame.
 
 It ships as package data, and `data/MANIFEST.json` records its SHA-256, byte
 count, tier counts, cut date, upstream sources, and the minimum vicary version
@@ -153,7 +163,7 @@ pytest -m gates -s            # the gates, with their numbers
 vicary-eval --frames          # per-frame scoring table, no corpus needed
 ```
 
-Current numbers, fixture `2026-08-06.1`, arm `local-gazetteer-lowercase`:
+Current numbers, fixture `2026-08-06.3`, arm `local-gazetteer-lowercase`:
 
 | gate | bar | measured |
 |---|---|---|
@@ -196,9 +206,11 @@ pytest -m gates -s
 * It does not detect names it has no evidence for. A private surname written
   lower-case throughout, or a bare surname in a document that also names a famous
   bearer of it, are known and documented misses rather than bugs.
-* The relation override reaches the `title` tier only. 66 name-shaped keys
-  resolve as real people in `full` instead — "My best friend Alan Ford" still
-  keeps — because overriding that tier would also redact "my hero Abraham
-  Lincoln", and which of those costs more has not been measured yet.
+* The relation override reaches `title` and `full`, not `place`. A private
+  person whose name is also a public *place* still keeps.
+* 87 of the 33,269 full-tier holes survive the override, and a title span still
+  shelters a bare uncommon given name ("my cousin Vinny" with no surname) —
+  a single mid-sentence capital needs corroboration the given-name tier cannot
+  supply for an uncommon name.
 * It makes no network call and creates no cloud resource unless you choose
   `guardrail` mode.
