@@ -29,7 +29,7 @@ import statistics
 
 import pytest
 
-from vicary import config, gazetteer
+from vicary import DEFAULT_NAME_DETECTION, config, gazetteer
 from vicary.eval import census as census_eval
 from vicary.eval.fixture import FIXTURE_VERSION
 from vicary.eval.fixture import frames as select_frames
@@ -377,6 +377,47 @@ def test_the_unaided_arm_is_reported_not_hidden(record_gate) -> None:
     # The one thing worth asserting: it must be *worse*, or the gated arm's
     # oracles are doing nothing and one of these two measurements is wrong.
     assert held_out <= HELD_OUT_RECALL_FLOOR
+
+
+def test_the_default_a_host_gets_is_the_arm_these_gates_measured() -> None:
+    """The gated arm and the arm a deployment runs must be the same object.
+
+    This is the gate that was missing, and the gap it would have caught was not
+    small: :func:`build_redactor_if_enabled` took no oracle arguments at all, so
+    every number above described a redactor assembled by the test suite while
+    every deployment ran identity-only detection at **0% held-out third-party
+    recall**. Both facts were true, documented, and measured for months. Nothing
+    compared them, because comparing them was nobody's test.
+
+    It asserts on the constructed redactor rather than on the level string, so
+    renaming a constant cannot make it pass while the wiring rots.
+    """
+    from vicary.eval.recall import PATH_ARMS, build_redactor, fixture_identity
+    from vicary.redaction import build_redactor_if_enabled
+
+    shipped = build_redactor_if_enabled(True, identity=fixture_identity())
+    assert shipped is not None
+
+    gated = build_redactor(_GATE_ARM, None)
+
+    # The oracle set is the arm. Compare the classifier's resolved oracles, which
+    # is what actually decides a verdict, not the arguments that produced them.
+    def oracles(redactor) -> dict[str, object]:
+        classifier = redactor._classifier
+        return {
+            name: getattr(classifier, name, None) is not None
+            for name in ("notable", "given_name", "title", "title_prefix")
+        } | {"candidates": bool(getattr(classifier, "candidates", False))}
+
+    assert oracles(shipped) == oracles(gated), (
+        "the default configuration differs from the arm the gates measured — "
+        f"default={oracles(shipped)} gated={oracles(gated)}. Either the gates "
+        "are describing a configuration nobody runs, or the default regressed."
+    )
+
+    # And the level name that produces it is the one the path arm measures, so
+    # the published table and the default cannot drift apart either.
+    assert PATH_ARMS["path-" + DEFAULT_NAME_DETECTION] == DEFAULT_NAME_DETECTION
 
 
 def test_the_gate_report_says_what_it_could_not_measure(gate_results) -> None:

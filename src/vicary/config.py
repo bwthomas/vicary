@@ -39,6 +39,14 @@ VAR_PREFIX = "VICARY_"
 #: Redaction mode: ``off`` / ``stub`` / ``local`` / ``guardrail``.
 REDACTION_ENV_VAR: str = "VICARY_REDACTION"
 
+#: How hard ``local`` mode looks for names it was not told about. See
+#: :func:`vicary.redaction.name_detection` for the three levels and what each
+#: one measures. This is a *separate* dial from :data:`REDACTION_ENV_VAR`,
+#: because "is redaction on" and "does it find third-party names" are separate
+#: questions and conflating them is how a deployment ended up running redaction
+#: at 0% recall on the only class of name it could not interpolate.
+NAME_DETECTION_ENV_VAR: str = "VICARY_NAME_DETECTION"
+
 #: Bedrock Guardrail wiring, used only by the optional ``guardrail`` mode.
 GUARDRAIL_ID_ENV_VAR: str = "VICARY_BEDROCK_GUARDRAIL_ID"
 GUARDRAIL_VERSION_ENV_VAR: str = "VICARY_BEDROCK_GUARDRAIL_VERSION"

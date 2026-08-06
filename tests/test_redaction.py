@@ -530,3 +530,123 @@ def test_an_inscrutable_flag_is_still_off_even_in_production(
     monkeypatch.setenv("ENVIRONMENT", "production")
     monkeypatch.setenv(REDACTION_ENV_VAR, "banana")
     assert redaction_mode() == MODE_OFF
+
+
+# ---------------------------------------------------------------------------
+# Detection level — how hard `local` mode looks for names nobody supplied.
+# ---------------------------------------------------------------------------
+
+NAME_DETECTION_ENV_VAR = "VICARY_NAME_DETECTION"
+
+
+def test_the_default_level_finds_third_party_names(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The regression that matters, stated as the behaviour rather than a flag.
+
+    A host that wires redaction in and configures nothing must detect a name it
+    was never handed. For most of this library's life it did not: the entry
+    point built an identity-only classifier and there was no argument that could
+    make it do otherwise, so "redaction is on" meant 0% recall on the only class
+    of name that cannot be interpolated from an account record.
+    """
+    from vicary import StudentIdentity, build_redactor_if_enabled
+
+    monkeypatch.delenv(NAME_DETECTION_ENV_VAR, raising=False)
+    redactor = build_redactor_if_enabled(
+        True, identity=StudentIdentity(first_name="Ada", last_name="Byron")
+    )
+    assert redactor is not None
+    masked = redactor.redact_inbound(
+        "My cousin Terrence Okonkwo helped me study for the test."
+    )
+    assert "Terrence" not in masked.text
+    assert "Okonkwo" not in masked.text
+    assert masked.intervened
+
+
+def test_the_default_level_still_keeps_a_public_figure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The other half. Recall bought by masking everyone is not recall."""
+    from vicary import StudentIdentity, build_redactor_if_enabled
+
+    monkeypatch.delenv(NAME_DETECTION_ENV_VAR, raising=False)
+    redactor = build_redactor_if_enabled(
+        True, identity=StudentIdentity(first_name="Ada", last_name="Byron")
+    )
+    assert redactor is not None
+    masked = redactor.redact_inbound(
+        "Vincent van Gogh painted the piece I wrote about."
+    )
+    assert "Vincent van Gogh" in masked.text
+
+
+def test_identity_level_is_reachable_for_a_host_that_wants_the_old_behaviour(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from vicary import StudentIdentity, build_redactor_if_enabled
+
+    monkeypatch.setenv(NAME_DETECTION_ENV_VAR, "identity")
+    redactor = build_redactor_if_enabled(
+        True, identity=StudentIdentity(first_name="Ada", last_name="Byron")
+    )
+    assert redactor is not None
+    masked = redactor.redact_inbound("My cousin Terrence Okonkwo helped me.")
+    assert "Terrence Okonkwo" in masked.text
+
+
+def test_the_call_site_beats_the_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from vicary.redaction import NAMES_IDENTITY, name_detection
+
+    monkeypatch.setenv(NAME_DETECTION_ENV_VAR, "gazetteer-lowercase")
+    assert name_detection("identity") == NAMES_IDENTITY
+
+
+def test_an_unrecognized_level_falls_back_to_the_default_not_to_identity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Deliberately the opposite of `redaction_mode`'s fail-safe, and why.
+
+    A typo'd redaction mode leaves the host as it was before redaction existed —
+    a non-event. A typo'd level would leave redaction *on*, emitting spans and
+    metrics, while finding none of the names it exists to find. That failure is
+    invisible from every log line, so it must not be the one a typo selects.
+    """
+    from vicary.redaction import DEFAULT_NAME_DETECTION, name_detection
+
+    monkeypatch.setenv(NAME_DETECTION_ENV_VAR, "aggressive")
+    assert name_detection() == DEFAULT_NAME_DETECTION
+
+
+def test_the_identity_level_loads_no_gazetteer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The one thing the cheapest level should still buy: no 2.1 MB decompress."""
+    from vicary.redaction import NAMES_IDENTITY, _gazetteer_oracles
+
+    assert _gazetteer_oracles(NAMES_IDENTITY) == {}
+
+
+def test_only_the_lowercase_level_passes_the_given_name_oracle() -> None:
+    """Pins the single argument that separates the two gazetteer levels.
+
+    It is one keyword, and it does two things — adds the case-insensitive route
+    AND gates a precision filter on the capitalised route — which is why the
+    arms differ in over-firing by more than the route alone explains.
+    """
+    from vicary.redaction import (
+        NAMES_GAZETTEER,
+        NAMES_LOWERCASE,
+        _gazetteer_oracles,
+    )
+
+    bare = _gazetteer_oracles(NAMES_GAZETTEER)
+    full = _gazetteer_oracles(NAMES_LOWERCASE)
+    assert bare["given_name"] is None
+    assert full["given_name"] is not None
+    assert {k: v for k, v in bare.items() if k != "given_name"} == {
+        k: v for k, v in full.items() if k != "given_name"
+    }

@@ -208,6 +208,10 @@ def test_the_legacy_corpus_variables_still_work(
 NEW_SINCE_EXTRACTION = {
     config.ASSET_PATH_ENV_VAR,
     config.EVAL_CENSUS_CSV_ENV_VAR,
+    # No legacy spelling because the setting did not exist: hosts got the
+    # identity-only detector unconditionally, with no way to ask for anything
+    # else. There is nothing to stay compatible with.
+    config.NAME_DETECTION_ENV_VAR,
 }
 
 

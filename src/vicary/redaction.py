@@ -175,6 +175,111 @@ def redaction_enabled(kwarg_value: bool | str | None = None) -> bool:
     return redaction_mode(kwarg_value) != MODE_OFF
 
 
+# How hard ``local`` mode looks for names nobody told it about.
+#
+#: Structured entities plus the student's own interpolated name and school, and
+#: nothing else. **This finds 0% of third-party names** — a classmate, a
+#: teacher, a neighbour — because it has no way to tell one from a public figure
+#: without a lookup. It is the honest floor, not a safe setting.
+NAMES_IDENTITY: str = "identity"
+#: Adds candidate generation filtered by the bundled offline gazetteer: public
+#: figures, places, published works and fictional characters are KEPT, everything
+#: else name-shaped is redacted.
+NAMES_GAZETTEER: str = "gazetteer"
+#: Adds the case-insensitive route, the only one that reaches a writer who does
+#: not capitalise. Also enables a precision filter on the capitalised route, so
+#: it is not purely additive — see the measurement in the package README.
+NAMES_LOWERCASE: str = "gazetteer-lowercase"
+
+_NAMES_IDENTITY_ALIASES = {"identity", "off", "none", "0", "false", "no"}
+_NAMES_GAZETTEER_ALIASES = {"gazetteer", "on", "1", "true", "yes", "names"}
+_NAMES_LOWERCASE_ALIASES = {
+    "gazetteer-lowercase", "lowercase", "gazetteer_lowercase", "full",
+}
+
+#: Code default for :func:`name_detection`.
+#:
+#: **``gazetteer-lowercase``, set 2026-08-06**, from a three-way comparison run
+#: through :func:`build_redactor_if_enabled` itself — not through a redactor a
+#: harness assembled. Inbound: 25 first-in-file-order ASAP set-8 essays at
+#: fixture 2026-08-05.6 (:mod:`vicary.eval.recall`, ``--modes path-*``).
+#: Outbound: 14 real generated responses / 121 shown-to-the-reader fields
+#: (:mod:`vicary.eval.overfire`), rate per response.
+#:
+#: ===========================  ==========  ==========  ====================
+#: axis                          identity    gazetteer   gazetteer-lowercase
+#: ===========================  ==========  ==========  ====================
+#: held-out third-party recall       0.0%       90.5%                 100.0%
+#: KEEP precision                  100.0%       93.5%                 100.0%
+#: over-fire, inbound prose           0.00        3.36                   1.20
+#: over-fire, outbound response       0.00        1.21                   0.57
+#: leaks over 25 essays                 45           4                      2
+#: latency p95                      0.7 ms      3.2 ms                 4.4 ms
+#: ===========================  ==========  ==========  ====================
+#:
+#: ``gazetteer-lowercase`` is not a trade-off against ``gazetteer`` — it wins on
+#: every axis except 1.2 ms. Passing the given-name oracle does two things, and
+#: only one of them is the case-insensitive route: it also gates a precision
+#: filter that drops a candidate whose only evidence is a sentence-initial
+#: capital. Without it, outbound text loses the first word of its own imperative
+#: sentences (``Double``-check, ``Push`` this further, ``Reread`` the opening —
+#: 12 of that arm's 17 outbound over-fires).
+#:
+#: **The outbound row reverses if you score the wrong field set**, which is why
+#: the harness makes the field list explicit. Over the explanatory field alone
+#: the two levels run 6 spans to 8 — ``gazetteer`` ahead. Add the imperative
+#: suggestion field, which the same host redacts in the same call, and it goes
+#: 17 to 8 the other way. The imperatives are the entire effect.
+#:
+#: ``identity``'s clean over-fire columns are not a virtue. It finds **none** of
+#: the third-party names — the classmate, the teacher, the neighbour — because
+#: it has no lookup to tell one from a public figure, and it is the level every
+#: deployment silently ran until this dial existed.
+#:
+#: Two things this measurement did NOT settle, both recorded rather than
+#: smoothed over. The residual outbound over-fire is 0.25 spans/essay of
+#: student-visible feedback (``line makes``, ``tone toward``) plus two
+#: keep-destroyed spans the gazetteer should have caught (``Narciso``,
+#: ``Cuban``); and the inbound over-fire figure is a FLOOR, because ASAP replaced
+#: every proper noun with a placeholder before we ever saw it.
+DEFAULT_NAME_DETECTION: str = NAMES_LOWERCASE
+
+
+def name_detection(kwarg_value: str | None = None) -> str:
+    """Resolve how hard ``local`` mode looks for names. Three levels.
+
+    Returns :data:`NAMES_IDENTITY`, :data:`NAMES_GAZETTEER` or
+    :data:`NAMES_LOWERCASE`.
+
+      1. Explicit ``kwarg_value`` — the host's call-site override.
+      2. ``VICARY_NAME_DETECTION``.
+      3. Code default: :data:`DEFAULT_NAME_DETECTION`.
+
+    An unrecognized non-empty value resolves to the **default**, not to
+    ``identity``. That is the opposite of :func:`redaction_mode`'s fail-safe, and
+    deliberately so: there, a typo makes the host behave as it did before
+    redaction existed, which is a recoverable non-event. Here, silently dropping
+    to ``identity`` would leave redaction *on* and reporting spans while finding
+    none of the names a reader would call PII — a failure that looks exactly like
+    success from every log line and metric.
+    """
+    raw = (kwarg_value or config.get(config.NAME_DETECTION_ENV_VAR)).strip().lower()
+    if raw in _NAMES_IDENTITY_ALIASES and raw != "":
+        return NAMES_IDENTITY
+    if raw in _NAMES_GAZETTEER_ALIASES:
+        return NAMES_GAZETTEER
+    if raw in _NAMES_LOWERCASE_ALIASES:
+        return NAMES_LOWERCASE
+    if raw:
+        logger.warning(
+            "%s=%r is not a recognized level (%s); using the default %r.",
+            config.NAME_DETECTION_ENV_VAR, raw,
+            "/".join((NAMES_IDENTITY, NAMES_GAZETTEER, NAMES_LOWERCASE)),
+            DEFAULT_NAME_DETECTION,
+        )
+    return DEFAULT_NAME_DETECTION
+
+
 def guardrail_identifier() -> str | None:
     """Configured Bedrock Guardrail ID from env, or ``None`` if unset."""
     return config.get(GUARDRAIL_ID_ENV_VAR) or None
@@ -556,30 +661,75 @@ def _extract_masked_text(response: dict[str, Any], *, fallback: str) -> str:
     return joined or fallback
 
 
+def _gazetteer_oracles(level: str) -> dict:
+    """Keyword arguments that wire the bundled gazetteer into ``local`` mode.
+
+    Imported lazily: a host running at :data:`NAMES_IDENTITY` never touches the
+    2.1 MB asset, and a host that is not redacting at all never imports the
+    gazetteer module. At the other two levels the first lookup pays the
+    decompression; call :func:`vicary.gazetteer.load` at container init to move
+    that off the first request.
+    """
+    if level == NAMES_IDENTITY:
+        return {}
+    from vicary.gazetteer import (
+        is_common_given_name,
+        is_notable,
+        is_title,
+        is_title_prefix,
+        notability,
+    )
+
+    return {
+        # Generation and the oracle are ONE decision, not two. Generation alone
+        # masks every public figure a student writes about; the oracle alone has
+        # nothing to judge. There is no supported way to ask for half of this.
+        "local_candidates": True,
+        "notable": is_notable,
+        "notability_tier": notability,
+        "title": is_title,
+        "title_prefix": is_title_prefix,
+        # The one difference between the two gazetteer levels.
+        "given_name": (
+            is_common_given_name if level == NAMES_LOWERCASE else None
+        ),
+    }
+
+
 def build_redactor_if_enabled(
     kwarg_value: bool | str | None = None,
     *,
     client: GuardrailsClient | None = None,
     identity: StudentIdentity | None = None,
+    names: str | None = None,
 ) -> Redactor | None:
     """Return a :class:`Redactor` for the resolved mode, or ``None`` (off).
 
-    The single entry point the orchestrator calls. ``None`` means the seam is
-    inert and the pipeline proceeds unchanged.
+    The single entry point a host calls. ``None`` means the seam is inert and
+    the caller proceeds unchanged.
 
-    * ``local`` (the production default) — the in-process regex +
-      interpolated-identity classifier. Free, no network hop. ``identity``
-      supplies the student's own name and school; without it the classifier
-      still masks every structured entity, just not the names.
+    * ``local`` (the production default) — the in-process offline classifier.
+      Free, no network hop. ``identity`` supplies the writer's own name and
+      school; without it the classifier still masks every structured entity,
+      just not the names.
     * ``stub`` — the older offline masker, kept for the dev seam.
     * ``guardrail`` — the real billed Bedrock pass. Raises when enabled without
       a configured Guardrail ID: fail closed rather than ship PII.
+
+    ``names`` selects how hard ``local`` mode looks for names it was not handed
+    — see :func:`name_detection`. It is a second dial rather than a fourth mode
+    because it is orthogonal to *where* redaction runs, and because the two
+    questions had been silently answered together: this function used to build
+    the identity-only classifier unconditionally, so every deployment that
+    turned redaction "on" got a detector with **0% recall on third-party names**
+    and no signal anywhere that it had.
     """
     mode = redaction_mode(kwarg_value)
     if mode == MODE_OFF:
         return None
     if mode == MODE_LOCAL:
-        return Redactor(local=True, identity=identity)
+        level = name_detection(names)
+        return Redactor(local=True, identity=identity, **_gazetteer_oracles(level))
     if mode == MODE_STUB:
         return Redactor(client=client, simulate=True)
     return Redactor(client=client)
