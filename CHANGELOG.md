@@ -60,3 +60,19 @@ essay-scoring pipeline; extracting it changed the following, and nothing else.
   script cannot survive extraction. Replaced by a test that every file in
   `data/` is matched by a `package-data` glob, which is the equivalent hazard
   packaging *does* have.
+
+### Gates, and one correction they forced
+
+Measured at fixture `2026-08-05.6`, the arm that clears the gate set is
+`local-gazetteer-lowercase` — candidate generation, the notability oracle, **and**
+the case-insensitive route. The route was previously left off by default on the
+belief that it cost over-firing. It does not, on this fixture: it *halves* it.
+
+| axis | with the route | without |
+|---|---|---|
+| held-out recall | 100% | 90.5% |
+| KEEP precision | 100% | 93.5% |
+| over-firing on prose | 1.20 spans/essay | 3.36 |
+
+Over-firing is essay-selection dependent — the same code on a different 25 essays
+reads 1.16 rather than 1.20 — so the gate pins the selection along with the bar.

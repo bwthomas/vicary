@@ -78,6 +78,7 @@ Every variable vicary reads, resolved in `vicary/config.py`:
 | `VICARY_BEDROCK_GUARDRAIL_REGION` | Guardrail region; no default, on purpose |
 | `VICARY_EVAL_CORPUS_TSV` | eval corpus path (see *Measurement*) |
 | `VICARY_EVAL_CORPUS_DIR` | directory holding `training_set_rel3.tsv` |
+| `VICARY_EVAL_CENSUS_CSV` | local copy of the US Census surname file, for the false-positive control |
 
 `ENVIRONMENT` is honoured as a host convention where `VICARY_DEPLOY_ENV` is
 unset. The earlier `GRADER_*` spellings of these are still read, at lower
@@ -132,6 +133,18 @@ pytest -m gates -s            # the gates, with their numbers
 vicary-eval --frames          # per-frame scoring table, no corpus needed
 ```
 
+Current numbers, fixture `2026-08-05.6`, arm `local-gazetteer-lowercase`:
+
+| gate | bar | measured |
+|---|---|---|
+| held-out recall | ≥ 100% | 100% |
+| KEEP precision | ≥ 100% | 100% |
+| round-trip restorability | ≥ 100% | 100% |
+| unaccounted invariant violations | 0 | 0 |
+| over-firing on real prose | ≤ 1.20 spans/essay | 1.20 |
+| bare-surname Census exposure | ≤ 1.5% | 1.47% |
+| latency p95 (essay-length) | ≤ 10 ms | 3.4 ms |
+
 Recall cannot be measured on a pre-anonymized corpus — ASAP set-8 already
 replaced every name with `@PERSON1`-style tokens before publication, so a
 detector that does nothing scores perfectly. The harness therefore injects ground
@@ -139,9 +152,21 @@ truth whose literals it knows, from `vicary/eval/fixture.py`, and reports the
 **held-out** frames separately: once a detector has been tuned against a fixture,
 only the held-out half of its recall is honest.
 
-The corpus itself is licensed third-party data and is **not** packaged.
-Corpus-dependent gates skip, and say they skipped, when
-`VICARY_EVAL_CORPUS_TSV` is unset.
+Three known invariant violations are listed, with reasons, in
+`ACCEPTED_VIOLATIONS`. The gate is that no *unlisted* violation appears, and a
+second test fails if a listed one stops occurring — a stale exemption would
+shelter the next real defect of the same shape.
+
+Neither the essay corpus nor the Census surname file is packaged: one is licensed
+third-party data, the other is 3 MB the redaction path never reads. Gates that
+need them skip, and the report names what it could not measure, so a partial run
+cannot read as a clean sweep.
+
+```sh
+export VICARY_EVAL_CORPUS_DIR=/path/to/asap-aes        # training_set_rel3.tsv
+export VICARY_EVAL_CENSUS_CSV=/path/to/names.zip       # census.gov 2010 surnames
+pytest -m gates -s
+```
 
 ## What it does not do
 
