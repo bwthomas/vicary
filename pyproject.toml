@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vicary"
+description = "Offline redaction of personal names in student compositions"
+readme = "README.md"
+requires-python = ">=3.11"
+dynamic = ["version"]
+keywords = ["redaction", "anonymization", "privacy", "education", "names"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+# No runtime dependencies, deliberately. The redaction path is stdlib-only: no
+# model, no network, no cloud client. Everything optional is an extra, so a host
+# that only wants the offline detector installs exactly that.
+dependencies = []
+
+[project.optional-dependencies]
+# The AWS Bedrock Guardrail arm (an alternative detector and the eval's external
+# baseline), plus the script that provisions the Guardrail resource.
+bedrock = ["boto3>=1.34"]
+# Everything needed to run the gates and the eval report.
+eval = ["pytest>=8"]
+dev = [
+    "pytest>=8",
+    "mypy>=1.8",
+    "ruff>=0.5",
+    "build>=1.0",
+]
+
+[project.scripts]
+# Inspect, verify, or rebuild the bundled data asset.
+vicary-assets = "vicary.assets:main"
+# Run the recall/precision measurement and print the table.
+vicary-eval = "vicary.eval.recall:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "vicary._version.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# The gazetteer asset and its checksum manifest. This line is the whole reason
+# packaging was worth doing: the asset used to reach deployment through a
+# build-time copy allowlist that had already silently dropped a runtime file
+# once. Package data cannot be forgotten.
+vicary = ["data/*.txt.gz", "data/MANIFEST.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# `gates` is the measurement suite: slower than the unit tests, and the
+# corpus-dependent parts skip when no corpus is configured. Run everything with
+# plain `pytest`; run just the fast tests with `-m "not gates"`.
+markers = [
+    "gates: measured quality gates rather than unit assertions",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src/vicary"]
+ignore_missing_imports = true

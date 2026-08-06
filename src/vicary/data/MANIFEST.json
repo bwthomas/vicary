@@ -1,0 +1,24 @@
+{
+  "assets": {
+    "notability.txt.gz": {
+      "bytes": 2138217,
+      "cut_date": "2026-08-05",
+      "format": 2,
+      "min_package_version": "0.1.0",
+      "sha256": "74c398f1ff6d6afdd817ab8df51b7564455241c0d9f9f0a945cb96ebc5677b53",
+      "sources": [
+        "https://qlever.dev/api/wikidata",
+        "https://www2.census.gov/topics/genealogy/2010surnames/names.zip"
+      ],
+      "tiers": {
+        "full": 294995,
+        "given": 10588,
+        "place": 25824,
+        "short": 1229,
+        "title": 38017
+      }
+    }
+  },
+  "manifest_version": 1,
+  "written_by": "vicary 0.1.0"
+}
