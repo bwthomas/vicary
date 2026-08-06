@@ -85,6 +85,8 @@ from vicary.name_candidates import (
     NotabilityOracle,
     NotabilityTierOracle,
     TitleOracle,
+    established_name_tokens,
+    find_candidates,
 )
 
 logger = logging.getLogger(__name__)
@@ -479,10 +481,15 @@ class Redactor:
         relation_refusal: bool = True,
         title_relation_refusal: bool = True,
         outbound_oracles: dict | None = None,
+        carry_notable_keeps: bool = True,
     ) -> None:
         self.simulate = simulate
         self.local = local
         self.identity = identity
+        self.carry_notable_keeps = carry_notable_keeps
+        #: Bare tokens of the notable full names the inbound pass kept, so the
+        #: outbound pass can recognise them. Populated by ``redact_inbound``.
+        self._carried_keeps: frozenset[str] = frozenset()
         # ``local_candidates`` turns on third-party name detection. Off by
         # default: without a notability oracle it masks every public figure a
         # student writes about, which is a visible product defect outbound.
@@ -579,7 +586,9 @@ class Redactor:
                       else self._classifier)
         if classifier is not None:
             # Local mode: in-process, no network hop, zero billed units.
-            result = classifier.mask(text)
+            result = classifier.mask(
+                text, self._carried_keeps if outbound else frozenset()
+            )
             if result.intervened:
                 logger.info(
                     "Local PII classifier masked %d span(s) on %s.",
@@ -638,7 +647,88 @@ class Redactor:
         Harness: ``python -m vicary.eval.recall``. Re-run it if this line
         changes; a 0% detector is invisible from every other vantage point.
         """
+        if self.carry_notable_keeps and self._classifier is not None:
+            self._carried_keeps = self.carried_keeps(text)
         return self._apply(text, source="OUTPUT")
+
+    def carried_keeps(self, composition: str) -> frozenset[str]:
+        """Bare tokens the outbound pass may keep, given what this essay named.
+
+        **The defect this closes.** Stage-5 feedback about a memoir by Narciso
+        Rodriguez reads "introducing who Narciso is". The essay writes the full
+        name, the gazetteer keeps it, and the feedback writes only the first
+        name — which is in the ``given`` tier, a *redact* signal, so a student
+        reads "introducing who {NAME} is" about the author they just wrote about.
+        Measured on 14 real Stage-5 responses, this was 2 of the 3 remaining
+        over-fires at the shipped level.
+
+        No lookup can fix it. The ``given`` tier is *built* from the first tokens
+        of the full tier, so every entry in it heads some notable full name and a
+        blanket "given names that head a notable name keep" rule empties the tier.
+        Narciso Rodriguez is far below the short tier's 100-sitelink floor, so no
+        threshold reaches him either. The evidence has to be per-document, and
+        the document that has it is the *essay*, not the feedback.
+
+        **Why this is safe, and the condition it depends on.** Outbound text is
+        generated from the inbound-redacted composition, so a name the inbound
+        pass masked never reached the model and cannot come back in its output.
+        The only "Narciso" that can appear in feedback about this essay is one
+        the inbound pass kept. That makes carrying a *first* name sound here
+        where :func:`surname_forms` rightly refuses to carry one inbound.
+
+        Two subtractions, because the argument above has two holes:
+
+        * **The student's own name.** Identity masking is exact-match, not
+          gazetteer-driven, so a student named Narciso is masked inbound without
+          ever entering the notable set — and would then be un-masked outbound by
+          a token carried from the designer. Identity tokens are removed.
+        * **A second, private full name sharing the token.** A document naming
+          both Narciso Rodriguez and a cousin Narciso Delgado establishes the
+          token in two roles at once; the feedback's bare "Narciso" is then
+          genuinely ambiguous, so it keeps neither.
+
+        The second subtraction counts only **multi-token** non-notable
+        candidates, and getting that wrong is what made the first version of this
+        measure exactly zero. Scored over every candidate, the essay's own bare
+        "Narciso" — not notable on its own, which is the entire premise — was
+        read as evidence of a private person and cancelled the keep it was meant
+        to license. A bare mention is the *symptom*; only a competing full name
+        is *evidence*.
+
+        Strictly, neither subtraction is load-bearing given the paragraph above —
+        a private name is masked inbound and so cannot be echoed at all. They are
+        kept because they are nearly free and they still hold if a host ever
+        calls the legs out of order.
+
+        Returns an empty set when the redactor has no notability oracle — there
+        is nothing to establish from — which is what keeps this inert for a host
+        running the identity-only level.
+        """
+        classifier = self._classifier
+        if classifier is None or classifier.notable is None:
+            return frozenset()
+        established = established_name_tokens(
+            composition,
+            classifier.notable,
+            classifier.topical,
+            tier=classifier.notability_tier,
+        )
+        if not established:
+            return frozenset()
+        private = {
+            token
+            for candidate in find_candidates(composition)
+            if len(candidate.text.split()) > 1
+            and not classifier.notable(candidate.text)
+            for token in candidate.text.lower().split()
+        }
+        identity = self.identity
+        if identity is not None:
+            for value in (identity.first_name, identity.last_name,
+                          *identity.extra_names):
+                if value:
+                    private.update(value.lower().split())
+        return frozenset(established - private)
 
     def redact_outbound(self, text: str) -> RedactionResult:
         """Scrub PII a model may have echoed before returning it to a caller."""

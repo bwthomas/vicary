@@ -96,15 +96,25 @@ config.add_production_alias("acme-prod")
 
 ## The data asset
 
-One file, `vicary/data/notability.txt.gz`, holding five independent tiers:
+One file, `vicary/data/notability.txt.gz`, holding six independent tiers:
 
 | tier | entries | answers |
 |---|---|---|
-| `full` | 294,995 | full name of a public figure |
+| `full` | 295,049 | full name of a public figure |
 | `short` | 1,229 | bare surname iconic enough to stand alone |
-| `place` | 25,824 | public place or landmark (settlements excluded — a town name is where a student lives) |
-| `given` | 10,588 | common given name — a **redact** signal, not a keep |
-| `title` | 38,017 | published work or fictional character |
+| `place` | 25,444 | public place or landmark (settlements excluded — a town name is where a student lives) |
+| `given` | 10,589 | common given name — a **redact** signal, not a keep |
+| `title` | 38,024 | published work or fictional character |
+| `demonym` | 1,044 | nationality or regional adjective — `Cuban`, `Nigerian` |
+
+`demonym` is the only tier with no notability evidence behind it: it is a keep
+granted to a bare token for being a *word*. So it is subtracted harder than any
+other — anything already in `given` is dropped (a common first name is evidence
+of a person), as is any surname borne by 10,000+ Americans. That bar is 2.5×
+stricter than the short tier's and `Horner` is why: a demonym of Horn and 23,881
+Americans' surname, which would otherwise stop a coach named Horner redacting.
+13 of 1,057 demonyms are dropped; `English`, `Welsh`, `Thai`, `French`, `German`
+and `Roman` still over-fire, which is the direction this tier may fail in.
 
 A tier is a lookup, and a lookup answers about a *string*, not about the person
 in front of you. **578 keys in `title` and 33,682 in `full`** are a common given
@@ -135,6 +145,34 @@ Vincent van Gogh", "my role model Rosa Parks" all keep, because *hero*, *muse*,
 relative and are therefore evidence of nothing. That is why the cue list is
 closed and hand-written rather than "any noun between *my* and the name", and it
 is pinned by a held-out frame.
+
+### Carrying a keep across the two passes
+
+Feedback about a memoir by Narciso Rodriguez reads *"introducing who Narciso
+is"*. The essay writes the full name and the gazetteer keeps it; the feedback
+writes only the first name, which is in the `given` tier — a **redact** signal —
+so a student read `introducing who {NAME} is` about the author they had just
+written about.
+
+No lookup fixes that. The `given` tier is *built from* the first tokens of the
+full tier, so every entry in it heads some notable full name, and Narciso
+Rodriguez sits far below the short tier's floor. The evidence has to be
+per-document, and the document holding it is the **essay**, not the feedback. So
+`redact_inbound` records the bare tokens of the notable full names it kept, and
+`redact_outbound` treats them as topical:
+
+```python
+redactor.redact_inbound(essay)        # records: {"narciso", "rodriguez"}
+redactor.redact_outbound(feedback)    # "Narciso" and "Narciso's" now survive
+```
+
+This is safe because **outbound text is generated from inbound-redacted input**:
+a classmate named Narciso was masked on the way in, so the model never saw the
+token and cannot write it back. That is also the condition — a host redacting
+outbound text from some *other* source must pass `carry_notable_keeps=False`.
+Two keeps are refused anyway: tokens of the student's own name (identity masking
+is exact-match, so it never enters the notable set), and any token a *second,
+private* full name in the same essay also claims.
 
 It ships as package data, and `data/MANIFEST.json` records its SHA-256, byte
 count, tier counts, cut date, upstream sources, and the minimum vicary version
@@ -174,8 +212,13 @@ Current numbers, fixture `2026-08-06.3`, arm `local-gazetteer-lowercase`:
 | round-trip restorability | ≥ 100% | 100% |
 | unaccounted invariant violations | 0 | 0 |
 | over-firing on real prose | ≤ 0.72 spans/essay | 0.72 |
-| bare-surname Census exposure | ≤ 1.5% | 1.47% |
-| latency p95 (essay-length) | ≤ 10 ms | 3.8 ms |
+| bare-surname Census exposure | ≤ 1.25% | 1.20% |
+| latency p95 (essay-length) | ≤ 10 ms | 3.4 ms |
+
+Measured separately, on 14 real generated-feedback responses rather than on
+essays: **over-firing on the outbound pass is 0.00 spans/response**, down from
+0.21. Two of the three residual spans needed the essay to close, not a rule —
+see *Carrying a keep across the two passes* below.
 
 Recall cannot be measured on a pre-anonymized corpus — ASAP set-8 already
 replaced every name with `@PERSON1`-style tokens before publication, so a
@@ -214,5 +257,9 @@ pytest -m gates -s
   shelters a bare uncommon given name ("my cousin Vinny" with no surname) —
   a single mid-sentence capital needs corroboration the given-name tier cannot
   supply for an uncommon name.
+* Raising the single-token place floor to 150 dropped `Auschwitz`, `Alsace`,
+  `Burgundy`, `Bohemia` and `Anatolia` from the place tier, so a bare mention of
+  one over-fires. Multi-token forms are unaffected — "Auschwitz concentration
+  camp" still resolves.
 * It makes no network call and creates no cloud resource unless you choose
   `guardrail` mode.

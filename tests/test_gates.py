@@ -82,9 +82,17 @@ ROUND_TRIP_FLOOR = 100.0
 OVER_FIRE_SPANS_CEILING = 0.72
 
 #: Population-weighted share of US surname bearers whose BARE surname resolves
-#: notable. A ceiling on the short tier's generosity. 1.5% is measured; reducing
-#: it without losing held-out figures is open work.
-CENSUS_BARE_SURNAME_CEILING = 1.5
+#: notable. A ceiling on the *single-token* tiers' generosity — short, place and
+#: demonym, all three of which grant a keep to a bare token.
+#:
+#: 1.25 as of 2026-08-06, measured 1.20. It was 1.5 against a measured 1.47, and
+#: the reduction is closed work rather than the open item that comment used to
+#: describe: raising ``PLACE_MIN_SITELINKS_SINGLE_TOKEN`` 100 -> 150 took it to
+#: 1.20 with held-out figure recall unchanged at 60.3%. The margin is deliberately
+#: ~4% rather than the latency gate's 3x, because this number is computed from
+#: two fixed files and has no run-to-run noise at all — anything that moves it
+#: moved a tier, and that is exactly what should fail here.
+CENSUS_BARE_SURNAME_CEILING = 1.25
 
 #: Both redaction passes sit serially on a host's request path, so this is spent
 #: from the host's latency budget. Measured p95 is ~3.4 ms on essay-length text;

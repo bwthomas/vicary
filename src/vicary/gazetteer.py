@@ -98,7 +98,7 @@ ASSET_RELPATH = Path("data") / assets.NOTABILITY_ASSET
 
 #: On-disk format this reader understands. A mismatch raises: an asset whose
 #: tier semantics changed is worse than a missing one, because it answers.
-SUPPORTED_FORMAT = 2
+SUPPORTED_FORMAT = 3
 
 #: Lookup verdicts. Strings rather than an enum so they survive a JSON round
 #: trip into eval rows without a converter.
@@ -107,6 +107,12 @@ TITLE = "title"
 FULL_NAME = "full_name"
 ICONIC_SHORT = "iconic_short"
 PLACE = "place"
+#: A nationality or regional adjective — ``Cuban``, ``Nigerian``, ``Bostonian``.
+#: Its own verdict rather than folded into PLACE because it is not a place: it
+#: is a word *derived* from one, it is the only keep tier with no notability
+#: evidence behind it, and eval attribution needs to see it separately to tell
+#: whether this tier is where a leak came from.
+DEMONYM = "demonym"
 
 #: Name particles that may lead a two- or three-token *partial* surname. Kept in
 #: sync with the builder's list by a unit test rather than by import, so the
@@ -193,6 +199,8 @@ class Gazetteer:
     given: frozenset[str] = frozenset()
     #: Works and fictional characters — multi-token only. See :meth:`is_title`.
     title: frozenset[str] = frozenset()
+    #: English demonyms — ``cuban``, ``nigerian``. A KEEP, see :attr:`DEMONYM`.
+    demonym: frozenset[str] = frozenset()
     #: Memoized first-token index, built on first use. Not a constructor argument
     #: because it is derived from ``title`` and must never disagree with it.
     _heads: frozenset[str] | None = field(default=None, compare=False)
@@ -203,7 +211,7 @@ class Gazetteer:
     @property
     def entry_count(self) -> int:
         return (len(self.full) + len(self.short) + len(self.place)
-                + len(self.title))
+                + len(self.title) + len(self.demonym))
 
     @property
     def title_heads(self) -> frozenset[str]:
@@ -318,7 +326,14 @@ class Gazetteer:
         if key in self.place:
             return PLACE
         if len(tokens) == 1:
-            return ICONIC_SHORT if key in self.short else NOT_NOTABLE
+            if key in self.short:
+                return ICONIC_SHORT
+            # After `short`, because a token that is both — none today, but the
+            # tiers are rebuilt from a moving upstream — should report the tier
+            # that carries notability evidence rather than the one that does not.
+            # The builder has already subtracted `given` from this tier, so a
+            # demonym here cannot be shadowing a common first name.
+            return DEMONYM if key in self.demonym else NOT_NOTABLE
         if len(tokens) <= 3 and tokens[0] in PARTICLES and key in self.short:
             # "van Gogh", "de Gaulle" — a partial, not a full name, so it is held
             # to the strict short-tier threshold.
@@ -355,7 +370,7 @@ def asset_path() -> Path:
 def _parse(text: str) -> Gazetteer:
     tiers: dict[str, set[str]] = {
         "full": set(), "short": set(), "place": set(), "given": set(),
-        "title": set(),
+        "title": set(), "demonym": set(),
     }
     meta: dict = {}
     declared: dict[str, int] = {}
@@ -405,6 +420,7 @@ def _parse(text: str) -> Gazetteer:
         place=frozenset(tiers["place"]),
         given=frozenset(tiers["given"]),
         title=frozenset(tiers["title"]),
+        demonym=frozenset(tiers["demonym"]),
         meta=meta,
     )
 

@@ -106,7 +106,8 @@ class LevelResult:
 
 
 def measure(groups: Sequence[Sequence[str]], level: str,
-            identity: StudentIdentity = ABSENT_IDENTITY) -> LevelResult:
+            identity: StudentIdentity = ABSENT_IDENTITY,
+            sources: Sequence[str] | None = None) -> LevelResult:
     """Run each group through the outbound pass at ``level`` and count the masks.
 
     A *group* is the set of fields a host redacts together in one call. Grouping
@@ -131,6 +132,17 @@ def measure(groups: Sequence[Sequence[str]], level: str,
     Redactor directly, for the same reason the ``path-*`` arms in
     :mod:`vicary.eval.recall` do: a measurement of a configuration no host can
     request is a measurement of nothing.
+
+    Args:
+        sources: The composition each group's feedback is about, positionally
+            aligned with ``groups``. Supplying it runs the **two-leg** shape a
+            host actually runs — ``redact_inbound`` on the essay, then the
+            outbound pass — which is what turns on
+            :meth:`~vicary.redaction.Redactor.carried_keeps`. Omitted, the
+            outbound pass runs cold, every carried keep is absent, and a fix
+            that depends on the essay measures as exactly zero. That is not a
+            hypothetical: it is the same defect as scoring fields unbatched,
+            one leg further out.
     """
     redactor = build_redactor_if_enabled(True, identity=identity, names=level)
     if redactor is None:  # pragma: no cover - local mode always builds one
@@ -138,6 +150,12 @@ def measure(groups: Sequence[Sequence[str]], level: str,
     classifier = redactor._classifier  # noqa: SLF001
     if classifier is None:  # pragma: no cover - local mode always has one
         raise RuntimeError(f"level {level!r} built no local classifier")
+    if sources is not None and len(sources) != len(groups):
+        raise ValueError(
+            f"sources has {len(sources)} entries for {len(groups)} groups; "
+            "they are positional and a silent misalignment would attribute one "
+            "essay's public figures to another essay's feedback"
+        )
     result = LevelResult(
         level=level,
         documents=sum(len(g) for g in groups),
@@ -146,16 +164,24 @@ def measure(groups: Sequence[Sequence[str]], level: str,
         spans=0,
         documents_touched=0,
     )
-    for group in groups:
+    for index, group in enumerate(groups):
         fields = [t for t in group if t]
         if not fields:
             continue
+        # The inbound leg, when the caller supplied the essay. Its masked output
+        # is discarded on purpose — this harness scores the OUTBOUND pass — but
+        # running it is what populates the redactor's carried keeps, exactly as
+        # the host's own ordering does.
+        carried: frozenset[str] = frozenset()
+        if sources is not None and sources[index]:
+            redactor.redact_inbound(sources[index])
+            carried = redactor._carried_keeps  # noqa: SLF001
         # The classifier, not the public wrapper, because only it hands back the
         # restore map — and the restore map is the finding. A bare count says the
         # detector over-fired; the spans say whether it ate a rare surname or the
         # word "Reread". Joined first, on the host's own separator, so the
         # document-level signals see the document the host shows them.
-        masked = classifier.mask(BATCH_SEPARATOR.join(fields))
+        masked = classifier.mask(BATCH_SEPARATOR.join(fields), carried)
         restored = masked.restore_map or {}
         if not restored:
             continue
@@ -175,8 +201,9 @@ def measure(groups: Sequence[Sequence[str]], level: str,
 
 
 def compare(groups: Sequence[Sequence[str]],
-            levels: Iterable[str] = LEVELS) -> list[LevelResult]:
-    return [measure(groups, level) for level in levels]
+            levels: Iterable[str] = LEVELS,
+            sources: Sequence[str] | None = None) -> list[LevelResult]:
+    return [measure(groups, level, sources=sources) for level in levels]
 
 
 def load_groups(*, texts_path: str | None = None,
