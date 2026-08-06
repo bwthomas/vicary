@@ -48,6 +48,41 @@ essay-scoring pipeline; extracting it changed the following, and nothing else.
   `vicary-gazetteer/<version>`, with `USER_AGENT_SUFFIX` for a deployment's own
   contact address.
 
+### Detection
+
+* A **first-person relation attached to a name now overrides a `title`-tier
+  keep**: "My neighbor Alice Adams" redacts, where before the 1921 novel of that
+  name kept it. 578 keys in the tier are a common given name beside an ordinary
+  US surname, and every one of them sheltered whichever private individual
+  carries it — measured through `redact_inbound`, 578 of 578 leaked. The
+  override recovers 508; the remaining 70 resolve in another tier and are
+  untouched by it.
+
+  No threshold could have fixed this. The distributions interleave — Atticus
+  Finch is at 17 sitelinks, the hole "Alice Adams" at 24 — so raising the floor
+  to 25 costs Atticus Finch, Peter Parker and Clark Kent to close a quarter of
+  the holes. The evidence had to come from the sentence instead.
+
+  The rule is deliberately stricter than the bare-surname refusal it is modelled
+  on: it requires a **first-person** relation, and requires it **attached** to
+  the name. Reusing the surname rule unchanged refuses six of the seven
+  curriculum characters, because characters are described *by* their relations
+  ("Atticus Finch is the kind of father who…"); dropping attachment redacts a
+  book whenever a student says who they read it with ("I read Harry Potter with
+  my little brother"). Both frames are in the fixture, held out, in both
+  directions.
+
+  On 27 un-scrubbed student documents the override fires 0 times, which is why
+  over-firing on prose is unchanged at 1.20 — an explained equality, not a
+  coincidental one. Off with `title_relation_refusal=False`, or
+  `vicary-eval --no-title-relation-refusal` for the control arm.
+
+* `Span.redacted_by` distinguishes a span the gazetteer has never heard of
+  (`"absence"`) from one it vouches for that the sentence overrides
+  (`"context"`). Both directions are asserted: an `"absence"` span that resolves
+  notable is an asset defect, and a `"context"` span that does *not* is a frame
+  measuring nothing.
+
 ### Measurement
 
 * The eval harness ships with the library. Its gates are pytest tests in
@@ -63,7 +98,7 @@ essay-scoring pipeline; extracting it changed the following, and nothing else.
 
 ### Gates, and one correction they forced
 
-Measured at fixture `2026-08-05.6`, the arm that clears the gate set is
+Measured at fixture `2026-08-06.1`, the arm that clears the gate set is
 `local-gazetteer-lowercase` — candidate generation, the notability oracle, **and**
 the case-insensitive route. The route was previously left off by default on the
 belief that it cost over-firing. It does not, on this fixture: it *halves* it.

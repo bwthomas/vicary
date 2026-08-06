@@ -246,14 +246,44 @@ def test_private_names_do_not_resolve_notable(
 
 
 def test_no_fixture_redact_span_resolves_notable(gazetteer: Gazetteer) -> None:
+    """Every span the asset alone must catch is a span the asset has never heard of.
+
+    Scoped to ``redacted_by="absence"``, which is what this invariant always
+    silently meant. A ``"context"`` span is the opposite case by construction —
+    the gazetteer vouches for the string and the sentence overrides it — so
+    including it here would make the frame that measures that override read as
+    an asset defect.
+    """
     leaks = [
         (frame.frame_id, span.literal)
         for frame in fixture.ALL_FRAMES
         for span in frame.redact_spans
         if span.entity in {"NAME", "LOCATION", "ORGANIZATION"}
+        and span.redacted_by == "absence"
         and gazetteer.is_notable(span.literal)
     ]
     assert not leaks, f"gazetteer would leak: {leaks}"
+
+
+def test_context_redacted_spans_do_resolve_notable(gazetteer: Gazetteer) -> None:
+    """The other half, and the reason the carve-out above is not a hole.
+
+    A ``"context"`` span claims the asset keeps this string and the sentence
+    beats it. If the asset stops keeping it, the frame still passes — for the
+    wrong reason, measuring plain absence — and the override it was written to
+    guard becomes untested without a single test going red.
+    """
+    inert = [
+        (frame.frame_id, span.literal)
+        for frame in fixture.ALL_FRAMES
+        for span in frame.redact_spans
+        if span.redacted_by == "context"
+        and not gazetteer.is_notable(span.literal)
+    ]
+    assert not inert, (
+        f"these frames claim to override a notability keep, but the gazetteer "
+        f"no longer keeps them, so they measure nothing: {inert}"
+    )
 
 
 def test_blakes_pair_splits(gazetteer: Gazetteer) -> None:

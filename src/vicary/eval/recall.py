@@ -285,7 +285,8 @@ def build_redactor(mode: str, guardrail_id: str | None, *,
                    candidates: bool = False, corroborate: bool = True,
                    number_placeholders: bool = True,
                    headings_are_orthographic: bool = True,
-                   relation_refusal: bool = True):
+                   relation_refusal: bool = True,
+                   title_relation_refusal: bool = True):
     from vicary.redaction import Redactor
 
     if mode in PATH_ARMS:
@@ -335,6 +336,7 @@ def build_redactor(mode: str, guardrail_id: str | None, *,
             number_placeholders=number_placeholders,
             headings_are_orthographic=headings_are_orthographic,
             relation_refusal=relation_refusal,
+            title_relation_refusal=title_relation_refusal,
         )
     if mode == "local-candidates" or (mode == "local" and candidates):
         # Candidate generation with NO notability oracle: recall-maximal,
@@ -360,7 +362,8 @@ def run(cases: list[Case], mode: str, sidecar: str, *,
         corroborate: bool = True,
         number_placeholders: bool = True,
         headings_are_orthographic: bool = True,
-        relation_refusal: bool = True) -> list[dict]:
+        relation_refusal: bool = True,
+        title_relation_refusal: bool = True) -> list[dict]:
     """Redact every case under ``mode``, appending one JSONL record per case.
 
     Resumable by ``(arm, essay_id)`` so a re-run picks up where a kill left off
@@ -383,6 +386,8 @@ def run(cases: list[Case], mode: str, sidecar: str, *,
         arm += ":no-heading-rule"
     if not relation_refusal:
         arm += ":no-relation-refusal"
+    if not title_relation_refusal:
+        arm += ":no-title-relation-refusal"
 
     done: set[tuple[str, str]] = set()
     if os.path.exists(sidecar):
@@ -397,7 +402,8 @@ def run(cases: list[Case], mode: str, sidecar: str, *,
     redactor = build_redactor(mode, guardrail_id, corroborate=corroborate,
                               number_placeholders=number_placeholders,
                               headings_are_orthographic=headings_are_orthographic,
-                              relation_refusal=relation_refusal)
+                              relation_refusal=relation_refusal,
+                              title_relation_refusal=title_relation_refusal)
     results: list[dict] = []
     with open(sidecar, "a", encoding="utf-8") as fh:
         for case in cases:
@@ -429,7 +435,8 @@ def run_frames(mode: str, guardrail_id: str | None, source: str,
                corroborate: bool = True,
                number_placeholders: bool = True,
                headings_are_orthographic: bool = True,
-        relation_refusal: bool = True) -> list[dict]:
+        relation_refusal: bool = True,
+        title_relation_refusal: bool = True) -> list[dict]:
     """Score each frame in isolation — no corpus, exact invariants."""
     # Every axis in the arm label must also reach the redactor. It did not:
     # ``number_placeholders`` was named in the label and dropped here, so an
@@ -443,6 +450,7 @@ def run_frames(mode: str, guardrail_id: str | None, source: str,
         number_placeholders=number_placeholders,
         headings_are_orthographic=headings_are_orthographic,
         relation_refusal=relation_refusal,
+        title_relation_refusal=title_relation_refusal,
     )
     # Same envelope rule as run(): the arm label has to name every axis the run
     # varied, or the summary silently reports zero rows for the treatment.
@@ -455,6 +463,8 @@ def run_frames(mode: str, guardrail_id: str | None, source: str,
         arm += ":no-heading-rule"
     if not relation_refusal:
         arm += ":no-relation-refusal"
+    if not title_relation_refusal:
+        arm += ":no-title-relation-refusal"
     out: list[dict] = []
     for frame in pool:
         t0 = time.monotonic()
@@ -701,6 +711,10 @@ def main(argv=None):
                          "corroboration for a bare surname it marks as "
                          "someone in the writer's life. The control for "
                          "the neighbour-who-shares-a-famous-surname arm.")
+    ap.add_argument("--no-title-relation-refusal", action="store_true",
+                    help="stop an attached first-person relation from "
+                         "overriding a title-tier keep. The control for the "
+                         "neighbour-whose-name-is-also-a-novel arm.")
     ap.add_argument("--census", action="store_true",
                     help="report the corpus authors' own @PERSON tokens and exit")
     args = ap.parse_args(argv)
@@ -728,7 +742,8 @@ def main(argv=None):
                                   corroborate=not args.no_corroborate,
                                   number_placeholders=not args.no_number_placeholders,
                                   headings_are_orthographic=not args.no_heading_rule,
-                                  relation_refusal=not args.no_relation_refusal)
+                                  relation_refusal=not args.no_relation_refusal,
+                                  title_relation_refusal=not args.no_title_relation_refusal)
                 arm = f"{mode}:{source}:{FIXTURE_VERSION}:frames"
                 if args.no_corroborate:
                     arm += ":no-corroborate"
@@ -738,6 +753,8 @@ def main(argv=None):
                     arm += ":no-heading-rule"
                 if args.no_relation_refusal:
                     arm += ":no-relation-refusal"
+                if args.no_title_relation_refusal:
+                    arm += ":no-title-relation-refusal"
                 metrics[arm] = summarize(recs, arm)
         if args.metrics_out:
             with open(args.metrics_out, "w", encoding="utf-8") as fh:
@@ -779,7 +796,8 @@ def main(argv=None):
                 source=source, corroborate=not args.no_corroborate,
                 number_placeholders=not args.no_number_placeholders,
                 headings_are_orthographic=not args.no_heading_rule,
-                relation_refusal=not args.no_relation_refusal)
+                relation_refusal=not args.no_relation_refusal,
+                title_relation_refusal=not args.no_title_relation_refusal)
             arm = f"{mode}:{source}:{FIXTURE_VERSION}"
             if args.no_corroborate:
                 arm += ":no-corroborate"
@@ -789,6 +807,8 @@ def main(argv=None):
                 arm += ":no-heading-rule"
             if args.no_relation_refusal:
                 arm += ":no-relation-refusal"
+            if args.no_title_relation_refusal:
+                arm += ":no-title-relation-refusal"
             arms.append(arm)
 
     all_recs = []

@@ -364,6 +364,7 @@ class LocalNameClassifier:
         number_placeholders: bool = True,
         headings_are_orthographic: bool = True,
         relation_refusal: bool = True,
+        title_relation_refusal: bool = True,
     ) -> None:
         self.identity = identity or StudentIdentity()
         self.candidates = candidates
@@ -388,6 +389,10 @@ class LocalNameClassifier:
         #: someone in the writer's life — the neighbour who shares a famous
         #: person's surname. On by default; overridable so the arm stays measurable.
         self.relation_refusal = relation_refusal
+        #: Refuses a title-tier keep when a first-person relation is attached
+        #: to the name — the neighbour whose name is also a novel. On by
+        #: default; overridable so the arm stays measurable.
+        self.title_relation_refusal = title_relation_refusal
         #: Turns on the lowercase route through candidate generation, which is
         #: the only one that reaches a student who writes without capitals.
         self.given_name = given_name
@@ -483,6 +488,7 @@ class LocalNameClassifier:
                 minter=minter,
                 headings_are_orthographic=self.headings_are_orthographic,
                 relation_refusal=self.relation_refusal,
+                title_relation_refusal=self.title_relation_refusal,
             )
             n += extra
 

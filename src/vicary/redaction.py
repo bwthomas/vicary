@@ -454,6 +454,7 @@ class Redactor:
         number_placeholders: bool = True,
         headings_are_orthographic: bool = True,
         relation_refusal: bool = True,
+        title_relation_refusal: bool = True,
     ) -> None:
         self.simulate = simulate
         self.local = local
@@ -475,6 +476,7 @@ class Redactor:
                 number_placeholders=number_placeholders,
                 headings_are_orthographic=headings_are_orthographic,
                 relation_refusal=relation_refusal,
+                title_relation_refusal=title_relation_refusal,
             )
             if local
             else None
