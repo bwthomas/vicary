@@ -51,7 +51,7 @@ from vicary.local_classifier import StudentIdentity
 #: Bump on any change to the frames. Recorded on every eval row and used in the
 #: resume key, because a resumed record built from a different fixture is a
 #: foreign record, not a consenting one.
-FIXTURE_VERSION: str = "2026-08-06.1"
+FIXTURE_VERSION: str = "2026-08-06.3"
 
 VERDICT_REDACT: str = "redact"
 VERDICT_KEEP: str = "keep"
@@ -373,6 +373,39 @@ RECALL_FRAMES: tuple[Frame, ...] = (
              "frame that scores it.",
     ),
     Frame(
+        frame_id="relative-whose-phrase-is-also-a-film-title",
+        sentence="We stayed with the Alvarez family in July. My cousin Vinny "
+                 "Delgado came over that summer and never left.",
+        spans=(Span("NAME", "Vinny Delgado", expect="{NAME}",
+                    redacted_by="context"),),
+        held_out=True,
+        note="THE WORST SHAPE IN THE TITLE TIER, and it is the commonest frame "
+             "in the fixture wearing a film's name. 41 keys lead with a "
+             "first-person relation — 'My Cousin Vinny', 'My Sister Eileen', "
+             "'My Brother Nikhil' — and the tier matches case-insensitively, so "
+             "a student writing about an actual cousin matched the 1992 film, "
+             "had generation blocked across the whole phrase, and shipped the "
+             "name. The writer supplies the discriminator: a title is "
+             "title-cased and a sentence about a relative is not, which is the "
+             "same orthographic evidence the heading rule reads. Gated on the "
+             "document capitalising at all, because in a document that "
+             "capitalises nothing an absent capital is testimony about nothing.",
+    ),
+    Frame(
+        frame_id="private-person-shadowed-by-a-real-public-figure",
+        sentence="My best friend Alan Ford helped me study for the test last week.",
+        spans=(Span("NAME", "Alan Ford", expect="{NAME}",
+                    redacted_by="context"),),
+        held_out=True,
+        note="THE SAME HOLE ONE TIER OVER, and 57x larger than the title one. "
+             "33,682 keys in the `full` tier are <common given name> <ordinary US "
+             "surname> and 33,269 of them shelter whichever private individual "
+             "carries the name — 'Alan Ford' is a footballer and also somebody's "
+             "best friend. Scoping the override to titles was justified in writing "
+             "by 'it would also redact my hero Abraham Lincoln'; that claim is "
+             "RETRACTED by measurement, and the frame below is what retracts it.",
+    ),
+    Frame(
         frame_id="full-name-midsentence",
         sentence="I asked Marisol Ybarra what she thought about the ending.",
         spans=(Span("NAME", "Marisol Ybarra", expect="{NAME}"),),
@@ -532,6 +565,22 @@ KEEP_FRAMES: tuple[Frame, ...] = (
              "redacted; this is the pair that makes that visible.",
     ),
     Frame(
+        frame_id="admiration-invocation-before-a-public-figure",
+        sentence="My hero Abraham Lincoln held the country together in the "
+                 "middle of a war.",
+        spans=(Span("NAME", "Abraham Lincoln", verdict=VERDICT_KEEP),),
+        held_out=True,
+        note="THE GUARD that let the override reach the `full` tier, and the "
+             "reason the cue list is closed and hand-written. 'My hero X', 'my "
+             "muse X', 'my inspiration X', 'my role model X' are ADMIRATION "
+             "invocations, and they attach to a public figure as readily as to a "
+             "relative — 'my hero dad' and 'my hero Abraham Lincoln' are equally "
+             "ordinary sentences. So they are not evidence, and none of them is a "
+             "relation cue. A rule keyed on 'any noun between my and the name' "
+             "would fire on all four; this frame is what makes that difference "
+             "cost a test rather than a paragraph.",
+    ),
+    Frame(
         frame_id="fictional-character-described-by-a-relation",
         sentence="Atticus Finch is the kind of father who does the right thing "
                  "even when it costs him everything.",
@@ -547,6 +596,17 @@ KEEP_FRAMES: tuple[Frame, ...] = (
              "What separates them from 'My neighbor Alice Adams' is that the "
              "relation is not the WRITER'S: title-tier refusal therefore demands "
              "a first-person possessive attached to the name itself.",
+    ),
+    Frame(
+        frame_id="relation-led-title-written-as-a-title",
+        sentence="We stayed with the Alvarez family in July. My Cousin Vinny is "
+                 "my favorite movie and I have seen it four times.",
+        spans=(Span("TITLE", "My Cousin Vinny", verdict=VERDICT_KEEP),),
+        held_out=True,
+        note="THE GUARD on the frame above, in the same two-sentence document so "
+             "the capitalisation signal is identical and the only difference is "
+             "the one under test. Measured across all 41 relation-led keys: 41/41 "
+             "survive here, 31/31 of the name-bearing ones are removed there.",
     ),
     Frame(
         frame_id="work-title-near-an-unattached-first-person-relation",

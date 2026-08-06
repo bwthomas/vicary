@@ -103,13 +103,25 @@ NotabilityTierOracle = Callable[[str], str]
 #: them carries evidence about what a bare surname in the same document means.
 CORROBORATING_TIER: str = "full_name"
 
-#: The tier whose keeps a first-person relation may override. Work titles and
-#: fictional characters are the one tier built from strings that are *also*
-#: ordinary people's names — 589 keys in the shipped tier are a common given name
-#: beside an ordinary US surname ("Alice Adams", "Adam Mitchell"), and every one
-#: of them keeps whichever private individual carries it. See
-#: :func:`names_someone_the_writer_knows`.
-OVERRIDABLE_TIER: str = "title"
+#: The tiers whose keeps a first-person relation may override. Both are built
+#: from strings that are *also* ordinary people's names: 578 title keys and
+#: **33,682 full-name keys** are a common given name beside an ordinary US
+#: surname ("Alice Adams" is a 1921 novel; "Alan Ford" is a footballer), and each
+#: one keeps whichever private individual happens to carry it — 33,269 of them
+#: measured doing exactly that.
+#:
+#: `full_name` is in here on a measurement that RETRACTS the reason it was left
+#: out. The stated reason was that overriding it would redact "my hero Abraham
+#: Lincoln"; it does not, because *hero*, *muse*, *inspiration*, *role model* and
+#: *favourite* are admiration invocations and none of them is in
+#: :data:`_RELATION_CUES`. Those pair with public figures as readily as with
+#: relatives, which is precisely why they are not evidence — and it is why the
+#: cue list is closed and hand-written rather than "any noun before the name".
+#:
+#: `place` and `iconic_short` are excluded and stay excluded. A place is not a
+#: person, and a bare iconic surname has its own document-level rule with its own
+#: guard (:func:`names_someone_in_the_writers_life`).
+OVERRIDABLE_TIERS: frozenset[str] = frozenset({"title", "full_name"})
 
 #: Answers "do lots of notable people share this first name?" — the **inverse**
 #: signal to :data:`NotabilityOracle`. ``True`` is evidence the token names a
@@ -801,6 +813,11 @@ def find_candidates(
             title_spans = [
                 (s, e) for s, e in title_spans
                 if not names_someone_the_writer_knows(text, s, e)
+                # ...and the title is not itself a relation phrase the writer is
+                # using literally. This one needs the document's capitalisation
+                # signal, so it is gated on the same test the scan itself is.
+                and not (capitalises
+                         and title_is_the_writers_own_relation(text, s, e))
             ]
         blocked += title_spans
 
@@ -1118,6 +1135,44 @@ _RELATION_ATTACHED_AFTER = re.compile(
 #: lives nearby; only a first-person pronoun says nearby *to the writer*.
 _FIRST_PERSON: frozenset[str] = frozenset({"i", "me", "my", "we", "us", "our"})
 
+#: A title whose own first words are a first-person relation — "My Cousin Vinny",
+#: "My Sister Eileen", "My Best Friend Anne Frank". 41 keys in the shipped tier,
+#: and they are the most dangerous shape in it: the phrase they occupy is
+#: ``kinship-possessive``, the single commonest frame a student names somebody in.
+#: The tier match is case-insensitive, so "My cousin Vinny Delgado came over"
+#: matched the 1992 film, blocked generation over the whole phrase, and shipped
+#: the name. See :func:`title_is_the_writers_own_relation`.
+_TITLE_LEADS_WITH_RELATION = re.compile(
+    rf"^(?:my|our)\s+{_MODIFIERS}(?:{_RELATION_ALTERNATION})\b"
+)
+
+
+def title_is_the_writers_own_relation(text: str, start: int, end: int) -> bool:
+    """Whether a relation-led title span is really the writer naming somebody.
+
+    "My Cousin Vinny is my favorite movie" and "My cousin Vinny Delgado came over
+    that summer" fold to the same lookup key, and the tier keeps both. The
+    difference is one the writer supplied: a title is title-cased, so its relation
+    word carries a capital, and a sentence about a relative does not.
+
+    That is the same evidence the heading rule reads and the same evidence rule 1
+    of the capitalisation rules reads — the document's own orthography, not a
+    guess about intent. Callers gate this on
+    :func:`document_capitalises_names`, because in a document that capitalises
+    nothing the absent capital is not testimony about anything.
+
+    The cost of being wrong is a student who writes "my cousin vinny is my
+    favorite movie" losing the film to a placeholder inbound. The cost of the
+    other error is a cousin's name reaching a third-party model.
+    """
+    span = text[start:end]
+    if not _TITLE_LEADS_WITH_RELATION.match(span.lower()):
+        return False
+    # Everything after the leading possessive: "Cousin Vinny" in the title,
+    # "cousin Vinny" in the sentence. The relation word is the one that differs.
+    tokens = _ANY_TOKEN.findall(span)
+    return any(token.islower() for token in tokens[1:3])
+
 
 def names_someone_the_writer_knows(text: str, start: int, end: int) -> bool:
     """Whether a first-person relation is syntactically attached to this name.
@@ -1300,7 +1355,7 @@ def mask_candidates(
             if not (
                 title_relation_refusal
                 and notability_tier is not None
-                and notability_tier(name) == OVERRIDABLE_TIER
+                and notability_tier(name) in OVERRIDABLE_TIERS
                 and names_someone_the_writer_knows(
                     text, candidate.start, candidate.end
                 )
