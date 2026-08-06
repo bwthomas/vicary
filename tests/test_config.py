@@ -212,6 +212,9 @@ NEW_SINCE_EXTRACTION = {
     # identity-only detector unconditionally, with no way to ask for anything
     # else. There is nothing to stay compatible with.
     config.NAME_DETECTION_ENV_VAR,
+    # Newer still, and inert unset: outbound inherits inbound, so there is no
+    # prior behaviour for a legacy name to preserve.
+    config.NAME_DETECTION_OUTBOUND_ENV_VAR,
 }
 
 
@@ -246,3 +249,60 @@ def test_every_renamed_variable_still_accepts_its_old_spelling() -> None:
         f"{sorted(missing)} declare no legacy spelling and are not listed in "
         "NEW_SINCE_EXTRACTION. Either add the old name or say it is new."
     )
+
+
+# ---------------------------------------------------------------------------
+# The two directions are separately configurable
+
+
+def test_outbound_inherits_inbound_when_unset(monkeypatch) -> None:
+    """The dial is inert until set — adding it changed no deployment."""
+    from vicary.redaction import name_detection_outbound
+
+    monkeypatch.delenv(config.NAME_DETECTION_OUTBOUND_ENV_VAR, raising=False)
+    monkeypatch.setenv(config.NAME_DETECTION_ENV_VAR, "gazetteer")
+    assert name_detection_outbound(inbound="gazetteer") == "gazetteer"
+
+
+def test_outbound_can_differ_from_inbound(monkeypatch) -> None:
+    from vicary.redaction import name_detection_outbound
+
+    monkeypatch.setenv(config.NAME_DETECTION_OUTBOUND_ENV_VAR, "identity")
+    assert name_detection_outbound(inbound="gazetteer-lowercase") == "identity"
+
+
+def test_matching_levels_share_one_classifier(monkeypatch) -> None:
+    """Not two equal ones. Two objects that agree today can stop agreeing.
+
+    A second classifier built from an identical level would let the outbound
+    number drift with nothing in the configuration to explain it, which is the
+    shape of every defect this module has had.
+    """
+    from vicary.redaction import build_redactor_if_enabled
+
+    monkeypatch.setenv(config.REDACTION_ENV_VAR, "local")
+    monkeypatch.setenv(config.NAME_DETECTION_ENV_VAR, "gazetteer")
+    monkeypatch.setenv(config.NAME_DETECTION_OUTBOUND_ENV_VAR, "gazetteer")
+    r = build_redactor_if_enabled(True)
+    assert r is not None and r._outbound_classifier is None
+
+
+def test_a_stricter_outbound_level_actually_reaches_the_outbound_pass(
+    monkeypatch,
+) -> None:
+    """The guard that makes the dial a control rather than a label.
+
+    Both passes call ApplyGuardrail with source="OUTPUT", so the direction was
+    not represented anywhere in the call. A dial that resolved correctly and then
+    fed the same classifier to both legs would pass every test above.
+    """
+    from vicary.redaction import build_redactor_if_enabled
+
+    monkeypatch.setenv(config.REDACTION_ENV_VAR, "local")
+    monkeypatch.setenv(config.NAME_DETECTION_ENV_VAR, "gazetteer-lowercase")
+    monkeypatch.setenv(config.NAME_DETECTION_OUTBOUND_ENV_VAR, "identity")
+    r = build_redactor_if_enabled(True)
+    assert r is not None
+    text = "My cousin Terrence Okonkwo came over that summer."
+    assert "Terrence Okonkwo" not in r.redact_inbound(text).text
+    assert "Terrence Okonkwo" in r.redact_outbound(text).text
