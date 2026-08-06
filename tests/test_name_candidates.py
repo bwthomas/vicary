@@ -21,9 +21,11 @@ from vicary.eval.fixture import (
 )
 from vicary.local_classifier import LocalNameClassifier
 from vicary.name_candidates import (
+    document_capitalises_names,
     find_candidates,
     is_public_landmark,
     mask_candidates,
+    writes_without_standard_capitals,
 )
 
 #: The frames the capitalisation route cannot reach on its own. Still named
@@ -989,3 +991,87 @@ def test_a_heading_does_not_corroborate_its_own_words() -> None:
     """
     doc = "Intro\n\nThe First Horses\n\nHorses eat hay, grass and oats.\n"
     assert "Horses" in _mask_lowercase(doc)
+
+
+# ---------------------------------------------------------------------------
+# Absence of capitals is not evidence of a writer who drops them
+# ---------------------------------------------------------------------------
+
+def test_well_capitalised_prose_with_no_names_does_not_get_the_lowercase_route() -> None:
+    """The bug that put "line circles" in front of a student.
+
+    ``document_capitalises_names`` counts mid-sentence capitals, and a **no** has
+    two causes: the writer drops capitals, or the text contains no proper nouns.
+    Only the first should reach the permissive path. Stage-5 feedback fields are
+    the second — ordinary prose about an essay, scoring zero because there is
+    nothing to capitalise — and they were being read as lower-case writing.
+
+    `line` is a genuine given name, so the seed is legitimate; the missing guard
+    was the whole defect. Scoped back (permissive whenever capitals are absent)
+    this sentence masks "line circles".
+    """
+    text = "Your closing line circles back to the idea you opened with."
+    assert not document_capitalises_names(text)
+    assert not writes_without_standard_capitals(text)
+    assert _mask_lowercase(text, given_name={"line"}.__contains__) == text
+
+
+def test_a_writer_who_drops_capitals_still_reaches_the_route() -> None:
+    """The other side, so the guard cannot be satisfied by refusing everything.
+
+    Both tells are exercised independently: a sentence opening in lower case,
+    and a bare lower-case "i" in prose that otherwise capitalises its openings.
+    """
+    dropped_opening = "then terrence okonkwo showed up and everything changed."
+    assert writes_without_standard_capitals(dropped_opening)
+    assert "terrence okonkwo" not in _mask_lowercase(dropped_opening)
+
+    bare_i = "Last summer i met terrence okonkwo at the community pool."
+    assert writes_without_standard_capitals(bare_i)
+    assert "terrence okonkwo" not in _mask_lowercase(bare_i)
+
+
+def test_a_capital_inside_an_opening_quote_is_orthography_not_a_name() -> None:
+    """Feedback quotes the student's own words, and that capital is required.
+
+    "vivid words like 'Giggles filled the school'" put a capital on `Giggles`
+    for the same reason a full stop does. The sentence-break pattern knew about
+    a *closing* quote after terminal punctuation and not about an opening one,
+    so the capital read as the writer's choice and masked in text a student
+    reads. The control is the same words as a real sentence, which already
+    emitted nothing.
+
+    Asserted on the oracle path, because that is the only path the filter runs
+    on: without a given-name list the document's capitals are the sole evidence
+    channel, so the no-oracle arm deliberately stays recall-maximal and still
+    emits ``Giggles``.
+    """
+    quoted = "You reach for vivid words like 'Giggles filled the school' here."
+    assert _mask_lowercase(quoted) == quoted, _mask_lowercase(quoted)
+    plain = "You reach for vivid words. Giggles filled the school. Good."
+    assert _mask_lowercase(plain) == plain, _mask_lowercase(plain)
+
+
+def test_a_real_name_in_quotes_is_still_caught() -> None:
+    """The other half — the opening-quote rule discounts the capital, not the name.
+
+    Only reachable because ``_corroborated`` now strips the token before asking
+    the given-name tier. It did not, so `Terrence'` (the candidate pattern keeps
+    the apostrophe, for O'Brien) was asked about verbatim and answered no.
+    """
+    masked = _mask_lowercase("Words like 'Terrence' stand out in your draft.")
+    assert "Terrence" not in masked, masked
+
+
+def test_masking_a_quoted_name_leaves_the_quotation_balanced() -> None:
+    """A trailing apostrophe is the closing quote, not part of the name.
+
+    Masking `Terrence'` produced "Words like '{NAME_1} stand out" — an
+    unbalanced quotation in student-visible text. O'Brien and possessives must
+    survive the trim, so both are pinned here too.
+    """
+    masked = _mask_lowercase("Words like 'Terrence' stand out in your draft.")
+    assert masked.count("'") == 2, masked
+    assert "O'Brien" not in _mask_lowercase(
+        "Ask O'Brien Delgado about it.", given_name={"delgado"}.__contains__
+    )

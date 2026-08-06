@@ -65,12 +65,21 @@ ROUND_TRIP_FLOOR = 100.0
 #: Spans removed from genuine, un-injected student prose. A ceiling: this is the
 #: visible product defect, since a student reading their own feedback sees it.
 #:
-#: 1.20 is the measured value for **this** essay selection — the first 25 set-8
+#: 0.72 is the measured value for **this** essay selection — the first 25 set-8
 #: essays in file order. The number is selection-dependent and that is not noise:
-#: the same code on a different 25 essays reads 1.16. Anything comparing across
-#: selections is comparing two measurements, so the gate pins the selection
-#: (``load_set8(tsv, None, 25)``) and the bar goes with it.
-OVER_FIRE_SPANS_CEILING = 1.20
+#: at the previous bar of 1.20, the same code on a different 25 essays read 1.16.
+#: Anything comparing across selections is comparing two measurements, so the
+#: gate pins the selection (``load_set8(tsv, None, 25)``) and the bar goes with
+#: it.
+#:
+#: Lowered from 1.20 when the capitalisation signal stopped reading *absence* of
+#: mid-sentence capitals as evidence of a writer who drops them (see
+#: :func:`~vicary.name_candidates.writes_without_standard_capitals`) and an
+#: opening quote started counting as a sentence start. Held-out recall, KEEP
+#: precision and the leak count were all unchanged across that move, so the bar
+#: follows the measurement down rather than banking the slack — a ceiling left
+#: above the measured value is not a gate, it is a comment.
+OVER_FIRE_SPANS_CEILING = 0.72
 
 #: Population-weighted share of US surname bearers whose BARE surname resolves
 #: notable. A ceiling on the short tier's generosity. 1.5% is measured; reducing

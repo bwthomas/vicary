@@ -52,6 +52,7 @@ from dataclasses import dataclass, field
 
 from vicary.local_classifier import StudentIdentity
 from vicary.redaction import (
+    BATCH_SEPARATOR,
     NAMES_GAZETTEER,
     NAMES_IDENTITY,
     NAMES_LOWERCASE,
@@ -115,6 +116,17 @@ def measure(groups: Sequence[Sequence[str]], level: str,
     that batches its outbound fields and a harness that does not are measuring
     different systems.
 
+    Which is what this function used to do. It took groups, documented why they
+    mattered, and then masked **each field separately** — so it measured the one
+    shape no host runs. :meth:`Redactor.redact_outbound_batch` joins every field
+    of a response into ONE pass (it is a billing fix: ``ApplyGuardrail`` rounds
+    each field up to a 1000-char unit), and the difference is not academic here.
+    Two document-level signals are computed over whatever text arrives —
+    same-document surname corroboration, and the capitalisation tell in
+    :func:`~vicary.name_candidates.writes_without_standard_capitals` — so a
+    191-character field and the 1,656-character response it belongs to are
+    genuinely different inputs. It now joins on the same separator the host does.
+
     Goes through :func:`build_redactor_if_enabled` rather than constructing a
     Redactor directly, for the same reason the ``path-*`` arms in
     :mod:`vicary.eval.recall` do: a measurement of a configuration no host can
@@ -135,19 +147,30 @@ def measure(groups: Sequence[Sequence[str]], level: str,
         documents_touched=0,
     )
     for group in groups:
-        for text in group:
-            # The classifier, not the public wrapper, because only it hands back
-            # the restore map — and the restore map is the finding. A bare count
-            # says the detector over-fired; the spans say whether it ate a rare
-            # surname or the word "Reread".
-            masked = classifier.mask(text)
-            restored = masked.restore_map or {}
-            if not restored:
-                continue
+        fields = [t for t in group if t]
+        if not fields:
+            continue
+        # The classifier, not the public wrapper, because only it hands back the
+        # restore map — and the restore map is the finding. A bare count says the
+        # detector over-fired; the spans say whether it ate a rare surname or the
+        # word "Reread". Joined first, on the host's own separator, so the
+        # document-level signals see the document the host shows them.
+        masked = classifier.mask(BATCH_SEPARATOR.join(fields))
+        restored = masked.restore_map or {}
+        if not restored:
+            continue
+        # Per-field attribution survives the join: the separator is not
+        # name-shaped, so it passes through untouched and the masked text splits
+        # back into the same number of parts. If it ever does not, count the
+        # group as one touched document rather than guessing which field it was.
+        parts = masked.text.split(BATCH_SEPARATOR)
+        if len(parts) == len(fields):
+            result.documents_touched += sum(1 for p in parts if "{" in p)
+        else:
             result.documents_touched += 1
-            for original in restored.values():
-                result.spans += 1
-                result.by_span[original] += 1
+        for original in restored.values():
+            result.spans += 1
+            result.by_span[original] += 1
     return result
 
 

@@ -50,6 +50,50 @@ essay-scoring pipeline; extracting it changed the following, and nothing else.
 
 ### Detection
 
+* **Absence of capitals stopped counting as evidence of a writer who drops
+  them.** `document_capitalises_names` answers "did this document capitalise its
+  proper nouns", and a **no** has two causes that were being treated as one: the
+  writer drops capitals — the case the lowercase route exists for — or the text
+  contains no proper nouns at all. Only the first should reach the permissive
+  path.
+
+  The second is what the outbound pass sees. Its inputs are single feedback
+  fields of 108-290 characters, ordinary prose about a student's essay; every one
+  scored zero mid-sentence capitals, every one was read as lower-case writing,
+  and the route ran with no corroboration required. "tone toward", "line makes",
+  "line circles" and "line loops" masked as names in text a student reads. Both
+  `tone` and `line` are genuine given names, so the seed was legitimate and the
+  absent guard was the whole defect.
+
+  New `writes_without_standard_capitals` requires a *positive* tell — a sentence
+  opening in lower case, or a bare lower-case "i" — rather than inferring one
+  from silence. Held-out recall, KEEP precision and the leak count are all
+  unchanged; over-firing falls **1.20 → 0.72 spans/essay inbound** and **0.57 →
+  0.29 spans/response outbound**.
+
+* **An opening quote now counts as a sentence start.** The pattern knew about a
+  *closing* quote after terminal punctuation and not about an opening one, so
+  "vivid words like 'Giggles filled the school'" read that capital as the
+  writer's choice. Quoting the student's own words is how feedback refers to
+  them. Outbound over-firing **0.29 → 0.21**.
+
+  Two things this surfaced, both older than it. `_corroborated` stripped
+  punctuation for the capitalisation channel and not before the given-name tier,
+  so `Terrence'` — the candidate pattern keeps the apostrophe so O'Brien survives
+  — was asked about verbatim and answered no; a quoted first name would have
+  started leaking. And a trailing apostrophe rode into the masked span, so
+  masking ate the closing quote: "Words like '{NAME_1} stand out". Both fixed,
+  both pinned.
+
+* **The over-fire harness now batches the way the host does.** `measure()` took
+  groups, documented at length why grouping matters, and then masked each field
+  separately — the one shape no host runs. `redact_outbound_batch` joins every
+  field of a response into ONE pass, and two document-level signals are computed
+  over whatever arrives, so a 191-character field and the 1,656-character
+  response it belongs to are different inputs. Pinned by a test where it changes
+  the answer: "Narciso Rodriguez" in one field and a bare "Rodriguez" in the next
+  over-fires scored apart and does not scored together.
+
 * **The two directions are separately configurable**, via
   `VICARY_NAME_DETECTION_OUTBOUND`. Unset it inherits the inbound level, so this
   changes no deployment; set, it builds a second classifier for the outbound

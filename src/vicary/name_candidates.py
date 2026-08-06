@@ -265,10 +265,23 @@ _ALLCAPS_RUN: int = 3
 _WORD_TOKEN = re.compile(r"[A-Za-z][A-Za-z'’-]*")
 
 #: Where a sentence begins: start of text, after terminal punctuation and any
-#: closing quote, or after a line break. A capital in one of these positions is
-#: required by orthography, so it is evidence of nothing — which is the whole of
-#: the objection to treating a capital as proof that a word is a name.
-_SENTENCE_BREAK = re.compile(r"(?:\A|[.!?][\"'’”\)]*\s+|\n+)\s*")
+#: closing quote, after a line break, or immediately inside an *opening* quote. A
+#: capital in one of these positions is required by orthography, so it is
+#: evidence of nothing — which is the whole of the objection to treating a
+#: capital as proof that a word is a name.
+#:
+#: The opening-quote arm was missing, and quoted material is how feedback refers
+#: to a student's own words: "vivid words like 'Giggles filled the school'" put a
+#: capital on `Giggles` for the same orthographic reason a full stop does, and it
+#: masked as a name in text a student reads. Only the *capital* is discounted —
+#: a real name inside quotes still carries the given-name tier, so "words like
+#: 'Marisol' stand out" is unaffected.
+#:
+#: An apostrophe inside a word cannot match: the quote must not be preceded by a
+#: letter, so "don't" and "Narciso's" are untouched.
+_SENTENCE_BREAK = re.compile(
+    r"(?:\A|[.!?][\"'’”\)]*\s+|\n+|(?:(?<=\s)|\A)[\"'‘“](?=[A-Za-z]))\s*"
+)
 
 #: One entirely-lowercase word. The leading ``\b`` is what keeps this from
 #: matching the tail of a capitalised word — there is no word boundary between
@@ -434,6 +447,46 @@ _MID_SENTENCE_CAP = re.compile(r"(?<=[a-z,;:]\s)([A-Z][a-z]{2,})")
 #: lowercase fixture frame is 0, so no threshold separates them. That was a
 #: property of the corpus, not of the signal.
 _CAPITALISES_NAMES_MIN: int = 2
+
+#: A sentence opening on a lower-case letter, which is the writer telling us
+#: directly that they are not keeping standard capitalisation. Matched at the
+#: start of the text as well as after a sentence break.
+_LOWERCASE_SENTENCE_START = re.compile(
+    r"(?:\A|(?<=[.!?]\s))\s*[a-z]", re.MULTILINE
+)
+
+#: A bare lower-case first-person "i" — the other unambiguous tell, and the one
+#: that survives a writer who does capitalise sentence openings.
+_BARE_LOWERCASE_I = re.compile(r"\bi\b")
+
+
+def writes_without_standard_capitals(text: str) -> bool:
+    """Positive evidence that this writer is not keeping standard capitalisation.
+
+    The companion to :func:`document_capitalises_names`, and the reason it needs
+    one: that function answers "did this document capitalise its proper nouns",
+    and a **no** has two completely different causes. Either the writer does not
+    capitalise — the case the lowercase route exists for — or the text simply
+    contains no proper nouns to capitalise. Nothing distinguished them, so the
+    second was being served the first's permissive treatment.
+
+    That is not hypothetical. The outbound pass scores single feedback fields of
+    108-290 characters, ordinary well-formed prose about a student's essay. Every
+    one scored zero mid-sentence capitals, every one was therefore read as
+    lower-case writing, and the route ran with no corroboration required: "tone
+    toward", "line makes", "line circles" and "line loops" masked as names in
+    text a student reads. Both `tone` and `line` are genuine given names, so the
+    seed was legitimate and the absent guard was the entire defect.
+
+    Two tells, both of them the writer's own doing rather than an inference from
+    what is missing: a sentence opening in lower case, and a bare lower-case "i".
+    Prose that keeps both conventions is making a positive claim about its own
+    orthography, and a lower-case token inside it is evidence against a name for
+    the same reason a mid-sentence capital is evidence for one.
+    """
+    return bool(
+        _LOWERCASE_SENTENCE_START.search(text) or _BARE_LOWERCASE_I.search(text)
+    )
 
 
 def document_capitalises_names(text: str) -> bool:
@@ -843,9 +896,16 @@ def find_candidates(
         here — and "My Brother Terrence Okonkwo" leads with an honorific, so
         checking only the first token consulted "Brother" and leaked the name.
         """
+        # Both channels see the same stripped token. They did not: the capital
+        # channel stripped `.,'’` and the given-name channel got the raw token,
+        # so a name against a closing quote — "words like 'Terrence'", which the
+        # candidate regex hands over as `Terrence'` because an apostrophe is a
+        # name character — asked the tier about `Terrence'` and was told no.
+        # Only reachable once the capital is the sole evidence, which is why an
+        # opening quote counting as a sentence start is what surfaced it.
         return any(
-            token.lower().strip(".,'’") in written_as_a_capital or is_given(token)
-            for token in tokens
+            stripped in written_as_a_capital or is_given(stripped)
+            for stripped in (t.lower().strip(".,'’") for t in tokens)
         )
 
     out: list[Candidate] = []
@@ -882,11 +942,23 @@ def find_candidates(
                 and not _corroborated(run, given_name)
             ):
                 continue
+            # A *trailing* apostrophe is the closing quote, not part of the name.
+            # The candidate pattern treats `'` as a name character so O'Brien
+            # survives, which also means "words like 'Terrence'" arrives as
+            # `Terrence'` — and masking that ate the quote: "Words like
+            # '{NAME_1} stand out". Possessives are untouched because they end in
+            # `s`. The one case this trims wrongly is a plural possessive ("the
+            # Smiths'"), which loses the apostrophe from the masked span and
+            # reads `the {NAME_1}'` — cosmetically odd, against a defect that
+            # unbalances a quotation in text a student reads.
+            masked_text = joined.rstrip("'’")
+            if not masked_text:
+                continue
             out.append(
                 Candidate(
-                    text=joined,
+                    text=masked_text,
                     start=start,
-                    end=start + len(joined),
+                    end=start + len(masked_text),
                     kind=_classify(run),
                 )
             )
@@ -897,9 +969,19 @@ def find_candidates(
         # the same characters would mask the outer one and leave the inner
         # placeholder's braces as debris.
         claimed = [(c.start, c.end) for c in out]
+        # `None` here is the permissive path: "no capitalisation signal, so the
+        # given-name tier stands alone". It is reached only on positive evidence
+        # that the writer drops capitals, never on the mere absence of them —
+        # absence is what a text with no names in it looks like, and reading its
+        # silence as consent is what put "line circles" in front of a student.
+        # See :func:`writes_without_standard_capitals`.
         for candidate in _find_lowercase_candidates(
             text, given_name, _protected,
-            corroborate=written_as_a_capital if capitalises else None,
+            corroborate=(
+                None
+                if not capitalises and writes_without_standard_capitals(text)
+                else written_as_a_capital
+            ),
         ):
             if any(candidate.start < end and candidate.end > start
                    for start, end in claimed):
