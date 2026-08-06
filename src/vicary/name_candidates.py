@@ -121,7 +121,7 @@ CORROBORATING_TIER: str = "full_name"
 #: `place` and `iconic_short` are excluded and stay excluded. A place is not a
 #: person, and a bare iconic surname has its own document-level rule with its own
 #: guard (:func:`names_someone_in_the_writers_life`).
-OVERRIDABLE_TIERS: frozenset[str] = frozenset({"title", "full_name"})
+OVERRIDABLE_TIERS: frozenset[str] = frozenset({"title", "full_name", "demonym"})
 
 #: Answers "do lots of notable people share this first name?" — the **inverse**
 #: signal to :data:`NotabilityOracle`. ``True`` is evidence the token names a
@@ -1116,6 +1116,55 @@ def surname_forms(name: str) -> tuple[str, ...]:
     return tuple(forms)
 
 
+def established_name_tokens(
+    text: str,
+    notable: NotabilityOracle,
+    keep: frozenset[str] = frozenset(),
+    tier: NotabilityTierOracle | None = None,
+) -> frozenset[str]:
+    """Every bare token of every notable full name ``text`` establishes.
+
+    ``"Narciso Rodriguez's memoir"`` yields ``{"narciso", "rodriguez"}``. The
+    **first** name is included, which is exactly what :func:`surname_forms`
+    refuses to do, so the difference has to be justified rather than assumed.
+
+    :func:`surname_forms` is for the INBOUND pass, over prose a student wrote,
+    where a bare first name is the commonest private surface form there is —
+    corroborating it would let one notable full name keep every "Terrence" in the
+    document. That argument does not survive the trip to the outbound pass, and
+    the reason is structural rather than a judgement call: **outbound text was
+    generated from already-redacted input.** A classmate named Narciso was masked
+    on the way in, so the model never saw the token and cannot have written it
+    back. The only "Narciso" that can appear in feedback about this essay is the
+    one the essay kept.
+
+    That is the whole safety argument for :meth:`Redactor.carried_keeps`, and it
+    is conditional on the pipeline shape — inbound first, outbound over text
+    derived only from the inbound result. A host that redacts outbound text from
+    some *other* source must not feed it this set.
+
+    Only multi-token names contribute. A mononym is already the bare form and
+    establishes nothing new.
+    """
+    out: set[str] = set()
+    lowered_keep = {k.lower() for k in keep}
+    for candidate in find_candidates(text):
+        name = candidate.text
+        if len(name.split()) < 2:
+            continue
+        if name.lower() in lowered_keep:
+            pass
+        elif tier is not None:
+            if tier(name) != CORROBORATING_TIER:
+                continue
+        elif not notable(name) or is_public_landmark(name):
+            continue
+        for token in _surname_tokens(name):
+            if len(token) > 1 and token not in _PARTICLES:
+                out.add(token)
+    return frozenset(out)
+
+
 #: Words that make a nearby bare surname somebody in the WRITER'S life rather than
 #: the public figure the document established. Two kinds, and both are needed:
 #: relation nouns ("my cousin", "our coach") and *proximity* phrases, because the
@@ -1424,7 +1473,14 @@ def mask_candidates(
     # Right to left so earlier offsets stay valid as the text shrinks.
     for candidate in sorted(candidates, key=lambda c: c.start, reverse=True):
         name = candidate.text
-        if name.lower() in lowered_keep:
+        # The possessive folds into the keep, for the same reason it folds into
+        # corroboration: literary analysis writes "Wright's" far more often than
+        # "Wright", and a keep list that only matched the citation form would miss
+        # the shape students actually use. On the Stage-5 corpus "Narciso's" was a
+        # *separate* over-fire span from "Narciso", surviving the keep that had
+        # already rescued its bare neighbour two sentences earlier.
+        if (name.lower() in lowered_keep
+                or " ".join(_surname_tokens(name)) in lowered_keep):
             continue
         if is_public_landmark(name):
             continue

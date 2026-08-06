@@ -419,8 +419,15 @@ class LocalNameClassifier:
         """``"{NAME}"`` -> ``"NAME"``. The pattern tables carry the braced form."""
         return placeholder.strip("{}")
 
-    def mask(self, text: str) -> LocalRedactionResult:
-        """Replace every detected span with a typed ``{PLACEHOLDER}``."""
+    def mask(
+        self, text: str, extra_keep: frozenset[str] = frozenset()
+    ) -> LocalRedactionResult:
+        """Replace every detected span with a typed ``{PLACEHOLDER}``.
+
+        ``extra_keep`` is unioned with :attr:`topical` for this call only. It
+        carries per-document evidence the constructor cannot know — see
+        :meth:`Redactor.carried_keeps`.
+        """
         if not text:
             return LocalRedactionResult(text=text, n_masked=0)
 
@@ -479,7 +486,7 @@ class LocalNameClassifier:
             masked, extra = mask_candidates(
                 masked,
                 notable=self.notable,
-                keep=self.topical,
+                keep=self.topical | extra_keep,
                 given_name=self.given_name,
                 title=self.title,
                 title_prefix=self.title_prefix,

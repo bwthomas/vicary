@@ -42,6 +42,11 @@ class Exposure:
     bearers_via_short: int
     #: Bearers exposed via a single-token ``place`` entry.
     bearers_via_place: int
+    #: Bearers exposed via the ``demonym`` tier. Counted here for the same reason
+    #: the other two are: it is a KEEP granted to a bare single token, which is
+    #: exactly the surface form this control measures. Leaving it out would make
+    #: adding a tier look free.
+    bearers_via_demonym: int = 0
 
     @property
     def rate(self) -> float:
@@ -55,6 +60,10 @@ class Exposure:
     @property
     def place_rate(self) -> float:
         return 100.0 * self.bearers_via_place / self.bearers_total
+
+    @property
+    def demonym_rate(self) -> float:
+        return 100.0 * self.bearers_via_demonym / self.bearers_total
 
     @property
     def distinct_rate(self) -> float:
@@ -98,13 +107,14 @@ def measure(census: dict[str, int] | None = None,
     gaz = gaz or gazetteer.load()
 
     single_token_places = {n for n in gaz.place if " " not in n}
-    single = single_token_places | set(gaz.short)
+    single = single_token_places | set(gaz.short) | set(gaz.demonym)
 
     bearers_total = sum(census.values())
     bearers_exposed = sum(c for name, c in census.items() if name in single)
     surnames_matched = sum(1 for name in census if name in single)
     via_short = sum(c for name, c in census.items() if name in gaz.short)
     via_place = sum(c for name, c in census.items() if name in single_token_places)
+    via_demonym = sum(c for name, c in census.items() if name in gaz.demonym)
 
     return Exposure(
         surnames_scored=len(census),
@@ -113,6 +123,7 @@ def measure(census: dict[str, int] | None = None,
         bearers_exposed=bearers_exposed,
         bearers_via_short=via_short,
         bearers_via_place=via_place,
+        bearers_via_demonym=via_demonym,
     )
 
 
@@ -128,6 +139,7 @@ def render(exposure: Exposure) -> str:
             f"({exposure.bearers_exposed:,} / {exposure.bearers_total:,} bearers)",
             f"    via the short tier       {exposure.short_rate:.2f}%",
             f"    via single-token places  {exposure.place_rate:.2f}%",
+            f"    via the demonym tier     {exposure.demonym_rate:.2f}%",
             "  reads as: for a private person named by BARE SURNAME ONLY — no",
             "            first name, no title, no corroboration — this share",
             "            resolves 'notable'. Conditional on that surface form.",

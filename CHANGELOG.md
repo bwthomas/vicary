@@ -1,5 +1,76 @@
 # Changelog
 
+## Unreleased — the 2026-08-06 cut
+
+### Two build defects that made every tier change invisible
+
+* **`vicary-assets fetch` was a silent no-op.** The builder resolved its output
+  against its own directory, writing `src/vicary/build/data/notability.txt.gz`,
+  which nothing loads — the runtime and `MANIFEST.json` both read
+  `src/vicary/data/`. So a full Wikidata rebuild fetched everything, wrote to a
+  dead path, rewrote the manifest by checksumming the *old* asset, verified that
+  same old asset against its own fresh checksum, and printed a pass. Pinned by
+  `test_the_builder_writes_where_the_runtime_reads`.
+* **`write_asset` iterated a hardcoded five-tier list.** A tier added to
+  `build_tiers` and not to that list built cleanly, reported its count in the
+  build log, and read back empty — which for a KEEP tier means redacting
+  everything it was built to protect. It now writes every tier the fold
+  produced, and the round-trip is asserted against the fold's own output so the
+  *next* tier is covered without anybody remembering.
+
+### New `demonym` tier — asset format 2 → 3
+
+* 1,044 English demonyms from Wikidata `P1549`. Closes `Cuban` in "your Cuban
+  heritage", 1 of the 3 residual over-fires on real generated feedback.
+* Subtracted by the `given` tier and by any surname with 10,000+ US bearers —
+  2.5× stricter than the short tier, because a demonym is the only keep with no
+  notability evidence behind it. `Horner` forced the number: a demonym of Horn
+  and 23,881 Americans' surname.
+* Reachable by the first-person relation override, so "my coach Cornish"
+  redacts while "my Cuban heritage" keeps.
+
+### Carrying a keep across the two passes
+
+* `redact_inbound` records the bare tokens of the notable full names it kept;
+  `redact_outbound` treats them as topical. Closes `Narciso` and `Narciso's`,
+  the other 2 residual over-fires — a case no lookup can reach, because the
+  `given` tier is built *from* the first tokens of the full tier.
+* Sound because outbound text is generated from inbound-redacted input, so a
+  masked name never reached the model. Off with `carry_notable_keeps=False` for
+  a host whose outbound text has another source.
+* Refused for the student's own name and for a token a second, private full name
+  in the same essay also claims.
+* A keep now folds the possessive, so a `keep` entry for "Narciso" also covers
+  "Narciso's". This reaches the `prompt_context` leg too.
+
+### Census exposure 1.47% → 1.20%
+
+* `PLACE_MIN_SITELINKS_SINGLE_TOKEN` 100 → 150, with held-out figure recall
+  **unchanged** at 60.3% and Washington/Delaware/Jordan all surviving.
+* The obvious lever was measured and rejected: reaching 1.4% via the short
+  tier's Census bar costs **Poe, Milton, Swift, Dahl and Thurman**, and leaves
+  `saavedra` and `hathaway` — the entries the regression was attributed to —
+  untouched, because they sit below the cut. The place tier had never been
+  Census-examined at all.
+* The 100–149 band is mostly *foreign* first-level subdivisions arriving through
+  `Q10864048`: French départements, Spanish and Italian provinces, Brazilian and
+  Mexican states. A Spanish province is named for its capital, so the
+  administrative reading readmits the settlement names the settlement exclusion
+  removes. Cost: bare `Auschwitz`, `Alsace`, `Burgundy`, `Bohemia`, `Anatolia`.
+* The Census control now counts the demonym tier (0.025pp) — a keep on a bare
+  token is exactly what it measures, and omitting it would make a new tier look
+  free. Gate ceiling 1.5 → 1.25.
+
+### Build tooling
+
+* `--cache-dir` persists the raw SPARQL rows, so a threshold sweep re-folds them
+  offline instead of re-issuing ~30 queries per candidate value against donated
+  infrastructure. Delete the directory after changing a query.
+* `vicary.eval.overfire.measure` takes `sources=`, running the two-leg shape a
+  host runs — inbound on the essay, then outbound. Run cold it cannot see a
+  cross-pass fix at all, which is the same defect as scoring fields unbatched,
+  one leg further out.
+
 ## 0.1.0 — unreleased
 
 First release as a standalone package. The code previously lived inside an
