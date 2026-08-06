@@ -175,7 +175,7 @@ Current numbers, fixture `2026-08-06.3`, arm `local-gazetteer-lowercase`:
 | unaccounted invariant violations | 0 | 0 |
 | over-firing on real prose | ≤ 0.72 spans/essay | 0.72 |
 | bare-surname Census exposure | ≤ 1.5% | 1.47% |
-| latency p95 (essay-length) | ≤ 10 ms | 4.4 ms |
+| latency p95 (essay-length) | ≤ 10 ms | 3.8 ms |
 
 Recall cannot be measured on a pre-anonymized corpus — ASAP set-8 already
 replaced every name with `@PERSON1`-style tokens before publication, so a
