@@ -51,7 +51,7 @@ from vicary.local_classifier import StudentIdentity
 #: Bump on any change to the frames. Recorded on every eval row and used in the
 #: resume key, because a resumed record built from a different fixture is a
 #: foreign record, not a consenting one.
-FIXTURE_VERSION: str = "2026-08-05.6"
+FIXTURE_VERSION: str = "2026-08-06.1"
 
 VERDICT_REDACT: str = "redact"
 VERDICT_KEEP: str = "keep"
@@ -150,6 +150,16 @@ class Span:
     #: notability gate — a percentage threshold silently gives every future
     #: unresolvable KEEP span the same free pass these two earned on purpose.
     kept_by: str = "notability"
+    #: What is supposed to make a REDACT span disappear. ``"absence"`` — the
+    #: default and nearly all of them — means the gazetteer has never heard of it,
+    #: so generation proposes it and no notability tier rescues it. ``"context"``
+    #: means the gazetteer *does* vouch for the string and the sentence overrides
+    #: it: "My neighbor Alice Adams" is a 1921 novel and also somebody's
+    #: neighbour. The distinction is asserted both ways in the asset invariants —
+    #: an ``"absence"`` span that resolves notable is an asset defect, and a
+    #: ``"context"`` span that does *not* resolve notable is a frame testing
+    #: nothing, which is the failure mode a carve-out normally introduces.
+    redacted_by: str = "absence"
     note: str = ""
 
     @property
@@ -346,6 +356,23 @@ RECALL_FRAMES: tuple[Frame, ...] = (
              "regression cannot hide inside the kept 'Richard Wright'.",
     ),
     Frame(
+        frame_id="private-person-shadowed-by-a-work-title",
+        sentence="My neighbor Alice Adams walked me to the bus stop every "
+                 "morning that whole year.",
+        spans=(Span("NAME", "Alice Adams", expect="{NAME}",
+                    redacted_by="context"),),
+        held_out=True,
+        note="THE TITLE TIER'S version of the Robinson problem, and the one the "
+             "surname tier's fix does not reach. 'Alice Adams' is a 1921 novel, "
+             "so the title tier keeps it, and 589 keys in the shipped tier have "
+             "this same <common given name> <ordinary US surname> shape — every "
+             "one of them shelters whichever private individual carries it. No "
+             "sitelink floor separates them from the curriculum: Atticus Finch "
+             "sits at 17 sitelinks and this hole at 24. So the discriminator has "
+             "to be local evidence, as it was for bare surnames, and this is the "
+             "frame that scores it.",
+    ),
+    Frame(
         frame_id="full-name-midsentence",
         sentence="I asked Marisol Ybarra what she thought about the ending.",
         spans=(Span("NAME", "Marisol Ybarra", expect="{NAME}"),),
@@ -503,6 +530,39 @@ KEEP_FRAMES: tuple[Frame, ...] = (
              "opposite verdict. The notability tier is built from P31 wd:Q5, "
              "human, so every fictional character resolved not-notable and was "
              "redacted; this is the pair that makes that visible.",
+    ),
+    Frame(
+        frame_id="fictional-character-described-by-a-relation",
+        sentence="Atticus Finch is the kind of father who does the right thing "
+                 "even when it costs him everything.",
+        spans=(Span("NAME", "Atticus Finch", verdict=VERDICT_KEEP),),
+        held_out=True,
+        note="THE GUARD on title-tier relation refusal, and the reason that rule "
+             "cannot reuse the bare-surname cue test unchanged. Characters are "
+             "described BY their relations — a father, a friend, an aunt in "
+             "Queens — so a bare relation noun in the window fires on the "
+             "curriculum: measured, the surname rule's discriminator refuses "
+             "Atticus Finch, Harry Potter, Percy Jackson, Tom Sawyer, Peter "
+             "Parker and Clark Kent, six of the seven characters it must keep. "
+             "What separates them from 'My neighbor Alice Adams' is that the "
+             "relation is not the WRITER'S: title-tier refusal therefore demands "
+             "a first-person possessive attached to the name itself.",
+    ),
+    Frame(
+        frame_id="work-title-near-an-unattached-first-person-relation",
+        sentence="I read Harry Potter out loud with my little brother almost "
+                 "every night that winter.",
+        spans=(Span("NAME", "Harry Potter", verdict=VERDICT_KEEP),),
+        held_out=True,
+        note="THE GUARD on the adjacency half of the same rule. 'my little "
+             "brother' is a genuine first-person relation and it names nobody — "
+             "so proximity in the window is not enough either, and refusal has "
+             "to require the relation phrase to be syntactically attached to the "
+             "span: immediately before it, or inside the appositive immediately "
+             "after it. Without this frame the rule could pass its other two by "
+             "scanning a window for 'my' and a kinship noun, which would "
+             "over-redact a book every time a student mentions who they read it "
+             "with.",
     ),
 )
 

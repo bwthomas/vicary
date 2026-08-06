@@ -832,6 +832,95 @@ def test_relation_refusal_off_restores_the_old_behaviour() -> None:
 
 
 # ---------------------------------------------------------------------------
+# A work title is also somebody's name
+
+
+#: Two-token title-tier keys, both of which are also perfectly ordinary American
+#: names. "Alice Adams" is a 1921 novel; 589 keys in the shipped tier have this
+#: shape, and no sitelink floor separates them from the curriculum.
+TITLES: frozenset[str] = frozenset(
+    {"alice adams", "atticus finch", "harry potter", "to kill a mockingbird"}
+)
+
+
+def _mask_titles(text: str, **kw) -> str:
+    """Mask with the oracle set a title-tier keep needs, all of it stood in."""
+    kw.setdefault("given_name", is_given)
+    kw.setdefault("notable", lambda n: n.lower().strip(".,'’") in TITLES)
+    kw.setdefault("title", lambda n: n.lower().strip(".,'’") in TITLES)
+    kw.setdefault("notability_tier",
+                  lambda n: "title" if n.lower().strip(".,'’") in TITLES else None)
+    return _mask(text, **kw)
+
+
+def test_a_neighbour_whose_name_is_also_a_novel_is_masked() -> None:
+    """The hole row 5 closes: measured, 578 of 578 name-shaped keys sheltered one."""
+    text = "My neighbor Alice Adams walked me to the bus stop every morning."
+    assert _mask_titles(text) == (
+        "My neighbor {NAME} walked me to the bus stop every morning."
+    )
+
+
+def test_the_appositive_form_refuses_too() -> None:
+    """English puts the relation either side of the name."""
+    text = "Alice Adams, my next-door neighbor, drove us all the way there."
+    assert "Alice Adams" not in _mask_titles(text)
+
+
+def test_a_relation_expressed_as_distance_refuses() -> None:
+    """The shape that actually occurs, and it contains no relation noun at all."""
+    text = "Alice Adams, who lives two doors down from us, taught me to throw."
+    assert "Alice Adams" not in _mask_titles(text)
+
+
+def test_a_character_described_by_a_relation_still_keeps() -> None:
+    """THE GUARD, and the reason this rule is not the bare-surname rule.
+
+    Characters are described *by* their relations. The surname-tier
+    discriminator — any relation cue in the window — refuses six of the seven
+    curriculum characters it must keep, this one included.
+    """
+    text = ("Atticus Finch is the kind of father who does the right thing even "
+            "when it costs him everything.")
+    assert "Atticus Finch" in _mask_titles(text)
+
+
+def test_an_unattached_first_person_relation_still_keeps() -> None:
+    """THE OTHER GUARD: first person is necessary and not sufficient.
+
+    "my little brother" is a genuine first-person relation naming nobody. Without
+    attachment the rule would redact a book every time a student says who they
+    read it with.
+    """
+    text = "I read Harry Potter out loud with my little brother every night."
+    assert "Harry Potter" in _mask_titles(text)
+
+
+def test_a_prepositional_phrase_is_not_an_appositive() -> None:
+    """The comma is load-bearing: an appositive is punctuated, a phrase is not."""
+    text = "I read To Kill a Mockingbird with my mom over the summer."
+    assert "To Kill a Mockingbird" in _mask_titles(text)
+
+
+def test_title_relation_refusal_off_restores_the_old_behaviour() -> None:
+    """The control arm, so the recovery is a delta rather than a claim."""
+    text = "My neighbor Alice Adams walked me to the bus stop every morning."
+    assert "Alice Adams" in _mask_titles(text, title_relation_refusal=False)
+
+
+def test_the_refusal_needs_the_tier_not_just_the_boolean() -> None:
+    """Without a tier oracle the rule stands down rather than guessing.
+
+    ``notable`` cannot say *why* a name was kept, and overriding every tier would
+    redact "my hero Abraham Lincoln". Standing down is the safe half of the
+    trade — it costs recall on a hole that has always been open, where the other
+    choice costs precision on every notable person a student is close to.
+    """
+    text = "My neighbor Alice Adams walked me to the bus stop every morning."
+    assert "Alice Adams" in _mask_titles(text, notability_tier=None)
+
+
+# ---------------------------------------------------------------------------
 # A heading's capitals are orthographic, so they are not evidence
 
 

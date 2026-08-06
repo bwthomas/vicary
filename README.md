@@ -104,6 +104,26 @@ One file, `vicary/data/notability.txt.gz`, holding five independent tiers:
 | `given` | 10,588 | common given name — a **redact** signal, not a keep |
 | `title` | 38,017 | published work or fictional character |
 
+A tier is a lookup, and a lookup answers about a *string*, not about the person
+in front of you. 578 keys in `title` are a common given name beside an ordinary
+US surname — "Alice Adams" is a 1921 novel and also somebody's neighbour — and no
+sitelink floor separates them from the curriculum, because Atticus Finch sits at
+17 sitelinks and the hole "Alice Adams" at 24. So a keep is overridable by the
+sentence: a **first-person relation attached to the name** — immediately before
+it, or in the appositive immediately after — beats a title-tier keep.
+
+```
+My neighbor Alice Adams walked me to the bus stop  -> redact
+Atticus Finch is the kind of father who ...        -> keep  (relation, not the writer's)
+I read Harry Potter with my little brother         -> keep  (first person, not attached)
+```
+
+Both halves are required, and the guards say why: characters are *described by*
+their relations, so a bare relation cue in the window refuses six of seven
+curriculum characters, and first person alone redacts a book whenever a student
+says who they read it with. On 27 un-scrubbed student documents the override
+fires 0 times; on the 578 name-shaped keys it recovers 508.
+
 It ships as package data, and `data/MANIFEST.json` records its SHA-256, byte
 count, tier counts, cut date, upstream sources, and the minimum vicary version
 that can read it. `load()` checks all of that and **raises rather than
@@ -133,7 +153,7 @@ pytest -m gates -s            # the gates, with their numbers
 vicary-eval --frames          # per-frame scoring table, no corpus needed
 ```
 
-Current numbers, fixture `2026-08-05.6`, arm `local-gazetteer-lowercase`:
+Current numbers, fixture `2026-08-06.1`, arm `local-gazetteer-lowercase`:
 
 | gate | bar | measured |
 |---|---|---|
@@ -176,5 +196,9 @@ pytest -m gates -s
 * It does not detect names it has no evidence for. A private surname written
   lower-case throughout, or a bare surname in a document that also names a famous
   bearer of it, are known and documented misses rather than bugs.
+* The relation override reaches the `title` tier only. 66 name-shaped keys
+  resolve as real people in `full` instead — "My best friend Alan Ford" still
+  keeps — because overriding that tier would also redact "my hero Abraham
+  Lincoln", and which of those costs more has not been measured yet.
 * It makes no network call and creates no cloud resource unless you choose
   `guardrail` mode.

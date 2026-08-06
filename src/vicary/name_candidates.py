@@ -103,6 +103,14 @@ NotabilityTierOracle = Callable[[str], str]
 #: them carries evidence about what a bare surname in the same document means.
 CORROBORATING_TIER: str = "full_name"
 
+#: The tier whose keeps a first-person relation may override. Work titles and
+#: fictional characters are the one tier built from strings that are *also*
+#: ordinary people's names — 589 keys in the shipped tier are a common given name
+#: beside an ordinary US surname ("Alice Adams", "Adam Mitchell"), and every one
+#: of them keeps whichever private individual carries it. See
+#: :func:`names_someone_the_writer_knows`.
+OVERRIDABLE_TIER: str = "title"
+
 #: Answers "do lots of notable people share this first name?" — the **inverse**
 #: signal to :data:`NotabilityOracle`. ``True`` is evidence the token names a
 #: person, which on the inbound path means redact rather than keep. Injected for
@@ -761,6 +769,7 @@ def find_candidates(
     title: TitleOracle | None = None,
     title_prefix: TitleOracle | None = None,
     headings_are_orthographic: bool = True,
+    title_relation_refusal: bool = True,
 ) -> list[Candidate]:
     """Every name-shaped span, before any notability decision.
 
@@ -772,6 +781,12 @@ def find_candidates(
             capitalisation alone and misses lowercase writing by construction.
         title: Protects work titles and fictional-character names from generation
             entirely. Absent, a student writing about a book has the book redacted.
+        title_relation_refusal: Withdraw that protection from a title span with a
+            first-person relation attached to it — "My neighbor Alice Adams". The
+            protection is applied *here*, before generation, so the refusal has
+            to be applied here too; the notability gate in
+            :func:`mask_candidates` is the second half of the same rule and
+            neither half works alone.
         headings_are_orthographic: Treat a section heading's capitals as required
             by title case rather than chosen by the writer. On by default; the flag
             exists so the arm stays measurable against its control.
@@ -779,9 +794,15 @@ def find_candidates(
     blocked = [m.span() for m in _PROTECTED.finditer(text)]
     capitalises = document_capitalises_names(text)
     if title is not None:
-        blocked += find_title_spans(
+        title_spans = find_title_spans(
             text, title, title_prefix, requires_capital=capitalises
         )
+        if title_relation_refusal:
+            title_spans = [
+                (s, e) for s, e in title_spans
+                if not names_someone_the_writer_knows(text, s, e)
+            ]
+        blocked += title_spans
 
     def _protected(start: int, end: int) -> bool:
         return any(start < b_end and end > b_start for b_start, b_end in blocked)
@@ -1068,6 +1089,78 @@ def names_someone_in_the_writers_life(text: str, start: int, end: int) -> bool:
     return False
 
 
+#: The relation nouns as a regex alternation, for the *attached-phrase* patterns
+#: below. Sorted so the pattern is stable across runs and diffs.
+_RELATION_ALTERNATION: str = "|".join(sorted(_RELATION_CUES))
+
+#: Up to two words may sit between the possessive and the relation noun — "my
+#: next-door neighbor", "my best friend", "my old soccer coach". Lower-case only,
+#: so a capitalised name cannot be swallowed as a modifier.
+_MODIFIERS: str = r"(?:[a-z][a-z'’-]*\s+){0,2}"
+
+#: "my cousin " immediately before the span. Anchored at the end: the relation
+#: phrase has to run right up to the name, which is what makes it name *that*
+#: person rather than merely appear in the same sentence.
+_RELATION_ATTACHED_BEFORE = re.compile(
+    rf"\b(?:my|our)\s+{_MODIFIERS}(?:{_RELATION_ALTERNATION})\s+$"
+)
+
+#: ", my next-door neighbor" immediately after it. The comma is required — an
+#: appositive is punctuated and a prepositional phrase is not, and that is the
+#: whole difference between "Alice Adams, my neighbor," and "Harry Potter … with
+#: my little brother".
+_RELATION_ATTACHED_AFTER = re.compile(
+    rf"^\s*,\s*(?:who\s+(?:is|was)\s+)?(?:my|our)\s+{_MODIFIERS}"
+    rf"(?:{_RELATION_ALTERNATION})\b"
+)
+
+#: First-person tokens, for the proximity leg. A proximity phrase says somebody
+#: lives nearby; only a first-person pronoun says nearby *to the writer*.
+_FIRST_PERSON: frozenset[str] = frozenset({"i", "me", "my", "we", "us", "our"})
+
+
+def names_someone_the_writer_knows(text: str, start: int, end: int) -> bool:
+    """Whether a first-person relation is syntactically attached to this name.
+
+    The strict sibling of :func:`names_someone_in_the_writers_life`, and strict
+    for a measured reason. That function scans a window for any relation cue,
+    which is right for a bare surname the document itself established — but
+    applied to the title tier it refuses six of the seven curriculum characters
+    it must keep, because characters are *described by* their relations: Atticus
+    Finch is a father, Peter Parker lives with his aunt, Tom Sawyer talks his
+    friends into whitewashing a fence. A relation noun in the window is therefore
+    no evidence at all about a work title.
+
+    Two things separate "My neighbor Alice Adams" from those. The relation is
+    **first-person** — the writer's own — and it is **attached** to the name,
+    either immediately before it or inside the appositive immediately after it.
+    Both are required. First person alone keeps "I read Harry Potter with my
+    little brother"; attachment alone keeps "Atticus Finch, a father who…".
+
+    The error costs are asymmetric and that is what makes the rule affordable at
+    all: a title hit overridden wrongly over-redacts a book the student wrote
+    about, which the inbound placeholder absorbs; a title hit honoured wrongly
+    ships a classmate's name to a third-party model.
+    """
+    before = text[max(0, start - _RELATION_WINDOW) : start].lower()
+    after = text[end : end + _RELATION_WINDOW].lower()
+    if _RELATION_ATTACHED_BEFORE.search(before):
+        return True
+    if _RELATION_ATTACHED_AFTER.match(after):
+        return True
+    # The relation expressed as distance — "Alice Adams, who lives two doors down
+    # from us". Same attachment requirement (the clause is the appositive that
+    # follows the name), plus a first-person pronoun, because "two doors down"
+    # on its own says nothing about whose street it is.
+    if after.lstrip().startswith(","):
+        clause = re.split(r"[.!?\n]", after, maxsplit=1)[0]
+        if any(cue in clause for cue in _PROXIMITY_CUES) and any(
+            token in _FIRST_PERSON for token in _ANY_TOKEN.findall(clause)
+        ):
+            return True
+    return False
+
+
 def corroborated_surnames(
     candidates: list[Candidate],
     notable: NotabilityOracle,
@@ -1139,6 +1232,7 @@ def mask_candidates(
     notability_tier: NotabilityTierOracle | None = None,
     minter: PlaceholderMinter | None = None,
     relation_refusal: bool = True,
+    title_relation_refusal: bool = True,
     headings_are_orthographic: bool = True,
 ) -> tuple[str, int]:
     """Mask every candidate the notability filter does not keep.
@@ -1169,6 +1263,11 @@ def mask_candidates(
             context marks it as someone in the writer's life. See
             :func:`names_someone_in_the_writers_life`. No effect without
             ``corroborate``, since there is nothing to refuse.
+        title_relation_refusal: Refuse a *title-tier* keep when a first-person
+            relation is attached to the name. See
+            :func:`names_someone_the_writer_knows`. Needs ``notability_tier``:
+            the boolean oracle cannot say which tier vouched for a name, and
+            overriding every tier would redact "my hero Abraham Lincoln".
 
     Returns:
         ``(masked_text, spans_masked)``.
@@ -1177,6 +1276,7 @@ def mask_candidates(
     candidates = find_candidates(
         text, given_name=given_name, title=title, title_prefix=title_prefix,
         headings_are_orthographic=headings_are_orthographic,
+        title_relation_refusal=title_relation_refusal,
     )
     established: frozenset[str] = frozenset()
     if corroborate and notable is not None:
@@ -1192,7 +1292,20 @@ def mask_candidates(
         if is_public_landmark(name):
             continue
         if notable is not None and notable(name):
-            continue
+            # ...unless a work title is standing in for a person the writer
+            # knows. "Alice Adams" is a 1921 novel and also 589 real people's
+            # names in this tier alone; no threshold separates them from the
+            # curriculum (Atticus Finch sits BELOW the hole in sitelinks), so the
+            # separation has to come from the sentence.
+            if not (
+                title_relation_refusal
+                and notability_tier is not None
+                and notability_tier(name) == OVERRIDABLE_TIER
+                and names_someone_the_writer_knows(
+                    text, candidate.start, candidate.end
+                )
+            ):
+                continue
         # Only the bare form corroborates. "Coach Wright" and "Priya Wright" stay
         # masked even where "Wright" is established — the whole-candidate rule
         # that keeps "Priya Lincoln" out of the short tier applies here too.
