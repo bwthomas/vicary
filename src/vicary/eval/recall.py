@@ -264,6 +264,23 @@ def load_set8(tsv: str, ids_path: str | None, limit: int) -> list[tuple[str, str
     return out
 
 
+#: Arms that construct the redactor the way a HOST does — through
+#: :func:`vicary.redaction.build_redactor_if_enabled` — rather than by calling
+#: :class:`Redactor` with hand-picked oracles the way every other arm here does.
+#:
+#: The distinction is the whole point of these three. Every published number in
+#: this harness's history described a redactor the harness itself assembled, and
+#: for a long stretch no deployment could assemble that redactor at all: the
+#: entry point took no oracle arguments, so "redaction is on in production" and
+#: "the measured arm" were different objects with no test between them. An arm
+#: that goes through the front door cannot drift from the front door.
+PATH_ARMS: dict[str, str] = {
+    "path-identity": "identity",
+    "path-gazetteer": "gazetteer",
+    "path-gazetteer-lowercase": "gazetteer-lowercase",
+}
+
+
 def build_redactor(mode: str, guardrail_id: str | None, *,
                    candidates: bool = False, corroborate: bool = True,
                    number_placeholders: bool = True,
@@ -271,6 +288,19 @@ def build_redactor(mode: str, guardrail_id: str | None, *,
                    relation_refusal: bool = True):
     from vicary.redaction import Redactor
 
+    if mode in PATH_ARMS:
+        # Deliberately NOT Redactor(...) — the host entry point, with the level
+        # passed as a host would pass it. The knobs this harness varies for the
+        # research arms (corroborate, number_placeholders, …) are not reachable
+        # from here, which is correct: they are not reachable from a deployment
+        # either, and an arm that could set them would stop describing one.
+        from vicary.redaction import build_redactor_if_enabled
+
+        redactor = build_redactor_if_enabled(
+            True, identity=fixture_identity(), names=PATH_ARMS[mode],
+        )
+        assert redactor is not None, "local mode must build a redactor"
+        return redactor
     if mode in ("local-gazetteer", "local-gazetteer-lowercase"):
         # The shippable arm: generation plus the offline notability oracle. Both
         # halves must be on together — generation alone destroys every public
@@ -621,11 +651,15 @@ def main(argv=None):
     ap.add_argument("--modes", default="local",
                     help="comma-separated: local,local-candidates,"
                          "local-gazetteer,local-gazetteer-lowercase,stub,"
-                         "guardrail. `local-candidates` adds third-party name "
-                         "detection with no notability oracle — recall-maximal, "
-                         "precision-minimal, and the two are reported apart. "
-                         "`local-gazetteer` adds the oracle; the `-lowercase` "
-                         "variant also adds the case-insensitive route.")
+                         "guardrail,path-identity,path-gazetteer,"
+                         "path-gazetteer-lowercase. `local-candidates` adds "
+                         "third-party name detection with no notability oracle "
+                         "— recall-maximal, precision-minimal, and the two are "
+                         "reported apart. `local-gazetteer` adds the oracle; the "
+                         "`-lowercase` variant also adds the case-insensitive "
+                         "route. The `path-*` arms build the redactor through "
+                         "build_redactor_if_enabled, the way a host does, so "
+                         "they measure what a deployment can actually run.")
     ap.add_argument("--sources", default="INPUT",
                     help="comma-separated: INPUT,OUTPUT. ANONYMIZE behaves "
                          "differently on each, so this is an axis, not a detail.")
