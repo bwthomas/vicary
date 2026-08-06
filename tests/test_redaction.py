@@ -401,10 +401,10 @@ def test_per_field_billing_is_what_the_batch_replaces() -> None:
 def test_a_separator_collision_falls_back_rather_than_misaligning() -> None:
     """A suggestion pasted onto the wrong glow is worse than paying for the
     extra units, so a failed round trip must degrade to per-field."""
-    from vicary.redaction import _BATCH_SEPARATOR, Redactor
+    from vicary.redaction import BATCH_SEPARATOR, Redactor
 
     # A Guardrail that eats the separator — the exact failure the guard exists for.
-    client = FakeGuardrailsClient({_BATCH_SEPARATOR: " "})
+    client = FakeGuardrailsClient({BATCH_SEPARATOR: " "})
     r = Redactor(guardrail_id="gr-1", client=client)
 
     masked, units, batched = r.redact_outbound_batch(["first", "second", "third"])

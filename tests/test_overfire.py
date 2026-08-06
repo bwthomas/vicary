@@ -141,3 +141,28 @@ def test_a_sentence_initial_verb_survives_the_default_but_not_the_level_below() 
     full = overfire.measure(imperative, NAMES_LOWERCASE)
     assert "Reread" in bare.by_span
     assert "Reread" not in full.by_span
+
+
+def test_a_group_is_scored_as_one_call_the_way_the_host_makes_it() -> None:
+    """Fields of one response are joined, not scored apart.
+
+    ``Redactor.redact_outbound_batch`` joins every field of a Stage-5 response
+    into ONE pass, so a harness that masks field-by-field measures a shape no
+    host runs. This harness did exactly that while its own docstring explained
+    why it must not.
+
+    The case is the smallest one where it changes the answer: "Rodriguez" alone
+    is a bare surname, but the response as a whole establishes "Narciso
+    Rodriguez", and same-document corroboration only sees that if the fields
+    arrive together. Scored apart it over-fires; scored as the host sends it, it
+    does not.
+    """
+    fields = [
+        "You handle Narciso Rodriguez as a subject with real care throughout.",
+        "Push the Rodriguez material further in your closing paragraph.",
+    ]
+    as_one_response = overfire.measure([fields], NAMES_LOWERCASE)
+    as_two_responses = overfire.measure([[fields[0]], [fields[1]]],
+                                        NAMES_LOWERCASE)
+    assert as_one_response.spans == 0, dict(as_one_response.by_span)
+    assert "Rodriguez" in as_two_responses.by_span

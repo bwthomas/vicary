@@ -426,7 +426,7 @@ class _StubGuardrailsClient:
 #: check runs anyway — see :meth:`Redactor.redact_outbound_batch` — because a
 #: separator that "should" survive is exactly the kind of assumption that silently
 #: mis-aligns feedback fields.
-_BATCH_SEPARATOR: str = "\n␞␞␞\n"
+BATCH_SEPARATOR: str = "\n␞␞␞\n"
 
 
 @dataclass
@@ -663,7 +663,7 @@ class Redactor:
 
         **Where it can go wrong, and what happens then.** The join/split round trip
         is the risk: masking changes lengths, so offsets cannot be trusted, and the
-        split relies on :data:`_BATCH_SEPARATOR` surviving the pass intact. If the
+        split relies on :data:`BATCH_SEPARATOR` surviving the pass intact. If the
         response does not split back into exactly ``len(texts)`` parts, this method
         **falls back to per-field calls and says so** (``batched=False``) rather
         than returning a mis-aligned list — a suggestion pasted into the wrong
@@ -681,9 +681,9 @@ class Redactor:
             out[nonempty[0]] = only.text
             return out, only.char_units, True
 
-        joined = _BATCH_SEPARATOR.join(texts[i] for i in nonempty)
+        joined = BATCH_SEPARATOR.join(texts[i] for i in nonempty)
         result = self._apply(joined, source="OUTPUT")
-        parts = result.text.split(_BATCH_SEPARATOR)
+        parts = result.text.split(BATCH_SEPARATOR)
         if len(parts) != len(nonempty):
             logger.warning(
                 "PII outbound batch did not round-trip (%d fields in, %d parts "
