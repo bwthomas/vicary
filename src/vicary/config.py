@@ -58,6 +58,12 @@ EVAL_CORPUS_DIR_ENV_VAR: str = "VICARY_EVAL_CORPUS_DIR"
 #: Filename looked for inside :data:`EVAL_CORPUS_DIR_ENV_VAR`.
 EVAL_CORPUS_FILENAME: str = "training_set_rel3.tsv"
 
+#: Local copy of the US Census surname file (``.zip`` or extracted ``.csv``), for
+#: the bare-surname false-positive control in :mod:`vicary.eval.census`. Not
+#: packaged: it is 3 MB of data the redaction path never reads, and it changes on
+#: the Census Bureau's schedule rather than ours.
+EVAL_CENSUS_CSV_ENV_VAR: str = "VICARY_EVAL_CENSUS_CSV"
+
 #: Legacy spellings, accepted at lower precedence with a deprecation notice.
 #: Keyed by the current name. Deleting an entry is a breaking change; adding one
 #: is not.

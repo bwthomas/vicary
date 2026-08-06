@@ -25,6 +25,7 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
         *(n for names in config.HOST_FALLBACKS.values() for n in names),
         config.ASSET_PATH_ENV_VAR,
         config.REDACTION_ENV_VAR,
+        config.EVAL_CENSUS_CSV_ENV_VAR,
     ):
         monkeypatch.delenv(name, raising=False)
     config.reset_deprecation_warnings()
@@ -201,21 +202,43 @@ def test_the_legacy_corpus_variables_still_work(
     assert config.eval_corpus_tsv() == f"/data/corpus/{config.EVAL_CORPUS_FILENAME}"
 
 
+#: Names introduced by this library rather than renamed from the host, so they
+#: have no legacy spelling to accept. Adding to this set is the deliberate act
+#: the test below forces.
+NEW_SINCE_EXTRACTION = {
+    config.ASSET_PATH_ENV_VAR,
+    config.EVAL_CENSUS_CSV_ENV_VAR,
+}
+
+
+def _declared_names() -> set[str]:
+    """Every ``*_ENV_VAR`` constant the config module declares.
+
+    Discovered rather than listed, so a name added without a legacy entry fails
+    this file instead of quietly working.
+    """
+    return {
+        value
+        for name, value in vars(config).items()
+        if name.endswith("_ENV_VAR") and isinstance(value, str)
+    }
+
+
 def test_every_name_the_library_owns_carries_the_prefix() -> None:
     """A name that slipped back into a host's namespace is the defect this whole
     module exists to prevent, and it is trivially checkable."""
-    owned = [
-        config.REDACTION_ENV_VAR,
-        config.GUARDRAIL_ID_ENV_VAR,
-        config.GUARDRAIL_VERSION_ENV_VAR,
-        config.GUARDRAIL_REGION_ENV_VAR,
-        config.DEPLOY_ENV_VAR,
-        config.ASSET_PATH_ENV_VAR,
-        config.EVAL_CORPUS_TSV_ENV_VAR,
-        config.EVAL_CORPUS_DIR_ENV_VAR,
-    ]
-    assert set(owned) == set(config.LEGACY_NAMES) | {
-        config.ASSET_PATH_ENV_VAR
-    }, "a name was added without a legacy entry or an explicit exemption"
-    for name in owned:
+    for name in _declared_names():
         assert name.startswith(config.VAR_PREFIX), name
+
+
+def test_every_renamed_variable_still_accepts_its_old_spelling() -> None:
+    """A rename without a fallback is an outage on somebody's next deploy.
+
+    Seven variables moved out of the host's namespace. Each must appear in
+    ``LEGACY_NAMES``, or be explicitly listed as new.
+    """
+    missing = _declared_names() - set(config.LEGACY_NAMES) - NEW_SINCE_EXTRACTION
+    assert not missing, (
+        f"{sorted(missing)} declare no legacy spelling and are not listed in "
+        "NEW_SINCE_EXTRACTION. Either add the old name or say it is new."
+    )
