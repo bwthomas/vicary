@@ -50,6 +50,25 @@ essay-scoring pipeline; extracting it changed the following, and nothing else.
 
 ### Detection
 
+* **The two directions are separately configurable**, via
+  `VICARY_NAME_DETECTION_OUTBOUND`. Unset it inherits the inbound level, so this
+  changes no deployment; set, it builds a second classifier for the outbound
+  pass only. It exists because the error costs are not the same and one setting
+  could not express both: inbound an over-redaction is a placeholder in text the
+  model already reads as `@PERSON1`, outbound it is a hole in feedback a student
+  reads, and the residual there is real at 0.57 spans per response.
+
+  Two things this needed that were not obvious. The direction was **not
+  represented anywhere in the call** — both passes invoke `ApplyGuardrail` with
+  `source="OUTPUT"`, because `ANONYMIZE` only masks there — so `_apply` takes an
+  explicit `outbound` flag rather than inferring one. And equal levels share one
+  classifier rather than building two identical ones, because two objects that
+  agree today can stop agreeing and the outbound number would then move with
+  nothing in the configuration to explain it.
+
+  Which level outbound *should* be is a measurement, not a default, and it has
+  not been made yet. The dial had to exist before the question could be asked.
+
 * A **first-person relation attached to a name now overrides a `title`-tier
   keep**: "My neighbor Alice Adams" redacts, where before the 1921 novel of that
   name kept it. 578 keys in the tier are a common given name beside an ordinary

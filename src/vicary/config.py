@@ -47,6 +47,14 @@ REDACTION_ENV_VAR: str = "VICARY_REDACTION"
 #: at 0% recall on the only class of name it could not interpolate.
 NAME_DETECTION_ENV_VAR: str = "VICARY_NAME_DETECTION"
 
+#: The same dial for the OUTBOUND pass. Unset, outbound inherits the inbound
+#: level, which is the behaviour that shipped and stays the default. It is a
+#: separate name because the two directions have genuinely different error costs
+#: — inbound an over-redaction is a placeholder in a prompt the model reads as
+#: ordinary input, outbound it is a hole in feedback a student reads — and one
+#: setting cannot express both.
+NAME_DETECTION_OUTBOUND_ENV_VAR: str = "VICARY_NAME_DETECTION_OUTBOUND"
+
 #: Bedrock Guardrail wiring, used only by the optional ``guardrail`` mode.
 GUARDRAIL_ID_ENV_VAR: str = "VICARY_BEDROCK_GUARDRAIL_ID"
 GUARDRAIL_VERSION_ENV_VAR: str = "VICARY_BEDROCK_GUARDRAIL_VERSION"

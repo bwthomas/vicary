@@ -71,6 +71,8 @@ Every variable vicary reads, resolved in `vicary/config.py`:
 | variable | meaning |
 |---|---|
 | `VICARY_REDACTION` | mode: `off` / `local` / `stub` / `guardrail` |
+| `VICARY_NAME_DETECTION` | how hard `local` looks for names it was not handed: `identity` / `gazetteer` / `gazetteer-lowercase` |
+| `VICARY_NAME_DETECTION_OUTBOUND` | the same dial for the outbound pass. Unset, it inherits the inbound one |
 | `VICARY_DEPLOY_ENV` | environment name; a production one defaults the mode to `local` |
 | `VICARY_ASSET_PATH` | load a different gazetteer asset (file or directory) |
 | `VICARY_BEDROCK_GUARDRAIL_ID` | Guardrail identifier, `guardrail` mode only |

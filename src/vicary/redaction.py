@@ -280,6 +280,29 @@ def name_detection(kwarg_value: str | None = None) -> str:
     return DEFAULT_NAME_DETECTION
 
 
+def name_detection_outbound(
+    kwarg_value: str | None = None, *, inbound: str | None = None
+) -> str:
+    """Resolve the OUTBOUND detection level. Defaults to whatever inbound is.
+
+    Same three levels and the same fail-to-the-default rule as
+    :func:`name_detection`; the only difference is the fallback. Unset, outbound
+    inherits inbound, so adding this dial changes nothing until somebody sets it.
+
+    It exists because the two directions are not the same decision. Inbound, an
+    over-redaction costs a placeholder in text a model already reads as
+    ``@PERSON1`` — the ASAP training distribution is *entirely* placeholders — so
+    recall is what to buy. Outbound, the same over-redaction is a hole in
+    feedback a student reads, and the residual is real: 0.57 spans per response
+    of student-visible text at the current default. One setting served both, so
+    tightening the direction that needs it meant loosening the one that does not.
+    """
+    raw = (kwarg_value or config.get(config.NAME_DETECTION_OUTBOUND_ENV_VAR)).strip()
+    if not raw:
+        return inbound if inbound is not None else name_detection()
+    return name_detection(raw)
+
+
 def guardrail_identifier() -> str | None:
     """Configured Bedrock Guardrail ID from env, or ``None`` if unset."""
     return config.get(GUARDRAIL_ID_ENV_VAR) or None
@@ -455,6 +478,7 @@ class Redactor:
         headings_are_orthographic: bool = True,
         relation_refusal: bool = True,
         title_relation_refusal: bool = True,
+        outbound_oracles: dict | None = None,
     ) -> None:
         self.simulate = simulate
         self.local = local
@@ -479,6 +503,32 @@ class Redactor:
                 title_relation_refusal=title_relation_refusal,
             )
             if local
+            else None
+        )
+        # A second classifier for the outbound pass, when the host asked for a
+        # different level there. Absent, outbound runs the inbound one and the
+        # two directions are the same object — which is what shipped, and what
+        # keeps this dial inert until it is set.
+        self._outbound_classifier = (
+            LocalNameClassifier(
+                identity,
+                # `identity` level supplies no oracles, and generation without
+                # an oracle is the recall-maximal arm that masks every public
+                # figure. So the level decides generation too, exactly as it
+                # does inbound — hardcoding True here made "outbound=identity"
+                # mask MORE than gazetteer-lowercase, which is the opposite of
+                # what the name says.
+                candidates=bool(outbound_oracles.get("local_candidates")),
+                topical=topical,
+                corroborate=corroborate,
+                number_placeholders=number_placeholders,
+                headings_are_orthographic=headings_are_orthographic,
+                relation_refusal=relation_refusal,
+                title_relation_refusal=title_relation_refusal,
+                **{k: v for k, v in outbound_oracles.items()
+                   if k != "local_candidates"},
+            )
+            if local and outbound_oracles is not None
             else None
         )
         if local:
@@ -516,14 +566,20 @@ class Redactor:
             self._client = _default_client()
         return self._client
 
-    def _apply(self, text: str, *, source: str) -> RedactionResult:
+    def _apply(self, text: str, *, source: str,
+               outbound: bool = False) -> RedactionResult:
         if not text:
             return RedactionResult(text=text, intervened=False, char_units=0)
-        if self._classifier is not None:
-            # Local mode: in-process, no network hop, zero billed units. Both
-            # directions run the same classifier — unlike ApplyGuardrail, it
-            # has no INPUT/OUTPUT asymmetry to work around.
-            result = self._classifier.mask(text)
+        # `source` cannot carry the direction: BOTH passes call ApplyGuardrail
+        # with source="OUTPUT", because ANONYMIZE only masks there. So the leg of
+        # OUR pipeline that is calling has to be passed separately, and used to
+        # be unrepresented entirely.
+        classifier = (self._outbound_classifier if outbound
+                      and self._outbound_classifier is not None
+                      else self._classifier)
+        if classifier is not None:
+            # Local mode: in-process, no network hop, zero billed units.
+            result = classifier.mask(text)
             if result.intervened:
                 logger.info(
                     "Local PII classifier masked %d span(s) on %s.",
@@ -586,7 +642,7 @@ class Redactor:
 
     def redact_outbound(self, text: str) -> RedactionResult:
         """Scrub PII a model may have echoed before returning it to a caller."""
-        return self._apply(text, source="OUTPUT")
+        return self._apply(text, source="OUTPUT", outbound=True)
 
     def redact_outbound_batch(
         self, texts: Sequence[str]
@@ -704,6 +760,7 @@ def build_redactor_if_enabled(
     client: GuardrailsClient | None = None,
     identity: StudentIdentity | None = None,
     names: str | None = None,
+    names_outbound: str | None = None,
 ) -> Redactor | None:
     """Return a :class:`Redactor` for the resolved mode, or ``None`` (off).
 
@@ -731,7 +788,16 @@ def build_redactor_if_enabled(
         return None
     if mode == MODE_LOCAL:
         level = name_detection(names)
-        return Redactor(local=True, identity=identity, **_gazetteer_oracles(level))
+        outbound = name_detection_outbound(names_outbound, inbound=level)
+        return Redactor(
+            local=True, identity=identity, **_gazetteer_oracles(level),
+            # None, not an equal dict: identical levels must share ONE classifier
+            # rather than build two that behave the same. Two objects that agree
+            # today are two objects that can stop agreeing, and the outbound
+            # number would move with nothing in the config to explain it.
+            outbound_oracles=(_gazetteer_oracles(outbound)
+                              if outbound != level else None),
+        )
     if mode == MODE_STUB:
         return Redactor(client=client, simulate=True)
     return Redactor(client=client)
