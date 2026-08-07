@@ -867,9 +867,13 @@ def find_candidates(
                 (s, e) for s, e in title_spans
                 if not names_someone_the_writer_knows(text, s, e)
                 # ...and the title is not itself a relation phrase the writer is
-                # using literally. This one needs the document's capitalisation
-                # signal, so it is gated on the same test the scan itself is.
-                and not (capitalises
+                # using literally. The document's capitalisation signal answers
+                # this, EXCEPT on a document too short to have one — where the
+                # span's own mixed case answers it instead, and the missing
+                # answer used to ship a cousin's name. See
+                # :func:`relation_led_title_is_internally_mixed`.
+                and not ((capitalises
+                          or relation_led_title_is_internally_mixed(text, s, e))
                          and title_is_the_writers_own_relation(text, s, e))
             ]
         blocked += title_spans
@@ -1303,6 +1307,44 @@ def title_is_the_writers_own_relation(text: str, start: int, end: int) -> bool:
     # "cousin Vinny" in the sentence. The relation word is the one that differs.
     tokens = _ANY_TOKEN.findall(span)
     return any(token.islower() for token in tokens[1:3])
+
+
+def relation_led_title_is_internally_mixed(text: str, start: int, end: int) -> bool:
+    """Whether the span alone proves the writer used capitals and skipped one.
+
+    The document-level gate on :func:`title_is_the_writers_own_relation` costs a
+    leak on the shortest documents. ``document_capitalises_names`` needs a
+    capitalised name *somewhere else* to return True, and "My cousin Vinny came
+    over that summer and never left." has none — the only other capital is
+    sentence-initial. So the refusal switched off, the 1992 film kept the span,
+    and the cousin's name shipped. Measured, not supposed: adding one unrelated
+    name ("the Alvarez family") to the same sentence flips the document tell and
+    the same cousin masks correctly. A leak that depends on how much *else* the
+    student wrote is a leak.
+
+    What this reads instead is confined to the span, so it needs no document:
+
+        My Cousin Vinny   -- every token capitalised; the film. Already excluded
+                             by title_is_the_writers_own_relation.
+        My cousin Vinny   -- the name carries a capital and the relation word
+                             does not. MIXED: the writer uses capitals, and
+                             chose not to put one on "cousin". A relative.
+        my cousin vinny   -- nothing carries a capital. Not mixed, and the
+                             docstring above applies in full: the absent capital
+                             on "cousin" is not testimony about anything, because
+                             nothing here is capitalised. Keep the document gate.
+
+    Only the middle row is new. The trailing token is the test rather than "any
+    token", because the leading possessive is sentence-initial in every frame
+    this shape occurs in, and a sentence-initial capital is orthography, not
+    evidence — reading it as evidence is the mistake this whole module is built
+    around avoiding.
+    """
+    span = text[start:end]
+    tokens = _ANY_TOKEN.findall(span)
+    if len(tokens) < 2:
+        return False
+    return tokens[-1][:1].isupper() and any(t.islower() for t in tokens[1:3])
 
 
 def names_someone_the_writer_knows(text: str, start: int, end: int) -> bool:
