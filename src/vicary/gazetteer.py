@@ -114,6 +114,16 @@ PLACE = "place"
 #: whether this tier is where a leak came from.
 DEMONYM = "demonym"
 
+#: Every tier this reader knows, in one place. :func:`_parse` builds its
+#: accumulator from it, :class:`Gazetteer` carries one field per name, and
+#: ``tests/test_assets.py`` reconciles all three against the shipped asset's
+#: manifest — so a tier added to the builder and forgotten anywhere downstream
+#: is a red test rather than a frozenset that silently reads empty. An empty
+#: KEEP tier redacts everything it was built to protect, which presents as
+#: over-aggressive tuning rather than as a packaging bug.
+TIER_NAMES: tuple[str, ...] = ("full", "short", "place", "given", "title",
+                               "demonym")
+
 #: Name particles that may lead a two- or three-token *partial* surname. Kept in
 #: sync with the builder's list by a unit test rather than by import, so the
 #: runtime module never depends on a build tool.
@@ -368,10 +378,7 @@ def asset_path() -> Path:
 
 
 def _parse(text: str) -> Gazetteer:
-    tiers: dict[str, set[str]] = {
-        "full": set(), "short": set(), "place": set(), "given": set(),
-        "title": set(), "demonym": set(),
-    }
+    tiers: dict[str, set[str]] = {name: set() for name in TIER_NAMES}
     meta: dict = {}
     declared: dict[str, int] = {}
     current: set[str] | None = None
@@ -465,14 +472,13 @@ def load(path: Path | None = None, *, force: bool = False) -> Gazetteer:
     if path is None:
         with _lock:
             _loaded = gazetteer
+    # Every tier, from TIER_NAMES rather than a hand-written format string: this
+    # line is where an operator would have seen `demonym=0` on the cut that
+    # shipped the tier empty, and it said nothing because nobody extended it.
     logger.info(
-        "loaded notability gazetteer: full=%d short=%d place=%d given=%d "
-        "title=%d cut=%s",
-        len(gazetteer.full),
-        len(gazetteer.short),
-        len(gazetteer.place),
-        len(gazetteer.given),
-        len(gazetteer.title),
+        "loaded notability gazetteer: %s cut=%s",
+        " ".join(f"{name}={len(getattr(gazetteer, name))}"
+                 for name in TIER_NAMES),
         gazetteer.meta.get("cut_date", "unknown"),
     )
     return gazetteer

@@ -17,6 +17,12 @@
   everything it was built to protect. It now writes every tier the fold
   produced, and the round-trip is asserted against the fold's own output so the
   *next* tier is covered without anybody remembering.
+* **The shipped asset's tier counts are now reconciled with the manifest's**, on
+  the frozensets a loaded process actually holds rather than on the build log —
+  the log said 1,044 demonyms while the running gazetteer held 0. The reader's
+  tier names live in one place (`gazetteer.TIER_NAMES`), the parser and the
+  dataclass are asserted against it, and `load()` logs every tier rather than a
+  hand-written five, which is where an operator would have seen `demonym=0`.
 
 ### New `demonym` tier — asset format 2 → 3
 
