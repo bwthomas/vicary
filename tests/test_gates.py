@@ -74,7 +74,7 @@ ROUND_TRIP_FLOOR = 100.0
 #:
 #: Lowered from 1.20 when the capitalisation signal stopped reading *absence* of
 #: mid-sentence capitals as evidence of a writer who drops them (see
-#: :func:`~vicary.name_candidates.writes_without_standard_capitals`) and an
+#: :class:`~vicary.name_candidates.CapitalisationHabit`) and an
 #: opening quote started counting as a sentence start. Held-out recall, KEEP
 #: precision and the leak count were all unchanged across that move, so the bar
 #: follows the measurement down rather than banking the slack — a ceiling left

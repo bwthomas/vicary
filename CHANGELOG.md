@@ -1,6 +1,38 @@
 # Changelog
 
-## Unreleased — the 2026-08-06 cut
+## Unreleased
+
+### The capitalisation verdict is four states, not two booleans
+
+* `document_capitalises_names` and `writes_without_standard_capitals` are replaced
+  by `CapitalisationHabit` and `capitalisation_habit()`. The two booleans
+  **contradicted each other on 7 of 27 un-scrubbed student documents**, so which
+  treatment a document got depended on which predicate a call site read. All three
+  consumers now read one verdict computed once.
+* `INCONSISTENT` names the writer who marks some proper nouns and drops others —
+  4 of the 27. It gets no document-level answer on purpose and falls through to
+  per-token evidence (`_mid_sentence_capitals`), which is the right granularity and
+  already existed.
+* The presence counter now excludes heading spans, bringing it into line with the
+  per-token channel the inconsistent band falls through to; the two were reading
+  the same evidence through different rules. Measured effect on the 27 documents:
+  **none** — it lowers five counts (`horses` 52 → 27 is the largest) and none
+  crosses the floor. A precision repair, not a fix.
+* Two rate proposals were measured. On the **presence** side a rate is rejected:
+  it re-orders the deciding band instead of separating it, and inverts the two
+  closest cases (`141-693` "Powerball" ×2 at 0.58/1k is a real capitaliser;
+  `141-433` "The"/"There" at 1.75/1k are artefacts). On the **absence** side it is
+  kept only above the floor, where a presence signal exists to weigh it against —
+  applied below the floor it demoted a genuine lower-case-writing carrier essay at
+  a 1.7% drop rate and **leaked a held-out name** (28/28 → 27/28) to buy one span
+  of over-firing.
+* Every gate is unchanged: held-out recall 100% on both the frames and
+  essay-carrier arms, KEEP precision 100%, round-trip 100%, over-firing 0.72
+  spans/essay, Census exposure 1.20%, 114 spans on the 27-document student-prose
+  leg. The instrument is not blind to this path — the rejected variant above moved
+  held-out recall and over-firing in the same harness.
+
+## The 2026-08-06 cut
 
 ### Two build defects that made every tier change invisible
 

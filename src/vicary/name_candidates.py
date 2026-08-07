@@ -55,8 +55,11 @@ argued from the shape of English:
   :func:`_capital_is_the_only_evidence` and :func:`_mid_sentence_capitals`.
 * An all-caps run shorter than :data:`_ALLCAPS_RUN` inside mixed-case prose is
   emphasis. See :func:`_emphasis_spans`.
-* :func:`document_capitalises_names` raises the lowercase route's bar rather than
-  closing the route, which is what suppressing it outright used to do.
+* :class:`CapitalisationHabit` raises the lowercase route's bar rather than
+  closing the route, which is what suppressing it outright used to do. It is a
+  four-state reading of the writer's own orthography and NOT a boolean, because
+  the writer who both capitalises and drops capitals is 4 of 27 real documents
+  and neither document-level treatment fits them.
 
 All three are conditional on a given-name oracle being supplied: without one the
 document's own capitals are the only evidence channel, and there is nothing to
@@ -78,6 +81,7 @@ work and it will both miss names and over-fire on ordinary words. See
 
 from __future__ import annotations
 
+import enum
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -433,8 +437,7 @@ _CURLY_APOSTROPHE = str.maketrans({"’": "'", "‘": "'", "ʼ": "'", "′": "'"
 _MID_SENTENCE_CAP = re.compile(r"(?<=[a-z,;:]\s)([A-Z][a-z]{2,})")
 
 #: Mid-sentence capitals above which a document is taken to mark its proper nouns
-#: with capitals — at which point a *lowercase* token is evidence against a name
-#: and the lowercase route is suppressed.
+#: with capitals — at which point a *lowercase* token is evidence against a name.
 #:
 #: Measured on 36 un-scrubbed essay documents (~3,300 chars each, Project
 #: Gutenberg) against a lower-cased copy of the same text: as written the median
@@ -442,11 +445,24 @@ _MID_SENTENCE_CAP = re.compile(r"(?<=[a-z,;:]\s)([A-Z][a-z]{2,})")
 #: Clean separation, so the threshold is not delicate — 2 rather than 1 only to
 #: tolerate a single stray capital.
 #:
+#: **A rate was measured against this floor and rejected.** A count is
+#: length-blind, so the obvious repair is marks per 1,000 characters — and on the
+#: 27 un-scrubbed student documents that does not separate the deciding band, it
+#: only re-orders it. Both documents sitting at exactly 2 marks with the closest
+#: rates are decided *the wrong way round* by a rate: ``141-693`` marks
+#: "Powerball" twice in 3,478 characters (0.58 per 1k, a genuine capitaliser) and
+#: ``141-433`` marks "The" and "There" in 1,144 (1.75 per 1k, both artefacts of a
+#: sentence break the detector missed). A rate threshold demotes the real one and
+#: promotes the false one. What actually separates them is the *content* of the
+#: mark, which is per-token evidence — so the band falls through to
+#: :func:`_mid_sentence_capitals` rather than being decided at document level,
+#: and that is what :data:`CapitalisationHabit.INCONSISTENT` is for.
+#:
 #: This could not be measured on ASAP, whose authors replaced every proper noun
 #: with an ``@CAPS``-style marker before release; there the median is 2 and the
 #: lowercase fixture frame is 0, so no threshold separates them. That was a
 #: property of the corpus, not of the signal.
-_CAPITALISES_NAMES_MIN: int = 2
+_MARKS_PROPER_NOUNS_MIN: int = 2
 
 #: A sentence opening on a lower-case letter, which is the writer telling us
 #: directly that they are not keeping standard capitalisation. Matched at the
@@ -459,56 +475,172 @@ _LOWERCASE_SENTENCE_START = re.compile(
 #: that survives a writer who does capitalise sentence openings.
 _BARE_LOWERCASE_I = re.compile(r"\bi\b")
 
+#: One terminal-punctuation unit. The denominator for the drop rate, and it has
+#: to be this rather than :func:`_sentence_starts`: that counts ``\n`` as a break
+#: too, and these documents are hard-wrapped, so it would report a wrapped line as
+#: a sentence and halve the rate. This is the population
+#: :data:`_LOWERCASE_SENTENCE_START` actually draws from.
+_SENTENCE_UNIT = re.compile(r"[^.!?]+[.!?]*")
 
-def writes_without_standard_capitals(text: str) -> bool:
-    """Positive evidence that this writer is not keeping standard capitalisation.
+#: Fraction of sentence openings that must be lower-case before a writer who
+#: *does* mark proper nouns is read as also dropping capitals, rather than as
+#: having made a typo. Read :func:`capitalisation_habit` for the reason this is
+#: consulted on only one side of the floor — it is the load-bearing half.
+#:
+#: On the 27 un-scrubbed student documents the boolean "any lower-case opening"
+#: fires on 8, and the openings split in two with a gap between 12.5% and 7%:
+#:
+#: * habit — ``my-fabit-book`` 2 of 3 openings (67%), ``141-433`` 6 of 35 (17%),
+#:   ``121-816`` 1 of 8 (12.5%);
+#: * not — ``my-first-tooth-gone`` 1 of 14 (7%), ``marching-to-his-own-beat``
+#:   3 of 60 (5%), ``141-140`` 2 of 41 (5%), ``121-502`` 1 of 25 (4%).
+#:
+#: Every opening in the second group was read, and they are line wraps, citations
+#: and one stylistic ``Boy! did we cry``. ``marching-to-his-own-beat`` is an NWP
+#: anchor paper that marks 26 proper nouns correctly; the boolean called it a
+#: writer who does not keep standard capitalisation, on three artefacts.
+_DROPS_CAPITALS_MIN_RATE: float = 0.10
 
-    The companion to :func:`document_capitalises_names`, and the reason it needs
-    one: that function answers "did this document capitalise its proper nouns",
-    and a **no** has two completely different causes. Either the writer does not
-    capitalise — the case the lowercase route exists for — or the text simply
-    contains no proper nouns to capitalise. Nothing distinguished them, so the
-    second was being served the first's permissive treatment.
 
-    That is not hypothetical. The outbound pass scores single feedback fields of
-    108-290 characters, ordinary well-formed prose about a student's essay. Every
-    one scored zero mid-sentence capitals, every one was therefore read as
-    lower-case writing, and the route ran with no corroboration required: "tone
-    toward", "line makes", "line circles" and "line loops" masked as names in
-    text a student reads. Both `tone` and `line` are genuine given names, so the
-    seed was legitimate and the absent guard was the entire defect.
+class CapitalisationHabit(enum.Enum):
+    """What a document has told us about how its writer uses capital letters.
 
-    Two tells, both of them the writer's own doing rather than an inference from
-    what is missing: a sentence opening in lower case, and a bare lower-case "i".
-    Prose that keeps both conventions is making a positive claim about its own
-    orthography, and a lower-case token inside it is evidence against a name for
-    the same reason a mid-sentence capital is evidence for one.
+    This replaces two booleans — "does it capitalise its proper nouns" and "does
+    it drop standard capitals" — which were consulted separately and *contradict
+    each other on 7 of 27 un-scrubbed student documents*. ``141-433`` has two
+    mid-sentence capitals and six lower-case sentence openings, so it was
+    simultaneously a writer who capitalises and a writer who does not, and
+    whichever predicate a call site happened to read decided the treatment.
+
+    Four states, because the two signals are independent and all four cells occur:
+
+    ``CONSISTENT``
+        Marks its proper nouns, and does not drop sentence capitals. A lower-case
+        token here is evidence *against* a name. 15 of the 27.
+    ``INCONSISTENT``
+        Does both. This is the writer the booleans had no cell for, and **both
+        document-level treatments are wrong for them** — suppressing the lowercase
+        route loses the names they wrote lower-case, and opening it wide fires on
+        ordinary words. So there is no document-level answer here on purpose: the
+        band falls through to per-token evidence (:func:`_mid_sentence_capitals`),
+        which is the right granularity and already existed. 4 of the 27.
+    ``LOWERCASE``
+        Drops capitals and marks nothing. The given-name tier is the only handle
+        left, and the lowercase route runs without corroboration. 1 of the 27.
+    ``SILENT``
+        Says nothing either way: no proper nouns to capitalise, and no dropped
+        openings. **Silence is not consent.** Reading it as consent is what put
+        "line circles" and "tone toward" in front of a student, because a 108-290
+        character feedback field is ordinary prose with nothing in it to
+        capitalise. Treated like ``INCONSISTENT``: per-token evidence, never the
+        permissive path. 7 of the 27.
+
+    **No metric moves.** Held-out recall, KEEP precision, round-trip, over-firing
+    and Census exposure are identical to the two booleans on every arm, and that is
+    the intended result rather than a disappointment: this replaces two predicates
+    that disagreed with one that cannot, and the states they *both* got right are
+    most of them. What changes is that ``INCONSISTENT`` now has a name and a
+    defined treatment, so the next rule to weigh case has somewhere to attach.
+    The instrument is not blind to this path — see :func:`capitalisation_habit` for
+    a variant of it that moved held-out recall in the same harness.
     """
-    return bool(
-        _LOWERCASE_SENTENCE_START.search(text) or _BARE_LOWERCASE_I.search(text)
+
+    CONSISTENT = "consistent"
+    INCONSISTENT = "inconsistent"
+    LOWERCASE = "lowercase"
+    SILENT = "silent"
+
+    @property
+    def marks_proper_nouns(self) -> bool:
+        """Whether the writer puts capitals on proper nouns at all.
+
+        True for both ``CONSISTENT`` and ``INCONSISTENT``: an inconsistent writer
+        who capitalised "Vinny" and left "cousin" lower-case made a choice, and
+        that choice is testimony. It is the *absence* of a capital that means
+        nothing in a ``LOWERCASE`` or ``SILENT`` document.
+        """
+        return self in (CapitalisationHabit.CONSISTENT,
+                        CapitalisationHabit.INCONSISTENT)
+
+    @property
+    def drops_capitals(self) -> bool:
+        """Whether the writer drops standard capitals as a habit."""
+        return self in (CapitalisationHabit.INCONSISTENT,
+                        CapitalisationHabit.LOWERCASE)
+
+
+def capitalisation_habit(
+    text: str,
+    headings: tuple[tuple[int, int], ...] = (),
+) -> CapitalisationHabit:
+    """Classify how this document's writer uses capitals. See the enum.
+
+    Two independent readings, each taken from evidence the writer supplied rather
+    than inferred from what is missing.
+
+    **Does it mark proper nouns?** Count mid-sentence capitals, excluding any that
+    fall inside a heading. Sentence-initial capitals are not counted at all: a
+    student who capitalises the start of each sentence but not the names inside
+    them is exactly the case the lowercase route exists for, and counting those
+    would suppress the route on them. The heading exclusion is new here and brings
+    this counter into line with :func:`_mid_sentence_capitals`, which the
+    inconsistent band falls through to — the two channels were reading the same
+    evidence through different rules, which is a defect whatever the threshold is.
+    Its measured effect on the 27 documents is **none**: it lowers five counts
+    (``horses`` 52 to 27 is the largest) and none of them crosses the floor. It is
+    a precision repair, not a fix, and is recorded as one.
+
+    **Does it drop standard capitals?** A bare lower-case "i" anywhere, or a
+    lower-case sentence opening. Both are the writer's own doing rather than an
+    inference from what is missing.
+
+    **The rate is consulted on only one side of the floor, and that asymmetry is
+    the measurement, not an oversight.** Above the floor there is a presence signal
+    to weigh the drop side against, so the rate can say "26 marks and 3 dropped
+    openings is a writer who typed three typos" — which is
+    ``marching-to-his-own-beat``, an NWP anchor paper the boolean libelled. Below
+    the floor there is nothing to weigh it against, and applying it there **costs a
+    held-out name**: the ``lowercase-writing`` fixture frame rides in two carrier
+    essays, and in 20739 (one mid-sentence capital, one lower-case opening in 59
+    sentences, no bare "i") a 1.7% drop rate demoted a genuine lower-case-writing
+    document to ``SILENT``, withdrew the permissive path, and leaked "terrence
+    okonkwo". Held-out recall 28/28 to 27/28 for one span of over-firing — the
+    wrong direction for a tool whose whole bias is over-redact rather than leak.
+
+    So below the floor the document has given us one bit and it is taken
+    conservatively: any tell at all means ``LOWERCASE``. The cost of that is
+    ``my-first-tooth-gone`` staying on the permissive path when it is really a
+    capitaliser with nothing to capitalise — and that cost was measured at **zero**
+    spans, because its only candidate is "Boy" from the capitalised route under
+    either reading. A guard whose failing case costs nothing, against a rate whose
+    correction costs a name, is not a guard worth having.
+
+    Args:
+        headings: Spans whose capitals are orthographic because title case put
+            them there. Passed in rather than computed so the arm that turns the
+            heading rule off stays coherent — with it off, this reads headings as
+            prose, exactly like every other consumer of that flag.
+    """
+    marks = sum(
+        1
+        for m in _MID_SENTENCE_CAP.finditer(text)
+        if not any(m.start(1) < h_end and m.end(1) > h_start
+                   for h_start, h_end in headings)
     )
-
-
-def document_capitalises_names(text: str) -> bool:
-    """Whether this document marks its proper nouns with capital letters.
-
-    A writer who capitalises names has told us something about every *lowercase*
-    token in the document: it is probably not one. A writer who does not has told
-    us nothing, and the given-name tier is the only handle left.
-
-    What this does NOT do is decide whether the lowercase route runs. It used to,
-    and that cost every uncapitalised occurrence of a name in a document that
-    capitalises the rest — which is most students most of the time, since
-    capitalising proper nouns is a habit rather than a rule anyone keeps perfectly.
-    It now selects how much evidence a lowercase seed needs: see
-    :func:`_find_lowercase_candidates`'s ``corroborate``.
-
-    Sentence-initial capitals are deliberately not counted. A student who
-    capitalises the start of each sentence but not the names inside them is
-    exactly the case the lowercase route exists for, and counting those capitals
-    would suppress the route on them.
-    """
-    return sum(1 for _ in _MID_SENTENCE_CAP.finditer(text)) >= _CAPITALISES_NAMES_MIN
+    openings = sum(1 for _ in _LOWERCASE_SENTENCE_START.finditer(text))
+    # The bare "i" stays a boolean on both sides. It is the higher-precision tell —
+    # 26 of the 27 un-scrubbed documents have none at all, and the one that does has
+    # nine — so there is no noise for a rate to remove.
+    bare_i = bool(_BARE_LOWERCASE_I.search(text))
+    if marks >= _MARKS_PROPER_NOUNS_MIN:
+        sentences = sum(
+            1 for m in _SENTENCE_UNIT.finditer(text) if m.group(0).strip()
+        )
+        habitual = openings / max(1, sentences) >= _DROPS_CAPITALS_MIN_RATE
+        return (CapitalisationHabit.INCONSISTENT if bare_i or habitual
+                else CapitalisationHabit.CONSISTENT)
+    return (CapitalisationHabit.LOWERCASE if bare_i or openings
+            else CapitalisationHabit.SILENT)
 
 
 def _sentence_starts(text: str) -> frozenset[int]:
@@ -552,7 +684,8 @@ def _mid_sentence_capitals(
     """Lower-cased forms of every word this document capitalises mid-sentence.
 
     The document's own testimony about a particular word, which is the graded
-    version of :func:`document_capitalises_names`. A writer who put a capital on
+    version of :func:`capitalisation_habit`, and what its ``INCONSISTENT`` state
+    falls through to. A writer who put a capital on
     "Cade" somewhere other than a sentence start has told us "Cade" is a name in
     this document; one who only ever writes "Eventually" after a full stop has
     told us nothing, because orthography would have put that capital there
@@ -764,7 +897,7 @@ def _find_lowercase_candidates(
     and it is structural rather than a word list, so it does not need extending
     every time a new corpus turns up a new ordinary word.
 
-    ``corroborate`` is how :func:`document_capitalises_names` participates without
+    ``corroborate`` is how :func:`capitalisation_habit` participates without
     being a kill switch. In a document that marks its proper nouns with capitals a
     lowercase token is weak evidence, so the seed must additionally appear
     *capitalised mid-sentence somewhere in the same document* — the writer's own
@@ -857,10 +990,17 @@ def find_candidates(
             exists so the arm stays measurable against its control.
     """
     blocked = [m.span() for m in _PROTECTED.finditer(text)]
-    capitalises = document_capitalises_names(text)
+    starts = _sentence_starts(text)
+    emphasis = _emphasis_spans(text)
+    headings = _heading_spans(text) if headings_are_orthographic else ()
+    # Read before the title pass, because the title pass needs it. The habit is a
+    # property of the whole document, so it is computed once and every consumer
+    # reads the same verdict — which two separate booleans could not guarantee.
+    habit = capitalisation_habit(text, headings)
     if title is not None:
         title_spans = find_title_spans(
-            text, title, title_prefix, requires_capital=capitalises
+            text, title, title_prefix,
+            requires_capital=habit.marks_proper_nouns,
         )
         if title_relation_refusal:
             title_spans = [
@@ -872,7 +1012,7 @@ def find_candidates(
                 # span's own mixed case answers it instead, and the missing
                 # answer used to ship a cousin's name. See
                 # :func:`relation_led_title_is_internally_mixed`.
-                and not ((capitalises
+                and not ((habit.marks_proper_nouns
                           or relation_led_title_is_internally_mixed(text, s, e))
                          and title_is_the_writers_own_relation(text, s, e))
             ]
@@ -881,9 +1021,6 @@ def find_candidates(
     def _protected(start: int, end: int) -> bool:
         return any(start < b_end and end > b_start for b_start, b_end in blocked)
 
-    starts = _sentence_starts(text)
-    emphasis = _emphasis_spans(text)
-    headings = _heading_spans(text) if headings_are_orthographic else ()
     written_as_a_capital = _mid_sentence_capitals(text, starts, headings)
 
     def _corroborated(tokens: list[str], is_given: GivenNameOracle) -> bool:
@@ -974,16 +1111,17 @@ def find_candidates(
         # placeholder's braces as debris.
         claimed = [(c.start, c.end) for c in out]
         # `None` here is the permissive path: "no capitalisation signal, so the
-        # given-name tier stands alone". It is reached only on positive evidence
-        # that the writer drops capitals, never on the mere absence of them —
-        # absence is what a text with no names in it looks like, and reading its
-        # silence as consent is what put "line circles" in front of a student.
-        # See :func:`writes_without_standard_capitals`.
+        # given-name tier stands alone". Exactly one of the four habits reaches
+        # it. It is NOT reached on the mere absence of capitals — absence is what
+        # a text with no names in it looks like, and reading its silence as
+        # consent is what put "line circles" in front of a student — and it is not
+        # reached by the INCONSISTENT writer either, who has per-token evidence to
+        # offer and is better served by it. See :class:`CapitalisationHabit`.
         for candidate in _find_lowercase_candidates(
             text, given_name, _protected,
             corroborate=(
                 None
-                if not capitalises and writes_without_standard_capitals(text)
+                if habit is CapitalisationHabit.LOWERCASE
                 else written_as_a_capital
             ),
         ):
@@ -1293,8 +1431,10 @@ def title_is_the_writers_own_relation(text: str, start: int, end: int) -> bool:
     That is the same evidence the heading rule reads and the same evidence rule 1
     of the capitalisation rules reads — the document's own orthography, not a
     guess about intent. Callers gate this on
-    :func:`document_capitalises_names`, because in a document that capitalises
-    nothing the absent capital is not testimony about anything.
+    :attr:`CapitalisationHabit.marks_proper_nouns`, because in a document that
+    capitalises nothing the absent capital is not testimony about anything. An
+    INCONSISTENT writer passes that gate: they put a capital on "Vinny" and left
+    "cousin" lower-case, and that is a choice rather than an absence.
 
     The cost of being wrong is a student who writes "my cousin vinny is my
     favorite movie" losing the film to a placeholder inbound. The cost of the
@@ -1313,8 +1453,8 @@ def relation_led_title_is_internally_mixed(text: str, start: int, end: int) -> b
     """Whether the span alone proves the writer used capitals and skipped one.
 
     The document-level gate on :func:`title_is_the_writers_own_relation` costs a
-    leak on the shortest documents. ``document_capitalises_names`` needs a
-    capitalised name *somewhere else* to return True, and "My cousin Vinny came
+    leak on the shortest documents. ``marks_proper_nouns`` needs two capitalised
+    names *somewhere else* to be true, and "My cousin Vinny came
     over that summer and never left." has none — the only other capital is
     sentence-initial. So the refusal switched off, the 1992 film kept the span,
     and the cousin's name shipped. Measured, not supposed: adding one unrelated
