@@ -2,6 +2,61 @@
 
 ## Unreleased
 
+### A redacted town is typed `{LOCATION}`, not `{NAME}`
+
+* **New `settlement` tier, and the asset format goes 3 → 4.** `Akron` was always
+  masked — this was never a leak — but it was masked `{NAME}`, so a host that
+  reads the placeholder back writes "great job describing your trip to {NAME}".
+  It needed a rebuild rather than a patch: settlements are excluded from the
+  `place` tier *in SPARQL* (`FILTER NOT EXISTS ... Q486972`), because a town name
+  is where a student lives, so the signal needed to type it was never fetched.
+  The new tier inverts that filter to `EXISTS` and keeps the school exclusion.
+  23,277 entries.
+* **It is the second tier that grants no keep**, after `given`, and the one way
+  this change could have done damage was to become a keep by accident:
+  `notability()`'s contract is `verdict != NOT_NOTABLE => KEEP`, so a settlement
+  answered there would turn every student's hometown into a keep — readmitting
+  through the back door exactly the PII the place tier's exclusion removes. It
+  gets its own boolean oracle instead, and a test that goes red if anyone wires
+  it into `notability()` (verified red, not assumed).
+* **Half of American town names are somebody's surname**, because the towns were
+  named after the people. Typing on tier membership alone would relabel a
+  classmate named Jackson as `{LOCATION}` — the Akron defect with the sign
+  flipped, on a commoner population and pointing the worse way. Settlements that
+  are also common given names or surnames borne by 10,000+ Americans are dropped
+  and fall back to `{NAME}`: `Jackson`, `Austin`, `Houston`, `Cleveland`,
+  `Madison`, `Brooklyn`, `Aurora`. `Akron`, `Westfield`, `Springfield` and
+  `Phoenix` survive.
+* **The sitelink floor is 30, and the higher floor was measured and rejected.**
+  `Akron` carries 94 sitelinks, so the place tier's single-token floor of 150
+  misses it and 90 clears it by four against a moving upstream. The floor was
+  then tested as a *purity* lever and provably does not separate: measured
+  against `/usr/share/dict/words`, ordinary English words are 7.2% of
+  single-token keys at floor 30 and **16.5% at 150**, because what a high floor
+  keeps is world capitals that are themselves dictionary words (Rome, Moscow,
+  Berlin, Venice). A higher floor shrinks the tier and enriches the noise.
+* **All 9 gates re-measured, all PASS, every number unchanged** — held-out recall
+  100% on both arms, KEEP precision 100%, round-trip 100%, over-firing 0.72
+  spans/essay, Census exposure 1.20%, latency p95 3.50 ms, asset entries 360,790.
+  That identity is the predicted result rather than a blind instrument: typing
+  relabels a span and moves none, and the same harness *did* move where it should
+  — the `Akron` `wrong-type` violation is gone, and
+  `test_the_accepted_violations_still_happen` is what surfaced it.
+* **`ACCEPTED_VIOLATIONS` is down to two**, both leaks. `Deshawn` is the
+  remaining one worth losing.
+* Measured on the 27 un-scrubbed student documents: 114 masked spans in both arms
+  — the no-op-on-verdicts property at corpus scale — and 4 retyped, all of them
+  `Christmas` in one document. `Christmas` is a US town at exactly the floor. Both
+  labels are wrong and the span is a pre-existing over-fire, so the tier relabels
+  a defect rather than creating one; no ordinary-word subtraction was added,
+  because it would buy nothing on a span that is wrong either way and would cost
+  the student who really is from Normal, Illinois.
+* `vicary-assets fetch` now forwards `--cache-dir` to the builder. Without it the
+  documented rebuild command re-ran every SPARQL query against donated
+  infrastructure on each attempt, which made a threshold sweep — the reason the
+  cache exists — cost ~30 queries per step instead of one fetch and N offline
+  re-folds.
+
 ### The capitalisation verdict is four states, not two booleans
 
 * `document_capitalises_names` and `writes_without_standard_capitals` are replaced

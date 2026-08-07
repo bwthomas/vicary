@@ -383,6 +383,81 @@ def test_settlements_are_not_in_the_place_tier(gazetteer: Gazetteer) -> None:
         assert town.lower() not in gazetteer.place, town
 
 
+# ---------------------------------------------------------------------------
+# The settlement tier: typing only, and the guard that keeps it that way
+# ---------------------------------------------------------------------------
+
+
+def test_the_settlement_tier_reads_back_from_the_shipped_asset(
+    gazetteer: Gazetteer,
+) -> None:
+    """A tier that builds clean and reads back empty is the invisible failure.
+
+    It has no symptom for a tier that only types: every town would simply mask
+    ``{NAME}``, which is what shipped before the tier existed and is what no
+    other test in this file would notice.
+    """
+    assert len(gazetteer.settlement) > 1_000, (
+        f"settlement tier read back with {len(gazetteer.settlement)} entries — "
+        "the fold produced it but the asset round trip lost it"
+    )
+    assert gazetteer.is_settlement("Akron") is True
+
+
+def test_the_settlement_tier_grants_no_keep(gazetteer: Gazetteer) -> None:
+    """The tier types a mask; it must never *prevent* one.
+
+    This is the one way adding it could have done real damage. ``notability()``'s
+    contract is ``verdict != NOT_NOTABLE => KEEP``, so a settlement leaking into
+    that function would turn every student's hometown into a keep — the exact PII
+    the place tier's SPARQL exclusion exists to redact, readmitted through the
+    back door by the tier built from the names that exclusion discards.
+
+    Red if anyone wires ``settlement`` into :meth:`Gazetteer.notability`, which
+    is the plausible mistake: it is the function that already answers "which tier
+    matched", so it looks like the natural home.
+    """
+    typed = [name for name in ("Akron", "Westfield", "Springfield", "Phoenix")
+             if gazetteer.is_settlement(name)]
+    assert typed, "no probe resolved as a settlement — this test proves nothing"
+    for name in typed:
+        assert gazetteer.notability(name) == NOT_NOTABLE, name
+        assert gazetteer.is_notable(name) is False, name
+
+
+def test_the_settlement_tier_drops_names_people_carry(
+    gazetteer: Gazetteer,
+) -> None:
+    """Half of American town names are somebody's surname, because of the people.
+
+    Typing on settlement membership alone relabels a classmate named Jackson as
+    ``{LOCATION}`` — the Akron defect with the sign flipped, on a far commoner
+    population, and pointing the wrong way: a host reading the type back writes
+    "your friend {LOCATION}". Each of these is a real US settlement in the
+    upstream rows and is dropped by the Census bar or the given-name rule.
+    """
+    for name in ("Jackson", "Madison", "Houston", "Austin", "Cleveland",
+                 "Brooklyn", "Aurora"):
+        assert gazetteer.is_settlement(name) is False, (
+            f"{name!r} types as a location — the settlement subtractions "
+            "regressed, and a person now masks as {LOCATION}"
+        )
+
+
+def test_the_settlement_tier_is_outside_the_keep_entry_count(
+    gazetteer: Gazetteer,
+) -> None:
+    """``entry_count`` answers "how much notability", so a non-keep tier is out.
+
+    Same treatment as ``given``. Counting 23k towns as notability entries would
+    inflate the one number the asset gate reads.
+    """
+    assert gazetteer.entry_count == (
+        len(gazetteer.full) + len(gazetteer.short) + len(gazetteer.place)
+        + len(gazetteer.title) + len(gazetteer.demonym)
+    )
+
+
 def test_single_token_places_are_held_to_the_strict_bar(gazetteer: Gazetteer) -> None:
     """The place tier is an independent false-positive channel from the short tier.
 

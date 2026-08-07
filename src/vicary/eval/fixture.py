@@ -74,9 +74,12 @@ KNOWN_PLACEHOLDERS: frozenset[str] = frozenset(
         "{ZIP_CODE}",
         "{AGE}",
         "{CREDIT_DEBIT_CARD_NUMBER}",
-        # Not emitted today. Present because the ASAP training distribution has
-        # them (@ORGANIZATION 1.26/essay, @LOCATION 1.06/essay) and a candidate
-        # generator that fires on proper nouns will need somewhere to put them.
+        # Both emitted since 2026-08-07 — `{ORGANIZATION}` off the candidate
+        # generator's org-suffix rule, `{LOCATION}` off the gazetteer's settlement
+        # tier. They were listed here first, unemitted, because the ASAP training
+        # distribution carries them (@ORGANIZATION 1.26/essay, @LOCATION
+        # 1.06/essay) and a generator that fires on proper nouns would need
+        # somewhere to put them.
         "{ORGANIZATION}",
         "{LOCATION}",
     }

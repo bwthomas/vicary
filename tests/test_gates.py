@@ -102,21 +102,26 @@ LATENCY_P95_MS_CEILING = 10.0
 
 #: Invariant violations present at this fixture version, each one accounted for.
 #: Gated as an exact set rather than a count, so a *new* violation fails even
-#: though these four do not — a ceiling of four would let a fifth defect in by
+#: though these two do not — a ceiling of two would let a third defect in by
 #: silently displacing one of these.
 #:
 #: * ``Robinson`` — the documented, deliberately unpaid cost: once a document
 #:   establishes "Jackie Robinson", a bare "Robinson" in it keeps, including a
 #:   neighbour who shares the surname. No surname-level rule separates them.
 #: * ``Deshawn`` — a bare first name in a two-name frame. The gate arm's one
-#:   visible-recall miss.
-#: * ``Akron`` twice — redacted correctly but typed ``{NAME}`` instead of
-#:   ``{LOCATION}``. Not a leak; it matters to a host that reads the placeholder
-#:   type back ("your trip to {LOCATION}").
+#:   visible-recall miss, and the one this list would most like to lose: the
+#:   ``given`` tier is built from the first tokens of notable people rather than
+#:   from names US children are given, which misses Deshawn at every bearer
+#:   floor. The fix is a births-derived tier, blocked on data access.
+#:
+#: ``Akron`` twice — masked correctly but typed ``{NAME}`` — was removed on
+#: 2026-08-07 when the settlement tier landed and started typing it
+#: ``{LOCATION}``. It is named here rather than deleted silently because
+#: ``test_the_accepted_violations_still_happen`` is what surfaced the fix: the
+#: entry going stale IS the pass.
 ACCEPTED_VIOLATIONS = {
     ("leak", "NAME:Robinson"),
     ("leak", "NAME:Deshawn"),
-    ("wrong-type", "'Akron' expected {LOCATION} got {NAME}"),
 }
 
 #: The arm the bars describe: candidate generation **plus** the offline notability

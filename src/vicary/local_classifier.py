@@ -43,6 +43,7 @@ from vicary.name_candidates import (
     NotabilityOracle,
     NotabilityTierOracle,
     PlaceholderMinter,
+    SettlementOracle,
     TitleOracle,
     mask_candidates,
 )
@@ -359,6 +360,7 @@ class LocalNameClassifier:
         given_name: GivenNameOracle | None = None,
         title: TitleOracle | None = None,
         title_prefix: TitleOracle | None = None,
+        settlement: SettlementOracle | None = None,
         corroborate: bool = True,
         notability_tier: NotabilityTierOracle | None = None,
         number_placeholders: bool = True,
@@ -402,6 +404,10 @@ class LocalNameClassifier:
         self.title = title
         #: Cheap prefilter for the title scan; see gazetteer.title_heads.
         self.title_prefix = title_prefix
+        #: Types a masked town ``{LOCATION}`` rather than ``{NAME}``. The only
+        #: oracle here that decides no verdict — a settlement redacts either way,
+        #: and this decides which mask the student reads.
+        self.settlement = settlement
         #: Names the assignment prompt or source passage supplies. Topical by
         #: construction, so exact, free and zero-false-positive — the first rung
         #: of the notability filter, ahead of any gazetteer.
@@ -490,6 +496,7 @@ class LocalNameClassifier:
                 given_name=self.given_name,
                 title=self.title,
                 title_prefix=self.title_prefix,
+                settlement=self.settlement,
                 corroborate=self.corroborate,
                 notability_tier=self.notability_tier,
                 minter=minter,
