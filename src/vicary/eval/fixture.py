@@ -51,7 +51,7 @@ from vicary.local_classifier import StudentIdentity
 #: Bump on any change to the frames. Recorded on every eval row and used in the
 #: resume key, because a resumed record built from a different fixture is a
 #: foreign record, not a consenting one.
-FIXTURE_VERSION: str = "2026-08-06.3"
+FIXTURE_VERSION: str = "2026-08-06.4"
 
 VERDICT_REDACT: str = "redact"
 VERDICT_KEEP: str = "keep"
@@ -390,6 +390,26 @@ RECALL_FRAMES: tuple[Frame, ...] = (
              "same orthographic evidence the heading rule reads. Gated on the "
              "document capitalising at all, because in a document that "
              "capitalises nothing an absent capital is testimony about nothing.",
+    ),
+    Frame(
+        frame_id="relation-led-film-title-with-no-capitalisation-tell",
+        sentence="My cousin Vinny came over that summer and never left.",
+        spans=(Span("NAME", "Vinny", expect="{NAME}", redacted_by="context"),),
+        held_out=True,
+        note="THE FRAME ABOVE WITH ITS SECOND SENTENCE TAKEN AWAY, which is the "
+             "whole finding: the refusal above is gated on "
+             "`document_capitalises_names`, and that needs a capitalised name "
+             "somewhere OTHER than a sentence start. Here there is none — 'My' "
+             "is sentence-initial and 'Vinny' is the name under test — so the "
+             "gate read False, the 1992 film kept the span, and the cousin's "
+             "name shipped. A leak that depends on how much ELSE the student "
+             "wrote is a leak, and it was invisible while the only frame of this "
+             "shape carried a spare capital ('the Alvarez family') that supplied "
+             "the tell for free. Closed by reading the span's own mixed case "
+             "instead: 'Vinny' capitalised, 'cousin' not, so the writer uses "
+             "capitals and declined to put one on the relation word. The "
+             "all-lowercase form 'my cousin vinny' is deliberately NOT claimed "
+             "— there the absent capital really is testimony about nothing.",
     ),
     Frame(
         frame_id="private-person-shadowed-by-a-real-public-figure",

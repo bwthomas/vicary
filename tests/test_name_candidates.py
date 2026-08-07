@@ -25,6 +25,7 @@ from vicary.name_candidates import (
     find_candidates,
     is_public_landmark,
     mask_candidates,
+    relation_led_title_is_internally_mixed,
     writes_without_standard_capitals,
 )
 
@@ -920,6 +921,80 @@ def test_the_refusal_needs_the_tier_not_just_the_boolean() -> None:
     """
     text = "My neighbor Alice Adams walked me to the bus stop every morning."
     assert "Alice Adams" in _mask_titles(text, notability_tier=None)
+
+
+# ---------------------------------------------------------------------------
+# A relation-led title on a document too short to have a capitalisation tell
+
+
+#: "My Cousin Vinny" is the shape, so the stand-in tier has to contain it and a
+#: control that is not relation-led. Kept separate from TITLES: every test above
+#: asserts against that set's exact contents.
+RELATION_TITLES: frozenset[str] = frozenset(TITLES | {"my cousin vinny"})
+
+
+def _mask_relation_titles(text: str, **kw) -> str:
+    def _is(name: str) -> bool:
+        return name.lower().strip(".,'’") in RELATION_TITLES
+
+    kw.setdefault("notable", _is)
+    kw.setdefault("title", _is)
+    kw.setdefault("notability_tier", lambda n: "title" if _is(n) else None)
+    return _mask_titles(text, **kw)
+
+
+def test_a_relation_led_title_refuses_on_a_document_with_no_capitalisation_tell(
+) -> None:
+    """The leak: the refusal was gated on evidence the shortest documents lack.
+
+    ``document_capitalises_names`` needs a capitalised name somewhere OTHER than
+    a sentence start, and this sentence has none — so the gate read False, the
+    1992 film kept the span, and the cousin's name shipped. The span's own mixed
+    case ("Vinny" capitalised, "cousin" not) is the evidence that replaces it.
+    """
+    text = "My cousin Vinny came over that summer and never left."
+    assert not document_capitalises_names(text), (
+        "if this sentence ever grows a capitalisation tell the test passes for "
+        "the wrong reason — it would be exercising the document-level gate"
+    )
+    assert "Vinny" not in _mask_relation_titles(text)
+
+
+def test_the_film_itself_still_keeps_when_the_writer_title_cased_it() -> None:
+    """The half that must NOT move, and the reason mixed case is the test.
+
+    Title-cased throughout, so nothing in tokens[1:3] is lowercase and
+    ``title_is_the_writers_own_relation`` returns False before mixed case is ever
+    consulted. A rule that redacted this would eat every film a student names.
+    """
+    text = "My Cousin Vinny is the funniest movie I have ever seen."
+    assert "My Cousin Vinny" in _mask_relation_titles(text)
+
+
+def test_an_all_lowercase_relation_title_still_keeps_the_document_gate() -> None:
+    """The row the fix deliberately does not claim.
+
+    Nothing in "my cousin vinny" carries a capital, so the absent capital on
+    "cousin" is not testimony about anything — the original docstring's reasoning
+    applies in full and the document-level gate still governs. Written down as a
+    test because "it also fixes this" is the tempting over-claim.
+    """
+    text = "my cousin vinny came over that summer and never left."
+    assert "vinny" in _mask_relation_titles(text)
+
+
+def test_the_mixed_case_route_reads_the_trailing_token_not_any_token() -> None:
+    """Why the leading possessive cannot be the capital that counts.
+
+    "My" is sentence-initial in every frame this shape occurs in, so accepting
+    any capitalised token would make the all-lowercase row above indistinguishable
+    from the mixed one the moment the sentence starts with the phrase. This is
+    that case: capitalised only where orthography forces it.
+    """
+    text = "My cousin vinny came over that summer and never left."
+    assert not relation_led_title_is_internally_mixed(text, 0, len("My cousin vinny"))
+    text = "My cousin Vinny came over that summer and never left."
+    assert relation_led_title_is_internally_mixed(text, 0, len("My cousin Vinny"))
 
 
 # ---------------------------------------------------------------------------
