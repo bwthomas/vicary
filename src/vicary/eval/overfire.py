@@ -124,7 +124,7 @@ def measure(groups: Sequence[Sequence[str]], level: str,
     each field up to a 1000-char unit), and the difference is not academic here.
     Two document-level signals are computed over whatever text arrives —
     same-document surname corroboration, and the capitalisation tell in
-    :func:`~vicary.name_candidates.writes_without_standard_capitals` — so a
+    :func:`~vicary.name_candidates.capitalisation_habit` — so a
     191-character field and the 1,656-character response it belongs to are
     genuinely different inputs. It now joins on the same separator the host does.
 

@@ -398,7 +398,7 @@ RECALL_FRAMES: tuple[Frame, ...] = (
         held_out=True,
         note="THE FRAME ABOVE WITH ITS SECOND SENTENCE TAKEN AWAY, which is the "
              "whole finding: the refusal above is gated on "
-             "`document_capitalises_names`, and that needs a capitalised name "
+             "`marks_proper_nouns`, and that needs capitalised names "
              "somewhere OTHER than a sentence start. Here there is none — 'My' "
              "is sentence-initial and 'Vinny' is the name under test — so the "
              "gate read False, the 1992 film kept the span, and the cousin's "

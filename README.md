@@ -191,6 +191,55 @@ vicary-assets fetch     # rebuild from Wikidata + Census, rewrite the manifest
 infrastructure; a deployment doing large rebuilds should set
 `vicary.build.gazetteer.USER_AGENT_SUFFIX` to a contact address.
 
+## How it reads the writer's capitalisation
+
+Capitalisation is the cheapest evidence in the document and the easiest to
+over-trust. A writer who marks proper nouns with capitals has told us something
+about every *lowercase* token — probably not a name. A writer who does not has
+told us nothing, and the given-name tier is the only handle left. So the detector
+classifies the document once, into one of four states, and every rule that weighs
+case reads the same verdict:
+
+| state | the writer | a lowercase seed then needs |
+|---|---|---|
+| `consistent` | marks proper nouns, keeps sentence capitals | the same word capitalised elsewhere |
+| `inconsistent` | does both — marks some, drops some | the same word capitalised elsewhere |
+| `lowercase` | drops capitals and marks nothing | nothing; the given-name tier stands alone |
+| `silent` | no proper nouns, no dropped capitals | the same word capitalised elsewhere |
+
+`inconsistent` is why this is not a boolean. On 27 un-scrubbed student documents
+**7 satisfied both of the predicates this replaced** — "capitalises its proper
+nouns" *and* "does not keep standard capitalisation" — so the treatment they got
+depended on which predicate a call site happened to read. Neither
+document-level treatment fits them: suppressing the lowercase route loses the
+names they wrote lower-case, and opening it wide fires on ordinary words. They
+get no document-level answer on purpose, and fall through to per-token evidence.
+
+`silent` is the other half, and it is a defect that shipped. **Silence is not
+consent**: a 108–290 character feedback field is ordinary prose with nothing in it
+to capitalise, and reading its zero mid-sentence capitals as "this writer drops
+capitals" put `tone toward`, `line makes` and `line circles` in front of students.
+`tone` and `line` are both genuine given names, so the seed was legitimate and the
+absent guard was the whole defect.
+
+Two things were measured and are worth stating because they are the obvious
+repairs and they do not work:
+
+* **A rate does not fix the presence side.** The floor is a count of 2, which
+  decides 6 of the 27 documents, so marks-per-1,000-characters looks like the
+  obvious repair. It re-orders that band rather than separating it, and gets the
+  two closest cases backwards: `141-693` marks "Powerball" twice in 3,478
+  characters (0.58/1k, a real capitaliser) and `141-433` marks "The" and "There"
+  in 1,144 (1.75/1k, both artefacts of a missed sentence break). What separates
+  them is the *content* of the mark, which is per-token evidence.
+* **A rate fixes the absence side only where there is a presence signal to weigh
+  it against.** Above the floor it is right, and it stops one line wrap in sixty
+  sentences libelling a writer who marks 26 proper nouns correctly. Below the
+  floor it costs a held-out name: at a 1.7% drop rate one carrier essay was
+  demoted to `silent`, the permissive path was withdrawn, and held-out recall went
+  28/28 → 27/28 to buy one span of over-firing. Below the floor the document has
+  offered one bit and it is taken as given.
+
 ## Measurement
 
 The gates live with the library, in `tests/test_gates.py`, and are ordinary

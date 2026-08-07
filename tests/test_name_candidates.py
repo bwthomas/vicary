@@ -21,12 +21,13 @@ from vicary.eval.fixture import (
 )
 from vicary.local_classifier import LocalNameClassifier
 from vicary.name_candidates import (
-    document_capitalises_names,
+    CapitalisationHabit,
+    _heading_spans,
+    capitalisation_habit,
     find_candidates,
     is_public_landmark,
     mask_candidates,
     relation_led_title_is_internally_mixed,
-    writes_without_standard_capitals,
 )
 
 #: The frames the capitalisation route cannot reach on its own. Still named
@@ -947,13 +948,13 @@ def test_a_relation_led_title_refuses_on_a_document_with_no_capitalisation_tell(
 ) -> None:
     """The leak: the refusal was gated on evidence the shortest documents lack.
 
-    ``document_capitalises_names`` needs a capitalised name somewhere OTHER than
+``marks_proper_nouns`` needs two capitalised names somewhere OTHER than
     a sentence start, and this sentence has none — so the gate read False, the
     1992 film kept the span, and the cousin's name shipped. The span's own mixed
     case ("Vinny" capitalised, "cousin" not) is the evidence that replaces it.
     """
     text = "My cousin Vinny came over that summer and never left."
-    assert not document_capitalises_names(text), (
+    assert not capitalisation_habit(text).marks_proper_nouns, (
         "if this sentence ever grows a capitalisation tell the test passes for "
         "the wrong reason — it would be exercising the document-level gate"
     )
@@ -1075,19 +1076,18 @@ def test_a_heading_does_not_corroborate_its_own_words() -> None:
 def test_well_capitalised_prose_with_no_names_does_not_get_the_lowercase_route() -> None:
     """The bug that put "line circles" in front of a student.
 
-    ``document_capitalises_names`` counts mid-sentence capitals, and a **no** has
-    two causes: the writer drops capitals, or the text contains no proper nouns.
-    Only the first should reach the permissive path. Stage-5 feedback fields are
-    the second — ordinary prose about an essay, scoring zero because there is
-    nothing to capitalise — and they were being read as lower-case writing.
+Counting mid-sentence capitals gives a **no** with two causes: the writer
+    drops capitals, or the text contains no proper nouns. Only the first should
+    reach the permissive path. Stage-5 feedback fields are the second — ordinary
+    prose about an essay, scoring zero because there is nothing to capitalise —
+    and they were being read as lower-case writing.
 
     `line` is a genuine given name, so the seed is legitimate; the missing guard
     was the whole defect. Scoped back (permissive whenever capitals are absent)
     this sentence masks "line circles".
     """
     text = "Your closing line circles back to the idea you opened with."
-    assert not document_capitalises_names(text)
-    assert not writes_without_standard_capitals(text)
+    assert capitalisation_habit(text) is CapitalisationHabit.SILENT
     assert _mask_lowercase(text, given_name={"line"}.__contains__) == text
 
 
@@ -1098,12 +1098,76 @@ def test_a_writer_who_drops_capitals_still_reaches_the_route() -> None:
     and a bare lower-case "i" in prose that otherwise capitalises its openings.
     """
     dropped_opening = "then terrence okonkwo showed up and everything changed."
-    assert writes_without_standard_capitals(dropped_opening)
+    assert capitalisation_habit(dropped_opening) is CapitalisationHabit.LOWERCASE
     assert "terrence okonkwo" not in _mask_lowercase(dropped_opening)
 
     bare_i = "Last summer i met terrence okonkwo at the community pool."
-    assert writes_without_standard_capitals(bare_i)
+    assert capitalisation_habit(bare_i) is CapitalisationHabit.LOWERCASE
     assert "terrence okonkwo" not in _mask_lowercase(bare_i)
+
+
+def test_the_drop_rate_is_not_consulted_without_a_presence_signal() -> None:
+    """The asymmetry, pinned on the case that forced it.
+
+    A rate on the drop side is right where the writer marks proper nouns and wrong
+    where they do not, and the wrong half costs a held-out name. Carrier essay
+    20739 has one mid-sentence capital, one lower-case sentence opening in 59
+    sentences and no bare "i" — a 1.7% drop rate. Read as a rate that is a typo,
+    so the permissive path is withdrawn, and the ``lowercase-writing`` frame's
+    "terrence okonkwo" leaks: held-out recall 28/28 to 27/28, bought with one span
+    of over-firing. Wrong direction for a tool that over-redacts on purpose.
+
+    Below the floor the document has offered one bit, so it is taken as given. The
+    second half is the control: the SAME low rate above the floor is a typo, and
+    the writer stays CONSISTENT.
+    """
+    below = "a long paragraph about nothing. " * 40 + "then it ended."
+    assert capitalisation_habit(below) is CapitalisationHabit.LOWERCASE
+
+    above = (
+        "We drove to Denver in April. My uncle Carlos came along. "
+        + "The road was long and the radio was loud. " * 20
+        + "then we arrived."
+    )
+    assert capitalisation_habit(above) is CapitalisationHabit.CONSISTENT
+
+
+def test_a_writer_who_does_both_is_inconsistent_not_one_or_the_other() -> None:
+    """The cell two booleans could not represent, and why it matters.
+
+    7 of 27 real documents satisfied BOTH old predicates at once, so the
+    treatment they got depended on which one the call site happened to read.
+    Here the writer marks two proper nouns mid-sentence and opens two of four
+    sentences in lower case: they use capitals, and they drop them.
+
+    INCONSISTENT must behave like a capitaliser where a capital is *present*
+    (``marks_proper_nouns`` is true, so the span's own case is testimony) and must
+    NOT reach the permissive path, because it has per-token evidence to offer and
+    the permissive path throws that evidence away.
+    """
+    text = (
+        "we drove to Denver last spring. My uncle Carlos came along too. "
+        "he had never seen the mountains before. Denver was cold."
+    )
+    habit = capitalisation_habit(text)
+    assert habit is CapitalisationHabit.INCONSISTENT
+    assert habit.marks_proper_nouns and habit.drops_capitals
+
+
+def test_the_habit_reads_headings_as_orthography() -> None:
+    """A heading's capitals are title case, so they are not the writer's choice.
+
+    This brings the document-level counter into line with
+    ``_mid_sentence_capitals``, which the inconsistent band falls through to; the
+    two were reading the same evidence through different rules. On the 27
+    un-scrubbed documents it moves five counts and no verdict, so it is asserted
+    on a constructed case rather than claimed as a fix.
+    """
+    text = "Horse Families and Breeds\n\nA horse family is a group. They stay."
+    headings = _heading_spans(text)
+    assert headings, "the fixture must actually contain a heading"
+    assert capitalisation_habit(text, headings) is CapitalisationHabit.SILENT
+    assert capitalisation_habit(text, ()) is CapitalisationHabit.CONSISTENT
 
 
 def test_a_capital_inside_an_opening_quote_is_orthography_not_a_name() -> None:
