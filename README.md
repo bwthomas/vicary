@@ -18,8 +18,22 @@ and fictional characters, built from Wikidata and the US Census surname list,
 consulted by candidate *shape*, and combined with evidence about how the writer
 uses each name elsewhere in the same document.
 
-> The name is the root of *vicarious*. Why that is the right name for this is
-> worth writing down, and will be, in a later revision of this file.
+### Why "vicary"
+
+Latin *vicarius*: one who stands in the place of another. It is the root of
+*vicarious*, and of *vicar* — and a placeholder is exactly that, a substitute
+holding a name's position in the text so the position survives when the name does
+not. `{NAME_1}` is not the name deleted; it is a stand-in that keeps the sentence
+a sentence, keeps two mentions of one person the same person, and keeps the way
+back.
+
+The other half of the word is the point. *Vicarious* experience is experience had
+through a substitute, and that is precisely the relationship a scoring model is
+put into here: it reads the essay through stand-ins, never through the student's
+actual classmates and neighbours. It grades the writing and never meets the
+people. That is the whole design in one word — which is why the placeholders are
+numbered and the redaction is reversible. A substitute that cannot be traced back
+is not standing in for anything.
 
 ## Install
 

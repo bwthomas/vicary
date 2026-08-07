@@ -1,0 +1,84 @@
+# The gates are tests so that CI runs them whether anybody remembers or not.
+# That rationale is written into tests/test_gates.py and was unfulfilled until
+# this file existed: nothing ran them but a human at a terminal.
+#
+# What CI can and cannot measure. Four of the nine gates need data that is not
+# packaged — three need the licensed ASAP essay corpus, one needs the Census
+# surname file — so a public runner measures five. That is not papered over: `-s`
+# is passed so the gate report reaches the log, and it prints NOT MEASURED for
+# the four it could not reach. A green CI run therefore means "the corpus-free
+# gates hold", never "the gate set is clear".
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor from requires-python, and the newest interpreter. The
+        # redaction path is stdlib-only, so the interesting breakage is a `re`
+        # or `enum` behaviour change between versions rather than a dependency.
+        python-version: ["3.11", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -e '.[dev]'
+
+      - name: Lint
+        run: ruff check src tests
+
+      - name: Type-check
+        run: mypy src/vicary
+
+      - name: Unit tests
+        run: pytest -m "not gates" -q
+
+      # Separate step so a gate regression is distinguishable from a unit-test
+      # failure at a glance in the checks list, and so the printed numbers land
+      # in a log section of their own.
+      - name: Gates
+        run: pytest -m gates -s
+
+      - name: Asset integrity
+        run: vicary-assets verify
+
+  build:
+    # A packaging break is invisible to the test suite and only shows up for
+    # whoever runs `pip install` first. Cheap to catch here instead.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pip build twine
+      - run: python -m build
+      - name: Check metadata
+        run: python -m twine check dist/*
+      - name: The wheel must carry the data asset
+        # An sdist/wheel that builds cleanly but ships no gazetteer loads empty,
+        # which means redacting every public figure in every essay — privacy-safe,
+        # product-hostile, and indistinguishable from over-tuning for months.
+        run: |
+          python -m zipfile -l dist/*.whl | grep -q 'vicary/data/notability.txt.gz' \
+            || { echo "wheel is missing vicary/data/notability.txt.gz"; exit 1; }
+          python -m zipfile -l dist/*.whl | grep -q 'vicary/data/MANIFEST.json' \
+            || { echo "wheel is missing vicary/data/MANIFEST.json"; exit 1; }

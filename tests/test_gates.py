@@ -8,9 +8,8 @@ nobody opened.
 
 Run them:
 
-    pytest -m gates -s          # the numbers, printed
+    pytest -m gates -s          # the numbers, and the report table at the end
     pytest -m "not gates"       # everything else, fast
-    pytest --gate-report        # the numbers as one table at the end
 
 **Four of these gates need data that is not packaged.** Three need the licensed
 third-party essay corpus — over-firing, latency, and held-out recall in a carrier

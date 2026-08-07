@@ -8,6 +8,9 @@ description = "Offline redaction of personal names in student compositions"
 readme = "README.md"
 requires-python = ">=3.11"
 dynamic = ["version"]
+authors = [{ name = "Blake Thomas", email = "bwthomas@gmail.com" }]
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["redaction", "anonymization", "privacy", "education", "names"]
 classifiers = [
     "Development Status :: 4 - Beta",
