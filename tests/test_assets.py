@@ -10,6 +10,7 @@ break is a green light with a comment on it:
 
 from __future__ import annotations
 
+import dataclasses
 import gzip
 import json
 from pathlib import Path
@@ -45,6 +46,55 @@ def test_the_manifest_tier_counts_match_the_asset_header() -> None:
     record = assets.record_for()
     described = assets.describe(assets.bundled_path())
     assert record.tiers == described["tiers"]
+
+
+def test_the_manifest_tier_counts_match_the_loaded_gazetteer() -> None:
+    """The claim ``build.gazetteer.ASSET_RELPATH`` makes, actually asserted.
+
+    The comment there says tier counts "are now asserted against the loaded
+    gazetteer by a unit test rather than trusted from the build log". Until this
+    test existed that was a claim about a test that did not exist — and the
+    reason it is worth having is that the build log is the one place those counts
+    HAD been read from, on a cut where the log reported 1,044 demonyms and the
+    running process held 0.
+
+    The manifest ↔ header pair above and ``_parse``'s truncation check close the
+    file's internal consistency. What neither closes is the direction the
+    2026-08-06 defect took: a tier this reader declares but the asset does not
+    carry loads as an empty frozenset, in silence. So this compares the manifest
+    against the frozensets a process actually gets, over
+    :data:`~vicary.gazetteer.TIER_NAMES` rather than a literal list, so the next
+    tier is covered without anyone remembering to extend it.
+    """
+    record = assets.record_for()
+    loaded = gazetteer.load(force=True)
+    assert set(record.tiers) == set(gazetteer.TIER_NAMES), (
+        "manifest tiers and the reader's tiers disagree: manifest has "
+        f"{sorted(set(record.tiers) - set(gazetteer.TIER_NAMES))} extra, "
+        f"missing {sorted(set(gazetteer.TIER_NAMES) - set(record.tiers))}"
+    )
+    for tier, count in record.tiers.items():
+        assert len(getattr(loaded, tier)) == count, (
+            f"tier {tier!r}: manifest says {count:,}, the loaded gazetteer "
+            f"holds {len(getattr(loaded, tier)):,}"
+        )
+        assert count > 0, f"tier {tier!r} shipped empty"
+
+
+def test_the_reader_declares_a_field_for_every_tier_it_names() -> None:
+    """``TIER_NAMES`` is the one list; the dataclass must agree with it.
+
+    Red if a tier is added to :data:`~vicary.gazetteer.TIER_NAMES` without a
+    field to hold it (``_parse`` would raise on every asset) or a frozenset field
+    is added without a name (it would never be populated, which is the empty-tier
+    failure again).
+    """
+    fields = {
+        field.name
+        for field in dataclasses.fields(gazetteer.Gazetteer)
+        if not field.name.startswith("_") and field.name != "meta"
+    }
+    assert fields == set(gazetteer.TIER_NAMES)
 
 
 def test_the_manifest_records_where_the_data_came_from() -> None:
