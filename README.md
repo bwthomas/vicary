@@ -110,7 +110,7 @@ config.add_production_alias("acme-prod")
 
 ## The data asset
 
-One file, `vicary/data/notability.txt.gz`, holding six independent tiers:
+One file, `vicary/data/notability.txt.gz`, holding seven independent tiers:
 
 | tier | entries | answers |
 |---|---|---|
@@ -120,6 +120,27 @@ One file, `vicary/data/notability.txt.gz`, holding six independent tiers:
 | `given` | 10,589 | common given name — a **redact** signal, not a keep |
 | `title` | 38,024 | published work or fictional character |
 | `demonym` | 1,044 | nationality or regional adjective — `Cuban`, `Nigerian` |
+| `settlement` | 23,277 | town or city — a **typing** signal, neither keep nor redact |
+
+Five of the seven grant a keep. `given` and `settlement` do not, and they are the
+two the asset's `entry_count` leaves out for that reason.
+
+`settlement` answers a question the others never ask: not *should this be
+masked*, but *which placeholder should it get*. A student's hometown must
+redact — which is exactly why `place` excludes settlements in its SPARQL — and
+before this tier existed it redacted as `{NAME}`, so a host echoing the
+placeholder wrote "great job describing your trip to {NAME}". The tier is built
+from the names that exclusion throws away, and it can only relabel a span that
+was already going to be masked: it cannot keep anything and cannot suppress a
+mask.
+
+Half of American town names are somebody's surname, because the towns were named
+after the people, so a settlement that is also a common given name or a surname
+borne by 10,000+ Americans is dropped and falls back to `{NAME}` — the
+conservative type, since "your friend {LOCATION}" is a worse thing for a student
+to read than "your trip to {NAME}". That drops `Jackson`, `Austin`, `Houston`,
+`Cleveland`, `Madison`, `Brooklyn` and `Aurora`; `Akron`, `Westfield`,
+`Springfield` and `Phoenix` survive.
 
 `demonym` is the only tier with no notability evidence behind it: it is a keep
 granted to a bare token for being a *word*. So it is subtracted harder than any
@@ -324,5 +345,12 @@ pytest -m gates -s
   `Burgundy`, `Bohemia` and `Anatolia` from the place tier, so a bare mention of
   one over-fires. Multi-token forms are unaffected — "Auschwitz concentration
   camp" still resolves.
+* Placeholder *types* are three — `{NAME}`, `{ORGANIZATION}`, `{LOCATION}` —
+  and everything else masked as a third-party name gets `{NAME}`. A holiday, a
+  brand or a pet that over-fires is typed as a person, and `Christmas` is the
+  measured case: it is a US town at exactly the settlement floor, so on real
+  student prose it retypes to `{LOCATION}`. Both labels are wrong; the span is a
+  pre-existing over-fire that should not have been masked at all, so the tier
+  relabels a defect rather than creating one.
 * It makes no network call and creates no cloud resource unless you choose
   `guardrail` mode.

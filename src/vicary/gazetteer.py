@@ -98,7 +98,7 @@ ASSET_RELPATH = Path("data") / assets.NOTABILITY_ASSET
 
 #: On-disk format this reader understands. A mismatch raises: an asset whose
 #: tier semantics changed is worse than a missing one, because it answers.
-SUPPORTED_FORMAT = 3
+SUPPORTED_FORMAT = 4
 
 #: Lookup verdicts. Strings rather than an enum so they survive a JSON round
 #: trip into eval rows without a converter.
@@ -122,7 +122,7 @@ DEMONYM = "demonym"
 #: KEEP tier redacts everything it was built to protect, which presents as
 #: over-aggressive tuning rather than as a packaging bug.
 TIER_NAMES: tuple[str, ...] = ("full", "short", "place", "given", "title",
-                               "demonym")
+                               "demonym", "settlement")
 
 #: Name particles that may lead a two- or three-token *partial* surname. Kept in
 #: sync with the builder's list by a unit test rather than by import, so the
@@ -211,6 +211,9 @@ class Gazetteer:
     title: frozenset[str] = frozenset()
     #: English demonyms — ``cuban``, ``nigerian``. A KEEP, see :attr:`DEMONYM`.
     demonym: frozenset[str] = frozenset()
+    #: Human settlements. Neither a keep nor a redact signal — the only tier that
+    #: is neither. See :meth:`is_settlement`.
+    settlement: frozenset[str] = frozenset()
     #: Memoized first-token index, built on first use. Not a constructor argument
     #: because it is derived from ``title`` and must never disagree with it.
     _heads: frozenset[str] | None = field(default=None, compare=False)
@@ -220,6 +223,12 @@ class Gazetteer:
 
     @property
     def entry_count(self) -> int:
+        """Entries that can make something KEEP.
+
+        ``given`` and ``settlement`` are excluded on purpose: neither grants a
+        keep, so counting them here would inflate the one number that answers
+        "how much notability does this asset carry".
+        """
         return (len(self.full) + len(self.short) + len(self.place)
                 + len(self.title) + len(self.demonym))
 
@@ -320,6 +329,30 @@ class Gazetteer:
         """
         key = normalize(token)
         return bool(key) and " " not in key and key in self.given
+
+    def is_settlement(self, name: str) -> bool:
+        """True when ``name`` is a town, city or village.
+
+        **Not part of the notability decision, and deliberately not consulted by**
+        :meth:`notability`. A settlement is a student's hometown, so it must
+        redact; that is the whole reason ``Q486972`` is subtracted from the place
+        tier. What this answers is the *next* question, asked only about a span
+        that is already being masked: which placeholder does it get. A host that
+        reads the type back writes "great job describing your trip to
+        {LOCATION}", and before this tier existed it wrote "{NAME}".
+
+        So the failure modes are not symmetric with a keep tier's, and neither is
+        the cost of a wrong answer: a miss types a place ``{NAME}`` and a false
+        positive types a person ``{LOCATION}``. Both are already redacted. The
+        builder subtracts common given names and well-borne US surnames precisely
+        because the second is the one a student would read.
+
+        Same shape as :meth:`is_common_given_name` — a tier that ships in the
+        asset, is reconciled by the manifest, and is invisible to
+        :meth:`is_notable`.
+        """
+        key = normalize(name)
+        return bool(key) and key in self.settlement
 
     def notability(self, name: str) -> str:
         """Classify ``name``. One of the four verdict constants above.
@@ -428,6 +461,7 @@ def _parse(text: str) -> Gazetteer:
         given=frozenset(tiers["given"]),
         title=frozenset(tiers["title"]),
         demonym=frozenset(tiers["demonym"]),
+        settlement=frozenset(tiers["settlement"]),
         meta=meta,
     )
 
@@ -507,6 +541,11 @@ def notability(name: str) -> str:
 def is_common_given_name(token: str) -> bool:
     """True when ``token`` is a common given name — a REDACT signal, not a KEEP."""
     return load().is_common_given_name(token)
+
+
+def is_settlement(name: str) -> bool:
+    """True when ``name`` is a town or city — a TYPING signal, not a keep."""
+    return load().is_settlement(name)
 
 
 def is_title(name: str) -> bool:

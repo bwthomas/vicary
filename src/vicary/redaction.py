@@ -84,6 +84,7 @@ from vicary.name_candidates import (
     GivenNameOracle,
     NotabilityOracle,
     NotabilityTierOracle,
+    SettlementOracle,
     TitleOracle,
     established_name_tokens,
     find_candidates,
@@ -474,6 +475,7 @@ class Redactor:
         given_name: GivenNameOracle | None = None,
         title: TitleOracle | None = None,
         title_prefix: TitleOracle | None = None,
+        settlement: SettlementOracle | None = None,
         corroborate: bool = True,
         notability_tier: NotabilityTierOracle | None = None,
         number_placeholders: bool = True,
@@ -502,6 +504,7 @@ class Redactor:
                 given_name=given_name,
                 title=title,
                 title_prefix=title_prefix,
+                settlement=settlement,
                 corroborate=corroborate,
                 notability_tier=notability_tier,
                 number_placeholders=number_placeholders,
@@ -823,6 +826,7 @@ def _gazetteer_oracles(level: str) -> dict:
     from vicary.gazetteer import (
         is_common_given_name,
         is_notable,
+        is_settlement,
         is_title,
         is_title_prefix,
         notability,
@@ -837,6 +841,10 @@ def _gazetteer_oracles(level: str) -> dict:
         "notability_tier": notability,
         "title": is_title,
         "title_prefix": is_title_prefix,
+        # Wired at BOTH gazetteer levels, unlike `given_name` below. This one
+        # decides a placeholder's type, not a verdict, so it has nothing to do
+        # with which candidate routes are on.
+        "settlement": is_settlement,
         # The one difference between the two gazetteer levels.
         "given_name": (
             is_common_given_name if level == NAMES_LOWERCASE else None

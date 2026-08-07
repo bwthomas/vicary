@@ -395,6 +395,8 @@ def _cmd_fetch(args: argparse.Namespace) -> int:
     argv: list[str] = []
     if args.stats:
         argv.append("--stats")
+    if args.cache_dir:
+        argv += ["--cache-dir", args.cache_dir]
     rc = builder.main(argv) or 0
     if rc or args.stats:
         return rc
@@ -424,6 +426,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     fetch.add_argument("--stats", action="store_true",
                        help="report what a rebuild would produce; write nothing")
+    # Forwarded to the builder. Without this the documented rebuild command
+    # re-runs every SPARQL query against donated infrastructure on each attempt,
+    # which makes a threshold sweep — the reason the cache exists — cost ~30
+    # queries per step instead of one fetch and N offline re-folds.
+    fetch.add_argument("--cache-dir", default=None,
+                       help="cache raw SPARQL rows here and reuse them "
+                            "(delete it after changing a query)")
     fetch.set_defaults(func=_cmd_fetch)
 
     args = parser.parse_args(argv)

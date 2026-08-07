@@ -101,6 +101,17 @@ NotabilityOracle = Callable[[str], bool]
 #: mechanism would have let "Lake Powell" license a classmate's bare "Powell".
 NotabilityTierOracle = Callable[[str], str]
 
+#: Answers "is this a town?" — the *typing* question, asked only about a span
+#: that is already being masked. A separate boolean rather than a verdict from
+#: :data:`NotabilityTierOracle`, and the reason is a safety property rather than
+#: a style preference: ``notability()``'s contract is ``verdict != NOT_NOTABLE
+#: => KEEP``, so teaching it to return a settlement would turn every student's
+#: hometown into a keep the moment some caller asked ``is_notable``. A settlement
+#: must redact and merely wants a better placeholder, which is a different
+#: question and gets a different oracle — the same shape as
+#: :data:`GivenNameOracle`, the other tier that is not a keep.
+SettlementOracle = Callable[[str], bool]
+
 #: The tier a candidate must resolve to before it may establish a surname.
 #: A place, a landmark, a work title and an already-bare iconic surname are all
 #: excluded: none of them is a person written first-name-then-surname, so none of
@@ -323,16 +334,25 @@ class Candidate:
     text: str
     start: int
     end: int
-    #: ``NAME`` or ``ORGANIZATION``. LOCATION is deliberately absent: telling a
-    #: place from a person needs NER, and per the module docstring the inbound
-    #: path does not need the distinction — both are placeholders in the training
-    #: distribution. A location therefore masks as ``{NAME}`` and is reported by
-    #: the harness as recalled-but-mistyped rather than as a leak.
+    #: ``NAME``, ``ORGANIZATION`` or ``LOCATION``.
+    #:
+    #: ``LOCATION`` was absent until 2026-08-07 on the argument that telling a
+    #: place from a person needs NER and the inbound path does not need the
+    #: distinction — both are placeholders in the training distribution. The first
+    #: half of that is what changed: a settlement gazetteer tier is not NER, and
+    #: it types the case that actually occurs. The second half was always the
+    #: weaker claim, because the inbound path is not the only reader — a host that
+    #: echoes the placeholder back writes "your trip to {NAME}".
+    #:
+    #: Still no ``LOCATION`` for a place that is *kept* (a landmark, a country):
+    #: a kept span is never masked, so it has no placeholder to type.
     kind: str = "NAME"
 
     @property
     def placeholder(self) -> str:
-        return "{ORGANIZATION}" if self.kind == "ORGANIZATION" else "{NAME}"
+        if self.kind in ("ORGANIZATION", "LOCATION"):
+            return f"{{{self.kind}}}"
+        return "{NAME}"
 
 
 _HONORIFIC_SET: frozenset[str] = frozenset(h.lower() for h in _HONORIFICS)
@@ -379,10 +399,26 @@ def _is_stop(token: str) -> bool:
     return word.strip("'’") in _STOP_WORDS
 
 
-def _classify(tokens: list[str]) -> str:
+def _classify(
+    tokens: list[str], settlement: SettlementOracle | None = None
+) -> str:
+    """Which placeholder kind this span should mask as.
+
+    The org suffix wins over the settlement lookup, and the order is load-bearing
+    rather than arbitrary: "Springfield Township" and "Akron Public Library" both
+    resolve as settlements under a prefix match and both are organizations. The
+    suffix is direct evidence about *this* string; the tier is evidence about a
+    substring of it.
+
+    ``settlement`` absent means every non-organization span types ``NAME`` — the
+    behaviour before the tier existed, and the behaviour a caller that wires no
+    oracles still gets.
+    """
     tail = tokens[-1].lower().strip(".,")
     if tail in _ORG_SUFFIXES:
         return "ORGANIZATION"
+    if settlement is not None and settlement(" ".join(tokens)):
+        return "LOCATION"
     return "NAME"
 
 
@@ -868,6 +904,7 @@ def _find_lowercase_candidates(
     is_given: GivenNameOracle,
     protected: Callable[[int, int], bool],
     corroborate: frozenset[str] | None = None,
+    settlement: SettlementOracle | None = None,
 ) -> list[Candidate]:
     """Names written in lowercase, seeded on the gazetteer's given-name tier.
 
@@ -953,7 +990,7 @@ def _find_lowercase_candidates(
                 text=joined,
                 start=start,
                 end=span_end,
-                kind=_classify(joined.split()),
+                kind=_classify(joined.split(), settlement),
             )
         )
         index = reach + 1
@@ -966,6 +1003,7 @@ def find_candidates(
     given_name: GivenNameOracle | None = None,
     title: TitleOracle | None = None,
     title_prefix: TitleOracle | None = None,
+    settlement: SettlementOracle | None = None,
     headings_are_orthographic: bool = True,
     title_relation_refusal: bool = True,
 ) -> list[Candidate]:
@@ -979,6 +1017,10 @@ def find_candidates(
             capitalisation alone and misses lowercase writing by construction.
         title: Protects work titles and fictional-character names from generation
             entirely. Absent, a student writing about a book has the book redacted.
+        settlement: Types a masked span ``{LOCATION}`` instead of ``{NAME}``.
+            Changes no verdict — it cannot make a span keep or stop a span
+            masking, only relabel one that was already going to be masked. Absent,
+            every town types ``{NAME}``.
         title_relation_refusal: Withdraw that protection from a title span with a
             first-person relation attached to it — "My neighbor Alice Adams". The
             protection is applied *here*, before generation, so the refusal has
@@ -1100,7 +1142,7 @@ def find_candidates(
                     text=masked_text,
                     start=start,
                     end=start + len(masked_text),
-                    kind=_classify(run),
+                    kind=_classify(run, settlement),
                 )
             )
 
@@ -1118,7 +1160,7 @@ def find_candidates(
         # reached by the INCONSISTENT writer either, who has per-token evidence to
         # offer and is better served by it. See :class:`CapitalisationHabit`.
         for candidate in _find_lowercase_candidates(
-            text, given_name, _protected,
+            text, given_name, _protected, settlement=settlement,
             corroborate=(
                 None
                 if habit is CapitalisationHabit.LOWERCASE
@@ -1596,6 +1638,7 @@ def mask_candidates(
     given_name: GivenNameOracle | None = None,
     title: TitleOracle | None = None,
     title_prefix: TitleOracle | None = None,
+    settlement: SettlementOracle | None = None,
     corroborate: bool = True,
     notability_tier: NotabilityTierOracle | None = None,
     minter: PlaceholderMinter | None = None,
@@ -1619,6 +1662,9 @@ def mask_candidates(
         title: Keeps work titles and fictional-character names whole. Applied
             before generation rather than after, so it also protects titles that
             generation would otherwise split on an interior stopword.
+        settlement: Types a masked town ``{LOCATION}``. Purely a relabelling —
+            passing it changes which placeholder appears and never whether one
+            appears, so it cannot move recall, keep precision or over-firing.
         corroborate: Keep a bare surname when the same document also writes a
             full name the oracle keeps. See :func:`corroborated_surnames`. No
             effect without ``notable``, since there is nothing to corroborate
@@ -1643,6 +1689,7 @@ def mask_candidates(
     lowered_keep = {k.lower() for k in keep}
     candidates = find_candidates(
         text, given_name=given_name, title=title, title_prefix=title_prefix,
+        settlement=settlement,
         headings_are_orthographic=headings_are_orthographic,
         title_relation_refusal=title_relation_refusal,
     )

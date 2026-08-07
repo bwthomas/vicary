@@ -1214,3 +1214,89 @@ def test_masking_a_quoted_name_leaves_the_quotation_balanced() -> None:
     assert "O'Brien" not in _mask_lowercase(
         "Ask O'Brien Delgado about it.", given_name={"delgado"}.__contains__
     )
+
+
+# ---------------------------------------------------------------------------
+# Placeholder typing: {LOCATION} off the settlement tier
+# ---------------------------------------------------------------------------
+
+#: A stand-in for ``gazetteer.is_settlement``, which folds its argument before
+#: looking it up. Spelling that out here rather than passing a bare
+#: ``set.__contains__``: the candidate text arrives capitalised as written, and a
+#: case-sensitive fake answers no to everything while looking like it works.
+def _settles(*names: str):
+    keys = {n.lower() for n in names}
+    return lambda name: name.lower() in keys
+
+
+def test_a_town_types_as_a_location_not_a_name() -> None:
+    """The Akron defect, in one assertion.
+
+    "Akron" was always *masked* — this was never a leak — but it was masked
+    ``{NAME}``, so a host echoing the placeholder wrote "your trip to {NAME}".
+    """
+    masked, n = mask_candidates(
+        "We drove from Akron that summer.", settlement=_settles("Akron"),
+    )
+    assert "{LOCATION}" in masked, masked
+    assert "Akron" not in masked
+    assert n == 1
+
+
+def test_without_the_settlement_oracle_a_town_still_masks_as_a_name() -> None:
+    """The tier changes a type, never a verdict.
+
+    A caller that wires no settlement oracle gets exactly the prior behaviour:
+    still redacted, typed ``{NAME}``. That is what makes the oracle safe to add
+    to one arm at a time.
+    """
+    masked, n = mask_candidates("We drove from Akron that summer.")
+    assert "{NAME}" in masked, masked
+    assert "Akron" not in masked
+    assert n == 1
+
+
+def test_the_settlement_tier_cannot_keep_a_span_or_stop_one_masking() -> None:
+    """Same span count, same characters masked, different label.
+
+    This is the property that lets the recall, keep-precision and over-firing
+    gates go unre-derived for this change: all three count masked spans, and this
+    moves none of them. Red if typing ever gains the power to suppress a mask.
+    """
+    text = "We drove from Akron to see the Lincoln Memorial with Deshawn."
+    plain, n_plain = mask_candidates(text, given_name=_settles("Deshawn"))
+    typed, n_typed = mask_candidates(
+        text, given_name=_settles("Deshawn"), settlement=_settles("Akron"),
+    )
+    assert n_plain == n_typed
+    assert re.sub(r"\{[A-Z]+\}", "{X}", plain) == re.sub(
+        r"\{[A-Z]+\}", "{X}", typed
+    ), (plain, typed)
+    assert plain != typed, "the settlement oracle changed nothing at all"
+    assert "{LOCATION}" in typed and "{LOCATION}" not in plain
+
+
+def test_an_organization_suffix_beats_the_settlement_tier() -> None:
+    """Direct evidence about this string beats a tier hit on a substring of it.
+
+    "Akron Insurance" resolves as a settlement under a prefix reading and is an
+    organization. The suffix rule runs first.
+    """
+    masked, _ = mask_candidates(
+        "She works at Akron Insurance downtown.",
+        settlement=lambda name: name.lower().startswith("akron"),
+    )
+    assert "{ORGANIZATION}" in masked, masked
+
+
+def test_a_kept_place_gets_no_location_placeholder() -> None:
+    """A keep has no placeholder to type, so the two tiers cannot collide.
+
+    "Lincoln Memorial" is a public landmark and the essay's subject. Even with a
+    settlement oracle that would happily claim it, it is never masked, so it can
+    never be mistyped.
+    """
+    text = "We went to see the Lincoln Memorial."
+    masked, n = mask_candidates(text, settlement=lambda name: True)
+    assert masked == text, masked
+    assert n == 0
