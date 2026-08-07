@@ -26,7 +26,13 @@
   applied below the floor it demoted a genuine lower-case-writing carrier essay at
   a 1.7% drop rate and **leaked a held-out name** (28/28 → 27/28) to buy one span
   of over-firing.
-* Every gate is unchanged: held-out recall 100% on both the frames and
+* **New gate: held-out recall in a carrier essay.** The existing recall gate reads
+  the frames arm only, where each frame is scored alone; every document-level
+  signal the detector weighs sees a different input once a frame is injected into
+  3,000 characters of real prose. The rejected rate variant above scored 15/15 on
+  frames and 27/28 in carriers and **printed 8/8 PASS**. That failing case is now a
+  gate, and it goes red on the variant while every other gate stays green.
+* Every other gate is unchanged: held-out recall 100% on both the frames and
   essay-carrier arms, KEEP precision 100%, round-trip 100%, over-firing 0.72
   spans/essay, Census exposure 1.20%, 114 spans on the 27-document student-prose
   leg. The instrument is not blind to this path — the rejected variant above moved

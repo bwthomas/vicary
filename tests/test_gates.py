@@ -12,9 +12,10 @@ Run them:
     pytest -m "not gates"       # everything else, fast
     pytest --gate-report        # the numbers as one table at the end
 
-**Two of these gates need a corpus that is not packaged**, because it is licensed
-third-party essay data. They skip when it is absent, and the skip is loud: a run
-with `VICARY_EVAL_CORPUS_TSV` unset reports fewer gates, and
+**Four of these gates need data that is not packaged.** Three need the licensed
+third-party essay corpus — over-firing, latency, and held-out recall in a carrier
+essay — and one needs the Census surname file. They skip when it is absent, and the
+skip is loud: a run with `VICARY_EVAL_CORPUS_TSV` unset reports fewer gates, and
 :func:`test_the_gate_report_says_what_it_could_not_measure` refuses to let a
 partial run read as a complete one.
 
@@ -226,6 +227,38 @@ def test_held_out_recall(frame_metrics, record_gate) -> None:
         f"held-out recall {value:.1f}% is below {HELD_OUT_RECALL_FLOOR}%: a "
         "private name reached the output. Failing frames: "
         f"{_failing_frames(frame_metrics)}"
+    )
+
+
+def test_held_out_recall_in_a_carrier_essay(corpus_metrics, record_gate) -> None:
+    """The same spans again, riding in real essays instead of alone.
+
+    Not redundant with :func:`test_held_out_recall`, and the gap between them let a
+    real regression through. That gate reads the **frames** arm, where each frame
+    is scored alone; this reads the **essay-carrier** arm, where a frame is injected
+    into 3,000-odd characters of somebody else's prose. Every document-level signal
+    the detector weighs — the capitalisation habit, same-document surname
+    corroboration — sees a completely different input in the two arms, so a change
+    can be flat on one and move the other.
+
+    It did. A variant that read the lower-case-opening *rate* below the
+    mark floor scored 15/15 held out on frames and 27/28 in carriers: in essay
+    20739 one dropped opening across 59 sentences is a 1.7% rate, which withdrew
+    the permissive path and leaked "terrence okonkwo". All eight gates printed
+    PASS. This is that failing case, kept as a gate — see
+    :func:`~vicary.name_candidates.capitalisation_habit`.
+
+    Skips without a corpus, like the over-firing gate, and for the same reason:
+    there is no carrier to ride in.
+    """
+    value = corpus_metrics["recall_held_out"]
+    record_gate("held-out recall (carrier)", value, ">=", HELD_OUT_RECALL_FLOOR, "%")
+    assert value is not None, "no held-out spans were scored"
+    assert value >= HELD_OUT_RECALL_FLOOR, (
+        f"held-out recall in a carrier essay {value:.1f}% is below "
+        f"{HELD_OUT_RECALL_FLOOR}%: a private name reached the output once a real "
+        "essay was around it, even though the frames arm is clean. Failing "
+        f"frames: {_failing_frames(corpus_metrics)}"
     )
 
 
@@ -447,7 +480,7 @@ def test_the_gate_report_says_what_it_could_not_measure(gate_results) -> None:
     lines = ["", f"gate report — fixture {FIXTURE_VERSION}", "-" * 58]
     for name, value, op, bar, unit in gate_results:
         verdict = "PASS" if _passes(value, op, bar) else "FAIL"
-        lines.append(f"  {name:<24} {value:>8.2f}{unit:<14} {op} {bar:g}  {verdict}")
+        lines.append(f"  {name:<26} {value:>8.2f}{unit:<14} {op} {bar:g}  {verdict}")
     measured = {name for name, *_ in gate_results}
     missing = sorted(_ALL_GATES - measured)
     lines.append("-" * 58)
@@ -466,6 +499,7 @@ def test_the_gate_report_says_what_it_could_not_measure(gate_results) -> None:
 #: describe what did not.
 _ALL_GATES = {
     "held-out recall",
+    "held-out recall (carrier)",
     "KEEP precision",
     "round-trip",
     "unaccounted violations",
