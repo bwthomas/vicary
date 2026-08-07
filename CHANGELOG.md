@@ -38,6 +38,23 @@
   leg. The instrument is not blind to this path — the rejected variant above moved
   held-out recall and over-firing in the same harness.
 
+### Release readiness
+
+* **CI exists.** `test_gates.py` has always said "a test is something CI runs
+  whether anybody remembers or not"; nothing ran them but a human at a terminal.
+  `.github/workflows/ci.yml` runs lint, mypy, the unit tests, the gates and
+  `vicary-assets verify` on 3.11 and 3.13, plus a packaging job that builds,
+  `twine check`s, and **asserts the wheel actually contains the gazetteer** — an
+  artifact that builds cleanly and ships no asset loads empty, which means
+  redacting every public figure in every essay.
+* MIT licence, `LICENSE` file and `license`/`license-files`/`authors` metadata,
+  verified on the built wheel rather than in the source: `License-Expression: MIT`,
+  `License-File: LICENSE`.
+* `pytest --gate-report` was documented in `test_gates.py` and **does not exist** —
+  it errors out. The report is a test that prints under `-s`. Docstring corrected
+  rather than the flag added, since the mechanism was already there.
+* The README now says why the package is called vicary.
+
 ## The 2026-08-06 cut
 
 ### Two build defects that made every tier change invisible
