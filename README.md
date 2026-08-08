@@ -117,13 +117,25 @@ One file, `vicary/data/notability.txt.gz`, holding seven independent tiers:
 | `full` | 295,049 | full name of a public figure |
 | `short` | 1,229 | bare surname iconic enough to stand alone |
 | `place` | 25,444 | public place or landmark (settlements excluded — a town name is where a student lives) |
-| `given` | 10,589 | common given name — a **redact** signal, not a keep |
+| `given` | 8,138 | common given name — a **redact** signal, not a keep |
 | `title` | 38,024 | published work or fictional character |
 | `demonym` | 1,044 | nationality or regional adjective — `Cuban`, `Nigerian` |
 | `settlement` | 23,277 | town or city — a **typing** signal, neither keep nor redact |
 
 Five of the seven grant a keep. `given` and `settlement` do not, and they are the
 two the asset's `entry_count` leaves out for that reason.
+
+`given` is built from **SSA US birth counts**, all years and both sexes, at
+1,800 births or more — not from the first tokens of notable people's names, which
+is what it was until 2026-08-07. That was an equity defect rather than a tuning
+miss: it answered "was a famous person called this", and the misses skewed toward
+Black and South Asian given names — `Deshawn`, `Ayaan` and `Meisha` absent while
+`Marguerite`, `Terrence`, `Priya` and `Marisol` were present. Births are a
+*dense* signal where a bearer count is sparse, so the tier got better on both
+legs at once: it closed `Deshawn` (visible recall 96.2% → 100%) **and** over-firing
+fell 0.72 → 0.60 spans/essay. No US child is registered as `Like` or `Pride` at
+any threshold, which is why the ordinary-word collision that capped the old
+approach does not exist here.
 
 `settlement` answers a question the others never ask: not *should this be
 masked*, but *which placeholder should it get*. A student's hometown must
@@ -189,9 +201,10 @@ writes only the first name, which is in the `given` tier — a **redact** signal
 so a student read `introducing who {NAME} is` about the author they had just
 written about.
 
-No lookup fixes that. The `given` tier is *built from* the first tokens of the
-full tier, so every entry in it heads some notable full name, and Narciso
-Rodriguez sits far below the short tier's floor. The evidence has to be
+No lookup fixes that. `Narciso` is in the `given` tier because US children are
+named Narciso, not because the tier knows about Narciso Rodriguez — who sits far
+below the short tier's floor — so nothing in the asset connects the bare first
+name to the designer. The evidence has to be
 per-document, and the document holding it is the **essay**, not the feedback. So
 `redact_inbound` records the bare tokens of the notable full names it kept, and
 `redact_outbound` treats them as topical:
@@ -335,6 +348,11 @@ pytest -m gates -s
 * It does not detect names it has no evidence for. A private surname written
   lower-case throughout, or a bare surname in a document that also names a famous
   bearer of it, are known and documented misses rather than bugs.
+* The `given` tier's births floor leaves the rarest tail out. `Meisha` has 1,048
+  US births since 1880; reaching her needs a floor at or below that, which
+  measures 0.80 spans/essay and fails the over-firing gate. That trade is left
+  unmade rather than overlooked — it buys the rarest names at the cost of the
+  tightest gate.
 * The relation override reaches `title` and `full`, not `place`. A private
   person whose name is also a public *place* still keeps.
 * 87 of the 33,269 full-tier holes survive the override, and a title span still

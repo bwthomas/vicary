@@ -80,6 +80,18 @@ EVAL_CORPUS_FILENAME: str = "training_set_rel3.tsv"
 #: the Census Bureau's schedule rather than ours.
 EVAL_CENSUS_CSV_ENV_VAR: str = "VICARY_EVAL_CENSUS_CSV"
 
+#: Local copy of the SSA baby-names archive (``names.zip``), the source of the
+#: ``given`` tier. Read at BUILD time only — the redaction path never touches it.
+#:
+#: A local path rather than a download because ``ssa.gov`` returns an Akamai HTTP
+#: 403 to some networks on *every* path including the site root — verified 403 for
+#: this one with a plain UA, a browser UA, a cookie jar and a referer, while
+#: ``www2.census.gov`` and ``query.wikidata.org`` answered normally in the same
+#: run. So the builder cannot assume it can fetch this file, and a build that
+#: silently proceeded without it would ship a tier built from the wrong
+#: population under a format number promising the right one.
+BUILD_SSA_NAMES_ZIP_ENV_VAR: str = "VICARY_BUILD_SSA_NAMES_ZIP"
+
 #: Legacy spellings, accepted at lower precedence with a deprecation notice.
 #: Keyed by the current name. Deleting an entry is a breaking change; adding one
 #: is not.

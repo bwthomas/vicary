@@ -98,7 +98,7 @@ ASSET_RELPATH = Path("data") / assets.NOTABILITY_ASSET
 
 #: On-disk format this reader understands. A mismatch raises: an asset whose
 #: tier semantics changed is worse than a missing one, because it answers.
-SUPPORTED_FORMAT = 4
+SUPPORTED_FORMAT = 5
 
 #: Lookup verdicts. Strings rather than an enum so they survive a JSON round
 #: trip into eval rows without a converter.
