@@ -2,6 +2,58 @@
 
 ## Unreleased
 
+### The given-name tier is built from US births, not from famous people's first names
+
+* **`given` is rebuilt from the SSA baby-names archive** — per-name US birth
+  counts, 1880–2025, all years and both sexes, at **1,800 births or more**. Asset
+  format 4 → 5. It was the first tokens of the `full` tier at ≥3 distinct bearers,
+  which answers *"was a famous person called this"*, not *"is this a name a US
+  child is given"*.
+* **This was an equity defect, not a tuning miss.** Measured on the old tier:
+  `Deshawn`, `Ayaan` and `Meisha` absent while `Marguerite`, `Terrence`, `Priya`,
+  `Marisol` and `Vinny` were present — **the misses skewed toward Black and South
+  Asian given names**. `Deshawn` was the arm's one visible-recall miss and a
+  standing entry in `ACCEPTED_VIOLATIONS`.
+* **It improves both legs at once**, which is rare enough to be worth stating
+  plainly: visible recall **96.2% → 100.0%** (the `Deshawn` leak is gone, and
+  `intersect-school-and-friend` goes 50% → 100%) *and* over-firing **0.72 → 0.60**
+  spans/essay. The over-firing ceiling follows the measurement down to 0.60 by the
+  rule already written on it — a ceiling above the measured value is a comment,
+  not a gate.
+* **Why births succeed where the bearer floor could not.** The bearer floor was
+  measured first and rejected: floor 2 bought nothing, floor 1 reached `Deshawn`
+  but admitted 39,830 tokens for +7.9% over-firing and turned "Breeds I Like" into
+  "Breeds I {NAME}", because some notable label leads with "Like". Births are a
+  **dense** signal where a bearer count is sparse — `Like`, `Pride` and `Recess`
+  have **no birth record at any threshold** — so the tier is larger where it
+  matters and cleaner where it hurt. That frame is now clean.
+* **1,800 is the measured knee, not a round number.** Over-firing by floor against
+  the 25-essay gate corpus: 1,000 → 0.80, 1,200 → 0.76, 1,400 → 0.76, 1,600 →
+  0.72, **1,800 → 0.60**, 2,000 → 0.60. 1,600 would pass the old ceiling with zero
+  headroom; 1,800 buys 0.12 spans/essay for 635 of the rarest names in the band.
+  All-years rather than a recent window because the tail is where the misses live.
+* **What it still does not reach, named:** `Meisha`, at 1,048 births since 1880.
+  Reaching her needs a floor ≤1,048, which measures 0.80 spans/essay and fails the
+  over-firing gate. The trade is left unmade rather than unnoticed.
+* **The instrument is not blind to this path.** Rebuilding at floor 1 (tier
+  105,966) drove over-firing to 2.24, KEEP precision to 95% and added a new
+  invariant violation — three gates red — so the 0.60 is a measurement, not a
+  harness that cannot see the change.
+* `ACCEPTED_VIOLATIONS` is down to **one**: `Robinson`, the documented
+  deliberately-unpaid cost. Both removals this week were surfaced by
+  `test_the_accepted_violations_still_happen` going red.
+* **The build now requires the archive and refuses to guess.** `ssa.gov` returns
+  an Akamai HTTP 403 to some networks on every path including the site root
+  (verified with a plain UA, a browser UA, a cookie jar and a referer, while
+  `www2.census.gov` and `query.wikidata.org` answered normally in the same run),
+  so there is no download path to fall back on. Point
+  `VICARY_BUILD_SSA_NAMES_ZIP` at a hand-downloaded `names.zip`. A missing archive
+  raises; a truncated parse raises — a short read here makes the redactor *less*
+  aggressive, quietly restoring the leak the tier exists to close.
+* On the 27 un-scrubbed student documents the masked-span count moves 114 → 108.
+  Reported as a configuration delta only: real names are present in that corpus,
+  so an absolute count there is not an over-firing figure.
+
 ### A redacted town is typed `{LOCATION}`, not `{NAME}`
 
 * **New `settlement` tier, and the asset format goes 3 → 4.** `Akron` was always

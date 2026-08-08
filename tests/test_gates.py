@@ -65,7 +65,7 @@ ROUND_TRIP_FLOOR = 100.0
 #: Spans removed from genuine, un-injected student prose. A ceiling: this is the
 #: visible product defect, since a student reading their own feedback sees it.
 #:
-#: 0.72 is the measured value for **this** essay selection — the first 25 set-8
+#: 0.60 is the measured value for **this** essay selection — the first 25 set-8
 #: essays in file order. The number is selection-dependent and that is not noise:
 #: at the previous bar of 1.20, the same code on a different 25 essays read 1.16.
 #: Anything comparing across selections is comparing two measurements, so the
@@ -79,7 +79,15 @@ ROUND_TRIP_FLOOR = 100.0
 #: precision and the leak count were all unchanged across that move, so the bar
 #: follows the measurement down rather than banking the slack — a ceiling left
 #: above the measured value is not a gate, it is a comment.
-OVER_FIRE_SPANS_CEILING = 0.72
+#:
+#: Lowered again 0.72 -> 0.60 on 2026-08-07, by the same rule and in the rarer
+#: direction: rebuilding the ``given`` tier from US birth counts instead of
+#: notable people's first tokens **improved both legs at once**, closing the
+#: `Deshawn` leak (visible recall 96.2% -> 100.0%) while over-firing fell. The
+#: floor that produced it was picked against this number — 1,600 births measures
+#: 0.72 and would have passed with no headroom, 1,800 measures 0.60 — so banking
+#: the slack here would retire the very measurement that chose the floor.
+OVER_FIRE_SPANS_CEILING = 0.60
 
 #: Population-weighted share of US surname bearers whose BARE surname resolves
 #: notable. A ceiling on the *single-token* tiers' generosity — short, place and
@@ -108,20 +116,20 @@ LATENCY_P95_MS_CEILING = 10.0
 #: * ``Robinson`` — the documented, deliberately unpaid cost: once a document
 #:   establishes "Jackie Robinson", a bare "Robinson" in it keeps, including a
 #:   neighbour who shares the surname. No surname-level rule separates them.
-#: * ``Deshawn`` — a bare first name in a two-name frame. The gate arm's one
-#:   visible-recall miss, and the one this list would most like to lose: the
-#:   ``given`` tier is built from the first tokens of notable people rather than
-#:   from names US children are given, which misses Deshawn at every bearer
-#:   floor. The fix is a births-derived tier, blocked on data access.
 #:
-#: ``Akron`` twice — masked correctly but typed ``{NAME}`` — was removed on
-#: 2026-08-07 when the settlement tier landed and started typing it
-#: ``{LOCATION}``. It is named here rather than deleted silently because
-#: ``test_the_accepted_violations_still_happen`` is what surfaced the fix: the
-#: entry going stale IS the pass.
+#: Two entries were removed on 2026-08-07, both surfaced by
+#: ``test_the_accepted_violations_still_happen`` going red — an exemption going
+#: stale IS the pass:
+#:
+#: * ``Akron`` twice, ``wrong-type`` — masked correctly but typed ``{NAME}``.
+#:   Closed by the ``settlement`` tier, which types it ``{LOCATION}``.
+#: * ``Deshawn``, ``leak`` — the arm's one visible-recall miss. The ``given``
+#:   tier was built from the first tokens of *notable people's* names, which
+#:   answers "was a famous person called this" and missed Deshawn at every bearer
+#:   floor. Rebuilding it from **US birth counts** closed it and took visible
+#:   recall 96.2% -> 100.0%.
 ACCEPTED_VIOLATIONS = {
     ("leak", "NAME:Robinson"),
-    ("leak", "NAME:Deshawn"),
 }
 
 #: The arm the bars describe: candidate generation **plus** the offline notability

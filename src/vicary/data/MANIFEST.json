@@ -1,21 +1,21 @@
 {
   "assets": {
     "notability.txt.gz": {
-      "bytes": 2243036,
+      "bytes": 2234918,
       "cut_date": "2026-08-07",
-      "format": 4,
+      "format": 5,
       "min_package_version": "0.1.0",
-      "sha256": "9eb47f8708235f533e9e802e5060c53dfb2c5e646f50030b54d7f4c6c4851f9e",
+      "sha256": "ea882c2ab1a80bd5f3b56e32a41e9c32a314ae44389f9596ea5e7ec013d92d69",
       "sources": [
         "https://qlever.dev/api/wikidata",
         "https://www2.census.gov/topics/genealogy/2010surnames/names.zip"
       ],
       "tiers": {
-        "demonym": 1044,
+        "demonym": 1047,
         "full": 295049,
-        "given": 10589,
+        "given": 8138,
         "place": 25444,
-        "settlement": 23277,
+        "settlement": 23234,
         "short": 1229,
         "title": 38024
       }

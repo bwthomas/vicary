@@ -26,7 +26,7 @@ from pathlib import Path
 
 import pytest
 
-from vicary import assets
+from vicary import assets, config
 from vicary import gazetteer as gazetteer_module
 from vicary.build import gazetteer as build_gazetteer
 from vicary.eval import fixture
@@ -613,7 +613,8 @@ def test_asset_carries_its_provenance(gazetteer: Gazetteer) -> None:
         "short_max_us_surname_population",
         "place_min_sitelinks",
         "place_min_sitelinks_single_token",
-        "given_name_min_bearers",
+        "given_name_min_births",
+        "given_name_source",
     ):
         assert key in gazetteer.meta, key
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", gazetteer.meta["cut_date"])
@@ -931,3 +932,77 @@ def gazetteer_is_notable():
     from vicary.gazetteer import is_notable
 
     return is_notable
+
+
+# ---------------------------------------------------------------------------
+# The given tier: built from births, not from famous people's first names
+# ---------------------------------------------------------------------------
+
+
+def test_the_given_tier_covers_names_students_actually_have(
+    gazetteer: Gazetteer,
+) -> None:
+    """The equity guard, and the reason this tier was rebuilt.
+
+    Until 2026-08-07 ``given`` was the first tokens of the ``full`` tier — notable
+    people — at >= 3 distinct bearers. That answers "was a famous person called
+    this", not "is this a name a US child is given", and the misses skewed toward
+    Black and South Asian given names: ``Deshawn``, ``Ayaan`` and ``Meisha``
+    absent while ``Marguerite``, ``Terrence``, ``Priya``, ``Marisol`` and
+    ``Vinny`` were present.
+
+    Red if the tier is ever rebuilt from the bearer floor, at any value of it:
+    ``Deshawn`` is absent at floor 3 and at floor 2, and reaching it at floor 1
+    costs +7.9% over-firing and regresses the heading frame below.
+    """
+    for name in ("Deshawn", "Ayaan", "Terrence", "Marisol", "Priya", "Jaylen",
+                 "Aaliyah"):
+        assert gazetteer.is_common_given_name(name), (
+            f"{name!r} is not a common given name — the tier has reverted to the "
+            "notable-first-token population"
+        )
+
+
+def test_the_given_tier_excludes_the_words_that_broke_the_bearer_arm(
+    gazetteer: Gazetteer,
+) -> None:
+    """Why births are a *dense* signal where a bearer count is sparse.
+
+    The bearer floor could only reach ``Deshawn`` at 1, which admitted 39,830
+    tokens and turned "Breeds I Like" into "Breeds I {NAME}" — some notable label
+    leads with "Like". No US child is registered as ``Like``, ``Pride`` or
+    ``Recess`` at any birth threshold, so the tier can be larger where it matters
+    and cleaner here at the same time. That is the whole argument for the source
+    change, and this is the assertion behind it.
+    """
+    for word in ("Like", "Pride", "Recess"):
+        assert not gazetteer.is_common_given_name(word), word
+
+
+def test_a_truncated_ssa_parse_is_refused(tmp_path: Path) -> None:
+    """A short read makes the redactor LESS aggressive — the wrong way to fail.
+
+    Same reasoning as the Census floor, and the opposite consequence: a truncated
+    surname file over-keeps, a truncated births file *under-redacts*, quietly
+    restoring the leak this tier exists to close. Neither has a symptom.
+    """
+    with pytest.raises(ValueError, match="truncated or the wrong file"):
+        build_gazetteer.parse_ssa_given_names(
+            {"yob1880.txt": "Deshawn,M,4000\nAyaan,M,3000\n"}
+        )
+
+
+def test_the_ssa_build_refuses_to_guess_when_the_archive_is_absent(
+    monkeypatch,
+) -> None:
+    """No silent fallback to the old population.
+
+    ``ssa.gov`` 403s some networks on every path, so this build cannot download
+    its way out. The failure mode worth preventing is a rebuild that quietly
+    produces a bearer-derived tier under a format number promising a
+    births-derived one — a recall regression that presents as nothing at all.
+    """
+    monkeypatch.setenv(config.BUILD_SSA_NAMES_ZIP_ENV_VAR, "")
+    monkeypatch.delenv(config.BUILD_SSA_NAMES_ZIP_ENV_VAR, raising=False)
+    with pytest.raises(RuntimeError, match="SSA baby-names archive"):
+        build_gazetteer.fetch_ssa_given_names()
