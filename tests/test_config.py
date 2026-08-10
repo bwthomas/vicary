@@ -141,9 +141,10 @@ def test_the_host_convention_is_not_deprecated(
 def test_no_host_specific_alias_ships_in_the_library(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The extracted code carried ``examplecorp-prod`` as a literal. A library that
-    hardcodes one deployment's environment names cannot be embedded in a second
-    one, and the value is unguessable from outside that deployment."""
+    """The extracted code carried one deployment's environment name as a
+    literal. A library that hardcodes a single host's environment names cannot
+    be embedded in a second one, and the value is unguessable from outside the
+    deployment it came from."""
     monkeypatch.setenv("ENVIRONMENT", "examplecorp-prod")
     assert not config.deployment_is_production()
 

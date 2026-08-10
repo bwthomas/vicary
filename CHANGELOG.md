@@ -256,8 +256,9 @@ the following, and nothing else.
   convention, not a name this library owns.
 * All resolution now lives in `vicary.config`, with one precedence order tested
   in one place.
-* `examplecorp-prod` no longer counts as a production environment name. The generic
-  `prod` / `production` / `live` still do, and a host registers its own with
+* The originating deployment's own environment name, which shipped as a literal,
+  no longer counts as a production environment name. The generic `prod` /
+  `production` / `live` still do, and a host registers its own with
   `config.add_production_alias()`.
 * `guardrail` mode no longer falls back to a hardcoded AWS region. Set
   `VICARY_BEDROCK_GUARDRAIL_REGION`, or let boto3's own chain resolve it; an
