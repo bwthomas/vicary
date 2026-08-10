@@ -8,9 +8,15 @@
 # `release.yml`, environment `pypi` — and until it exists the publish step fails
 # with `invalid-publisher`, which is the correct failure: nothing is uploaded.
 #
-# The tag is the input, so the tag is checked. `v0.1.0` must match the version
+# The tag is the input, so the tag is checked. `v0.1.1` must match the version
 # setuptools will actually build, or the release goes out under a number nobody
 # asked for and PyPI will not let it be replaced.
+#
+# THE FILENAME IS LOAD-BEARING. PyPI's trusted publisher for this project names
+# workflow `release.yml`, so renaming this file to `release-python.yml` — which
+# would read better in a monorepo — breaks publishing with `invalid-publisher`
+# until the publisher is edited on PyPI first. It stays `release.yml` until
+# somebody does that in the right order.
 name: release
 
 on:
@@ -24,6 +30,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
     steps:
       - uses: actions/checkout@v4
 
@@ -70,7 +79,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: python/dist/
 
   publish:
     needs: build
