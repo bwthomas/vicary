@@ -1,8 +1,11 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
-build/
-dist/
+# Anchored, because unanchored `build/` also matches `src/vicary/build/` — the
+# gazetteer builder — and silently kept it out of all 17 commits before the
+# first push. A local run cannot see this: the files are on disk either way.
+/build/
+/dist/
 .tox/
 .venv/
 venv/
