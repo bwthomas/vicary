@@ -24,4 +24,30 @@ export {
 } from "./asset.js";
 export type { AssetMeta, Gazetteer } from "./asset.js";
 
+export {
+  DEMONYM,
+  FULL_NAME,
+  GazetteerAssetError,
+  GazetteerIndex,
+  ICONIC_SHORT,
+  NOT_NOTABLE,
+  PARTICLES,
+  PLACE,
+  ROLE_TITLES,
+  TIER_NAMES,
+  TITLE,
+  isCommonGivenName,
+  isNotable,
+  isSettlement,
+  isTitle,
+  isTitleHead,
+  isTitlePrefix,
+  load,
+  maxTitleTokens,
+  normalize,
+  notability,
+  resetCache,
+} from "./gazetteer.js";
+export type { Notability, TierName } from "./gazetteer.js";
+
 export { VERSION } from "./version.js";
