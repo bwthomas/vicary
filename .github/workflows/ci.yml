@@ -3,7 +3,7 @@
 # this file existed: nothing ran them but a human at a terminal.
 #
 # What CI can and cannot measure. Four of the nine gates need data that is not
-# packaged — three need the licensed ASAP essay corpus, one needs the Census
+# packaged — three need an essay corpus the operator supplies, one needs the Census
 # surname file — so a public runner measures five. That is not papered over: `-s`
 # is passed so the gate report reaches the log, and it prints NOT MEASURED for
 # the four it could not reach. A green CI run therefore means "the corpus-free

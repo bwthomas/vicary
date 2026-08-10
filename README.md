@@ -9,9 +9,9 @@ Scrub personal names out of student compositions. Offline, no model, no network,
 no per-request cost.
 
 **A green CI badge means the five corpus-free gates hold, not that the gate set
-is clear.** Four of the nine need data a public runner cannot have — three the
-licensed ASAP essay corpus, one the Census surname file — and the gate report
-prints `NOT MEASURED` for them rather than passing them by default.
+is clear.** Four of the nine need data a public runner cannot have — three an
+essay corpus you supply yourself, one the Census surname file — and the gate
+report prints `NOT MEASURED` for them rather than passing them by default.
 
 Structured identifiers — email, phone, SSN, card numbers — are a solved regex
 exercise. Names are not, because in English prose a classmate and a public figure
@@ -339,13 +339,21 @@ Three known invariant violations are listed, with reasons, in
 second test fails if a listed one stops occurring — a stale exemption would
 shelter the next real defect of the same shape.
 
-Neither the essay corpus nor the Census surname file is packaged: one is licensed
-third-party data, the other is 3 MB the redaction path never reads. Gates that
-need them skip, and the report names what it could not measure, so a partial run
-cannot read as a clean sweep.
+**No essay corpus ships with this package, and none is redistributed by it.** The
+numbers above were measured against third-party essay data obtained separately,
+under whatever terms its own distributor sets; this project makes no claim to
+those terms and grants no rights in that data. What it ships is the *harness* —
+you point it at a corpus you are entitled to use, and it measures. The Census
+surname file is likewise not packaged, for the duller reason that it is 3 MB the
+redaction path never reads. Gates that need either one skip, and the report names
+what it could not measure, so a partial run cannot read as a clean sweep.
+
+The harness reads a two-column TSV of `essay_id`/`essay`; the filename below is
+the default it looks for and can be pointed anywhere with
+`VICARY_EVAL_CORPUS_TSV`.
 
 ```sh
-export VICARY_EVAL_CORPUS_DIR=/path/to/asap-aes        # training_set_rel3.tsv
+export VICARY_EVAL_CORPUS_DIR=/path/to/your/corpus     # holds training_set_rel3.tsv
 export VICARY_EVAL_CENSUS_CSV=/path/to/names.zip       # census.gov 2010 surnames
 pytest -m gates -s
 ```
