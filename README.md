@@ -1,7 +1,17 @@
 # vicary
 
+[![ci](https://github.com/bwthomas/vicary/actions/workflows/ci.yml/badge.svg)](https://github.com/bwthomas/vicary/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/vicary.svg)](https://pypi.org/project/vicary/)
+[![Python](https://img.shields.io/pypi/pyversions/vicary.svg)](https://pypi.org/project/vicary/)
+[![License](https://img.shields.io/pypi/l/vicary.svg)](LICENSE)
+
 Scrub personal names out of student compositions. Offline, no model, no network,
 no per-request cost.
+
+**A green CI badge means the five corpus-free gates hold, not that the gate set
+is clear.** Four of the nine need data a public runner cannot have — three the
+licensed ASAP essay corpus, one the Census surname file — and the gate report
+prints `NOT MEASURED` for them rather than passing them by default.
 
 Structured identifiers — email, phone, SSN, card numbers — are a solved regex
 exercise. Names are not, because in English prose a classmate and a public figure

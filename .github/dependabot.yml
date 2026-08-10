@@ -1,0 +1,10 @@
+# Actions only. The package itself has no runtime dependencies — that is a
+# deliberate property of the redaction path, not an oversight — so the sole
+# supply chain here is the workflow actions, which are pinned by tag and would
+# otherwise drift silently.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
