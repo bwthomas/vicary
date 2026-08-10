@@ -60,6 +60,13 @@ jobs:
       - name: Unit tests
         run: pytest -m "not gates" -q
 
+      # Its own step because a stale spec is a different failure from a broken
+      # detector: it means the file the OTHER two front doors check themselves
+      # against no longer describes this one, and both of them would go green
+      # while diverging. `just sync-conformance` is the fix.
+      - name: Conformance spec is current
+        run: pytest tests/test_conformance.py -q
+
       # Separate step so a gate regression is distinguishable from a unit-test
       # failure at a glance in the checks list, and so the printed numbers land
       # in a log section of their own.

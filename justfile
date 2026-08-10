@@ -74,6 +74,14 @@ conformance:
 py-conformance:
     cd python && .venv/bin/python -m pytest tests/test_conformance.py -q
 
+# Regenerate conformance/*.json from the Python implementation, which defines the
+# spec. READ THE DIFF before committing: a changed `golden` block means the
+# detector's output changed, which is either the improvement you intended or a
+# regression all three front doors are about to inherit.
+sync-conformance:
+    cd python && .venv/bin/python -m vicary.eval.conformance --write
+    @git --no-pager diff --stat -- conformance/ || true
+
 # A missing spec must stop the run. Otherwise `just conformance` on a tree with
 # no conformance data prints three cheerful SKIPPEDs and exits 0 — a green light
 # with a comment on it.

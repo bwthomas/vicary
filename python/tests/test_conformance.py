@@ -1,0 +1,289 @@
+"""The shared spec, and the four ways it can quietly stop being shared.
+
+``conformance/frames.json`` and ``conformance/gates.json`` are what the
+TypeScript and Ruby ports run against. They are *generated* from the Python
+literals, which makes transcription error impossible and drift the only remaining
+failure mode — so drift is what this file gates, in four directions:
+
+1. the committed JSON is byte-identical to a fresh export (edit a frame, forget
+   to regenerate, the build goes red);
+2. reading the JSON back reproduces the Python objects exactly, so the file is
+   lossless rather than merely plausible;
+3. the reference arm re-run over the JSON-loaded frames reproduces the golden
+   masked bytes, **placeholder numbering included** — the property no semantic
+   expectation can express;
+4. every bar in ``gates.json`` equals the constant the Python gate actually
+   asserts, because a spec that says 0.60 while the gate asserts 0.72 gives the
+   ports a bar nobody holds.
+
+Numbering deserves its own note, since it is the thing most likely to be dismissed
+as an implementation detail. In ``nickname-and-full-name`` the reference output
+emits ``{NAME_2}`` *before* ``{NAME_1}`` — numbering does not follow position in
+the text. Any port that assumes it does passes every semantic check and produces a
+restoration mapping that is wrong for the two frames where it matters.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+import test_gates
+from vicary.eval import conformance
+from vicary.eval import fixture as fx
+
+
+@pytest.fixture(scope="module")
+def conformance_directory() -> Path:
+    directory = conformance.conformance_dir()
+    # Not a skip. Outside a checkout there is genuinely nothing to compare, but
+    # inside one a missing directory means the spec was deleted or moved, and
+    # skipping would report that as a pass. The suite runs from a checkout.
+    assert directory is not None, (
+        "no conformance/ directory found above vicary.eval.conformance — the "
+        "shared spec is missing, and every port is now checking itself against "
+        "nothing"
+    )
+    return directory
+
+
+@pytest.fixture(scope="module")
+def committed_frames(conformance_directory: Path) -> dict:
+    return json.loads(
+        (conformance_directory / conformance.FRAMES_FILENAME).read_text("utf-8")
+    )
+
+
+# ---------------------------------------------------------------------------
+# 1. The committed file is the current export.
+# ---------------------------------------------------------------------------
+
+
+def test_the_committed_frames_file_is_a_current_export(
+    conformance_directory: Path,
+) -> None:
+    on_disk = (conformance_directory / conformance.FRAMES_FILENAME).read_text("utf-8")
+    fresh = conformance.dumps(conformance.build_frames_document())
+    assert on_disk == fresh, (
+        "conformance/frames.json is stale — the fixture or the detector changed "
+        "and the spec the ports run against did not. Regenerate with "
+        "`just sync-conformance` and READ THE DIFF: a changed `golden` block "
+        "means output changed, which is either the improvement you intended or "
+        "a regression the ports would have inherited."
+    )
+
+
+def test_the_committed_gates_file_is_a_current_export(
+    conformance_directory: Path,
+) -> None:
+    on_disk = (conformance_directory / conformance.GATES_FILENAME).read_text("utf-8")
+    fresh = conformance.dumps(conformance.build_gates_document())
+    assert on_disk == fresh, (
+        "conformance/gates.json is stale — regenerate with `just sync-conformance`"
+    )
+
+
+# ---------------------------------------------------------------------------
+# 2. The file is lossless.
+# ---------------------------------------------------------------------------
+
+
+def test_reading_the_document_back_reproduces_every_frame(
+    committed_frames: dict,
+) -> None:
+    """Field-for-field, not count-for-count.
+
+    The export omits defaulted span fields to stay readable, so "51 frames in,
+    51 frames out" is satisfied by a reader that drops `kept_by` on every span.
+    Comparing the dataclasses is what makes the omission safe.
+    """
+    rebuilt = conformance.frames_from_document(committed_frames)
+    assert rebuilt == fx.ALL_FRAMES
+
+
+def test_the_document_carries_the_identity_the_detector_is_told(
+    committed_frames: dict,
+) -> None:
+    """A port that omits these measures a different system.
+
+    The student's own name is *given* to every arm, and interpolating it is the
+    one leg that reaches 100% trivially. A port running without it misses the
+    easiest spans in the fixture and reads as a porting bug when it is a
+    configuration one.
+    """
+    identity = fx.fixture_identity()
+    assert committed_frames["identity"] == {
+        "first_name": identity.first_name,
+        "last_name": identity.last_name,
+        "school_name": identity.school_name,
+    }
+
+
+def test_the_document_names_the_arm_its_golden_output_came_from(
+    committed_frames: dict,
+) -> None:
+    """Golden bytes without an arm are unreproducible: the same fixture through
+    `local` rather than `local-gazetteer-lowercase` masks different spans, and a
+    port comparing against these bytes while implementing that arm would be
+    measuring two differences at once."""
+    assert committed_frames["reference_arm"] == conformance.REFERENCE_ARM
+    assert committed_frames["fixture_version"] == fx.FIXTURE_VERSION
+
+
+# ---------------------------------------------------------------------------
+# 3. The golden output still reproduces — bytes, and numbering.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.gates
+def test_the_reference_arm_reproduces_the_golden_masked_bytes(
+    committed_frames: dict,
+) -> None:
+    """Python runs the conformance suite the way a port does: off the file.
+
+    Marked as a gate because it loads the 2.1 MB gazetteer, and because it is a
+    measurement of the shipped detector rather than a unit assertion.
+    """
+    from vicary.eval.recall import build_redactor
+
+    redactor = build_redactor(conformance.REFERENCE_ARM, None)
+    golden = committed_frames["golden"]
+    mismatched: list[str] = []
+    for frame in conformance.frames_from_document(committed_frames):
+        produced = redactor._apply(frame.sentence, source="INPUT").text
+        if produced != golden[frame.frame_id]["masked"]:
+            mismatched.append(
+                f"{frame.frame_id}: expected {golden[frame.frame_id]['masked']!r}, "
+                f"got {produced!r}"
+            )
+    assert not mismatched, "golden output diverged:\n  " + "\n  ".join(mismatched)
+
+
+def test_the_golden_output_pins_placeholder_numbering_where_it_is_not_positional(
+    committed_frames: dict,
+) -> None:
+    """At least one frame must number against text order.
+
+    This is the assertion that keeps the golden layer honest. If every frame's
+    placeholders happened to run 1, 2, 3 left to right, a port could assume
+    positional numbering, pass all 51 frames, and still be wrong the first time a
+    real essay hands it a nickname before the full name it belongs to. The
+    fixture does contain such a frame; this fails if it ever stops containing one,
+    because then the suite has stopped testing the risk it was built for.
+    """
+    golden = committed_frames["golden"]
+
+    def is_positional(tokens: list[str]) -> bool:
+        numbers = [int(t.rsplit("_", 1)[1].rstrip("}")) for t in tokens]
+        return numbers == sorted(numbers)
+
+    non_positional = {
+        frame_id: entry["placeholders"]
+        for frame_id, entry in golden.items()
+        if len(entry["placeholders"]) > 1 and not is_positional(entry["placeholders"])
+    }
+    assert non_positional, (
+        "no frame numbers its placeholders against text order any more, so the "
+        "suite no longer proves a port cannot assume positional numbering. Either "
+        "the detector's numbering changed, or a frame was removed; both need a "
+        "look before this assertion is relaxed."
+    )
+
+
+def test_every_frame_has_golden_output(committed_frames: dict) -> None:
+    frame_ids = {f["frame_id"] for f in committed_frames["frames"]}
+    golden_ids = set(committed_frames["golden"])
+    assert frame_ids == golden_ids, (
+        f"frames without golden output: {sorted(frame_ids - golden_ids)}; "
+        f"golden output for unknown frames: {sorted(golden_ids - frame_ids)}"
+    )
+
+
+def test_the_golden_mapping_restores_the_original(committed_frames: dict) -> None:
+    """The mapping is the product, not a debugging aid.
+
+    Numbered placeholders exist so a student can be shown their own words back.
+    A port can reproduce `masked` exactly and still emit a mapping that does not
+    reconstruct the input, so the spec asserts reconstruction rather than
+    trusting that matching bytes imply it.
+    """
+    failed: list[str] = []
+    for frame in committed_frames["frames"]:
+        entry = committed_frames["golden"][frame["frame_id"]]
+        restored = fx.restore(entry["masked"], dict(entry["mapping"]))
+        if restored != frame["sentence"]:
+            failed.append(f"{frame['frame_id']}: {restored!r}")
+    assert not failed, "golden mapping does not restore the original:\n  " + \
+        "\n  ".join(failed)
+
+
+# ---------------------------------------------------------------------------
+# 4. The published bars are the asserted bars.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def committed_gates(conformance_directory: Path) -> dict:
+    return json.loads(
+        (conformance_directory / conformance.GATES_FILENAME).read_text("utf-8")
+    )
+
+
+def test_the_spec_lists_exactly_the_gates_the_report_knows_about(
+    committed_gates: dict,
+) -> None:
+    """`_ALL_GATES` is what the gate report calls a complete run. A spec listing
+    eight of them hands the ports a smaller bar than Python holds, and the ninth
+    would never be missed by name."""
+    spec_labels = {g["label"] for g in committed_gates["gates"]}
+    assert spec_labels == test_gates._ALL_GATES
+
+
+def test_every_published_bar_is_the_bar_python_asserts(
+    committed_gates: dict,
+) -> None:
+    """The numbers in the spec, against the module constants the gates assert.
+
+    Without this, `gates.json` is documentation: somebody moves
+    OVER_FIRE_SPANS_CEILING and the ports keep holding the old value, or hold a
+    tighter one and fail for no reason anybody can find.
+    """
+    asserted = {
+        "held-out recall": test_gates.HELD_OUT_RECALL_FLOOR,
+        "held-out recall (carrier)": test_gates.HELD_OUT_RECALL_FLOOR,
+        "KEEP precision": test_gates.KEEP_PRECISION_FLOOR,
+        "round-trip": test_gates.ROUND_TRIP_FLOOR,
+        "unaccounted violations": 0.0,
+        "over-fire on prose": test_gates.OVER_FIRE_SPANS_CEILING,
+        "bare-surname exposure": test_gates.CENSUS_BARE_SURNAME_CEILING,
+        "latency p95": test_gates.LATENCY_P95_MS_CEILING,
+        "asset entries": 1.0,
+    }
+    published = {g["label"]: g["bar"] for g in committed_gates["gates"]}
+    assert published == asserted
+
+
+def test_the_spec_says_which_gates_need_data_no_package_ships(
+    committed_gates: dict,
+) -> None:
+    """Four of nine. A port that does not carry this distinction publishes a
+    green badge meaning "five gates held" while the Python one means nine, and
+    nobody notices because both badges are the same colour."""
+    needs_data = {
+        g["label"] for g in committed_gates["gates"] if g["requires"]
+    }
+    assert needs_data == {
+        "held-out recall (carrier)",
+        "over-fire on prose",
+        "bare-surname exposure",
+        "latency p95",
+    }
+    declared = set(committed_gates["requirements"])
+    for gate in committed_gates["gates"]:
+        unknown = set(gate["requires"]) - declared
+        assert not unknown, (
+            f"{gate['label']} requires {sorted(unknown)}, which the document "
+            f"does not describe — a port cannot tell an operator what to supply"
+        )

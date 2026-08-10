@@ -1,0 +1,1350 @@
+{
+  "document_version": 1,
+  "fixture_version": "2026-08-06.4",
+  "frames": [
+    {
+      "frame_id": "kinship-possessive",
+      "group": "recall",
+      "note": "The only frame the previous fixture contained. Kept as the visible/tunable case so the held-out frames measure generalisation.",
+      "sentence": "My cousin Terrence Okonkwo came over that summer and never left.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Terrence Okonkwo"
+        }
+      ]
+    },
+    {
+      "frame_id": "bare-first-name",
+      "group": "recall",
+      "note": "No relational trigger, no surname. A trigger rule cannot see this.",
+      "sentence": "Terrence and I stayed up late finishing the whole thing.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Terrence"
+        }
+      ]
+    },
+    {
+      "frame_id": "dialogue-attribution",
+      "group": "recall",
+      "held_out": true,
+      "sentence": "\"We should go back next year,\" said Marisol, and we did.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Marisol"
+        }
+      ]
+    },
+    {
+      "frame_id": "title-surname",
+      "group": "recall",
+      "note": "Surname only, behind a role title. 'Bramwell' not 'Whitfield' on purpose: the student's own surname would confound the leg.",
+      "sentence": "Coach Bramwell made us run laps until it got dark.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Coach Bramwell"
+        }
+      ]
+    },
+    {
+      "frame_id": "honorific-surname",
+      "group": "recall",
+      "held_out": true,
+      "sentence": "Mrs. Okonkwo taught me the trick with the index cards.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Mrs. Okonkwo"
+        }
+      ]
+    },
+    {
+      "frame_id": "lowercase-writing",
+      "group": "recall",
+      "held_out": true,
+      "note": "Students write like this. A capitalisation-based candidate generator scores zero here by construction, which is worth knowing before it ships rather than after.",
+      "sentence": "then terrence okonkwo showed up and everything changed for me.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "terrence okonkwo"
+        }
+      ]
+    },
+    {
+      "frame_id": "allcaps-writing",
+      "group": "recall",
+      "held_out": true,
+      "note": "The mirror of lowercase: every token is a candidate, so this is the frame where over-firing shows up as collateral, not a miss.",
+      "sentence": "MY BEST FRIEND DESHAWN PRITCHARD WOULD NEVER DO THAT TO ME.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "DESHAWN PRITCHARD"
+        }
+      ]
+    },
+    {
+      "frame_id": "appositive",
+      "group": "recall",
+      "sentence": "Ayaan Chaudhary, my next-door neighbor, drove us all the way there.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Ayaan Chaudhary"
+        }
+      ]
+    },
+    {
+      "frame_id": "private-surname-shadowed-by-a-notable-one",
+      "group": "recall",
+      "note": "THE PRICE OF same-document corroboration, and it is currently unpaid — this frame FAILS in the shipped arm and is scored so the cost is a number rather than a caveat in a docstring. Once a document establishes 'Jackie Robinson', a bare 'Robinson' anywhere in it keeps, including this neighbour. No surname-level rule can separate the two, because within this document the surname really is ambiguous and the writer supplied no other evidence. Kept VISIBLE rather than held out on purpose: the held-out recall number is the privacy gate, and a known accepted cost must not be able to masquerade as a fresh privacy regression there. The trade being accepted is one contrived neighbour against 27 destroyed spans in a single real essay about its author — see notable-surname-established-in-document.",
+      "sentence": "Jackie Robinson broke the color line in 1947. Robinson, who lives two doors down from us, taught me how to throw.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "expect_count": 1,
+          "literal": "Robinson"
+        }
+      ]
+    },
+    {
+      "frame_id": "heading-capital-on-an-ordinary-word",
+      "group": "recall",
+      "note": "The dominant over-fire class on real student prose, and the frame is copied from one: \"Breeds I Like\" is a literal heading in the Education Northwest horses paper. A heading is title-cased by convention, so every capital in it is orthographic and none of it is evidence about any word. Mid-line on purpose — sentence-initial capitals are already discounted, so a heading's FIRST word was never the problem; its later words are, and they are the ones that read as a deliberate mid-sentence capital. THIS REPLACES a rule that read these spans as emphasis. That story did not survive the data: across 27 un-scrubbed documents not one writer capitalised an initial letter for emphasis. Emphasis is ALL CAPS or mixed caps, which _emphasis_spans already had.",
+      "sentence": "\n\nBreeds I Like\n\nI wrote about horses because I like to ride them every summer.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "kept_by": "document",
+          "literal": "Like",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "heading-that-actually-names-somebody",
+      "group": "recall",
+      "held_out": true,
+      "note": "THE GUARD on the heading rule, and the reason it withholds evidence rather than vetoing. Students title sections after people, so a heading is not a licence to keep. Inside a heading the span has to clear the same bar as any other unevidenced capital — the given-name tier — and it does. A veto keyed on layout would leak this, which is precisely how the rule it replaced failed.",
+      "sentence": "\n\nMy Brother Terrence Okonkwo\n\nHe taught me how to ride a bike without training wheels.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Terrence Okonkwo"
+        }
+      ]
+    },
+    {
+      "frame_id": "notable-surname-in-a-first-person-appositive",
+      "group": "recall",
+      "note": "THE GUARD on relation refusal, and the reason its discriminator is a closed cue list rather than 'the appositive mentions the writer'. That was the first design and this frame kills it: literary analysis writes exactly this sentence, and refusing corroboration here re-destroys the author the essay is about — the defect corroboration was built to fix. A first-person pronoun says the SENTENCE is personal; only a relation or proximity cue says the PERSON is. expect_count=2 counts both the full name and the bare surname, so a regression cannot hide inside the kept 'Richard Wright'.",
+      "sentence": "Richard Wright wrote about hunger without flinching. Wright, who taught me to look away from nothing, is why I write.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect_count": 2,
+          "kept_by": "document",
+          "literal": "Wright",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "private-person-shadowed-by-a-work-title",
+      "group": "recall",
+      "held_out": true,
+      "note": "THE TITLE TIER'S version of the Robinson problem, and the one the surname tier's fix does not reach. 'Alice Adams' is a 1921 novel, so the title tier keeps it, and 589 keys in the shipped tier have this same <common given name> <ordinary US surname> shape — every one of them shelters whichever private individual carries it. No sitelink floor separates them from the curriculum: Atticus Finch sits at 17 sitelinks and this hole at 24. So the discriminator has to be local evidence, as it was for bare surnames, and this is the frame that scores it.",
+      "sentence": "My neighbor Alice Adams walked me to the bus stop every morning that whole year.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Alice Adams",
+          "redacted_by": "context"
+        }
+      ]
+    },
+    {
+      "frame_id": "relative-whose-phrase-is-also-a-film-title",
+      "group": "recall",
+      "held_out": true,
+      "note": "THE WORST SHAPE IN THE TITLE TIER, and it is the commonest frame in the fixture wearing a film's name. 41 keys lead with a first-person relation — 'My Cousin Vinny', 'My Sister Eileen', 'My Brother Nikhil' — and the tier matches case-insensitively, so a student writing about an actual cousin matched the 1992 film, had generation blocked across the whole phrase, and shipped the name. The writer supplies the discriminator: a title is title-cased and a sentence about a relative is not, which is the same orthographic evidence the heading rule reads. Gated on the document capitalising at all, because in a document that capitalises nothing an absent capital is testimony about nothing.",
+      "sentence": "We stayed with the Alvarez family in July. My cousin Vinny Delgado came over that summer and never left.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Vinny Delgado",
+          "redacted_by": "context"
+        }
+      ]
+    },
+    {
+      "frame_id": "relation-led-film-title-with-no-capitalisation-tell",
+      "group": "recall",
+      "held_out": true,
+      "note": "THE FRAME ABOVE WITH ITS SECOND SENTENCE TAKEN AWAY, which is the whole finding: the refusal above is gated on `marks_proper_nouns`, and that needs capitalised names somewhere OTHER than a sentence start. Here there is none — 'My' is sentence-initial and 'Vinny' is the name under test — so the gate read False, the 1992 film kept the span, and the cousin's name shipped. A leak that depends on how much ELSE the student wrote is a leak, and it was invisible while the only frame of this shape carried a spare capital ('the Alvarez family') that supplied the tell for free. Closed by reading the span's own mixed case instead: 'Vinny' capitalised, 'cousin' not, so the writer uses capitals and declined to put one on the relation word. The all-lowercase form 'my cousin vinny' is deliberately NOT claimed — there the absent capital really is testimony about nothing.",
+      "sentence": "My cousin Vinny came over that summer and never left.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Vinny",
+          "redacted_by": "context"
+        }
+      ]
+    },
+    {
+      "frame_id": "private-person-shadowed-by-a-real-public-figure",
+      "group": "recall",
+      "held_out": true,
+      "note": "THE SAME HOLE ONE TIER OVER, and 57x larger than the title one. 33,682 keys in the `full` tier are <common given name> <ordinary US surname> and 33,269 of them shelter whichever private individual carries the name — 'Alan Ford' is a footballer and also somebody's best friend. Scoping the override to titles was justified in writing by 'it would also redact my hero Abraham Lincoln'; that claim is RETRACTED by measurement, and the frame below is what retracts it.",
+      "sentence": "My best friend Alan Ford helped me study for the test last week.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Alan Ford",
+          "redacted_by": "context"
+        }
+      ]
+    },
+    {
+      "frame_id": "full-name-midsentence",
+      "group": "recall",
+      "sentence": "I asked Marisol Ybarra what she thought about the ending.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Marisol Ybarra"
+        }
+      ]
+    },
+    {
+      "frame_id": "hyphenated-surname",
+      "group": "recall",
+      "sentence": "Priya Raghunathan-Bell lent me her notes for the whole week.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Priya Raghunathan-Bell"
+        }
+      ]
+    },
+    {
+      "frame_id": "possessive-third-party",
+      "group": "recall",
+      "held_out": true,
+      "note": "The possessive has to be masked with the name; leaving \"'s\" behind is cosmetic, leaving \"Terrence\" behind is a leak.",
+      "sentence": "Terrence's older brother drove us to the game on Friday.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Terrence"
+        }
+      ]
+    },
+    {
+      "frame_id": "initial-plus-surname",
+      "group": "recall",
+      "held_out": true,
+      "sentence": "J. Okonkwo sat behind me in that class all year long.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "J. Okonkwo"
+        }
+      ]
+    },
+    {
+      "frame_id": "nickname-and-full-name",
+      "group": "recall",
+      "held_out": true,
+      "sentence": "Everyone called him Terry, but Terrence Okonkwo hated that name.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Terrence Okonkwo"
+        },
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Terry",
+          "note": "The name-linking leg: same person, second surface form. A detector can mask the full name and still leak the nickname, and a restore keyed on one placeholder cannot tell the two apart."
+        }
+      ]
+    },
+    {
+      "frame_id": "student-own-name",
+      "group": "recall",
+      "note": "The leg identity interpolation already covers, at 100%. Kept so a candidate-generation change cannot regress it unnoticed.",
+      "sentence": "I am Marguerite Delacroix-Whitfield and this is my final essay.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Marguerite Delacroix-Whitfield"
+        }
+      ]
+    },
+    {
+      "frame_id": "notable-possessive",
+      "group": "keep",
+      "note": "Same first-person-possessive frame as 'my cousin X'. This pair is why the discriminator has to be notability rather than syntax.",
+      "sentence": "My inspiration, Vincent van Gogh, painted through his worst years.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Vincent van Gogh",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "notable-bare-surname",
+      "group": "keep",
+      "sentence": "Lincoln held the country together in the middle of a war.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Lincoln",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "notable-name-is-also-a-place",
+      "group": "keep",
+      "held_out": true,
+      "note": "Notable person whose name is also a state and a common surname. A gazetteer keyed on exact strings keeps this; a NER pass that types it LOCATION and masks it does not.",
+      "sentence": "Washington crossed the Delaware in the dead of winter.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Washington",
+          "verdict": "keep"
+        },
+        {
+          "entity": "LOCATION",
+          "literal": "Delaware",
+          "note": "A public place-name, not the student's address.",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "notable-full-name",
+      "group": "keep",
+      "sentence": "Henry David Thoreau wrote about disobedience before it had a name.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Henry David Thoreau",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "notable-in-kinship-shaped-frame",
+      "group": "keep",
+      "held_out": true,
+      "note": "'my cousin' is present as a distractor and refers to nobody named. A trigger rule that fires on the phrase masks the wrong span.",
+      "sentence": "I read Toni Morrison the way my cousin reads box scores.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Toni Morrison",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "notable-single-name",
+      "group": "keep",
+      "held_out": true,
+      "sentence": "Joan of Arc led an army when she was barely seventeen.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Joan of Arc",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "source-author-cited",
+      "group": "keep",
+      "note": "The prompt_context leg: exact, free, zero false positives — but only if callers populate GraderRequest.prompt_context, which is unverified. This frame fails without the gazetteer behind it.",
+      "prompt_context": "Read the passage by Malcolm Gladwell and respond to it.",
+      "sentence": "As Malcolm Gladwell argues, the trend is older than it looks.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Malcolm Gladwell",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "prompt-context-figure",
+      "group": "keep",
+      "held_out": true,
+      "prompt_context": "Write about a moment when Rosa Parks changed what was possible.",
+      "sentence": "Rosa Parks did not plan to be the story, and that is the point.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Rosa Parks",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "work-title-with-interior-stopword",
+      "group": "keep",
+      "held_out": true,
+      "note": "The frame no notability *lookup* can pass. Candidate generation splits this on the stoplisted 'a' and proposes 'To' and 'Mockingbird' separately, so neither half can be resolved back to the book — the title has to be matched against the raw text before generation runs. Scored here so that ordering is a measurement rather than a claim in a docstring.",
+      "sentence": "I read To Kill a Mockingbird in ninth grade and it changed how I read everything after it.",
+      "spans": [
+        {
+          "entity": "TITLE",
+          "literal": "To Kill a Mockingbird",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "notable-surname-established-in-document",
+      "group": "keep",
+      "held_out": true,
+      "note": "The shape literary analysis actually takes: name the author once, write the surname for the rest of the essay. The bare surname of a famous person with a common surname cannot clear the short tier's two gates at once — SHORT_MIN_SITELINKS and SHORT_MAX_US_SURNAME_POPULATION are in tension by construction — so before same-document corroboration this frame red, and on 27 real un-scrubbed student essays it red 27 times inside ONE document, which was an essay about Black Boy. Two sentences because the evidence is cross-sentence: no single-sentence frame can express it, which is why the whole class was invisible to this fixture.",
+      "sentence": "Richard Wright wrote about hunger without flinching. Wright never lets the reader look away from what it costs.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect_count": 2,
+          "kept_by": "document",
+          "literal": "Wright",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "fictional-character",
+      "group": "keep",
+      "held_out": true,
+      "note": "Syntactically identical to 'My cousin Terrence Okonkwo' — two capitalised words in a first-person-possessive frame — and the opposite verdict. The notability tier is built from P31 wd:Q5, human, so every fictional character resolved not-notable and was redacted; this is the pair that makes that visible.",
+      "sentence": "My favorite character is Atticus Finch, because he does the right thing when it costs him something.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Atticus Finch",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "admiration-invocation-before-a-public-figure",
+      "group": "keep",
+      "held_out": true,
+      "note": "THE GUARD that let the override reach the `full` tier, and the reason the cue list is closed and hand-written. 'My hero X', 'my muse X', 'my inspiration X', 'my role model X' are ADMIRATION invocations, and they attach to a public figure as readily as to a relative — 'my hero dad' and 'my hero Abraham Lincoln' are equally ordinary sentences. So they are not evidence, and none of them is a relation cue. A rule keyed on 'any noun between my and the name' would fire on all four; this frame is what makes that difference cost a test rather than a paragraph.",
+      "sentence": "My hero Abraham Lincoln held the country together in the middle of a war.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Abraham Lincoln",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "fictional-character-described-by-a-relation",
+      "group": "keep",
+      "held_out": true,
+      "note": "THE GUARD on title-tier relation refusal, and the reason that rule cannot reuse the bare-surname cue test unchanged. Characters are described BY their relations — a father, a friend, an aunt in Queens — so a bare relation noun in the window fires on the curriculum: measured, the surname rule's discriminator refuses Atticus Finch, Harry Potter, Percy Jackson, Tom Sawyer, Peter Parker and Clark Kent, six of the seven characters it must keep. What separates them from 'My neighbor Alice Adams' is that the relation is not the WRITER'S: title-tier refusal therefore demands a first-person possessive attached to the name itself.",
+      "sentence": "Atticus Finch is the kind of father who does the right thing even when it costs him everything.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Atticus Finch",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "relation-led-title-written-as-a-title",
+      "group": "keep",
+      "held_out": true,
+      "note": "THE GUARD on the frame above, in the same two-sentence document so the capitalisation signal is identical and the only difference is the one under test. Measured across all 41 relation-led keys: 41/41 survive here, 31/31 of the name-bearing ones are removed there.",
+      "sentence": "We stayed with the Alvarez family in July. My Cousin Vinny is my favorite movie and I have seen it four times.",
+      "spans": [
+        {
+          "entity": "TITLE",
+          "literal": "My Cousin Vinny",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "work-title-near-an-unattached-first-person-relation",
+      "group": "keep",
+      "held_out": true,
+      "note": "THE GUARD on the adjacency half of the same rule. 'my little brother' is a genuine first-person relation and it names nobody — so proximity in the window is not enough either, and refusal has to require the relation phrase to be syntactically attached to the span: immediately before it, or inside the appositive immediately after it. Without this frame the rule could pass its other two by scanning a window for 'my' and a kinship noun, which would over-redact a book every time a student mentions who they read it with.",
+      "sentence": "I read Harry Potter out loud with my little brother almost every night that winter.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Harry Potter",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "intersect-notable-beside-private",
+      "group": "intersect",
+      "held_out": true,
+      "note": "The discriminator, in one sentence. Masking both is over-firing; masking neither is the shipped behaviour; masking the wrong one is the worst outcome and is invisible to a recall-only metric.",
+      "sentence": "I wrote about Vincent van Gogh for Mrs. Okonkwo's class last spring.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "literal": "Vincent van Gogh",
+          "verdict": "keep"
+        },
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Mrs. Okonkwo"
+        }
+      ]
+    },
+    {
+      "frame_id": "intersect-person-org-location",
+      "group": "intersect",
+      "note": "Three types, one sentence. This is the only place type confusion is measurable — separated into three frames it is not.",
+      "sentence": "Terrence Okonkwo moved to Akron and got a job at Progressive Insurance.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Terrence Okonkwo"
+        },
+        {
+          "entity": "LOCATION",
+          "expect": "{LOCATION}",
+          "literal": "Akron",
+          "note": "Masked inbound is fine and distributionally native (@LOCATION is 1.06/essay in the training corpus); the type is what matters, so a NAME placeholder here scores as recalled-but-mistyped."
+        },
+        {
+          "entity": "ORGANIZATION",
+          "expect": "{ORGANIZATION}",
+          "literal": "Progressive Insurance"
+        }
+      ]
+    },
+    {
+      "frame_id": "intersect-self-and-third-party",
+      "group": "intersect",
+      "note": "Two names, two mechanisms, one sentence — and one placeholder token for both, which is exactly what makes a restore ambiguous.",
+      "sentence": "Marguerite and Deshawn both stayed after class to finish it.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Marguerite",
+          "note": "Reached by identity interpolation."
+        },
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Deshawn",
+          "note": "Reached by nothing shipped today."
+        }
+      ]
+    },
+    {
+      "frame_id": "intersect-school-and-friend",
+      "group": "intersect",
+      "sentence": "Deshawn and I both go to Westfield High School on the east side.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Deshawn"
+        },
+        {
+          "entity": "SCHOOL",
+          "expect": "{SCHOOL}",
+          "literal": "Westfield High School"
+        }
+      ]
+    },
+    {
+      "frame_id": "intersect-landmark-and-hometown",
+      "group": "intersect",
+      "held_out": true,
+      "sentence": "We drove from Akron all the way to see the Lincoln Memorial.",
+      "spans": [
+        {
+          "entity": "LOCATION",
+          "expect": "{LOCATION}",
+          "literal": "Akron",
+          "note": "The student's hometown. Redact."
+        },
+        {
+          "entity": "LOCATION",
+          "literal": "Lincoln Memorial",
+          "note": "A public landmark and the essay's subject. Keep — and note it contains 'Lincoln', so a substring gazetteer hit is not enough to decide either span.",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
+      "frame_id": "intersect-name-beside-structured",
+      "group": "intersect",
+      "note": "Adjacent spans of different types. Pattern order decides who claims the boundary characters, and a name half-eaten by the phone pattern leaks the remainder.",
+      "sentence": "Call Terrence Okonkwo at (330) 555-0148 or m.delacroix2011@westfieldhigh.k12.oh.us.",
+      "spans": [
+        {
+          "entity": "NAME",
+          "expect": "{NAME}",
+          "literal": "Terrence Okonkwo"
+        },
+        {
+          "entity": "PHONE",
+          "expect": "{PHONE}",
+          "literal": "(330) 555-0148"
+        },
+        {
+          "entity": "EMAIL",
+          "expect": "{EMAIL}",
+          "literal": "m.delacroix2011@westfieldhigh.k12.oh.us"
+        }
+      ]
+    },
+    {
+      "frame_id": "structured-address",
+      "group": "structured",
+      "sentence": "We moved to 1147 Beaumont Terrace, Akron, Ohio 44305 that fall.",
+      "spans": [
+        {
+          "entity": "ADDRESS",
+          "expect": "{ADDRESS}",
+          "literal": "1147 Beaumont Terrace"
+        }
+      ]
+    },
+    {
+      "frame_id": "structured-phone",
+      "group": "structured",
+      "sentence": "You can reach my mom at (330) 555-0148 most afternoons.",
+      "spans": [
+        {
+          "entity": "PHONE",
+          "expect": "{PHONE}",
+          "literal": "(330) 555-0148"
+        }
+      ]
+    },
+    {
+      "frame_id": "structured-email",
+      "group": "structured",
+      "sentence": "I sent it to m.delacroix2011@westfieldhigh.k12.oh.us by mistake.",
+      "spans": [
+        {
+          "entity": "EMAIL",
+          "expect": "{EMAIL}",
+          "literal": "m.delacroix2011@westfieldhigh.k12.oh.us"
+        }
+      ]
+    },
+    {
+      "frame_id": "structured-age",
+      "group": "structured",
+      "sentence": "I am 14 years old and this is the first thing I finished.",
+      "spans": [
+        {
+          "entity": "AGE",
+          "expect": "{AGE}",
+          "literal": "14"
+        }
+      ]
+    },
+    {
+      "frame_id": "structured-ssn",
+      "group": "structured",
+      "sentence": "The form wanted 287-44-9163 which I should not have written down.",
+      "spans": [
+        {
+          "entity": "US_SOCIAL_SECURITY_NUMBER",
+          "expect": "{US_SOCIAL_SECURITY_NUMBER}",
+          "literal": "287-44-9163"
+        }
+      ]
+    },
+    {
+      "frame_id": "structured-url",
+      "group": "structured",
+      "sentence": "It is posted at https://westfieldhigh.k12.oh.us/students/mdelacroix now.",
+      "spans": [
+        {
+          "entity": "URL",
+          "expect": "{URL}",
+          "literal": "https://westfieldhigh.k12.oh.us/students/mdelacroix"
+        }
+      ]
+    },
+    {
+      "frame_id": "structured-username",
+      "group": "structured",
+      "sentence": "My handle is @margie_dw2011 if you ever want to look it up.",
+      "spans": [
+        {
+          "entity": "USERNAME",
+          "expect": "{USERNAME}",
+          "literal": "@margie_dw2011"
+        }
+      ]
+    },
+    {
+      "frame_id": "structured-card",
+      "group": "structured",
+      "sentence": "She read out 4532 7891 2345 6789 and I typed it in wrong.",
+      "spans": [
+        {
+          "entity": "CREDIT_DEBIT_CARD_NUMBER",
+          "expect": "{CREDIT_DEBIT_CARD_NUMBER}",
+          "literal": "4532 7891 2345 6789"
+        }
+      ]
+    }
+  ],
+  "golden": {
+    "admiration-invocation-before-a-public-figure": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "My hero Abraham Lincoln held the country together in the middle of a war.",
+      "placeholders": []
+    },
+    "allcaps-writing": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "DESHAWN PRITCHARD"
+        ]
+      ],
+      "masked": "MY BEST FRIEND {NAME_1} WOULD NEVER DO THAT TO ME.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "appositive": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Ayaan Chaudhary"
+        ]
+      ],
+      "masked": "{NAME_1}, my next-door neighbor, drove us all the way there.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "bare-first-name": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Terrence"
+        ]
+      ],
+      "masked": "{NAME_1} and I stayed up late finishing the whole thing.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "dialogue-attribution": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Marisol"
+        ]
+      ],
+      "masked": "\"We should go back next year,\" said {NAME_1}, and we did.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "fictional-character": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "My favorite character is Atticus Finch, because he does the right thing when it costs him something.",
+      "placeholders": []
+    },
+    "fictional-character-described-by-a-relation": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "Atticus Finch is the kind of father who does the right thing even when it costs him everything.",
+      "placeholders": []
+    },
+    "full-name-midsentence": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Marisol Ybarra"
+        ]
+      ],
+      "masked": "I asked {NAME_1} what she thought about the ending.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "heading-capital-on-an-ordinary-word": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "\n\nBreeds I Like\n\nI wrote about horses because I like to ride them every summer.",
+      "placeholders": []
+    },
+    "heading-that-actually-names-somebody": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Brother Terrence Okonkwo"
+        ]
+      ],
+      "masked": "\n\nMy {NAME_1}\n\nHe taught me how to ride a bike without training wheels.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "honorific-surname": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Mrs. Okonkwo"
+        ]
+      ],
+      "masked": "{NAME_1} taught me the trick with the index cards.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "hyphenated-surname": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Priya Raghunathan-Bell"
+        ]
+      ],
+      "masked": "{NAME_1} lent me her notes for the whole week.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "initial-plus-surname": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "J. Okonkwo"
+        ]
+      ],
+      "masked": "{NAME_1} sat behind me in that class all year long.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "intersect-landmark-and-hometown": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{LOCATION_1}",
+          "Akron"
+        ]
+      ],
+      "masked": "We drove from {LOCATION_1} all the way to see the Lincoln Memorial.",
+      "placeholders": [
+        "{LOCATION_1}"
+      ]
+    },
+    "intersect-name-beside-structured": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ],
+        [
+          "{PHONE_1}",
+          "(330) 555-0148"
+        ],
+        [
+          "{EMAIL_1}",
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "masked": "Call {NAME_1} at {PHONE_1} or {EMAIL_1}.",
+      "placeholders": [
+        "{NAME_1}",
+        "{PHONE_1}",
+        "{EMAIL_1}"
+      ]
+    },
+    "intersect-notable-beside-private": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Mrs. Okonkwo's"
+        ]
+      ],
+      "masked": "I wrote about Vincent van Gogh for {NAME_1} class last spring.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "intersect-person-org-location": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ],
+        [
+          "{LOCATION_1}",
+          "Akron"
+        ],
+        [
+          "{ORGANIZATION_1}",
+          "Progressive Insurance"
+        ]
+      ],
+      "masked": "{NAME_1} moved to {LOCATION_1} and got a job at {ORGANIZATION_1}.",
+      "placeholders": [
+        "{NAME_1}",
+        "{LOCATION_1}",
+        "{ORGANIZATION_1}"
+      ]
+    },
+    "intersect-school-and-friend": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Deshawn"
+        ],
+        [
+          "{SCHOOL_1}",
+          "Westfield High School"
+        ]
+      ],
+      "masked": "{NAME_1} and I both go to {SCHOOL_1} on the east side.",
+      "placeholders": [
+        "{NAME_1}",
+        "{SCHOOL_1}"
+      ]
+    },
+    "intersect-self-and-third-party": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Marguerite"
+        ],
+        [
+          "{NAME_2}",
+          "Deshawn"
+        ]
+      ],
+      "masked": "{NAME_1} and {NAME_2} both stayed after class to finish it.",
+      "placeholders": [
+        "{NAME_1}",
+        "{NAME_2}"
+      ]
+    },
+    "kinship-possessive": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "masked": "My cousin {NAME_1} came over that summer and never left.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "lowercase-writing": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "terrence okonkwo"
+        ]
+      ],
+      "masked": "then {NAME_1} showed up and everything changed for me.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "nickname-and-full-name": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_2}",
+          "Terry"
+        ],
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "masked": "Everyone called him {NAME_2}, but {NAME_1} hated that name.",
+      "placeholders": [
+        "{NAME_2}",
+        "{NAME_1}"
+      ]
+    },
+    "notable-bare-surname": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "Lincoln held the country together in the middle of a war.",
+      "placeholders": []
+    },
+    "notable-full-name": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "Henry David Thoreau wrote about disobedience before it had a name.",
+      "placeholders": []
+    },
+    "notable-in-kinship-shaped-frame": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "I read Toni Morrison the way my cousin reads box scores.",
+      "placeholders": []
+    },
+    "notable-name-is-also-a-place": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "Washington crossed the Delaware in the dead of winter.",
+      "placeholders": []
+    },
+    "notable-possessive": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "My inspiration, Vincent van Gogh, painted through his worst years.",
+      "placeholders": []
+    },
+    "notable-single-name": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "Joan of Arc led an army when she was barely seventeen.",
+      "placeholders": []
+    },
+    "notable-surname-established-in-document": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "Richard Wright wrote about hunger without flinching. Wright never lets the reader look away from what it costs.",
+      "placeholders": []
+    },
+    "notable-surname-in-a-first-person-appositive": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "Richard Wright wrote about hunger without flinching. Wright, who taught me to look away from nothing, is why I write.",
+      "placeholders": []
+    },
+    "possessive-third-party": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Terrence's"
+        ]
+      ],
+      "masked": "{NAME_1} older brother drove us to the game on Friday.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "private-person-shadowed-by-a-real-public-figure": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Alan Ford"
+        ]
+      ],
+      "masked": "My best friend {NAME_1} helped me study for the test last week.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "private-person-shadowed-by-a-work-title": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Alice Adams"
+        ]
+      ],
+      "masked": "My neighbor {NAME_1} walked me to the bus stop every morning that whole year.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "private-surname-shadowed-by-a-notable-one": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Robinson"
+        ]
+      ],
+      "masked": "Jackie Robinson broke the color line in 1947. {NAME_1}, who lives two doors down from us, taught me how to throw.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "prompt-context-figure": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "Rosa Parks did not plan to be the story, and that is the point.",
+      "placeholders": []
+    },
+    "relation-led-film-title-with-no-capitalisation-tell": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Vinny"
+        ]
+      ],
+      "masked": "My cousin {NAME_1} came over that summer and never left.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "relation-led-title-written-as-a-title": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Alvarez"
+        ]
+      ],
+      "masked": "We stayed with the {NAME_1} family in July. My Cousin Vinny is my favorite movie and I have seen it four times.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "relative-whose-phrase-is-also-a-film-title": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_2}",
+          "Alvarez"
+        ],
+        [
+          "{NAME_1}",
+          "Vinny Delgado"
+        ]
+      ],
+      "masked": "We stayed with the {NAME_2} family in July. My cousin {NAME_1} came over that summer and never left.",
+      "placeholders": [
+        "{NAME_2}",
+        "{NAME_1}"
+      ]
+    },
+    "source-author-cited": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "As Malcolm Gladwell argues, the trend is older than it looks.",
+      "placeholders": []
+    },
+    "structured-address": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{ADDRESS_1}",
+          "1147 Beaumont Terrace"
+        ],
+        [
+          "{LOCATION_1}",
+          "Akron"
+        ]
+      ],
+      "masked": "We moved to {ADDRESS_1}, {LOCATION_1}, Ohio 44305 that fall.",
+      "placeholders": [
+        "{ADDRESS_1}",
+        "{LOCATION_1}"
+      ]
+    },
+    "structured-age": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{AGE_1}",
+          "14"
+        ]
+      ],
+      "masked": "I am {AGE_1} years old and this is the first thing I finished.",
+      "placeholders": [
+        "{AGE_1}"
+      ]
+    },
+    "structured-card": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{CREDIT_DEBIT_CARD_NUMBER_1}",
+          "4532 7891 2345 6789"
+        ]
+      ],
+      "masked": "She read out {CREDIT_DEBIT_CARD_NUMBER_1} and I typed it in wrong.",
+      "placeholders": [
+        "{CREDIT_DEBIT_CARD_NUMBER_1}"
+      ]
+    },
+    "structured-email": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{EMAIL_1}",
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "masked": "I sent it to {EMAIL_1} by mistake.",
+      "placeholders": [
+        "{EMAIL_1}"
+      ]
+    },
+    "structured-phone": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{PHONE_1}",
+          "(330) 555-0148"
+        ]
+      ],
+      "masked": "You can reach my mom at {PHONE_1} most afternoons.",
+      "placeholders": [
+        "{PHONE_1}"
+      ]
+    },
+    "structured-ssn": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{US_SOCIAL_SECURITY_NUMBER_1}",
+          "287-44-9163"
+        ]
+      ],
+      "masked": "The form wanted {US_SOCIAL_SECURITY_NUMBER_1} which I should not have written down.",
+      "placeholders": [
+        "{US_SOCIAL_SECURITY_NUMBER_1}"
+      ]
+    },
+    "structured-url": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{URL_1}",
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix"
+        ]
+      ],
+      "masked": "It is posted at {URL_1} now.",
+      "placeholders": [
+        "{URL_1}"
+      ]
+    },
+    "structured-username": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{USERNAME_1}",
+          "@margie_dw2011"
+        ]
+      ],
+      "masked": "My handle is {USERNAME_1} if you ever want to look it up.",
+      "placeholders": [
+        "{USERNAME_1}"
+      ]
+    },
+    "student-own-name": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Marguerite Delacroix-Whitfield"
+        ]
+      ],
+      "masked": "I am {NAME_1} and this is my final essay.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "title-surname": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{NAME_1}",
+          "Coach Bramwell"
+        ]
+      ],
+      "masked": "{NAME_1} made us run laps until it got dark.",
+      "placeholders": [
+        "{NAME_1}"
+      ]
+    },
+    "work-title-near-an-unattached-first-person-relation": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "I read Harry Potter out loud with my little brother almost every night that winter.",
+      "placeholders": []
+    },
+    "work-title-with-interior-stopword": {
+      "aligns": true,
+      "mapping": [],
+      "masked": "I read To Kill a Mockingbird in ninth grade and it changed how I read everything after it.",
+      "placeholders": []
+    }
+  },
+  "identity": {
+    "first_name": "Marguerite",
+    "last_name": "Delacroix-Whitfield",
+    "school_name": "Westfield High School"
+  },
+  "reference_arm": "local-gazetteer-lowercase",
+  "verdicts": {
+    "keep": "keep",
+    "redact": "redact"
+  }
+}

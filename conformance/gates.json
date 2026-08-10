@@ -1,0 +1,99 @@
+{
+  "document_version": 1,
+  "gates": [
+    {
+      "bar": 100.0,
+      "id": "held_out_recall",
+      "label": "held-out recall",
+      "op": ">=",
+      "requires": [],
+      "unit": "%",
+      "why": "A private name reaching a model is the failure this library exists to prevent, so this one is 100% and the others are allowed slack."
+    },
+    {
+      "bar": 100.0,
+      "id": "held_out_recall_carrier",
+      "label": "held-out recall (carrier)",
+      "op": ">=",
+      "requires": [
+        "corpus"
+      ],
+      "unit": "%",
+      "why": "The same spans inside a real essay rather than an isolated frame. Isolated frames went green while a carrier essay leaked; eight passes hid one leak."
+    },
+    {
+      "bar": 100.0,
+      "id": "keep_precision",
+      "label": "KEEP precision",
+      "op": ">=",
+      "requires": [],
+      "unit": "%",
+      "why": "Recall alone rewards a redactor that masks everything. This is what stops that being a passing score."
+    },
+    {
+      "bar": 100.0,
+      "id": "round_trip",
+      "label": "round-trip",
+      "op": ">=",
+      "requires": [],
+      "unit": "%",
+      "why": "Masked text must map back one-to-one. Below 100% a student cannot be shown their own words, which is the property numbered placeholders exist for."
+    },
+    {
+      "bar": 0.0,
+      "id": "unaccounted_violations",
+      "label": "unaccounted violations",
+      "op": "==",
+      "requires": [],
+      "unit": "count",
+      "why": "Known violations are listed with reasons. The gate is that no UNLISTED one appears, and a second test fails when a listed one stops occurring, so a stale exemption cannot shelter the next defect of the same shape."
+    },
+    {
+      "bar": 0.6,
+      "id": "over_fire_prose",
+      "label": "over-fire on prose",
+      "op": "<=",
+      "requires": [
+        "corpus"
+      ],
+      "unit": "spans/essay",
+      "why": "Over-redaction is the cost side of recall. A FLOOR, not a rate: the measured corpus is pre-scrubbed, so real prose offers more to over-fire on."
+    },
+    {
+      "bar": 1.25,
+      "id": "bare_surname_exposure",
+      "label": "bare-surname exposure",
+      "op": "<=",
+      "requires": [
+        "census"
+      ],
+      "unit": "%",
+      "why": "How many ordinary US surnames a bare mention would keep by mistake. Watches every new single-token tier."
+    },
+    {
+      "bar": 10.0,
+      "id": "latency_p95",
+      "label": "latency p95",
+      "op": "<=",
+      "requires": [
+        "corpus"
+      ],
+      "unit": "ms",
+      "why": "p95 rather than p50, because a threshold read off a median reads rosy. The claim is single-digit milliseconds with no network."
+    },
+    {
+      "bar": 1.0,
+      "id": "asset_entries",
+      "label": "asset entries",
+      "op": ">=",
+      "requires": [],
+      "unit": "count",
+      "why": "A gazetteer that reads back empty redacts every public figure in every essay — privacy-safe, product-hostile, and invisible to every other gate."
+    }
+  ],
+  "reference_arm": "local-gazetteer-lowercase",
+  "requirements": {
+    "census": "The US Census surname file (VICARY_EVAL_CENSUS_CSV). Not shipped: 3 MB the redaction path never reads.",
+    "corpus": "An essay corpus TSV the operator supplies (VICARY_EVAL_CORPUS_TSV / _DIR). Not shipped by any package here."
+  }
+}
