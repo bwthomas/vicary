@@ -24,6 +24,15 @@ classifiers = [
 # that only wants the offline detector installs exactly that.
 dependencies = []
 
+# Keep this table LAST in [project]. A TOML sub-table swallows every key after
+# it, so `[project.urls]` placed above `dependencies` reads it as a URL and the
+# build fails with `project.urls.dependencies must be string`.
+[project.urls]
+Homepage = "https://github.com/bwthomas/vicary"
+Repository = "https://github.com/bwthomas/vicary"
+Changelog = "https://github.com/bwthomas/vicary/blob/main/CHANGELOG.md"
+Issues = "https://github.com/bwthomas/vicary/issues"
+
 [project.optional-dependencies]
 # The AWS Bedrock Guardrail arm (an alternative detector and the eval's external
 # baseline), plus the script that provisions the Guardrail resource.

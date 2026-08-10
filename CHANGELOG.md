@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 — 2026-08-10
+
+First published release. The three sections below are the cuts it is made of, in
+reverse order; the last of them is the extraction that started the package.
 
 ### The given-name tier is built from US births, not from famous people's first names
 
@@ -239,10 +242,10 @@
   cross-pass fix at all, which is the same defect as scoring fields unbatched,
   one leg further out.
 
-## 0.1.0 — unreleased
+## The extraction from the essay-scoring pipeline
 
-First release as a standalone package. The code previously lived inside an
-essay-scoring pipeline; extracting it changed the following, and nothing else.
+The code previously lived inside an essay-scoring pipeline; extracting it changed
+the following, and nothing else.
 
 ### Configuration
 
