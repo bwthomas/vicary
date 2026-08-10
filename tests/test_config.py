@@ -9,6 +9,7 @@ so each of those two claims gets a failing case here rather than a comment.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 import pytest
 
@@ -189,18 +190,93 @@ def test_an_explicit_corpus_tsv_wins_over_a_directory(
     assert config.eval_corpus_tsv() == "/data/mine.tsv"
 
 
-def test_a_corpus_directory_is_joined_with_the_expected_filename(
-    monkeypatch: pytest.MonkeyPatch,
+def test_a_corpus_directory_resolves_the_preferred_filename(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
-    monkeypatch.setenv(config.EVAL_CORPUS_DIR_ENV_VAR, "/data/corpus")
-    assert config.eval_corpus_tsv() == f"/data/corpus/{config.EVAL_CORPUS_FILENAME}"
+    (tmp_path / config.EVAL_CORPUS_PREFERRED_FILENAME).write_text("id\ttext\n")
+    (tmp_path / "notes.txt").write_text("ignored\n")
+    monkeypatch.setenv(config.EVAL_CORPUS_DIR_ENV_VAR, str(tmp_path))
+    assert config.eval_corpus_tsv() == str(
+        tmp_path / config.EVAL_CORPUS_PREFERRED_FILENAME
+    )
+
+
+def test_a_corpus_directory_resolves_a_single_tsv_under_any_name(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    """The whole reason the directory is scanned rather than joined with a fixed
+    name: a directory laid out under an older release holds one TSV called
+    whatever its upstream called it, and renaming the operator's data is not a
+    migration this library gets to demand."""
+    (tmp_path / "some-upstream-name_rel3.tsv").write_text("id\ttext\n")
+    monkeypatch.setenv(config.EVAL_CORPUS_DIR_ENV_VAR, str(tmp_path))
+    assert config.eval_corpus_tsv() == str(tmp_path / "some-upstream-name_rel3.tsv")
+
+
+def test_the_preferred_filename_wins_over_another_tsv(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    (tmp_path / config.EVAL_CORPUS_PREFERRED_FILENAME).write_text("id\ttext\n")
+    (tmp_path / "zzz-other.tsv").write_text("id\ttext\n")
+    monkeypatch.setenv(config.EVAL_CORPUS_DIR_ENV_VAR, str(tmp_path))
+    assert config.eval_corpus_tsv() == str(
+        tmp_path / config.EVAL_CORPUS_PREFERRED_FILENAME
+    )
+
+
+@pytest.mark.parametrize("names", [(), ("a.tsv", "b.tsv")])
+def test_an_ambiguous_corpus_directory_raises_rather_than_reading_as_unset(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, names: tuple[str, ...],
+) -> None:
+    """Zero TSVs and two TSVs are both operator errors, and the one thing this
+    must not do is return "" — every caller treats "" as "no corpus configured,
+    skip the gate", so a mis-named corpus would print a pass on no data."""
+    for name in names:
+        (tmp_path / name).write_text("id\ttext\n")
+    monkeypatch.setenv(config.EVAL_CORPUS_DIR_ENV_VAR, str(tmp_path))
+    with pytest.raises(config.CorpusDirectoryError) as caught:
+        config.eval_corpus_tsv()
+    # The message has to name the variable and the escape hatch, or an operator
+    # reads "cannot tell which is the corpus" and has nowhere to go.
+    assert config.EVAL_CORPUS_DIR_ENV_VAR in str(caught.value)
+    assert config.EVAL_CORPUS_TSV_ENV_VAR in str(caught.value)
+
+
+def test_a_corpus_directory_that_does_not_exist_raises(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    monkeypatch.setenv(config.EVAL_CORPUS_DIR_ENV_VAR, str(tmp_path / "absent"))
+    with pytest.raises(config.CorpusDirectoryError):
+        config.eval_corpus_tsv()
+
+
+def test_an_explicit_corpus_tsv_needs_no_directory_scan(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    """The explicit path is taken on trust and never stat'd, so a caller can
+    point at a file that a fixture is about to write."""
+    monkeypatch.setenv(config.EVAL_CORPUS_TSV_ENV_VAR, str(tmp_path / "not-yet.tsv"))
+    assert config.eval_corpus_tsv() == str(tmp_path / "not-yet.tsv")
+
+
+def test_no_third_party_dataset_filename_is_baked_into_the_library() -> None:
+    """A published general-purpose library naming one specific essay dataset's
+    filename both tied it to that corpus and named a third-party dataset in an
+    artifact on PyPI. The default is generic; the directory scan is what keeps
+    existing layouts resolving."""
+    source = Path(config.__file__).read_text(encoding="utf-8")
+    assert "training_set" not in source
+    assert config.EVAL_CORPUS_PREFERRED_FILENAME == "corpus.tsv"
 
 
 def test_the_legacy_corpus_variables_still_work(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
-    monkeypatch.setenv("GRADER_CORPUS_REPO", "/data/corpus")
-    assert config.eval_corpus_tsv() == f"/data/corpus/{config.EVAL_CORPUS_FILENAME}"
+    (tmp_path / config.EVAL_CORPUS_PREFERRED_FILENAME).write_text("id\ttext\n")
+    monkeypatch.setenv("GRADER_CORPUS_REPO", str(tmp_path))
+    assert config.eval_corpus_tsv() == str(
+        tmp_path / config.EVAL_CORPUS_PREFERRED_FILENAME
+    )
 
 
 #: Names introduced by this library rather than renamed from the host, so they

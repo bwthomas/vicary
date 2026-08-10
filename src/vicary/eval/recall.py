@@ -648,12 +648,22 @@ def main(argv=None):
         description="Score a redaction arm for recall, precision, over-firing "
                     "and round-trip restorability.",
     )
-    # No path literal here. The corpus is licensed third-party data, is not
-    # packaged, and its location is per-machine — see vicary.config.
-    ap.add_argument("--tsv", default=config.eval_corpus_tsv(),
-                    help=f"ASAP {config.EVAL_CORPUS_FILENAME} (or set "
-                         f"{config.EVAL_CORPUS_TSV_ENV_VAR} / "
-                         f"{config.EVAL_CORPUS_DIR_ENV_VAR}).")
+    # No path literal here, and no dataset named. The corpus is third-party data
+    # the operator supplies, is not packaged, and its location is per-machine —
+    # see vicary.config.
+    # A mis-named corpus directory raises rather than resolving to "", so that a
+    # configured-but-wrong corpus cannot read as an unconfigured one. Carry the
+    # message to the --tsv check below instead of letting it surface here as a
+    # traceback out of argparse's default expression.
+    try:
+        default_tsv, corpus_problem = config.eval_corpus_tsv(), ""
+    except config.CorpusDirectoryError as exc:
+        default_tsv, corpus_problem = "", str(exc)
+    ap.add_argument("--tsv", default=default_tsv,
+                    help=f"the corpus TSV (or set "
+                         f"{config.EVAL_CORPUS_TSV_ENV_VAR}, or "
+                         f"{config.EVAL_CORPUS_DIR_ENV_VAR} to a directory "
+                         f"holding one).")
     ap.add_argument("--ids", default="",
                     help="JSONL of composition_id records restricting which "
                          "essays are used. Omit to take the first --n in file "
@@ -764,8 +774,9 @@ def main(argv=None):
         return 0
 
     if not args.tsv:
-        print("no corpus: pass --tsv, set "
-              f"{config.EVAL_CORPUS_TSV_ENV_VAR}, or use --frames",
+        print(corpus_problem or
+              ("no corpus: pass --tsv, set "
+               f"{config.EVAL_CORPUS_TSV_ENV_VAR}, or use --frames"),
               file=sys.stderr)
         return 2
 

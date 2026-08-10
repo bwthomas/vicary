@@ -66,13 +66,22 @@ DEPLOY_ENV_VAR: str = "VICARY_DEPLOY_ENV"
 #: Override for the bundled notability asset. See :mod:`vicary.assets`.
 ASSET_PATH_ENV_VAR: str = "VICARY_ASSET_PATH"
 
-#: Eval corpus location. The corpus is licensed third-party essay data and is
-#: deliberately NOT packaged; corpus-dependent gates skip when it is absent.
+#: Eval corpus location. The corpus is third-party essay data the operator
+#: supplies and is deliberately NOT packaged; corpus-dependent gates skip when
+#: it is absent.
 EVAL_CORPUS_TSV_ENV_VAR: str = "VICARY_EVAL_CORPUS_TSV"
 EVAL_CORPUS_DIR_ENV_VAR: str = "VICARY_EVAL_CORPUS_DIR"
 
-#: Filename looked for inside :data:`EVAL_CORPUS_DIR_ENV_VAR`.
-EVAL_CORPUS_FILENAME: str = "training_set_rel3.tsv"
+#: Preferred filename inside :data:`EVAL_CORPUS_DIR_ENV_VAR`. Generic on
+#: purpose: this library is not tied to one essay corpus, and baking a specific
+#: third-party dataset's filename into a published artifact both named that
+#: dataset and implied it was the only one that works. Any single ``.tsv`` in
+#: the directory resolves too, so a directory laid out before this change still
+#: works without renaming anything — see :func:`eval_corpus_tsv`.
+EVAL_CORPUS_PREFERRED_FILENAME: str = "corpus.tsv"
+
+#: Extension the directory scan accepts. The corpus reader parses TSV.
+EVAL_CORPUS_SUFFIX: str = ".tsv"
 
 #: Local copy of the US Census surname file (``.zip`` or extracted ``.csv``), for
 #: the bare-surname false-positive control in :mod:`vicary.eval.census`. Not
@@ -214,11 +223,60 @@ def eval_corpus_tsv() -> str:
     Callers must treat ``""`` as "skip this measurement", never as "the corpus
     is empty" — a corpus-dependent gate that silently passes on no data is a
     green light with a comment on it.
+
+    ``""`` means **unconfigured**, and nothing else. A configured directory that
+    does not resolve to exactly one TSV raises :class:`CorpusDirectoryError`
+    instead of returning ``""``, because an operator who set the variable and
+    got a skipped gate has been told their corpus is absent when it is in fact
+    mis-named — the one failure this function must not report as a pass.
+
+    Resolution inside a directory, in order:
+
+      1. :data:`EVAL_CORPUS_PREFERRED_FILENAME`, if present;
+      2. the single ``*.tsv`` in the directory, whatever it is called;
+      3. otherwise raise, listing what was found.
+
+    Rule 2 is what keeps a directory laid out under an older release working
+    without a rename, and it is why no specific dataset's filename appears here.
     """
     explicit = get(EVAL_CORPUS_TSV_ENV_VAR)
     if explicit:
         return explicit
     directory = get(EVAL_CORPUS_DIR_ENV_VAR)
-    if directory:
-        return os.path.join(directory, EVAL_CORPUS_FILENAME)
-    return ""
+    if not directory:
+        return ""
+    return _resolve_corpus_in_directory(directory)
+
+
+class CorpusDirectoryError(RuntimeError):
+    """A configured corpus directory does not hold exactly one TSV."""
+
+
+def _resolve_corpus_in_directory(directory: str) -> str:
+    """The one corpus TSV in ``directory``, or raise saying why there isn't one."""
+    preferred = os.path.join(directory, EVAL_CORPUS_PREFERRED_FILENAME)
+    if os.path.isfile(preferred):
+        return preferred
+    try:
+        entries = sorted(os.listdir(directory))
+    except OSError as exc:
+        raise CorpusDirectoryError(
+            f"{EVAL_CORPUS_DIR_ENV_VAR}={directory!r} cannot be read ({exc}). "
+            f"Point it at a directory, or name the file directly with "
+            f"{EVAL_CORPUS_TSV_ENV_VAR}."
+        ) from exc
+    candidates = [
+        name for name in entries
+        if name.endswith(EVAL_CORPUS_SUFFIX)
+        and os.path.isfile(os.path.join(directory, name))
+    ]
+    if len(candidates) == 1:
+        return os.path.join(directory, candidates[0])
+    found = ", ".join(candidates) if candidates else "none"
+    raise CorpusDirectoryError(
+        f"{EVAL_CORPUS_DIR_ENV_VAR}={directory!r} holds "
+        f"{len(candidates)} {EVAL_CORPUS_SUFFIX} files ({found}); vicary cannot "
+        f"tell which is the corpus. Name it "
+        f"{EVAL_CORPUS_PREFERRED_FILENAME}, or set "
+        f"{EVAL_CORPUS_TSV_ENV_VAR} to the file directly."
+    )

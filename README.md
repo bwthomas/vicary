@@ -103,7 +103,7 @@ Every variable vicary reads, resolved in `vicary/config.py`:
 | `VICARY_BEDROCK_GUARDRAIL_VERSION` | Guardrail version, default `DRAFT` |
 | `VICARY_BEDROCK_GUARDRAIL_REGION` | Guardrail region; no default, on purpose |
 | `VICARY_EVAL_CORPUS_TSV` | eval corpus path (see *Measurement*) |
-| `VICARY_EVAL_CORPUS_DIR` | directory holding `training_set_rel3.tsv` |
+| `VICARY_EVAL_CORPUS_DIR` | directory holding the corpus TSV (see *Measurement*) |
 | `VICARY_EVAL_CENSUS_CSV` | local copy of the US Census surname file, for the false-positive control |
 
 `ENVIRONMENT` is honoured as a host convention where `VICARY_DEPLOY_ENV` is
@@ -348,12 +348,15 @@ surname file is likewise not packaged, for the duller reason that it is 3 MB the
 redaction path never reads. Gates that need either one skip, and the report names
 what it could not measure, so a partial run cannot read as a clean sweep.
 
-The harness reads a two-column TSV of `essay_id`/`essay`; the filename below is
-the default it looks for and can be pointed anywhere with
-`VICARY_EVAL_CORPUS_TSV`.
+The harness reads a two-column TSV of `essay_id`/`essay`. Point
+`VICARY_EVAL_CORPUS_TSV` at the file, or `VICARY_EVAL_CORPUS_DIR` at a directory
+holding it — a directory resolves `corpus.tsv` if present, otherwise the single
+`.tsv` it contains, whatever your corpus's distributor named it. A directory
+holding none or several raises rather than resolving to nothing, because a
+skipped gate must mean "no corpus configured" and never "configured, mis-named".
 
 ```sh
-export VICARY_EVAL_CORPUS_DIR=/path/to/your/corpus     # holds training_set_rel3.tsv
+export VICARY_EVAL_CORPUS_DIR=/path/to/your/corpus     # holds one .tsv
 export VICARY_EVAL_CENSUS_CSV=/path/to/names.zip       # census.gov 2010 surnames
 pytest -m gates -s
 ```
