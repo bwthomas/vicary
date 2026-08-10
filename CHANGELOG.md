@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.1.1 — 2026-08-10
+
+Nothing about the detector changed. This release exists because a package's
+rendered project page is built from the README at build time, so a corrected
+README does not reach PyPI without a version to carry it.
+
+### The package no longer implies it holds a licence to the corpus it was measured against
+
+* **The README's "the licensed ASAP essay corpus" is gone.** It read as a licence
+  *this project holds and passes on*, which is not true of anything here. It now
+  says no essay corpus ships or is redistributed, that the operator supplies data
+  they are entitled to use, and that this project makes no claim to those terms
+  and grants no rights in that data. The same phrasing was corrected in `ci.yml`.
+* **This was a wording defect, not a packaging one.** Verified against the
+  published artifacts rather than the build config: the 0.1.0 sdist and wheel
+  carry exactly two data files, `vicary/data/notability.txt.gz` and
+  `MANIFEST.json`. No essay text, no excerpt, no TSV. The only route to a corpus
+  is an environment variable pointing at a file the operator supplies.
+* Measurement claims derived from a corpus ("25 essays", "2,108 `@PERSON`
+  tokens") stay, as does the *pattern* the corpus authors' own anonymization
+  tokens match. Statistics about a corpus are not redistribution of it.
+
+### The eval corpus is found by scanning, so no dataset's filename is baked in
+
+* **`VICARY_EVAL_CORPUS_DIR` no longer joins a fixed `training_set_rel3.tsv`.**
+  One corpus's filename in a general-purpose library both tied the library to
+  that corpus and named a specific third-party dataset in a published artifact.
+  The default is now the generic `corpus.tsv`, and a directory holding a single
+  `.tsv` under any other name resolves too — so a directory laid out under 0.1.0
+  keeps working with nothing renamed.
+* **An ambiguous directory raises `CorpusDirectoryError` rather than resolving to
+  the empty string.** Every caller reads `""` as "no corpus configured, skip this
+  gate", so a mis-named corpus would have printed a gate pass on no data. Zero
+  TSVs and two TSVs are operator errors and now say so, naming both the variable
+  and the escape hatch. The eval CLI surfaces that message from its `--tsv`
+  check instead of as a traceback out of an argparse default.
+* Gates re-measured after the change: **9 of 9 measured, 9 of 9 PASS**, every
+  value unchanged, 720 tests green.
+
 ## 0.1.0 — 2026-08-10
 
 First published release. The three sections below are the cuts it is made of, in
