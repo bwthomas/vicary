@@ -17,9 +17,13 @@
 # tag builds, tests, prints the scoreboard, and stops. That is the correct outcome.
 name: release-npm
 
+# NO TAG TRIGGER YET, DELIBERATELY. The conformance gate below would refuse on
+# every `v*` tag until the detector is ported, which means a permanent red check on
+# every Python release — and "is the release green?" stops having an answer. So this
+# is manual-dispatch only for now, and the commit that raises the ratchet to 35 of
+# 35 is the commit that adds `push: tags: ["v*"]` back. The gate stays either way;
+# what changes is whether an unfinished port fails somebody else's release.
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
