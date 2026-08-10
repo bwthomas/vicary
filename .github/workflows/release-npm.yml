@@ -1,0 +1,101 @@
+# Publish the npm package when a `v*` tag is pushed.
+#
+# Same trust story as the Python release: no long-lived token in this repository.
+# npm mints provenance from the workflow's OIDC identity (`--provenance`), so the
+# published tarball carries a verifiable link back to this commit and this
+# workflow. The one secret that remains is NPM_TOKEN, because npm's *trusted
+# publishing* still requires a granular automation token for the initial link;
+# scope it to this package and nothing else.
+#
+# THE GATE THAT MATTERS IS CONFORMANCE, NOT THE TESTS.
+#
+# A port that publishes while it reproduces 0 of 35 masking-required frames is a
+# package called `vicary` that does not redact — worse than no package, because a
+# host that installs it gets silence instead of an error. So this workflow refuses
+# to publish unless the conformance scoreboard reports every masking-required frame
+# matching the reference output byte-for-byte. Until the detector is ported, a `v*`
+# tag builds, tests, prints the scoreboard, and stops. That is the correct outcome.
+name: release-npm
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: typescript
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+          cache-dependency-path: typescript/package-lock.json
+
+      - run: npm ci
+
+      - name: The tag must be the version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg=$(node -p "require('./package.json').version")
+          test "$tag" = "$pkg" \
+            || { echo "tag $GITHUB_REF_NAME is version $tag, package is $pkg"; exit 1; }
+
+      # The asset, verified by sha256 against the manifest. A gazetteer that reads
+      # back empty redacts every public figure in every essay: privacy-safe,
+      # product-hostile, and invisible to every other check.
+      - name: Vendor the asset
+        run: npm run sync-assets
+
+      - run: npm test
+
+      - name: Conformance must be complete before this package may be published
+        run: |
+          npm run conformance | tee /tmp/conformance.txt
+          # Parse the scoreboard's leading line rather than trusting an exit code:
+          # the suite passes at 0 of 35 on purpose, because a ratchet that failed
+          # the build for being incomplete would make the port unmergeable. The
+          # PUBLISH gate is the stricter one, and it reads the number.
+          line=$(grep 'frames requiring masking' /tmp/conformance.txt)
+          matched=$(echo "$line" | awk '{print $4}')
+          total=$(echo "$line" | awk '{print $6}')
+          echo "conformance: $matched of $total masking-required frames"
+          test -n "$matched" && test -n "$total" \
+            || { echo "could not read the scoreboard — refusing to publish on an unparsed number"; exit 1; }
+          test "$matched" = "$total" || {
+            echo "REFUSING TO PUBLISH: $matched of $total masking-required frames match"
+            echo "the reference output. Publishing now would ship a package named"
+            echo "vicary that does not redact, and a caller cannot tell."
+            exit 1
+          }
+
+      - name: The packed tarball must carry the asset
+        run: |
+          npm pack --dry-run --json > /tmp/pack.json
+          node -e '
+            const files = require("/tmp/pack.json")[0].files.map(f => f.path);
+            for (const need of ["assets/notability.txt.gz", "assets/MANIFEST.json"]) {
+              if (!files.includes(need)) {
+                console.error(`tarball is missing ${need}`);
+                process.exit(1);
+              }
+            }
+            console.log("tarball carries the gazetteer asset");
+          '
+
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

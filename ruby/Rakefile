@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+require "rake/testtask"
+
+Rake::TestTask.new(:test) do |t|
+  t.libs << "lib" << "test"
+  t.test_files = FileList["test/**/*_test.rb"]
+  t.warning = false
+end
+
+desc "Vendor the gazetteer asset from the repository's tracked copy"
+task :sync_assets do
+  ruby "scripts/sync_assets.rb"
+end
+
+desc "Score this port against the shared conformance suite"
+task :conformance do
+  ruby "-Ilib -Itest test/conformance_test.rb"
+end
+
+desc "Build the gem, vendoring the asset first"
+task build: :sync_assets do
+  sh "gem build vicary.gemspec"
+end
+
+task default: %i[test]

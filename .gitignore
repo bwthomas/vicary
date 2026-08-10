@@ -16,8 +16,16 @@ __pycache__/
 /python/dist/
 /python/.venv/
 /typescript/dist/
+/typescript/dist-test/
 /typescript/node_modules/
 /ruby/pkg/
+/ruby/*.gem
+
+# Vendored asset copies. Reproduced from python/src/vicary/data by each package's
+# sync step, and NOT tracked: a second tracked copy is a second thing to bump per
+# asset cut, which is how two front doors end up shipping different gazetteers.
+/typescript/assets/
+/ruby/assets/
 
 .tox/
 .venv/

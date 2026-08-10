@@ -11,9 +11,17 @@ and it answers in single-digit milliseconds.
 
 | front door | package | status |
 |---|---|---|
-| Python | [`vicary`](https://pypi.org/project/vicary/) on PyPI | **published** — see [`python/`](python/) |
-| TypeScript | `vicary` on npm | in progress — see [`typescript/`](typescript/) |
-| Ruby | `vicary` on RubyGems | in progress — see [`ruby/`](ruby/) |
+| Python | [`vicary`](https://pypi.org/project/vicary/) on PyPI | **published**, 9 of 9 gates PASS — see [`python/`](python/) |
+| TypeScript | `vicary` on npm | asset layer + conformance harness; detector **0 of 35** — see [`typescript/`](typescript/) |
+| Ruby | `vicary` on RubyGems | asset layer + conformance harness; detector **0 of 35** — see [`ruby/`](ruby/) |
+
+"0 of 35" is the number of masking-required fixture frames the port reproduces
+byte-for-byte, printed by every `npm test` / `rake test` run. Both ports load the
+identical gazetteer bytes as Python — same sha256, same seven tier counts, checked
+against the manifest rather than against a copied constant — and both **raise
+rather than return the text unchanged** when asked to redact, so neither can be
+mistaken for a working redactor while it is not one. Their release workflows refuse
+to publish until that number reaches 35 of 35.
 
 The full narrative — modes, the data asset, how it reads the writer's
 capitalisation, what was measured and what it deliberately does not do — is in

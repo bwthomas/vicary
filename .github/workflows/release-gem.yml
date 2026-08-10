@@ -1,0 +1,97 @@
+# Publish the gem when a `v*` tag is pushed.
+#
+# RubyGems trusted publishing (OIDC), so there is no API key in this repository:
+# rubygems.org is configured to trust this workflow, in this repository, in the
+# `rubygems` environment, and mints a short-lived credential per run. The one-time
+# setup is on RubyGems' side — the gem's Trusted Publishers page, or a pending
+# publisher for a gem that does not exist yet — and until it exists the publish
+# step fails, which is the correct failure: nothing is uploaded.
+#
+# THE GATE THAT MATTERS IS CONFORMANCE, NOT THE TESTS.
+#
+# A port that publishes while it reproduces 0 of 35 masking-required frames is a
+# gem called `vicary` that does not redact — worse than no gem, because a host that
+# installs it gets silence instead of an error. So this refuses to publish unless
+# the conformance scoreboard reports every masking-required frame matching the
+# reference output byte-for-byte. Until the detector is ported, a `v*` tag builds,
+# tests, prints the scoreboard, and stops. That is the correct outcome.
+name: release-gem
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: rubygems
+    defaults:
+      run:
+        working-directory: ruby
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: The tag must be the version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg=$(ruby -Ilib -e 'require "vicary/version"; print Vicary::VERSION')
+          test "$tag" = "$pkg" \
+            || { echo "tag $GITHUB_REF_NAME is version $tag, gem is $pkg"; exit 1; }
+
+      # The asset, verified by sha256 against the manifest. A gazetteer that reads
+      # back empty redacts every public figure in every essay: privacy-safe,
+      # product-hostile, and invisible to every other check.
+      - name: Vendor the asset
+        run: rake sync_assets
+
+      - run: rake test
+
+      - name: Conformance must be complete before this gem may be published
+        run: |
+          rake conformance | tee /tmp/conformance.txt
+          # Parse the scoreboard rather than trusting an exit code: the suite
+          # passes at 0 of 35 on purpose, because a ratchet that failed the build
+          # for being incomplete would make the port unmergeable. The PUBLISH gate
+          # is the stricter one, and it reads the number.
+          line=$(grep 'frames requiring masking' /tmp/conformance.txt)
+          matched=$(echo "$line" | awk '{print $4}')
+          total=$(echo "$line" | awk '{print $6}')
+          echo "conformance: $matched of $total masking-required frames"
+          test -n "$matched" && test -n "$total" \
+            || { echo "could not read the scoreboard — refusing to publish on an unparsed number"; exit 1; }
+          test "$matched" = "$total" || {
+            echo "REFUSING TO PUBLISH: $matched of $total masking-required frames match"
+            echo "the reference output. Publishing now would ship a gem named vicary"
+            echo "that does not redact, and a caller cannot tell."
+            exit 1
+          }
+
+      - name: Build, and the gem must carry the asset
+        run: |
+          gem build vicary.gemspec
+          gem contents --gemspec vicary.gemspec 2>/dev/null || true
+          tar -tf vicary-*.gem >/dev/null
+          # `gem build` lists what it packed, but reading the built artifact is the
+          # claim that matters: a gemspec glob that stops matching is silent.
+          tar -xOf vicary-*.gem data.tar.gz | tar -tzf - > /tmp/members.txt
+          for need in assets/notability.txt.gz assets/MANIFEST.json; do
+            grep -qx "$need" /tmp/members.txt \
+              || { echo "gem is missing $need"; exit 1; }
+          done
+          echo "gem carries the gazetteer asset"
+
+      - uses: rubygems/release-gem@v1
+        with:
+          await-release: false

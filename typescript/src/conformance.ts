@@ -1,0 +1,291 @@
+/**
+ * Read the shared spec and score this implementation against it.
+ *
+ * The spec lives in the repository's `conformance/` directory, is generated from
+ * the Python implementation, and is what all three front doors run against. See
+ * `conformance/README.md` for the bar; the short version is that every frame's
+ * masked output must be byte-identical **including placeholder numbering**.
+ *
+ * **Why the scoreboard reports two denominators.** 16 of the 51 frames expect
+ * nothing to be masked — they exist to catch over-redaction. An implementation
+ * that returns its input unchanged therefore scores 16 of 51 and looks a third of
+ * the way done while detecting nothing at all. So the number that leads is
+ * `matched of framesRequiringMasking`, and the 51-frame total is reported beside
+ * it rather than instead of it. A ratio whose numerator a null implementation can
+ * inflate is not a measure of progress.
+ */
+
+import { readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+export const DOCUMENT_VERSION = 1;
+
+export interface SpecSpan {
+  entity: string;
+  literal: string;
+  verdict: string;
+  expectCount: number | null;
+  expect: string | null;
+  keptBy: string;
+  redactedBy: string;
+  note: string;
+}
+
+export interface SpecFrame {
+  frameId: string;
+  group: string;
+  sentence: string;
+  spans: SpecSpan[];
+  heldOut: boolean;
+  promptContext: string;
+  note: string;
+}
+
+export interface Golden {
+  masked: string;
+  placeholders: string[];
+  mapping: Array<[string, string]>;
+  aligns: boolean;
+}
+
+export interface Identity {
+  firstName: string;
+  lastName: string;
+  schoolName: string;
+}
+
+export interface Spec {
+  fixtureVersion: string;
+  referenceArm: string;
+  identity: Identity;
+  frames: SpecFrame[];
+  golden: Map<string, Golden>;
+}
+
+export interface Gate {
+  id: string;
+  label: string;
+  unit: string;
+  op: string;
+  bar: number;
+  requires: string[];
+  why: string;
+}
+
+export interface GateSpec {
+  referenceArm: string;
+  requirements: Record<string, string>;
+  gates: Gate[];
+}
+
+/** Locate the repository's `conformance/` directory, or throw naming the search. */
+export function conformanceDir(): string {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const tried: string[] = [];
+  let current = resolve(here);
+  for (let depth = 0; depth < 8; depth += 1) {
+    const candidate = join(current, "conformance");
+    tried.push(candidate);
+    try {
+      readFileSync(join(candidate, "frames.json"));
+      return candidate;
+    } catch {
+      // keep walking up
+    }
+    const parent = resolve(current, "..");
+    if (parent === current) break;
+    current = parent;
+  }
+  throw new Error(
+    `no conformance/frames.json found. Looked in: ${tried.join(", ")}. The spec ` +
+      `lives in the repository, not in an installed package — a published copy ` +
+      `would imply the installed one is authoritative.`,
+  );
+}
+
+function requireVersion(version: unknown, file: string): void {
+  if (version !== DOCUMENT_VERSION) {
+    throw new Error(
+      `${file} is document_version ${String(version)}, this reader understands ` +
+        `${DOCUMENT_VERSION}. Refusing to read it rather than guessing which ` +
+        `fields moved.`,
+    );
+  }
+}
+
+/** Load `conformance/frames.json`, applying the documented field defaults. */
+export function loadSpec(directory?: string): Spec {
+  const dir = directory ?? conformanceDir();
+  const raw = JSON.parse(readFileSync(join(dir, "frames.json"), "utf8"));
+  requireVersion(raw.document_version, "frames.json");
+
+  const frames: SpecFrame[] = raw.frames.map((f: Record<string, unknown>) => ({
+    frameId: f["frame_id"] as string,
+    group: f["group"] as string,
+    sentence: f["sentence"] as string,
+    heldOut: (f["held_out"] as boolean | undefined) ?? false,
+    promptContext: (f["prompt_context"] as string | undefined) ?? "",
+    note: (f["note"] as string | undefined) ?? "",
+    spans: (f["spans"] as Array<Record<string, unknown>>).map((s) => ({
+      entity: s["entity"] as string,
+      literal: s["literal"] as string,
+      // The defaults are documented in conformance/README.md. Applying them
+      // here rather than requiring the exporter to write them keeps the file
+      // readable; getting one wrong silently changes what a frame asserts.
+      verdict: (s["verdict"] as string | undefined) ?? "redact",
+      expectCount: (s["expect_count"] as number | undefined) ?? null,
+      expect: (s["expect"] as string | undefined) ?? null,
+      keptBy: (s["kept_by"] as string | undefined) ?? "notability",
+      redactedBy: (s["redacted_by"] as string | undefined) ?? "absence",
+      note: (s["note"] as string | undefined) ?? "",
+    })),
+  }));
+
+  const golden = new Map<string, Golden>();
+  for (const [frameId, entry] of Object.entries(
+    raw.golden as Record<string, Golden>,
+  )) {
+    golden.set(frameId, entry);
+  }
+
+  return {
+    fixtureVersion: raw.fixture_version as string,
+    referenceArm: raw.reference_arm as string,
+    identity: {
+      firstName: raw.identity.first_name as string,
+      lastName: raw.identity.last_name as string,
+      schoolName: raw.identity.school_name as string,
+    },
+    frames,
+    golden,
+  };
+}
+
+/** Load `conformance/gates.json`. */
+export function loadGates(directory?: string): GateSpec {
+  const dir = directory ?? conformanceDir();
+  const raw = JSON.parse(readFileSync(join(dir, "gates.json"), "utf8"));
+  requireVersion(raw.document_version, "gates.json");
+  return {
+    referenceArm: raw.reference_arm as string,
+    requirements: raw.requirements as Record<string, string>,
+    gates: raw.gates as Gate[],
+  };
+}
+
+export interface FrameOutcome {
+  frameId: string;
+  requiresMasking: boolean;
+  matched: boolean;
+  expected: string;
+  produced: string;
+  /** Set when the implementation threw rather than returned. */
+  error?: string;
+}
+
+export interface Scoreboard {
+  fixtureVersion: string;
+  referenceArm: string;
+  total: number;
+  matched: number;
+  requiringMasking: number;
+  matchedRequiringMasking: number;
+  outcomes: FrameOutcome[];
+}
+
+/**
+ * Score an implementation against every frame.
+ *
+ * `redact` returns the masked text. It is passed the sentence and the identity
+ * the detector is told about, which is the same input every Python arm receives —
+ * omitting the identity measures a different system and misses the easiest spans.
+ */
+export function score(
+  spec: Spec,
+  redact: (sentence: string, identity: Identity) => string,
+): Scoreboard {
+  const outcomes: FrameOutcome[] = [];
+  for (const frame of spec.frames) {
+    const golden = spec.golden.get(frame.frameId);
+    if (golden === undefined) {
+      throw new Error(
+        `frame ${frame.frameId} has no golden output in the spec; the file is ` +
+          `internally inconsistent and scoring against it would be meaningless`,
+      );
+    }
+    const requiresMasking = golden.placeholders.length > 0;
+    let produced: string;
+    let error: string | undefined;
+    try {
+      produced = redact(frame.sentence, spec.identity);
+    } catch (caught) {
+      produced = "";
+      error = caught instanceof Error ? caught.message : String(caught);
+    }
+    outcomes.push({
+      frameId: frame.frameId,
+      requiresMasking,
+      matched: error === undefined && produced === golden.masked,
+      expected: golden.masked,
+      produced,
+      ...(error === undefined ? {} : { error }),
+    });
+  }
+
+  const requiring = outcomes.filter((o) => o.requiresMasking);
+  return {
+    fixtureVersion: spec.fixtureVersion,
+    referenceArm: spec.referenceArm,
+    total: outcomes.length,
+    matched: outcomes.filter((o) => o.matched).length,
+    requiringMasking: requiring.length,
+    matchedRequiringMasking: requiring.filter((o) => o.matched).length,
+    outcomes,
+  };
+}
+
+/**
+ * Render the scoreboard.
+ *
+ * Leads with the masking-required ratio, because that is the one a null
+ * implementation cannot inflate. The gate list is printed with NOT MEASURED
+ * spelled out per gate rather than reduced out of the denominator — five of nine
+ * held is a different statement from nine of nine, and a badge cannot tell them
+ * apart.
+ */
+export function report(board: Scoreboard, gates: GateSpec): string {
+  const lines: string[] = [];
+  lines.push(`conformance — fixture ${board.fixtureVersion}, arm ${board.referenceArm}`);
+  lines.push("-".repeat(58));
+  lines.push(
+    `  frames requiring masking   ${board.matchedRequiringMasking
+      .toString()
+      .padStart(3)} / ${board.requiringMasking}`,
+  );
+  lines.push(
+    `  all frames                 ${board.matched
+      .toString()
+      .padStart(3)} / ${board.total}   ` +
+      `(${board.total - board.requiringMasking} expect no masking, so an ` +
+      `identity function scores that many)`,
+  );
+  lines.push("-".repeat(58));
+  lines.push("  gates:");
+  for (const gate of gates.gates) {
+    const needs =
+      gate.requires.length === 0
+        ? ""
+        : `  NEEDS ${gate.requires.join("+")}`;
+    lines.push(
+      `    NOT MEASURED  ${gate.label.padEnd(28)} ${gate.op} ${gate.bar}` +
+        ` ${gate.unit}${needs}`,
+    );
+  }
+  lines.push(
+    "  -> no gate is measured by this port yet. A green run here means the " +
+      "spec loads,",
+  );
+  lines.push("     never that the gate set is clear.");
+  return lines.join("\n");
+}

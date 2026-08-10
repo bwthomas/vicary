@@ -101,3 +101,57 @@ jobs:
             || { echo "wheel is missing vicary/data/notability.txt.gz"; exit 1; }
           python -m zipfile -l dist/*.whl | grep -q 'vicary/data/MANIFEST.json' \
             || { echo "wheel is missing vicary/data/MANIFEST.json"; exit 1; }
+
+  typescript:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: typescript
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor from package.json engines, and current LTS. The redaction path
+        # is standard library only, so the interesting breakage is a RegExp or
+        # Intl behaviour change between versions rather than a dependency.
+        node-version: ["20", "22"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: typescript/package-lock.json
+      - run: npm ci
+      # Vendors the asset from python/src/vicary/data and verifies the sha256 of
+      # what landed. Its own step because "the copy succeeded" and "the copy is
+      # the right bytes" are different claims, and only the second one matters.
+      - name: Vendor the asset
+        run: npm run sync-assets
+      - run: npx tsc -p tsconfig.json --noEmit
+      - run: npm test
+      # Printed as its own step so the scoreboard is readable in the checks list
+      # without expanding a test log. It reports 0 of 35 until the detector lands,
+      # which is the honest number and the reason it is printed at all.
+      - name: Conformance scoreboard
+        run: npm run conformance
+
+  ruby:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ruby
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby-version: ["3.1", "3.3"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          working-directory: ruby
+      - name: Vendor the asset
+        run: rake sync_assets
+      - run: rake test
+      - name: Conformance scoreboard
+        run: rake conformance
