@@ -1,4 +1,4 @@
-# Publish the gem when a `v*` tag is pushed.
+# Publish the gem when a `v*` tag is pushed — and prove the push path before then.
 #
 # RubyGems trusted publishing (OIDC), so there is no API key in this repository:
 # rubygems.org is configured to trust this workflow, in this repository, in the
@@ -15,6 +15,52 @@
 # the conformance scoreboard reports every masking-required frame matching the
 # reference output byte-for-byte. Until the detector is ported, a `v*` tag builds,
 # tests, prints the scoreboard, and stops. That is the correct outcome.
+#
+# ---------------------------------------------------------------------------
+# THE PUSH PROBE — how this path gets exercised without publishing
+# ---------------------------------------------------------------------------
+#
+# The problem: every link in this workflow between "the gem is built" and "the
+# registry serves it" is unproven until a release runs, and the first release
+# cannot happen until the detector is ported. Which means the first time the
+# credential exchange runs for real would also be the first time anyone learns
+# whether the trusted publisher was registered against the right repository,
+# workflow filename and environment. That is the wrong moment to find out.
+#
+# So `push_probe: true` runs this same workflow, in this same environment, from
+# this same file — all three of which the OIDC claims are matched against — mints
+# a real credential, and then attempts a `gem push` that RubyGems is *guaranteed*
+# to refuse.
+#
+# The guarantee is not a convention, it is rubygems.org's own authorization code.
+# `Pusher#authorize` clears a push from a trusted-publisher-owned key by exactly
+# two routes: the publisher already owns the gem, or there is an unexpired
+# *pending* publisher whose gem name matches this one exactly. The probe gem's
+# name matches no pending publisher and is owned by nobody, so both routes are
+# closed and the push is refused with a 403 and the body "You are not allowed to
+# push this gem." — an authenticated refusal, reached only after the credential
+# was accepted.
+#
+# A probe run that ends in that refusal has therefore proven, end to end:
+#
+#   * a trusted publisher exists whose repository, owner id, workflow filename,
+#     environment and audience all match this workflow's OIDC claims — otherwise
+#     the exchange raises RecordNotFound and the action fails;
+#   * a short-lived push credential was minted and written where `gem push` looks
+#     for it;
+#   * `gem push` reached rubygems.org over the real transport and the credential
+#     authenticated — a rejected or absent one returns 401 "Access Denied", which
+#     this step treats as a failure and says so;
+#   * the artifact steps above it all ran on the real runner.
+#
+# What it does not prove is the single branch that publishes, which by
+# construction only opens for `vicary` itself. That one is provable only by
+# publishing, and it stays unproven until the ratchet reaches 36 of 36.
+#
+# The probe cannot publish anything by accident. Three independent reasons: the
+# server refuses it (above); the probe gem is built under RUNNER_TEMP so the
+# publish step's `vicary-*.gem` glob cannot reach it; and the publish step is
+# skipped outright whenever `push_probe` is set.
 name: release-gem
 
 # NO TAG TRIGGER YET, DELIBERATELY. The conformance gate below would refuse on
@@ -25,6 +71,14 @@ name: release-gem
 # what changes is whether an unfinished port fails somebody else's release.
 on:
   workflow_dispatch:
+    inputs:
+      push_probe:
+        description: >-
+          Prove the push path without publishing: mint the trusted-publishing
+          credential and attempt a push RubyGems is guaranteed to refuse. Never
+          uploads a gem. Leave this off for a real release.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -46,6 +100,15 @@ jobs:
         with:
           ruby-version: "3.3"
 
+      - name: Say which of the two things this run is
+        run: |
+          if [ "${{ inputs.push_probe }}" = "true" ]; then
+            echo "PUSH PROBE — nothing will be uploaded. The push below is expected to be"
+            echo "REFUSED by rubygems.org, and this job fails if it is not."
+          else
+            echo "RELEASE — this run publishes the gem if the conformance gate clears."
+          fi
+
       - name: The tag must be the version
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
@@ -62,30 +125,28 @@ jobs:
 
       - run: rake test
 
+      # The gate lives in `scripts/release_gate.rb` rather than in shell here,
+      # because it reads the scoreboard object the harness returns instead of
+      # scraping a column out of a human-readable report — and because
+      # `test/release_test.rb` then drives its allow branch, which no run in this
+      # repository has ever reached. A gate that has only ever refused is
+      # indistinguishable from a gate that is stuck shut.
+      #
+      # In probe mode it reports and does not block: the probe's whole purpose is
+      # to reach the credential steps below while the port is incomplete. It is
+      # not a bypass — the step that publishes is skipped in probe mode, so there
+      # is no path from here to an upload.
       - name: Conformance must be complete before this gem may be published
         run: |
-          rake conformance | tee /tmp/conformance.txt
-          # Parse the scoreboard rather than trusting an exit code: the suite
-          # passes at 0 of 36 on purpose, because a ratchet that failed the build
-          # for being incomplete would make the port unmergeable. The PUBLISH gate
-          # is the stricter one, and it reads the number.
-          line=$(grep 'frames requiring masking' /tmp/conformance.txt)
-          matched=$(echo "$line" | awk '{print $4}')
-          total=$(echo "$line" | awk '{print $6}')
-          echo "conformance: $matched of $total masking-required frames"
-          test -n "$matched" && test -n "$total" \
-            || { echo "could not read the scoreboard — refusing to publish on an unparsed number"; exit 1; }
-          test "$matched" = "$total" || {
-            echo "REFUSING TO PUBLISH: $matched of $total masking-required frames match"
-            echo "the reference output. Publishing now would ship a gem named vicary"
-            echo "that does not redact, and a caller cannot tell."
-            exit 1
-          }
+          if [ "${{ inputs.push_probe }}" = "true" ]; then
+            ruby -Ilib scripts/release_gate.rb --report-only
+          else
+            ruby -Ilib scripts/release_gate.rb
+          fi
 
       - name: Build, and the gem must carry the asset
         run: |
           gem build vicary.gemspec
-          gem contents --gemspec vicary.gemspec 2>/dev/null || true
           tar -tf vicary-*.gem >/dev/null
           # `gem build` lists what it packed, but reading the built artifact is the
           # claim that matters: a gemspec glob that stops matching is silent.
@@ -96,8 +157,42 @@ jobs:
           done
           echo "gem carries the gazetteer asset"
 
-      # Credentials from the workflow's OIDC identity, then a plain `gem push` of
-      # the artifact the step above just read the inside of.
+      # Built under RUNNER_TEMP on purpose. Its name begins with `vicary-`, so if
+      # it sat beside the real gem the publish step's `vicary-*.gem` glob would
+      # match it — and the one thing a probe must never do is change what a
+      # release uploads.
+      - name: Build the gem the registry is expected to refuse
+        if: ${{ inputs.push_probe }}
+        run: |
+          probe="$RUNNER_TEMP/push-probe"
+          mkdir -p "$probe/lib"
+          cat > "$probe/lib/vicary_trusted_publishing_probe.rb" <<'RUBY'
+          # Never published. See .github/workflows/release-gem.yml.
+          RUBY
+          cat > "$probe/probe.gemspec" <<'SPEC'
+          Gem::Specification.new do |spec|
+            spec.name = "vicary-trusted-publishing-probe"
+            spec.version = "0.0.0"
+            spec.authors = ["Blake Thomas"]
+            spec.email = ["bwthomas@gmail.com"]
+            spec.summary = "Never published. Exists to be refused by rubygems.org."
+            spec.description = "A probe artifact. rubygems.org refuses this push because " \
+                               "no pending trusted publisher claims this name, which is how " \
+                               "the release workflow proves its credential authenticates " \
+                               "without publishing anything."
+            spec.homepage = "https://github.com/bwthomas/vicary"
+            spec.license = "MIT"
+            spec.required_ruby_version = ">= 3.1"
+            spec.files = ["lib/vicary_trusted_publishing_probe.rb"]
+            spec.require_paths = ["lib"]
+          end
+          SPEC
+          cd "$probe" && gem build probe.gemspec
+          ls -l "$probe"/*.gem
+
+      # Credentials from the workflow's OIDC identity. This step failing IS the
+      # probe's first finding: it means no trusted publisher on rubygems.org
+      # matches this repository, this workflow filename and this environment.
       #
       # NOT `rubygems/release-gem`, which was here first and would have failed on
       # this repository's first gem release in four separate ways. That action
@@ -117,28 +212,71 @@ jobs:
       # load. This is the same commit `rubygems/release-gem@v1` pins internally.
       - uses: rubygems/configure-rubygems-credentials@v2.1.0
 
+      - name: The credential exists
+        run: |
+          test -n "$GEM_HOST_API_KEY" \
+            || { echo "the OIDC exchange returned no API key"; exit 1; }
+          test -f ~/.gem/credentials \
+            || { echo "no ~/.gem/credentials — gem push would fall back to nothing"; exit 1; }
+          echo "a short-lived credential was minted and written where gem push reads it"
+
+      # The probe. A refusal here is the pass.
+      - name: The registry must authenticate us and then refuse this gem
+        if: ${{ inputs.push_probe }}
+        run: |
+          probe="$RUNNER_TEMP/push-probe"
+          set +e
+          out=$(gem push "$probe/vicary-trusted-publishing-probe-0.0.0.gem" 2>&1)
+          status=$?
+          set -e
+          echo "--- gem push said ---"
+          echo "$out"
+          echo "---------------------"
+
+          if [ "$status" -eq 0 ]; then
+            echo "FAIL: rubygems.org ACCEPTED a push it was expected to refuse."
+            echo "Something named vicary-trusted-publishing-probe may now exist on the"
+            echo "registry. Yank it, and do not trust this workflow's safety argument"
+            echo "until the reason is understood."
+            exit 1
+          fi
+
+          case "$out" in
+            *"You are not allowed to push this gem"*)
+              echo "PASS: the credential authenticated and rubygems.org refused the gem"
+              echo "at the ownership check — which is exactly as far as a push can get"
+              echo "for a name no pending publisher claims. The trusted publisher is"
+              echo "configured correctly for this repository, workflow and environment."
+              ;;
+            *"Access Denied"*|*"sign up for an account"*)
+              echo "FAIL: rubygems.org did not accept the credential (401). The OIDC"
+              echo "exchange produced a key the API will not authenticate."
+              exit 1
+              ;;
+            *"This gem name is reserved"*)
+              echo "PASS, with a note: authenticated, but refused for the name being"
+              echo "reserved rather than at the ownership check. Rename the probe gem"
+              echo "so it exercises the ownership branch a real push takes."
+              ;;
+            *)
+              echo "FAIL: the push was refused for a reason this step does not recognise."
+              echo "Read the body above before concluding anything about the release path."
+              exit 1
+              ;;
+          esac
+
       - name: Push the gem
+        if: ${{ !inputs.push_probe }}
         run: gem push vicary-*.gem
 
       # `gem push` reporting success is the system describing itself. Ask the
       # registry instead — the same reason the wheel is installed into a clean
       # interpreter over in release.yml rather than trusted to `twine check`.
+      # The polling and the payload parsing live in a script so that the
+      # difference between "not published yet" and "I could not tell" is a tested
+      # distinction rather than a `|| true` in a pipeline.
       - name: RubyGems must actually be serving the version we just pushed
+        if: ${{ !inputs.push_probe }}
         run: |
           version=$(ruby -Ilib -e 'require "vicary/version"; print Vicary::VERSION')
-          for attempt in $(seq 1 12); do
-            published=$(curl -sf "https://rubygems.org/api/v1/versions/vicary.json" \
-              | ruby -rjson -e 'puts JSON.parse(STDIN.read).map { |v| v["number"] }' 2>/dev/null || true)
-            case "$published" in
-              *"$version"*)
-                echo "rubygems.org is serving vicary $version"
-                exit 0
-                ;;
-            esac
-            echo "attempt $attempt: rubygems.org does not list $version yet"
-            sleep 10
-          done
-          echo "pushed vicary $version but rubygems.org never served it."
-          echo "The push reported success; the registry disagrees. Do not treat"
-          echo "this release as published until that is reconciled."
-          exit 1
+          ruby scripts/registry_serves.rb --attempts 12 --interval 10 vicary "$version"
