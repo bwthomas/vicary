@@ -25,12 +25,14 @@
  * a differential test rather than reasoned about:
  *
  * * `\w` and `\b` are Unicode-aware in Python and ASCII-only in JavaScript. Every
- *   `\w` here is written out as an explicit class so the two agree; `\b` is left
- *   as-is, which is exact for the ASCII neighbourhoods these patterns match and
- *   is where any future divergence would land.
- * * The `u` flag is deliberately NOT set. It bans the identity escapes (`\#`,
- *   `\-`) that a direct port produces, and buys nothing here: every pattern is
- *   ASCII by construction.
+ *   `\w` here is written out as an explicit class so the two agree. `\b` is left
+ *   as-is in the structured patterns, which is exact for the ASCII
+ *   neighbourhoods they match; `wordPattern` cannot make that assumption, since
+ *   the literal it wraps is a caller's name, so it spells its boundaries out.
+ * * The `u` flag is set only where a pattern needs it — the three patterns built
+ *   from `W`, and `wordPattern`. It is deliberately absent elsewhere, because it
+ *   bans the identity escapes (`\#`, `\-`) that a direct port of the Python
+ *   source produces and buys nothing on a pattern that is ASCII by construction.
  */
 
 import { PlaceholderMinter } from "./minter.js";
@@ -247,21 +249,55 @@ export function escapeLiteral(literal: string): string {
 }
 
 /**
+ * Possessive tails, straight and curly.
+ *
+ * A word processor turns every apostrophe curly, so the straight forms alone
+ * miss the majority of real prose. `s'` is the plural-family form ("the
+ * Delacroix-Whitfields' house").
+ */
+const POSSESSIVE_TAIL = "(?:['’]s|s['’])?";
+
+/**
+ * Leading and trailing boundary assertions appropriate to `literal`.
+ *
+ * `\b` is a boundary only when there is a word character beside it, so a literal
+ * *ending* in punctuation — "O'Brien (Jr.)", which is exactly the shape roster
+ * data arrives in — can never satisfy a trailing `\b` and silently matches
+ * nothing at all. Asserting only on the side that has a word character to assert
+ * against masks that literal, and is identical to `\b` for every literal that
+ * does not.
+ *
+ * Written as lookarounds over {@link W} rather than `\b` because JavaScript's
+ * `\b` is ASCII-only where Python's is Unicode-aware; these agree with Python
+ * for an accented name.
+ */
+function literalBoundaries(literal: string): [string, string] {
+  const isWord = (ch: string) => ch.length > 0 && new RegExp(`^[${W}]$`, "u").test(ch);
+  return [
+    isWord(literal.slice(0, 1)) ? `(?<![${W}])` : "",
+    isWord(literal.slice(-1)) ? `(?![${W}])` : "",
+  ];
+}
+
+/**
  * Case-insensitive whole-token match for a literal, possessive-tolerant.
  *
- * `\b` alone mis-handles a trailing apostrophe-s, which is exactly how a name
- * appears in student prose ("Sarah's essay"), so the possessive is part of the
- * match and gets masked with the name.
+ * A bare boundary mis-handles a trailing apostrophe-s, which is exactly how a
+ * name appears in student prose ("Sarah's essay"), so the possessive is part of
+ * the match and gets masked with the name.
  *
- * The three alternatives reproduce the Python source exactly, **including its
- * duplicate**: it reads `(?:'s|'s|s')`, where the second branch is a repeat of
- * the first rather than the curly-apostrophe form it looks like. That means a
- * curly possessive — which is what a word processor emits — is NOT matched here,
- * even though the gazetteer's fold handles it. Reproduced rather than fixed:
- * changing it changes the golden bytes, and that is a fixture decision.
+ * The `u` flag is set here, unlike the ASCII-by-construction patterns above,
+ * because a caller's surname is arbitrary Unicode: it makes the boundary classes
+ * mean what they say and makes `i` fold the way Python's `re.IGNORECASE` does.
+ * `escapeLiteral` is already `u`-safe — that is why it is narrower than
+ * `re.escape`.
  */
 export function wordPattern(literal: string): RegExp {
-  return new RegExp(`\\b${escapeLiteral(literal)}(?:'s|'s|s')?\\b`, "gi");
+  const [lead, trail] = literalBoundaries(literal);
+  return new RegExp(
+    `${lead}${escapeLiteral(literal)}${POSSESSIVE_TAIL}${trail}`,
+    "giu",
+  );
 }
 
 /**

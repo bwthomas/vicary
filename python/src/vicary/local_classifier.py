@@ -243,15 +243,48 @@ class StudentIdentity:
         )
 
 
+#: Possessive tails, straight and curly. A word processor turns every
+#: apostrophe curly, so the straight forms alone miss the majority of real
+#: prose; ``name_candidates`` folds both and this has to agree with it.
+#: ``s'`` is the plural-family form ("the Delacroix-Whitfields' house").
+_POSSESSIVE_TAIL = r"(?:['’]s|s['’])?"
+
+
+def _literal_boundaries(literal: str) -> tuple[str, str]:
+    """Leading and trailing boundary assertions appropriate to ``literal``.
+
+    ``\\b`` is a boundary only when there is a word character beside it, so a
+    literal *ending* in punctuation — "O'Brien (Jr.)", which is exactly the
+    shape roster data arrives in — can never satisfy a trailing ``\\b`` and
+    silently matches nothing at all. Asserting only on the side that has a word
+    character to assert against masks that literal, and is identical to ``\\b``
+    for every literal that does not, which is why this is not a behaviour
+    change for ordinary names.
+
+    The cost is that a punctuation-edged literal is no longer protected from
+    matching mid-token on that side. Nothing better is available: the boundary
+    that would protect it is the one that cannot hold.
+    """
+    lead = r"(?<!\w)" if _is_word_char(literal[:1]) else ""
+    trail = r"(?!\w)" if _is_word_char(literal[-1:]) else ""
+    return lead, trail
+
+
+def _is_word_char(ch: str) -> bool:
+    """``\\w`` as Python's ``re`` sees it, for a single character."""
+    return bool(ch) and (ch.isalnum() or ch == "_")
+
+
 def _word_pattern(literal: str) -> re.Pattern[str]:
     """Case-insensitive whole-token match for a literal, possessive-tolerant.
 
-    ``\\b`` alone mis-handles a trailing apostrophe-s, which is exactly how a
+    A bare boundary mis-handles a trailing apostrophe-s, which is exactly how a
     name appears in student prose ("Sarah's essay"), so the possessive is part
     of the match and gets masked with the name.
     """
+    lead, trail = _literal_boundaries(literal)
     return re.compile(
-        rf"\b{re.escape(literal)}(?:'s|'s|s')?\b", re.IGNORECASE
+        rf"{lead}{re.escape(literal)}{_POSSESSIVE_TAIL}{trail}", re.IGNORECASE
     )
 
 

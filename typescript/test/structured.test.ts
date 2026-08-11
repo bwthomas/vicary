@@ -184,13 +184,23 @@ test("a possessive is masked with the name", () => {
   assert.match(redact("Marguerite's essay was late.", IDENTITY), /^\{NAME_1\} essay/);
 });
 
-test("a curly possessive is NOT matched, reproducing Python", () => {
-  // The Python source reads `(?:'s|'s|s')` — the second branch repeats the first
-  // rather than being the curly form it resembles, so a word processor's
-  // apostrophe misses. Pinned rather than fixed: changing it changes the golden
-  // bytes, and that is a fixture decision, not a port decision.
-  const out = redact("Marguerite’s essay was late.", IDENTITY);
-  assert.equal(out, "{NAME_1}’s essay was late.");
+test("a curly possessive is masked with the name", () => {
+  // A word processor turns every apostrophe curly, so this is the common form,
+  // not the exotic one. It missed in both languages until the Python pattern's
+  // duplicated `'s` branch became the curly form it always resembled.
+  assert.equal(redact("Marguerite’s essay was late.", IDENTITY), "{NAME_1} essay was late.");
+});
+
+test("a plural family possessive is masked with the name", () => {
+  // "the Delacroix-Whitfields' house" — the `s'` branch the pattern always
+  // carried and could never reach, because the boundary after its apostrophe had
+  // no word character to hold on to.
+  for (const text of [
+    "I went to the Delacroix-Whitfields' house.",
+    "I went to the Delacroix-Whitfields’ house.",
+  ]) {
+    assert.equal(redact(text, IDENTITY), "I went to the {NAME_1} house.");
+  }
 });
 
 test("the school acronym is matched case-sensitively", () => {
@@ -243,22 +253,28 @@ test("a literal with regex metacharacters is escaped", () => {
   );
 });
 
-test("a literal ending in punctuation cannot match, in both languages", () => {
-  // Not a port defect — verified identical in Python. `_word_pattern` closes
-  // with `\b`, and a literal ending in `)` or `.` puts a non-word character
-  // there, so the boundary can never hold. A caller passing a suffixed surname
-  // ("O'Brien (Jr.)") silently gets no masking for it.
-  //
-  // Pinned rather than fixed for the same reason as the curly possessive above:
-  // the fold is shared with the reference arm, so changing it changes golden
-  // bytes. Worth knowing before a host feeds this roster data.
+test("a literal ending in punctuation is masked", () => {
+  // Roster data arrives suffixed, and a trailing `\b` can never hold after a
+  // closing paren — so this literal used to mask nothing at all, in both
+  // languages, while looking configured. The boundary is now asserted only on the
+  // side that has a word character to assert against.
   assert.equal(
     redact("O'Brien (Jr.) was here.", {
       firstName: "",
       lastName: "O'Brien (Jr.)",
       schoolName: "",
     }),
-    "O'Brien (Jr.) was here.",
+    "{NAME_1} was here.",
+  );
+});
+
+test("dropping that boundary does not widen an ordinary literal", () => {
+  // The guard on the fix above: the assertion is dropped per-side, not
+  // unconditionally, so a name that *can* be bounded still is.
+  const unchanged = "I grew up near Okonkwoville.";
+  assert.equal(
+    redact(unchanged, { firstName: "", lastName: "Okonkwo", schoolName: "" }),
+    unchanged,
   );
 });
 

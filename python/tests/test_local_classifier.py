@@ -175,6 +175,53 @@ def test_a_possessive_name_is_masked_with_the_name(student: StudentIdentity) -> 
     assert "Marguerite" not in out
 
 
+def test_a_curly_possessive_is_masked_with_the_name(
+    student: StudentIdentity,
+) -> None:
+    """A word processor turns every apostrophe curly, so this is the common form.
+
+    The straight-apostrophe case above passed for a year while this one failed,
+    because the pattern's second alternative repeated the first instead of being
+    the curly form it resembled.
+    """
+    out = _mask("This is Marguerite’s essay.", student)
+    assert "Marguerite" not in out
+    assert "’s" not in out
+
+
+def test_a_plural_family_possessive_is_masked_with_the_name(
+    student: StudentIdentity,
+) -> None:
+    """The tail the pattern always claimed to cover and never could.
+
+    "the Delacroix-Whitfields' house" — the ``s'`` alternative was dead code,
+    because the boundary after its apostrophe had no word character to hold on
+    to.
+    """
+    for text in (
+        "I went to the Delacroix-Whitfields' house.",
+        "I went to the Delacroix-Whitfields’ house.",
+    ):
+        assert "Delacroix-Whitfield" not in _mask(text, student)
+
+
+def test_a_literal_ending_in_punctuation_is_masked() -> None:
+    """Roster data arrives suffixed, and a trailing ``\\b`` can never hold after
+    a closing paren — so this literal silently masked nothing at all."""
+    suffixed = StudentIdentity(last_name="O'Brien (Jr.)")
+    assert "O'Brien" not in _mask("O'Brien (Jr.) was here.", suffixed)
+
+
+def test_a_punctuation_edged_literal_does_not_widen_an_ordinary_one() -> None:
+    """The boundary is dropped only on the side that has no word character to
+    assert against, so every ordinary name is bounded exactly as before."""
+    plain = StudentIdentity(last_name="Okonkwo")
+    # "Okonkwoville" must not match, and would if the trailing assertion were
+    # dropped unconditionally rather than only where it cannot hold.
+    unchanged = "I grew up near Okonkwoville."
+    assert _mask(unchanged, plain) == unchanged
+
+
 def test_the_school_and_its_acronym_are_masked(student: StudentIdentity) -> None:
     out = _mask("I go to Westfield High School. WHS is big.", student)
     assert "Westfield High School" not in out
