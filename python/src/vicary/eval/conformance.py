@@ -268,6 +268,208 @@ PRIMITIVE_TOKEN_LISTS: dict[str, list[str]] = {
     "settlement_with_org_suffix": ["Falls", "Church"],
 }
 
+#: Spans, for the relation-override predicates, which take ``(text, start, end)``
+#: rather than a whole text or a token list. Carried as ``(text, needle)`` and
+#: resolved to offsets at build time, so the committed file states the offsets a
+#: port must use and no port has to reproduce this file's own index arithmetic.
+#:
+#: The set is what the piece-5 probe diffed the two languages over, kept rather
+#: than thrown away: each id names the rule it separates, including the two
+#: boundary cases that pin :data:`_RELATION_WINDOW` behaviourally (a cue 80
+#: characters after the span is inside the window; one 92 characters after it is
+#: not) and the two that pin the port's Unicode word-boundary spelling.
+PRIMITIVE_SPAN_CASES: dict[str, tuple[str, str]] = {
+    "kinship-possessive-mixed": (
+        "My cousin Vinny came over that summer and never left.",
+        "My cousin Vinny",
+    ),
+    "kinship-possessive-title": (
+        "We stayed with the Alvarez family in July. My Cousin Vinny is my favorite movie and "
+        "I have seen it four times.",
+        "My Cousin Vinny",
+    ),
+    "kinship-possessive-lower": (
+        "my cousin vinny is my favorite movie and i have seen it four times.",
+        "my cousin vinny",
+    ),
+    "kinship-full-name": (
+        "We stayed with the Alvarez family in July. My cousin Vinny Delgado came over that "
+        "summer and never left.",
+        "My cousin Vinny Delgado",
+    ),
+    "neighbour-appositive": (
+        "Jackie Robinson broke the color line in 1947. Robinson, who lives two doors down "
+        "from us, taught me how to throw.",
+        "Robinson, who",
+    ),
+    "neighbour-bare-surname": (
+        "Jackie Robinson broke the color line in 1947. Robinson, who lives two doors down "
+        "from us, taught me how to throw.",
+        "Robinson",
+    ),
+    "relation-before-attached": (
+        "My neighbor Alice Adams walked me to the bus stop every morning that whole year.",
+        "Alice Adams",
+    ),
+    "relation-after-appositive": (
+        "Alice Adams, my next-door neighbor, drove us all the way there.",
+        "Alice Adams",
+    ),
+    "relation-after-who-is": (
+        "Alice Adams, who is my neighbor, drove us all the way there.",
+        "Alice Adams",
+    ),
+    "relation-after-who-was": (
+        "Alice Adams, who was my coach, drove us all the way there.",
+        "Alice Adams",
+    ),
+    "relation-after-no-comma": (
+        "Alice Adams my neighbor drove us all the way there.",
+        "Alice Adams",
+    ),
+    "first-person-alone-keeps": (
+        "I read Harry Potter with my little brother over the summer holiday.",
+        "Harry Potter",
+    ),
+    "attachment-alone-keeps": (
+        "Atticus Finch, a father who taught me to look away from nothing.",
+        "Atticus Finch",
+    ),
+    "character-described-by-relation": (
+        "Peter Parker lives with his aunt in a small apartment in Queens.",
+        "Peter Parker",
+    ),
+    "modifiers-zero": (
+        "My friend Deshawn Pritchard stayed after class to finish it.",
+        "Deshawn Pritchard",
+    ),
+    "modifiers-one": (
+        "My best friend Deshawn Pritchard stayed after class to finish it.",
+        "Deshawn Pritchard",
+    ),
+    "modifiers-two": (
+        "My old soccer coach Deshawn Pritchard stayed after class to finish it.",
+        "Deshawn Pritchard",
+    ),
+    "modifiers-three-too-many": (
+        "My very old soccer coach Deshawn Pritchard stayed after class to finish it.",
+        "Deshawn Pritchard",
+    ),
+    "modifier-capitalised-not-swallowed": (
+        "My Old soccer coach Deshawn Pritchard stayed after class to finish it.",
+        "Deshawn Pritchard",
+    ),
+    "our-possessive": (
+        "Our coach Bramwell made us run laps until it got dark.",
+        "Bramwell",
+    ),
+    "proximity-first-person": (
+        "Alice Adams, who lives two doors down from us, walked me to the bus stop.",
+        "Alice Adams",
+    ),
+    "proximity-no-first-person": (
+        "Alice Adams, who lives two doors down from the school, walked to the bus stop.",
+        "Alice Adams",
+    ),
+    "proximity-in-my-class": (
+        "Alice Adams, who is in my class, walked me to the bus stop every morning.",
+        "Alice Adams",
+    ),
+    "proximity-across-the-street": (
+        "Alice Adams, who lives across the street from me, walked me to the bus stop.",
+        "Alice Adams",
+    ),
+    "sentence-break-stops-scan": (
+        "Alice Adams walked to the bus stop. My cousin was there too on that morning.",
+        "Alice Adams",
+    ),
+    "window-boundary-inside": (
+        "Alice Adams walked me all the way to the bus stop on that cold morning, my cousin "
+        "said later.",
+        "Alice Adams",
+    ),
+    "window-boundary-outside": (
+        "Alice Adams walked me all the way to the bus stop on that very cold winter morning "
+        "again and again, my cousin said later.",
+        "Alice Adams",
+    ),
+    "boundary-before-accented": (
+        "naïmy cousin Terrence came over that summer and never left the house.",
+        "Terrence",
+    ),
+    "boundary-after-accented": (
+        "Alice Adams, my cousinä came over that summer and never left the house.",
+        "Alice Adams",
+    ),
+    "boundary-before-ascii-run": (
+        "roomy cousin Terrence came over that summer and never left the house.",
+        "Terrence",
+    ),
+    "curly-apostrophe-modifier": (
+        "My mom’s friend Alice Adams walked me to the bus stop every morning.",
+        "Alice Adams",
+    ),
+    "single-token-span": (
+        "My cousin Vinny came over that summer and never left.",
+        "Vinny",
+    ),
+    "relation-cue-plural": (
+        "My cousins Alice Adams and Deshawn came over that summer.",
+        "Alice Adams",
+    ),
+    "no-relation-anywhere": (
+        "Vincent van Gogh painted the sunflowers in Arles during that year.",
+        "Vincent van Gogh",
+    ),
+    "title-leads-two-modifiers": (
+        "My Best Friend Anne Frank is the book I read last spring for class.",
+        "My Best Friend Anne Frank",
+    ),
+    "title-leads-mixed-case": (
+        "My best Friend Anne Frank is the book I read last spring for class.",
+        "My best Friend Anne Frank",
+    ),
+    "hero-is-not-a-cue": (
+        "My hero Abraham Lincoln freed the slaves and saved the whole union.",
+        "Abraham Lincoln",
+    ),
+    "favourite-is-not-a-cue": (
+        "My favorite author Alice Adams wrote a book I read last spring.",
+        "Alice Adams",
+    ),
+    "span-at-text-start": (
+        "Robinson, my neighbor, taught me how to throw a curveball that year.",
+        "Robinson",
+    ),
+    "span-at-text-end": (
+        "The best throw I ever saw came from my neighbor Robinson",
+        "Robinson",
+    ),
+    "newline-stops-clause": (
+        "Alice Adams walked to the bus stop\nMy cousin was there too on that morning.",
+        "Alice Adams",
+    ),
+    "teacher-cue": (
+        "My teacher Mrs. Okonkwo taught me the trick with the index cards.",
+        "Mrs. Okonkwo",
+    ),
+    "grandmother-cue": (
+        "My grandmother Marisol Ybarra told me that story every single summer.",
+        "Marisol Ybarra",
+    ),
+    "window-cue-at-80-inside-90": (
+        "Alice Adams walked me to the bus stop every single morning of that whole long cold "
+        "winter, my cousin said later.",
+        "Alice Adams",
+    ),
+    "window-cue-at-92-outside-90": (
+        "Alice Adams walked me to the bus stop every single morning of that whole long and "
+        "very cold winter that year, my cousin said later.",
+        "Alice Adams",
+    ),
+}
+
+
 #: Single tokens for the stoplist predicate, each standing for a rule rather than
 #: a word: a clitic, a curly clitic, an un-apostrophized spelling, a bare clitic.
 PRIMITIVE_STOP_TOKENS: tuple[str, ...] = (
@@ -329,6 +531,12 @@ def build_primitives_document() -> dict[str, Any]:
     def over_lists(fn: Any) -> dict[str, Any]:
         return {name: fn(tokens) for name, tokens in lists.items()}
 
+    def over_spans(fn: Any) -> dict[str, Any]:
+        return {
+            name: fn(text, text.index(needle), text.index(needle) + len(needle))
+            for name, (text, needle) in PRIMITIVE_SPAN_CASES.items()
+        }
+
     def spans(fn: Any) -> Any:
         return lambda text: [list(s) for s in fn(text)]
 
@@ -367,12 +575,36 @@ def build_primitives_document() -> dict[str, Any]:
             "organization": sorted(nc._ORG_SUFFIXES),
             "landmark": sorted(nc._LANDMARK_SUFFIXES),
         },
+        # The span cases the relation predicates run over, with offsets resolved
+        # here so a port compares answers rather than reproducing this file's
+        # index arithmetic.
+        "span_cases": {
+            name: {
+                "text": text,
+                "start": text.index(needle),
+                "end": text.index(needle) + len(needle),
+            }
+            for name, (text, needle) in PRIMITIVE_SPAN_CASES.items()
+        },
+        # The relation override's word lists, on the same argument as `suffixes`:
+        # 38 cues, 13 proximity phrases and 6 pronouns, every one of them typed by
+        # hand in each port. `overridable_tiers` is here because it is the policy
+        # half — a port that let the override reach `place` would redact a town
+        # the tier deliberately keeps, and no case above would say so.
+        "relation": {
+            "cues": sorted(nc._RELATION_CUES),
+            # Order matters: this one is a tuple scanned in order, not a set.
+            "proximity_cues": list(nc._PROXIMITY_CUES),
+            "first_person": sorted(nc._FIRST_PERSON),
+            "overridable_tiers": sorted(nc.OVERRIDABLE_TIERS),
+        },
         "constants": {
             "allcaps_run": nc._ALLCAPS_RUN,
             "drops_capitals_min_rate": nc._DROPS_CAPITALS_MIN_RATE,
             "heading_max_chars": nc._HEADING_MAX_CHARS,
             "lowercase_min_tokens": nc._LOWERCASE_MIN_TOKENS,
             "marks_proper_nouns_min": nc._MARKS_PROPER_NOUNS_MIN,
+            "relation_window": nc._RELATION_WINDOW,
             "stop_words": len(nc._STOP_WORDS),
             "title_max_tokens": nc._TITLE_MAX_TOKENS,
         },
@@ -428,6 +660,22 @@ def build_primitives_document() -> dict[str, Any]:
             ),
             "mid_sentence_capitals": over_corpus(
                 lambda x: sorted(nc._mid_sentence_capitals(x, nc._sentence_starts(x)))
+            ),
+            # The relation override. Four predicates over the span cases: the
+            # window scan for a bare surname, the strict attached-phrase test for
+            # a title-tier hit, and the two that read the writer's own capitals
+            # inside a relation-led span.
+            "names_someone_in_the_writers_life": over_spans(
+                nc.names_someone_in_the_writers_life
+            ),
+            "names_someone_the_writer_knows": over_spans(
+                nc.names_someone_the_writer_knows
+            ),
+            "title_is_the_writers_own_relation": over_spans(
+                nc.title_is_the_writers_own_relation
+            ),
+            "relation_led_title_is_internally_mixed": over_spans(
+                nc.relation_led_title_is_internally_mixed
             ),
             "mid_sentence_capitals_with_headings": over_corpus(
                 lambda x: sorted(

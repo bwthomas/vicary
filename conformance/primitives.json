@@ -3496,6 +3496,100 @@
         "ohio"
       ]
     },
+    "names_someone_in_the_writers_life": {
+      "attachment-alone-keeps": true,
+      "boundary-after-accented": true,
+      "boundary-before-accented": true,
+      "boundary-before-ascii-run": true,
+      "character-described-by-relation": true,
+      "curly-apostrophe-modifier": true,
+      "favourite-is-not-a-cue": false,
+      "first-person-alone-keeps": true,
+      "grandmother-cue": true,
+      "hero-is-not-a-cue": false,
+      "kinship-full-name": false,
+      "kinship-possessive-lower": false,
+      "kinship-possessive-mixed": false,
+      "kinship-possessive-title": false,
+      "modifier-capitalised-not-swallowed": true,
+      "modifiers-one": true,
+      "modifiers-three-too-many": true,
+      "modifiers-two": true,
+      "modifiers-zero": true,
+      "neighbour-appositive": true,
+      "neighbour-bare-surname": false,
+      "newline-stops-clause": false,
+      "no-relation-anywhere": false,
+      "our-possessive": true,
+      "proximity-across-the-street": true,
+      "proximity-first-person": true,
+      "proximity-in-my-class": true,
+      "proximity-no-first-person": true,
+      "relation-after-appositive": true,
+      "relation-after-no-comma": true,
+      "relation-after-who-is": true,
+      "relation-after-who-was": true,
+      "relation-before-attached": true,
+      "relation-cue-plural": true,
+      "sentence-break-stops-scan": false,
+      "single-token-span": true,
+      "span-at-text-end": true,
+      "span-at-text-start": true,
+      "teacher-cue": true,
+      "title-leads-mixed-case": false,
+      "title-leads-two-modifiers": false,
+      "window-boundary-inside": true,
+      "window-boundary-outside": false,
+      "window-cue-at-80-inside-90": true,
+      "window-cue-at-92-outside-90": false
+    },
+    "names_someone_the_writer_knows": {
+      "attachment-alone-keeps": false,
+      "boundary-after-accented": false,
+      "boundary-before-accented": false,
+      "boundary-before-ascii-run": false,
+      "character-described-by-relation": false,
+      "curly-apostrophe-modifier": true,
+      "favourite-is-not-a-cue": false,
+      "first-person-alone-keeps": false,
+      "grandmother-cue": true,
+      "hero-is-not-a-cue": false,
+      "kinship-full-name": false,
+      "kinship-possessive-lower": false,
+      "kinship-possessive-mixed": false,
+      "kinship-possessive-title": false,
+      "modifier-capitalised-not-swallowed": true,
+      "modifiers-one": true,
+      "modifiers-three-too-many": false,
+      "modifiers-two": true,
+      "modifiers-zero": true,
+      "neighbour-appositive": false,
+      "neighbour-bare-surname": false,
+      "newline-stops-clause": false,
+      "no-relation-anywhere": false,
+      "our-possessive": true,
+      "proximity-across-the-street": true,
+      "proximity-first-person": true,
+      "proximity-in-my-class": true,
+      "proximity-no-first-person": false,
+      "relation-after-appositive": true,
+      "relation-after-no-comma": false,
+      "relation-after-who-is": true,
+      "relation-after-who-was": true,
+      "relation-before-attached": true,
+      "relation-cue-plural": true,
+      "sentence-break-stops-scan": false,
+      "single-token-span": true,
+      "span-at-text-end": true,
+      "span-at-text-start": true,
+      "teacher-cue": true,
+      "title-leads-mixed-case": false,
+      "title-leads-two-modifiers": false,
+      "window-boundary-inside": false,
+      "window-boundary-outside": false,
+      "window-cue-at-80-inside-90": false,
+      "window-cue-at-92-outside-90": false
+    },
     "protected": {
       "accented": [],
       "allcaps": [],
@@ -3540,6 +3634,53 @@
       "two_marks": [],
       "typo_capitaliser": [],
       "wrapped": []
+    },
+    "relation_led_title_is_internally_mixed": {
+      "attachment-alone-keeps": false,
+      "boundary-after-accented": false,
+      "boundary-before-accented": false,
+      "boundary-before-ascii-run": false,
+      "character-described-by-relation": false,
+      "curly-apostrophe-modifier": false,
+      "favourite-is-not-a-cue": false,
+      "first-person-alone-keeps": false,
+      "grandmother-cue": false,
+      "hero-is-not-a-cue": false,
+      "kinship-full-name": true,
+      "kinship-possessive-lower": false,
+      "kinship-possessive-mixed": true,
+      "kinship-possessive-title": false,
+      "modifier-capitalised-not-swallowed": false,
+      "modifiers-one": false,
+      "modifiers-three-too-many": false,
+      "modifiers-two": false,
+      "modifiers-zero": false,
+      "neighbour-appositive": false,
+      "neighbour-bare-surname": false,
+      "newline-stops-clause": false,
+      "no-relation-anywhere": true,
+      "our-possessive": false,
+      "proximity-across-the-street": false,
+      "proximity-first-person": false,
+      "proximity-in-my-class": false,
+      "proximity-no-first-person": false,
+      "relation-after-appositive": false,
+      "relation-after-no-comma": false,
+      "relation-after-who-is": false,
+      "relation-after-who-was": false,
+      "relation-before-attached": false,
+      "relation-cue-plural": false,
+      "sentence-break-stops-scan": false,
+      "single-token-span": false,
+      "span-at-text-end": false,
+      "span-at-text-start": false,
+      "teacher-cue": false,
+      "title-leads-mixed-case": true,
+      "title-leads-two-modifiers": false,
+      "window-boundary-inside": false,
+      "window-boundary-outside": false,
+      "window-cue-at-80-inside-90": false,
+      "window-cue-at-92-outside-90": false
     },
     "sentence_starts": {
       "accented": [
@@ -3669,6 +3810,53 @@
         0,
         39
       ]
+    },
+    "title_is_the_writers_own_relation": {
+      "attachment-alone-keeps": false,
+      "boundary-after-accented": false,
+      "boundary-before-accented": false,
+      "boundary-before-ascii-run": false,
+      "character-described-by-relation": false,
+      "curly-apostrophe-modifier": false,
+      "favourite-is-not-a-cue": false,
+      "first-person-alone-keeps": false,
+      "grandmother-cue": false,
+      "hero-is-not-a-cue": false,
+      "kinship-full-name": true,
+      "kinship-possessive-lower": true,
+      "kinship-possessive-mixed": true,
+      "kinship-possessive-title": false,
+      "modifier-capitalised-not-swallowed": false,
+      "modifiers-one": false,
+      "modifiers-three-too-many": false,
+      "modifiers-two": false,
+      "modifiers-zero": false,
+      "neighbour-appositive": false,
+      "neighbour-bare-surname": false,
+      "newline-stops-clause": false,
+      "no-relation-anywhere": false,
+      "our-possessive": false,
+      "proximity-across-the-street": false,
+      "proximity-first-person": false,
+      "proximity-in-my-class": false,
+      "proximity-no-first-person": false,
+      "relation-after-appositive": false,
+      "relation-after-no-comma": false,
+      "relation-after-who-is": false,
+      "relation-after-who-was": false,
+      "relation-before-attached": false,
+      "relation-cue-plural": false,
+      "sentence-break-stops-scan": false,
+      "single-token-span": false,
+      "span-at-text-end": false,
+      "span-at-text-start": false,
+      "teacher-cue": false,
+      "title-leads-mixed-case": true,
+      "title-leads-two-modifiers": false,
+      "window-boundary-inside": false,
+      "window-boundary-outside": false,
+      "window-cue-at-80-inside-90": false,
+      "window-cue-at-92-outside-90": false
     },
     "title_spans": {
       "accented": [],
@@ -5383,6 +5571,7 @@
     "heading_max_chars": 60,
     "lowercase_min_tokens": 2,
     "marks_proper_nouns_min": 2,
+    "relation_window": 90,
     "stop_words": 421,
     "title_max_tokens": 8
   },
@@ -5455,6 +5644,302 @@
       "tag": "PERSON"
     }
   ],
+  "relation": {
+    "cues": [
+      "aunt",
+      "babysitter",
+      "bestfriend",
+      "boss",
+      "brother",
+      "brothers",
+      "classmate",
+      "classmates",
+      "coach",
+      "cousin",
+      "cousins",
+      "coworker",
+      "dad",
+      "father",
+      "friend",
+      "friends",
+      "grandfather",
+      "grandma",
+      "grandmother",
+      "grandpa",
+      "mom",
+      "mother",
+      "neighbor",
+      "neighbors",
+      "neighbour",
+      "neighbours",
+      "principal",
+      "roommate",
+      "sister",
+      "sisters",
+      "stepdad",
+      "stepmom",
+      "teacher",
+      "teammate",
+      "teammates",
+      "tutor",
+      "uncle"
+    ],
+    "first_person": [
+      "i",
+      "me",
+      "my",
+      "our",
+      "us",
+      "we"
+    ],
+    "overridable_tiers": [
+      "demonym",
+      "full_name",
+      "title"
+    ],
+    "proximity_cues": [
+      "doors down",
+      "door down",
+      "down the street",
+      "next door",
+      "across the street",
+      "up the block",
+      "down the block",
+      "in my class",
+      "in my grade",
+      "on my team",
+      "at my school",
+      "in my neighborhood",
+      "in my neighbourhood"
+    ]
+  },
+  "span_cases": {
+    "attachment-alone-keeps": {
+      "end": 13,
+      "start": 0,
+      "text": "Atticus Finch, a father who taught me to look away from nothing."
+    },
+    "boundary-after-accented": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams, my cousinä came over that summer and never left the house."
+    },
+    "boundary-before-accented": {
+      "end": 21,
+      "start": 13,
+      "text": "naïmy cousin Terrence came over that summer and never left the house."
+    },
+    "boundary-before-ascii-run": {
+      "end": 21,
+      "start": 13,
+      "text": "roomy cousin Terrence came over that summer and never left the house."
+    },
+    "character-described-by-relation": {
+      "end": 12,
+      "start": 0,
+      "text": "Peter Parker lives with his aunt in a small apartment in Queens."
+    },
+    "curly-apostrophe-modifier": {
+      "end": 27,
+      "start": 16,
+      "text": "My mom’s friend Alice Adams walked me to the bus stop every morning."
+    },
+    "favourite-is-not-a-cue": {
+      "end": 30,
+      "start": 19,
+      "text": "My favorite author Alice Adams wrote a book I read last spring."
+    },
+    "first-person-alone-keeps": {
+      "end": 19,
+      "start": 7,
+      "text": "I read Harry Potter with my little brother over the summer holiday."
+    },
+    "grandmother-cue": {
+      "end": 29,
+      "start": 15,
+      "text": "My grandmother Marisol Ybarra told me that story every single summer."
+    },
+    "hero-is-not-a-cue": {
+      "end": 23,
+      "start": 8,
+      "text": "My hero Abraham Lincoln freed the slaves and saved the whole union."
+    },
+    "kinship-full-name": {
+      "end": 66,
+      "start": 43,
+      "text": "We stayed with the Alvarez family in July. My cousin Vinny Delgado came over that summer and never left."
+    },
+    "kinship-possessive-lower": {
+      "end": 15,
+      "start": 0,
+      "text": "my cousin vinny is my favorite movie and i have seen it four times."
+    },
+    "kinship-possessive-mixed": {
+      "end": 15,
+      "start": 0,
+      "text": "My cousin Vinny came over that summer and never left."
+    },
+    "kinship-possessive-title": {
+      "end": 58,
+      "start": 43,
+      "text": "We stayed with the Alvarez family in July. My Cousin Vinny is my favorite movie and I have seen it four times."
+    },
+    "modifier-capitalised-not-swallowed": {
+      "end": 37,
+      "start": 20,
+      "text": "My Old soccer coach Deshawn Pritchard stayed after class to finish it."
+    },
+    "modifiers-one": {
+      "end": 32,
+      "start": 15,
+      "text": "My best friend Deshawn Pritchard stayed after class to finish it."
+    },
+    "modifiers-three-too-many": {
+      "end": 42,
+      "start": 25,
+      "text": "My very old soccer coach Deshawn Pritchard stayed after class to finish it."
+    },
+    "modifiers-two": {
+      "end": 37,
+      "start": 20,
+      "text": "My old soccer coach Deshawn Pritchard stayed after class to finish it."
+    },
+    "modifiers-zero": {
+      "end": 27,
+      "start": 10,
+      "text": "My friend Deshawn Pritchard stayed after class to finish it."
+    },
+    "neighbour-appositive": {
+      "end": 59,
+      "start": 46,
+      "text": "Jackie Robinson broke the color line in 1947. Robinson, who lives two doors down from us, taught me how to throw."
+    },
+    "neighbour-bare-surname": {
+      "end": 15,
+      "start": 7,
+      "text": "Jackie Robinson broke the color line in 1947. Robinson, who lives two doors down from us, taught me how to throw."
+    },
+    "newline-stops-clause": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams walked to the bus stop\nMy cousin was there too on that morning."
+    },
+    "no-relation-anywhere": {
+      "end": 16,
+      "start": 0,
+      "text": "Vincent van Gogh painted the sunflowers in Arles during that year."
+    },
+    "our-possessive": {
+      "end": 18,
+      "start": 10,
+      "text": "Our coach Bramwell made us run laps until it got dark."
+    },
+    "proximity-across-the-street": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams, who lives across the street from me, walked me to the bus stop."
+    },
+    "proximity-first-person": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams, who lives two doors down from us, walked me to the bus stop."
+    },
+    "proximity-in-my-class": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams, who is in my class, walked me to the bus stop every morning."
+    },
+    "proximity-no-first-person": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams, who lives two doors down from the school, walked to the bus stop."
+    },
+    "relation-after-appositive": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams, my next-door neighbor, drove us all the way there."
+    },
+    "relation-after-no-comma": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams my neighbor drove us all the way there."
+    },
+    "relation-after-who-is": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams, who is my neighbor, drove us all the way there."
+    },
+    "relation-after-who-was": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams, who was my coach, drove us all the way there."
+    },
+    "relation-before-attached": {
+      "end": 23,
+      "start": 12,
+      "text": "My neighbor Alice Adams walked me to the bus stop every morning that whole year."
+    },
+    "relation-cue-plural": {
+      "end": 22,
+      "start": 11,
+      "text": "My cousins Alice Adams and Deshawn came over that summer."
+    },
+    "sentence-break-stops-scan": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams walked to the bus stop. My cousin was there too on that morning."
+    },
+    "single-token-span": {
+      "end": 15,
+      "start": 10,
+      "text": "My cousin Vinny came over that summer and never left."
+    },
+    "span-at-text-end": {
+      "end": 56,
+      "start": 48,
+      "text": "The best throw I ever saw came from my neighbor Robinson"
+    },
+    "span-at-text-start": {
+      "end": 8,
+      "start": 0,
+      "text": "Robinson, my neighbor, taught me how to throw a curveball that year."
+    },
+    "teacher-cue": {
+      "end": 23,
+      "start": 11,
+      "text": "My teacher Mrs. Okonkwo taught me the trick with the index cards."
+    },
+    "title-leads-mixed-case": {
+      "end": 25,
+      "start": 0,
+      "text": "My best Friend Anne Frank is the book I read last spring for class."
+    },
+    "title-leads-two-modifiers": {
+      "end": 25,
+      "start": 0,
+      "text": "My Best Friend Anne Frank is the book I read last spring for class."
+    },
+    "window-boundary-inside": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams walked me all the way to the bus stop on that cold morning, my cousin said later."
+    },
+    "window-boundary-outside": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams walked me all the way to the bus stop on that very cold winter morning again and again, my cousin said later."
+    },
+    "window-cue-at-80-inside-90": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams walked me to the bus stop every single morning of that whole long cold winter, my cousin said later."
+    },
+    "window-cue-at-92-outside-90": {
+      "end": 11,
+      "start": 0,
+      "text": "Alice Adams walked me to the bus stop every single morning of that whole long and very cold winter that year, my cousin said later."
+    }
+  },
   "stop_tokens": [
     "The",
     "the",

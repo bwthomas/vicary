@@ -56,6 +56,14 @@ import { load as loadLexicon } from "./lexicon.js";
 const NOT_WORD_BEFORE = "(?<![\\p{L}\\p{N}_])";
 
 /**
+ * The same correction on the trailing side: `\b` *after* a letter. Python finds
+ * no boundary in `cousinä` because `ä` is a word character; JavaScript finds one
+ * and matches `cousin`, which would let an accented word tail satisfy a relation
+ * cue the reference never accepts.
+ */
+const NOT_WORD_AFTER = "(?![\\p{L}\\p{N}_])";
+
+/**
  * Role titles and honorifics that introduce a name. Part of the span: masking
  * "Okonkwo" out of "Mrs. Okonkwo" leaves the relationship and the surname's
  * position, and students name teachers and coaches constantly.
@@ -1084,4 +1092,313 @@ export function suppressedAsAnUnevidencedCapital(
     capitalIsTheOnlyEvidence(tokens, start, starts, emphasis, headings) &&
     !corroborated(tokens, writtenAsACapital, isGiven)
   );
+}
+
+/**
+ * The tiers whose keeps a first-person relation may override.
+ *
+ * Both are built from strings that are *also* ordinary people's names: 578 title
+ * keys and 33,682 full-name keys are a common given name beside an ordinary US
+ * surname ("Alice Adams" is a 1921 novel; "Alan Ford" is a footballer), and each
+ * keeps whichever private individual happens to carry it.
+ *
+ * `place` and `iconic_short` are excluded and stay excluded. A place is not a
+ * person, and a bare iconic surname has its own document-level rule with its own
+ * guard ({@link namesSomeoneInTheWritersLife}).
+ */
+export const OVERRIDABLE_TIERS: ReadonlySet<string> = new Set([
+  "title",
+  "full_name",
+  "demonym",
+]);
+
+/**
+ * Words that make a nearby bare surname somebody in the WRITER'S life rather
+ * than the public figure the document established.
+ *
+ * Deliberately NOT "the appositive contains a first-person pronoun", which was
+ * the first design and is wrong: literary prose writes "Wright, who taught me to
+ * look away from nothing", and refusing corroboration there re-destroys the
+ * author the essay is about. A first-person pronoun says the sentence is
+ * personal; only these cues say the *person* is.
+ *
+ * Closed and hand-written on purpose rather than "any noun before the name":
+ * *hero*, *muse*, *inspiration*, *role model* and *favourite* are admiration
+ * invocations that pair with public figures as readily as with relatives, which
+ * is exactly why they are not evidence.
+ */
+export const RELATION_CUES: ReadonlySet<string> = new Set([
+  "neighbor", "neighbour", "neighbors", "neighbours",
+  "cousin", "cousins", "brother", "brothers", "sister", "sisters",
+  "uncle", "aunt", "grandma", "grandpa", "grandmother", "grandfather",
+  "mom", "mother", "dad", "father", "stepdad", "stepmom",
+  "coach", "teacher", "tutor", "principal", "babysitter",
+  "friend", "friends", "bestfriend", "classmate", "classmates", "roommate",
+  "teammate", "teammates", "boss", "coworker",
+]);
+
+/**
+ * Multi-word proximity phrases, matched on the folded context string.
+ *
+ * Needed because the shape that actually occurs is "lives two doors down from
+ * us" — a relation expressed as distance, with no relation noun in it anywhere.
+ */
+export const PROXIMITY_CUES: readonly string[] = [
+  "doors down",
+  "door down",
+  "down the street",
+  "next door",
+  "across the street",
+  "up the block",
+  "down the block",
+  "in my class",
+  "in my grade",
+  "on my team",
+  "at my school",
+  "in my neighborhood",
+  "in my neighbourhood",
+];
+
+/**
+ * First-person tokens, for the proximity leg. A proximity phrase says somebody
+ * lives nearby; only a first-person pronoun says nearby *to the writer*.
+ */
+export const FIRST_PERSON: ReadonlySet<string> = new Set([
+  "i", "me", "my", "we", "us", "our",
+]);
+
+/**
+ * How far around a bare surname to look for the cues. One clause either side:
+ * long enough for "Robinson, who lives two doors down from us," and short enough
+ * that the next sentence's unrelated cousin does not reach back.
+ */
+export const RELATION_WINDOW = 90;
+
+/**
+ * The relation nouns as a regex alternation. Sorted so the pattern is stable
+ * across runs and diffs — and so it is the *same* pattern the reference builds,
+ * since `sorted()` over the Python frozenset and a sort here must agree.
+ */
+const RELATION_ALTERNATION = [...RELATION_CUES].sort().join("|");
+
+/**
+ * Up to two words may sit between the possessive and the relation noun — "my
+ * next-door neighbor", "my best friend", "my old soccer coach".
+ *
+ * The reference comments this class as "lower-case only, so a capitalised name
+ * cannot be swallowed as a modifier". That is **not** what it does: every caller
+ * folds its window with `.lower()` before matching, so no capital ever reaches
+ * `[a-z]` and the restriction cannot fire. "My Old soccer coach Deshawn" is
+ * accepted exactly as "my old soccer coach Deshawn" is. Kept as-is because the
+ * behaviour is identical in both languages and a port is the wrong place to
+ * change a rule; pinned by `the modifier pattern's lower-case restriction is
+ * inert` in `candidates.test.ts`.
+ */
+const MODIFIERS = "(?:[a-z][a-z'’-]*\\s+){0,2}";
+
+/**
+ * "my cousin " immediately before the span. Anchored at the end: the relation
+ * phrase has to run right up to the name, which is what makes it name *that*
+ * person rather than merely appear in the same sentence.
+ */
+export const RELATION_ATTACHED_BEFORE = new RegExp(
+  `${NOT_WORD_BEFORE}(?:my|our)\\s+${MODIFIERS}(?:${RELATION_ALTERNATION})\\s+$`,
+  "u",
+);
+
+/**
+ * ", my next-door neighbor" immediately after it. The comma is required — an
+ * appositive is punctuated and a prepositional phrase is not, and that is the
+ * whole difference between "Alice Adams, my neighbor," and "Harry Potter … with
+ * my little brother".
+ */
+export const RELATION_ATTACHED_AFTER = new RegExp(
+  `^\\s*,\\s*(?:who\\s+(?:is|was)\\s+)?(?:my|our)\\s+${MODIFIERS}` +
+    `(?:${RELATION_ALTERNATION})${NOT_WORD_AFTER}`,
+  "u",
+);
+
+/**
+ * A title whose own first words are a first-person relation — "My Cousin Vinny",
+ * "My Sister Eileen", "My Best Friend Anne Frank". 41 keys in the shipped tier,
+ * and they are the most dangerous shape in it: the phrase they occupy is
+ * `kinship-possessive`, the single commonest frame a student names somebody in.
+ */
+export const TITLE_LEADS_WITH_RELATION = new RegExp(
+  `^(?:my|our)\\s+${MODIFIERS}(?:${RELATION_ALTERNATION})${NOT_WORD_AFTER}`,
+  "u",
+);
+
+/** The first clause of `text` — the scan stops at terminal punctuation. */
+function firstClause(text: string): string {
+  return text.split(/[.!?\n]/)[0]!;
+}
+
+/**
+ * Python's `str.islower()` for a token this module produces.
+ *
+ * Every token here comes from {@link ANY_TOKEN}, which is `[A-Za-z][A-Za-z'’-]*`
+ * — so a cased character is always present and the "at least one cased char"
+ * half of Python's contract is satisfied by construction, leaving the comparison.
+ */
+function isLower(token: string): boolean {
+  return token === token.toLowerCase();
+}
+
+/** Every {@link ANY_TOKEN} match in `text`, as Python's `findall` returns them. */
+function anyTokens(text: string): string[] {
+  return text.match(ANY_TOKEN) ?? [];
+}
+
+/**
+ * Whether the local context marks this surname as personal, not public.
+ *
+ * Checked only for a bare surname the document has otherwise *established* as a
+ * public figure's, and it is the one signal that can separate the two readings
+ * of "Robinson" in a document containing "Jackie Robinson": the neighbour
+ * carries an appositive about the writer's own life, and the ballplayer does not.
+ *
+ * Looks after the span for an appositive or relative clause, and before it for a
+ * possessive introduction ("my neighbour Robinson"). Both sides matter — English
+ * puts the relation either place — and neither reaches past one clause.
+ */
+export function namesSomeoneInTheWritersLife(
+  text: string,
+  start: number,
+  end: number,
+): boolean {
+  const after = text.slice(end, end + RELATION_WINDOW).toLowerCase();
+  const before = text.slice(Math.max(0, start - RELATION_WINDOW), start).toLowerCase();
+
+  // After: only an appositive or relative clause counts. A new sentence does
+  // not, so the scan stops at terminal punctuation. `before` is NOT clipped the
+  // same way — the reference scans the whole leading window.
+  for (const window of [firstClause(after), before]) {
+    if (PROXIMITY_CUES.some((cue) => window.includes(cue))) return true;
+    if (anyTokens(window).some((token) => RELATION_CUES.has(token))) return true;
+  }
+  return false;
+}
+
+/**
+ * Whether a relation-led title span is really the writer naming somebody.
+ *
+ * "My Cousin Vinny is my favorite movie" and "My cousin Vinny Delgado came over
+ * that summer" fold to the same lookup key, and the tier keeps both. The
+ * difference is one the writer supplied: a title is title-cased, so its relation
+ * word carries a capital, and a sentence about a relative does not.
+ *
+ * That is the same evidence the heading rule reads and the same evidence rule 1
+ * of the capitalisation rules reads — the document's own orthography, not a
+ * guess about intent. Callers gate this on `marksProperNouns`, because in a
+ * document that capitalises nothing the absent capital is not testimony about
+ * anything. An INCONSISTENT writer passes that gate: they put a capital on
+ * "Vinny" and left "cousin" lower-case, and that is a choice rather than an
+ * absence.
+ *
+ * The cost of being wrong is a student who writes "my cousin vinny is my
+ * favorite movie" losing the film to a placeholder inbound. The cost of the
+ * other error is a cousin's name reaching a third-party model.
+ */
+export function titleIsTheWritersOwnRelation(
+  text: string,
+  start: number,
+  end: number,
+): boolean {
+  const span = text.slice(start, end);
+  if (!TITLE_LEADS_WITH_RELATION.test(span.toLowerCase())) return false;
+  // Everything after the leading possessive: "Cousin Vinny" in the title,
+  // "cousin Vinny" in the sentence. The relation word is the one that differs.
+  return anyTokens(span).slice(1, 3).some(isLower);
+}
+
+/**
+ * Whether the span alone proves the writer used capitals and skipped one.
+ *
+ * The document-level gate on {@link titleIsTheWritersOwnRelation} costs a leak on
+ * the shortest documents. `marksProperNouns` needs two capitalised names
+ * *somewhere else* to be true, and "My cousin Vinny came over that summer and
+ * never left." has none — the only other capital is sentence-initial. So the
+ * refusal switched off, the 1992 film kept the span, and the cousin's name
+ * shipped. Measured, not supposed: adding one unrelated name ("the Alvarez
+ * family") to the same sentence flips the document tell and the same cousin
+ * masks correctly. A leak that depends on how much *else* the student wrote is a
+ * leak.
+ *
+ * What this reads instead is confined to the span, so it needs no document:
+ *
+ *     My Cousin Vinny   -- every token capitalised; the film. Already excluded
+ *                          by titleIsTheWritersOwnRelation.
+ *     My cousin Vinny   -- the name carries a capital and the relation word
+ *                          does not. MIXED: the writer uses capitals, and chose
+ *                          not to put one on "cousin". A relative.
+ *     my cousin vinny   -- nothing carries a capital. Not mixed, and the
+ *                          document gate above applies in full.
+ *
+ * The trailing token is the test rather than "any token", because the leading
+ * possessive is sentence-initial in every frame this shape occurs in, and a
+ * sentence-initial capital is orthography, not evidence.
+ */
+export function relationLedTitleIsInternallyMixed(
+  text: string,
+  start: number,
+  end: number,
+): boolean {
+  const tokens = anyTokens(text.slice(start, end));
+  if (tokens.length < 2) return false;
+  const last = tokens[tokens.length - 1]!;
+  const initial = last.slice(0, 1);
+  // Python's `[:1].isupper()`; the character is an ASCII letter by construction.
+  const startsUpper = initial !== "" && initial === initial.toUpperCase();
+  return startsUpper && tokens.slice(1, 3).some(isLower);
+}
+
+/**
+ * Whether a first-person relation is syntactically attached to this name.
+ *
+ * The strict sibling of {@link namesSomeoneInTheWritersLife}, and strict for a
+ * measured reason. That function scans a window for any relation cue, which is
+ * right for a bare surname the document itself established — but applied to the
+ * title tier it refuses six of the seven curriculum characters it must keep,
+ * because characters are *described by* their relations: Atticus Finch is a
+ * father, Peter Parker lives with his aunt, Tom Sawyer talks his friends into
+ * whitewashing a fence. A relation noun in the window is therefore no evidence
+ * at all about a work title.
+ *
+ * Two things separate "My neighbor Alice Adams" from those. The relation is
+ * **first-person** — the writer's own — and it is **attached** to the name,
+ * either immediately before it or inside the appositive immediately after it.
+ * Both are required. First person alone keeps "I read Harry Potter with my
+ * little brother"; attachment alone keeps "Atticus Finch, a father who…".
+ *
+ * The error costs are asymmetric and that is what makes the rule affordable at
+ * all: a title hit overridden wrongly over-redacts a book the student wrote
+ * about, which the inbound placeholder absorbs; a title hit honoured wrongly
+ * ships a classmate's name to a third-party model.
+ */
+export function namesSomeoneTheWriterKnows(
+  text: string,
+  start: number,
+  end: number,
+): boolean {
+  const before = text.slice(Math.max(0, start - RELATION_WINDOW), start).toLowerCase();
+  const after = text.slice(end, end + RELATION_WINDOW).toLowerCase();
+  if (RELATION_ATTACHED_BEFORE.test(before)) return true;
+  // `match`, not `search`: the reference anchors this one at the start of the
+  // window, and the pattern's own `^` carries that.
+  if (RELATION_ATTACHED_AFTER.test(after)) return true;
+  // The relation expressed as distance — "Alice Adams, who lives two doors down
+  // from us". Same attachment requirement (the clause is the appositive that
+  // follows the name), plus a first-person pronoun, because "two doors down" on
+  // its own says nothing about whose street it is.
+  if (after.trimStart().startsWith(",")) {
+    const clause = firstClause(after);
+    if (
+      PROXIMITY_CUES.some((cue) => clause.includes(cue)) &&
+      anyTokens(clause).some((token) => FIRST_PERSON.has(token))
+    ) {
+      return true;
+    }
+  }
+  return false;
 }

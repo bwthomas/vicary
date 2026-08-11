@@ -188,6 +188,19 @@ export interface Primitives {
    * that transliterated one of them short passes every case in `cases` anyway.
    */
   suffixes: { organization: string[]; landmark: string[] };
+  /**
+   * Inputs for the relation predicates, which take `(text, start, end)` rather
+   * than a whole text or a token list. Offsets are resolved by the generator, so
+   * a port compares answers instead of reproducing the spec's own arithmetic.
+   */
+  spanCases: Record<string, { text: string; start: number; end: number }>;
+  /** The relation override's word lists, and the tiers it may override. */
+  relation: {
+    cues: string[];
+    proximityCues: string[];
+    firstPerson: string[];
+    overridableTiers: string[];
+  };
   constants: Record<string, number>;
   cases: Record<string, Record<string, unknown>>;
 }
@@ -204,6 +217,16 @@ export function loadPrimitives(directory?: string): Primitives {
     oracles: raw.oracles as { settlements: string[]; titles: string[] },
     precedence: raw.precedence as PrecedenceRow[],
     suffixes: raw.suffixes as { organization: string[]; landmark: string[] },
+    spanCases: raw.span_cases as Record<
+      string,
+      { text: string; start: number; end: number }
+    >,
+    relation: {
+      cues: raw.relation.cues as string[],
+      proximityCues: raw.relation.proximity_cues as string[],
+      firstPerson: raw.relation.first_person as string[],
+      overridableTiers: raw.relation.overridable_tiers as string[],
+    },
     constants: raw.constants as Record<string, number>,
     cases: raw.cases as Record<string, Record<string, unknown>>,
   };

@@ -66,6 +66,32 @@ frame's masked output moved for any of the three.
   not close it either — 46 entries with one misspelled is still a kept town. No
   detector output changed; this pins data that was already identical.
 
+### The relation override ports, with its word lists as spec data
+
+* **The four relation predicates are in TypeScript**: the window scan for a bare
+  surname the document established (`namesSomeoneInTheWritersLife`), the strict
+  attached-phrase test for a title-tier hit (`namesSomeoneTheWriterKnows`), and
+  the two that read the writer's own capitals inside a relation-led span. No
+  Python behaviour changed — this is a port, and it was diffed against the
+  reference over 45 span cases before a line of it was checked in.
+* **`primitives.json` gained a `span_cases` input group and four sections**, plus
+  a `relation` block carrying the 37 cues, 13 proximity phrases, 6 first-person
+  pronouns and the three overridable tiers, and `relation_window` in `constants`.
+  `overridable_tiers` is the policy half: a port that let the override reach
+  `place` would redact a town the tier deliberately keeps, and no behavioural case
+  would say so.
+* **The 90-character window is pinned behaviourally, not just declared.** A cue 80
+  characters after the span is inside it; the same cue 99 characters after it is
+  not. Both are cases, so a port with an 80-character window fails rather than
+  passing on a corpus that never separates the two.
+* **A second documentation defect, measured and not fixed.** The modifier class in
+  the relation patterns is commented "lower-case only, so a capitalised name
+  cannot be swallowed as a modifier". It does no such thing: every caller folds
+  its window with `.lower()` before matching, so no capital ever reaches the
+  `[a-z]` class. "My Old soccer coach Deshawn" is accepted exactly as the
+  lower-case spelling is. Identical in both languages, so the comment is wrong and
+  the behaviour is not; pinned by a test rather than changed during a port.
+
 ### The lookups are the build mechanism's, not the Python package's
 
 * **`vicary.build` moved out of the package to `asset/vicary_build/`.** It fetched

@@ -111,9 +111,21 @@ def test_every_primitive_case_covers_the_whole_corpus() -> None:
     document = conformance.build_primitives_document()
     corpus = set(document["corpus"])
     lists = set(document["token_lists"])
+    spans = set(document["span_cases"])
     over_lists = {
         "trim", "classify", "classify_with_settlement",
         "classify_tags", "classify_tags_with_settlement", "masks_with_settlement",
+    }
+    # The relation predicates take ``(text, start, end)``, so they are keyed by
+    # `span_cases` rather than by the corpus. Listed explicitly rather than
+    # inferred from the keys, because inferring which input group a section
+    # belongs to from the section's own keys is how a section that covers the
+    # wrong group passes: it would be compared against whatever it happens to
+    # match.
+    over_spans = {
+        "names_someone_in_the_writers_life", "names_someone_the_writer_knows",
+        "title_is_the_writers_own_relation",
+        "relation_led_title_is_internally_mixed",
     }
 
     for section, cases in document["cases"].items():
@@ -121,6 +133,8 @@ def test_every_primitive_case_covers_the_whole_corpus() -> None:
             assert set(cases) == set(document["stop_tokens"]), section
         elif section in over_lists:
             assert set(cases) == lists, section
+        elif section in over_spans:
+            assert set(cases) == spans, section
         else:
             assert set(cases) == corpus, section
 

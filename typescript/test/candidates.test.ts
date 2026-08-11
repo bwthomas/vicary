@@ -22,6 +22,7 @@ import { test } from "node:test";
 
 import {
   ALLCAPS_RUN,
+  OVERRIDABLE_TIERS,
   ANY_TOKEN,
   CANDIDATE_RE,
   CONSISTENT,
@@ -51,6 +52,10 @@ import {
   isStop,
   marksProperNouns,
   midSentenceCapitals,
+  namesSomeoneInTheWritersLife,
+  namesSomeoneTheWriterKnows,
+  relationLedTitleIsInternallyMixed,
+  titleIsTheWritersOwnRelation,
   overlaps,
   placeholderFor,
   sentenceStarts,
@@ -922,4 +927,123 @@ test("the possessive fold takes one tail and only a real one", () => {
   assert.equal(corroborated(["Terrences"], written, noOracle), false);
   assert.equal(withoutClitic("terrence's"), "terrence");
   assert.equal(withoutClitic("terrence"), "terrence");
+});
+
+// ---------------------------------------------------------------------------
+// The relation override — piece 5. The exhaustive half is `primitives.test.ts`,
+// which runs all four predicates over 45 span cases exported from the reference.
+// These are the cases whose *answer needs a reason*.
+// ---------------------------------------------------------------------------
+
+test("a first-person relation must be attached, not merely nearby", () => {
+  // The whole point of the strict sibling. Applied to the title tier, a
+  // window scan refuses six of the seven curriculum characters it must keep,
+  // because characters are described BY their relations.
+  const attached = "My neighbor Alice Adams walked me to the bus stop.";
+  const nearby = "I read Harry Potter with my little brother over the holiday.";
+  assert.equal(namesSomeoneTheWriterKnows(attached, 12, 23), true);
+  assert.equal(namesSomeoneTheWriterKnows(nearby, 7, 19), false);
+  // ...and attachment without first person is equally not enough.
+  const described = "Atticus Finch, a father who taught me to look away.";
+  assert.equal(namesSomeoneTheWriterKnows(described, 0, 13), false);
+});
+
+test("the appositive's comma is the rule, not punctuation taste", () => {
+  // An appositive is punctuated and a prepositional phrase is not, and that is
+  // the entire difference between naming a person and mentioning a relation.
+  const withComma = "Alice Adams, my next-door neighbor, drove us there.";
+  const without = "Alice Adams my neighbor drove us all the way there.";
+  assert.equal(namesSomeoneTheWriterKnows(withComma, 0, 11), true);
+  assert.equal(namesSomeoneTheWriterKnows(without, 0, 11), false);
+});
+
+test("a proximity phrase needs a first person to say whose street it is", () => {
+  const ours = "Alice Adams, who lives two doors down from us, walked me home.";
+  const theirs = "Alice Adams, who lives two doors down from the school, walked.";
+  assert.equal(namesSomeoneTheWriterKnows(ours, 0, 11), true);
+  assert.equal(namesSomeoneTheWriterKnows(theirs, 0, 11), false);
+});
+
+test("at most two modifiers may sit between the possessive and the cue", () => {
+  const two = "My old soccer coach Deshawn Pritchard stayed after class.";
+  const three = "My very old soccer coach Deshawn Pritchard stayed after class.";
+  assert.equal(namesSomeoneTheWriterKnows(two, 20, 37), true);
+  assert.equal(namesSomeoneTheWriterKnows(three, 25, 42), false);
+});
+
+test("the modifier pattern's lower-case restriction is inert, and that is fine", () => {
+  // Recorded because the reference's comment claims otherwise: it says the
+  // modifier class is "lower-case only, so a capitalised name cannot be
+  // swallowed as a modifier". Every caller folds the window with `.lower()`
+  // before matching, so by the time `[a-z]` is applied there are no capitals
+  // left to exclude and the restriction can never fire.
+  //
+  // "My Old soccer coach Deshawn Pritchard" therefore resolves exactly as "my
+  // old soccer coach ..." does. Measured in both languages and identical in
+  // both — the comment is wrong, not the behaviour, which is why this pins the
+  // behaviour rather than "fixing" the pattern during a port.
+  const capital = "My Old soccer coach Deshawn Pritchard stayed after class.";
+  const lower = "My old soccer coach Deshawn Pritchard stayed after class.";
+  assert.equal(namesSomeoneTheWriterKnows(capital, 20, 37), true);
+  assert.equal(namesSomeoneTheWriterKnows(lower, 20, 37), true);
+});
+
+test("a relation-led span is the writer's relative when it is internally mixed", () => {
+  // The three rows of the docstring's table, as three assertions. Only the
+  // middle one is what `relationLedTitleIsInternallyMixed` adds: the name
+  // carries a capital and the relation word does not, so the writer used
+  // capitals and chose not to put one on "cousin".
+  const film = "My Cousin Vinny is my favorite movie and I have seen it twice.";
+  const relative = "My cousin Vinny came over that summer and never left.";
+  const lower = "my cousin vinny is my favorite movie and i have seen it twice.";
+  assert.equal(relationLedTitleIsInternallyMixed(film, 0, 15), false);
+  assert.equal(relationLedTitleIsInternallyMixed(relative, 0, 15), true);
+  assert.equal(relationLedTitleIsInternallyMixed(lower, 0, 15), false);
+  // The document-level sibling agrees about the film and the relative, and it
+  // is the lower-case row where the two differ — there the absent capital is
+  // not testimony about anything, so the document gate stays in charge.
+  assert.equal(titleIsTheWritersOwnRelation(film, 0, 15), false);
+  assert.equal(titleIsTheWritersOwnRelation(relative, 0, 15), true);
+  assert.equal(titleIsTheWritersOwnRelation(lower, 0, 15), true);
+});
+
+test("the window reaches one clause, and stops at a sentence end", () => {
+  // A cue 80 characters after the span is inside the window; the same cue 99
+  // characters after it is not. Both are pinned in the spec, because a port
+  // with a different window passes every other case here.
+  const inside =
+    "Alice Adams walked me to the bus stop every single morning of that " +
+    "whole long cold winter, my cousin said later.";
+  const outside =
+    "Alice Adams walked me to the bus stop every single morning of that " +
+    "whole long and very cold winter that year, my cousin said later.";
+  assert.equal(namesSomeoneInTheWritersLife(inside, 0, 11), true);
+  assert.equal(namesSomeoneInTheWritersLife(outside, 0, 11), false);
+  // Terminal punctuation ends the scan: the next sentence's cousin is not
+  // this span's appositive.
+  const nextSentence = "Alice Adams walked to the bus stop. My cousin was there.";
+  assert.equal(namesSomeoneInTheWritersLife(nextSentence, 0, 11), false);
+});
+
+test("the override reaches the tiers built from ordinary names, not place", () => {
+  // A place is not a person, and a bare iconic surname has its own
+  // document-level rule with its own guard.
+  assert.deepEqual([...OVERRIDABLE_TIERS].sort(), ["demonym", "full_name", "title"]);
+  assert.equal(OVERRIDABLE_TIERS.has("place"), false);
+  assert.equal(OVERRIDABLE_TIERS.has("iconic_short"), false);
+});
+
+test("Python's word boundary, not JavaScript's, on both sides of a cue", () => {
+  // `\b` is Unicode-aware in Python and ASCII-only in JavaScript, so a
+  // transliterated `\b` finds a boundary inside an accented word that the
+  // reference never finds. Both directions are pinned because both occur: the
+  // possessive is preceded by a word, and the cue is followed by one.
+  const before = "naïmy cousin Terrence came over that summer and never left.";
+  const after = "Alice Adams, my cousinä came over that summer and never left.";
+  assert.equal(namesSomeoneTheWriterKnows(before, 13, 21), false);
+  assert.equal(namesSomeoneTheWriterKnows(after, 0, 11), false);
+  // The ASCII-run control: "roomy" is one word in both languages, so both
+  // agree there and the case above is isolating the Unicode difference.
+  const ascii = "roomy cousin Terrence came over that summer and never left.";
+  assert.equal(namesSomeoneTheWriterKnows(ascii, 13, 21), false);
 });

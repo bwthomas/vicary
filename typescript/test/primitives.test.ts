@@ -28,14 +28,19 @@ import {
   ANY_TOKEN,
   CANDIDATE_RE,
   DROPS_CAPITALS_MIN_RATE,
+  FIRST_PERSON,
   HEADING_MAX_CHARS,
   LANDMARK_SUFFIXES,
   LOWERCASE_MIN_TOKENS,
   LOWER_TOKEN,
   MARKS_PROPER_NOUNS_MIN,
   ORG_SUFFIXES,
+  OVERRIDABLE_TIERS,
   PRECEDENCE,
   PROTECTED,
+  PROXIMITY_CUES,
+  RELATION_CUES,
+  RELATION_WINDOW,
   STOP_WORDS,
   TITLE_MAX_TOKENS,
   WORD_TOKEN,
@@ -47,8 +52,12 @@ import {
   headingSpans,
   isStop,
   midSentenceCapitals,
+  namesSomeoneInTheWritersLife,
+  namesSomeoneTheWriterKnows,
+  relationLedTitleIsInternallyMixed,
   resolve,
   sentenceStarts,
+  titleIsTheWritersOwnRelation,
   trim,
   type Span,
 } from "../src/candidates.js";
@@ -120,6 +129,10 @@ function section(
 const corpus = spec.corpus as Record<string, unknown>;
 const lists = spec.tokenLists as Record<string, unknown>;
 const stopTokens = Object.fromEntries(spec.stopTokens.map((t) => [t, t]));
+const spans = spec.spanCases as Record<string, unknown>;
+
+/** A span case as the predicates take it. */
+type SpanCase = { text: string; start: number; end: number };
 
 test("the spec's constants are this build's constants", () => {
   // Emitted as data because a port that reads the corpus off the spec and the
@@ -132,6 +145,7 @@ test("the spec's constants are this build's constants", () => {
     heading_max_chars: HEADING_MAX_CHARS,
     lowercase_min_tokens: LOWERCASE_MIN_TOKENS,
     marks_proper_nouns_min: MARKS_PROPER_NOUNS_MIN,
+    relation_window: RELATION_WINDOW,
     stop_words: STOP_WORDS.size,
     title_max_tokens: TITLE_MAX_TOKENS,
   });
@@ -175,6 +189,31 @@ test("the spec's suffix lists are this build's suffix lists", () => {
   assert.deepEqual([...LANDMARK_SUFFIXES].sort(), spec.suffixes.landmark);
 });
 
+section("names_someone_in_the_writers_life", spans, (c: SpanCase) =>
+  namesSomeoneInTheWritersLife(c.text, c.start, c.end),
+);
+section("names_someone_the_writer_knows", spans, (c: SpanCase) =>
+  namesSomeoneTheWriterKnows(c.text, c.start, c.end),
+);
+section("title_is_the_writers_own_relation", spans, (c: SpanCase) =>
+  titleIsTheWritersOwnRelation(c.text, c.start, c.end),
+);
+section("relation_led_title_is_internally_mixed", spans, (c: SpanCase) =>
+  relationLedTitleIsInternallyMixed(c.text, c.start, c.end),
+);
+
+test("the spec's relation word lists are this build's", () => {
+  // Same argument as the suffix lists: 37 cues, 13 proximity phrases and 6
+  // pronouns, every one typed by hand in each port, and the span cases above
+  // exercise only a fraction of them. `overridableTiers` is the policy half —
+  // a port that let the override reach `place` would redact a town the tier
+  // deliberately keeps, and no case above would say so.
+  assert.deepEqual([...RELATION_CUES].sort(), spec.relation.cues);
+  assert.deepEqual([...PROXIMITY_CUES], spec.relation.proximityCues);
+  assert.deepEqual([...FIRST_PERSON].sort(), spec.relation.firstPerson);
+  assert.deepEqual([...OVERRIDABLE_TIERS].sort(), spec.relation.overridableTiers);
+});
+
 section("word_token", corpus, (text: string) => matches(WORD_TOKEN, text));
 section("lower_token", corpus, (text: string) => matches(LOWER_TOKEN, text));
 section("any_token", corpus, (text: string) => matches(ANY_TOKEN, text));
@@ -216,6 +255,9 @@ test("every section the spec carries is checked by this file", () => {
     "classify_tags", "classify_tags_with_settlement", "masks_with_settlement",
     "word_token", "lower_token", "any_token", "candidate_re", "protected",
     "sentence_starts", "emphasis_spans", "heading_spans",
+    "names_someone_in_the_writers_life", "names_someone_the_writer_knows",
+    "title_is_the_writers_own_relation",
+    "relation_led_title_is_internally_mixed",
     "title_spans", "title_spans_requires_capital",
     "capitalisation_habit", "capitalisation_habit_with_headings",
     "mid_sentence_capitals", "mid_sentence_capitals_with_headings",
