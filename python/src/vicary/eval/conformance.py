@@ -575,6 +575,21 @@ def build_primitives_document() -> dict[str, Any]:
             "organization": sorted(nc._ORG_SUFFIXES),
             "landmark": sorted(nc._LANDMARK_SUFFIXES),
         },
+        # The three remaining hand-typed lists, and the last data in candidate
+        # generation a port could get wrong while staying green. Measured on this
+        # spec: its inputs exercise 7 of 32 honorifics, 3 of 19 particles and 2 of
+        # 16 clitics, so most of each was checked by nothing.
+        #
+        # **Emitted in source order, and compared in order.** These are not sets
+        # like `suffixes`: `_HONORIFICS` and `_PARTICLES` are joined into regex
+        # alternations, where the order of the branches decides which one matches
+        # first, and `_without_clitic` strips the first clitic that matches. A
+        # port that sorted any of them would build a different regex.
+        "word_lists": {
+            "honorifics": list(nc._HONORIFICS),
+            "particles": list(nc._PARTICLES),
+            "clitics": list(nc._CLITICS),
+        },
         # The span cases the relation predicates run over, with offsets resolved
         # here so a port compares answers rather than reproducing this file's
         # index arithmetic.

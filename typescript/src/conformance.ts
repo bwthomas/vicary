@@ -194,6 +194,14 @@ export interface Primitives {
    * a port compares answers instead of reproducing the spec's own arithmetic.
    */
   spanCases: Record<string, { text: string; start: number; end: number }>;
+  /**
+   * The hand-typed lists behind candidate generation, in SOURCE ORDER.
+   *
+   * Order is load-bearing: honorifics and particles are joined into regex
+   * alternations, and `withoutClitic` strips the first clitic that matches. A
+   * port that sorted any of them would build a different pattern.
+   */
+  wordLists: { honorifics: string[]; particles: string[]; clitics: string[] };
   /** The relation override's word lists, and the tiers it may override. */
   relation: {
     cues: string[];
@@ -221,6 +229,11 @@ export function loadPrimitives(directory?: string): Primitives {
       string,
       { text: string; start: number; end: number }
     >,
+    wordLists: raw.word_lists as {
+      honorifics: string[];
+      particles: string[];
+      clitics: string[];
+    },
     relation: {
       cues: raw.relation.cues as string[],
       proximityCues: raw.relation.proximity_cues as string[],

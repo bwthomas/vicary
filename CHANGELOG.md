@@ -66,6 +66,19 @@ frame's masked output moved for any of the three.
   not close it either — 46 entries with one misspelled is still a kept town. No
   detector output changed; this pins data that was already identical.
 
+### Every hand-typed list in candidate generation is now spec data
+
+* **`word_lists` carries the honorifics (32), particles (19) and clitics (16)**,
+  and each port compares its own **in order**. The spec's inputs exercise 7, 3 and
+  2 of them respectively, so most of each was checked by nothing — the same hole
+  the suffix lists had, in the stoplist and heading path rather than the
+  classification one.
+* **Order is compared, not just membership**, because it is load-bearing here in a
+  way it is not for the suffix sets: honorifics and particles are joined into
+  regex alternations where branch order decides which alternative matches first,
+  and `withoutClitic` strips the first clitic that matches. Swapping `"Mr"` and
+  `"Mrs"` fails this assertion and nothing else, which is how that was confirmed.
+
 ### The relation override ports, with its word lists as spec data
 
 * **The four relation predicates are in TypeScript**: the window scan for a bare

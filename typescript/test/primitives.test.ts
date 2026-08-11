@@ -27,9 +27,11 @@ import {
   ALLCAPS_RUN,
   ANY_TOKEN,
   CANDIDATE_RE,
+  CLITICS,
   DROPS_CAPITALS_MIN_RATE,
   FIRST_PERSON,
   HEADING_MAX_CHARS,
+  HONORIFICS,
   LANDMARK_SUFFIXES,
   LOWERCASE_MIN_TOKENS,
   LOWER_TOKEN,
@@ -37,6 +39,7 @@ import {
   ORG_SUFFIXES,
   OVERRIDABLE_TIERS,
   PRECEDENCE,
+  PARTICLES,
   PROTECTED,
   PROXIMITY_CUES,
   RELATION_CUES,
@@ -187,6 +190,17 @@ test("the spec's suffix lists are this build's suffix lists", () => {
   // fixture happens not to contain.
   assert.deepEqual([...ORG_SUFFIXES].sort(), spec.suffixes.organization);
   assert.deepEqual([...LANDMARK_SUFFIXES].sort(), spec.suffixes.landmark);
+});
+
+test("the spec's hand-typed word lists are this build's, in order", () => {
+  // The last data in candidate generation that no case pinned: the spec's
+  // inputs exercise 7 of 32 honorifics, 3 of 19 particles and 2 of 16 clitics.
+  // Compared IN ORDER, not sorted — honorifics and particles become regex
+  // alternations and `withoutClitic` strips the first match, so a port that
+  // reordered any of them builds a different pattern while holding the same set.
+  assert.deepEqual([...HONORIFICS], spec.wordLists.honorifics);
+  assert.deepEqual([...PARTICLES], spec.wordLists.particles);
+  assert.deepEqual([...CLITICS], spec.wordLists.clitics);
 });
 
 section("names_someone_in_the_writers_life", spans, (c: SpanCase) =>
