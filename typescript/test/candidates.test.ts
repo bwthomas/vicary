@@ -669,14 +669,21 @@ test("a capital the writer chose is testimony; one orthography forced is not", (
   // "Eventually" after a full stop has told us nothing, because orthography would
   // have put that capital there anyway.
   //
-  // "i" is in the answer, and that is not a slip in the port. The two channels
-  // that read capitals disagree about the first person on purpose: the
+  // "i" is in the answer, and it is unreachable rather than wrong. The two
+  // channels that read capitals disagree about the first person: the
   // document-level counter matches `[A-Z][a-z]{2,}`, so a bare "I" cannot vote on
   // whether the writer marks proper nouns — every writer capitalises it. This
-  // per-token channel has no such filter, because it answers a different question
-  // ("did this document ever capitalise this word mid-sentence?") and the answer
-  // for "I" is a true yes that no downstream rule asks about. Pinned rather than
-  // tidied: the reference does this, and a port that "fixes" it diverges.
+  // per-token channel has no such filter.
+  //
+  // It cannot reach a decision. The only consumer is the corroboration guard,
+  // which asks this set about the tokens of a candidate *run*, and runs come from
+  // `trim`, which drops stop words. "I" is a stop word and is not an honorific, so
+  // `trim(["I"])` is `[]` and no run can ever carry the token this entry would
+  // answer for. Measured, not argued: removing "i" from the set leaves all 51
+  // golden frames byte-identical.
+  //
+  // So it is pinned as-is. A port that "fixes" it diverges from the reference for
+  // no behavioural gain.
   const text = "I met Marisol today. Eventually I also saw Deshawn there.";
   assert.deepEqual(
     [...midSentenceCapitals(text, sentenceStarts(text))].sort(),
