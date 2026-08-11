@@ -43,6 +43,7 @@ import {
   capitalIsTheOnlyEvidence,
   capitalisationHabit,
   classify,
+  corroborated,
   dropsCapitals,
   emphasisSpans,
   findTitleSpans,
@@ -53,6 +54,7 @@ import {
   overlaps,
   placeholderFor,
   sentenceStarts,
+  suppressedAsAnUnevidencedCapital,
   trim,
   type CapitalisationHabit,
   type Span,
@@ -754,4 +756,135 @@ test("a capital inside an emphasis shout is not the writer's choice either", () 
   assert.equal(capitalIsTheOnlyEvidence(["SLAM"], 5, starts, emphasis), true);
   // Mid-sentence, outside the shout: a choice the writer made.
   assert.equal(capitalIsTheOnlyEvidence(["Marisol"], 31, starts, emphasis), false);
+});
+
+// ---------------------------------------------------------------------------
+// Piece 3 — the sentence-initial corroboration guard
+//
+// Every answer below was recorded by running the reference implementation and
+// this one over the same corpus and diffing, not by reading either source. The
+// harness was negative-controlled first: giving the two channels different strip
+// sets — the exact defect the reference's own comment records having fixed —
+// diverges `corroborated` on four corpus entries and the guard on the closing-
+// quote one, so an agreement here is a measurement rather than a coincidence.
+//
+// The guard is ~98% precise on real prose: 133 occurrences over 101 distinct
+// spans suppressed, 99 of the 101 correctly. It is NOT the defect and must not be
+// "fixed" — the tier feeding it was, and that was addressed in 0.1.0.
+// ---------------------------------------------------------------------------
+
+/** The stand-in given-name tier the probe used. */
+const isGiven = (name: string) =>
+  new Set(["terrence", "marisol", "sadie", "deshawn", "cade"]).has(name);
+
+test("an unevidenced sentence-initial capital is suppressed", () => {
+  // The whole purpose. "Words" opens the sentence, so orthography put the capital
+  // there; no tier knows it and the document never capitalises it mid-sentence.
+  const text = "Words like 'Terrence' stand out in that chapter.";
+  const starts = sentenceStarts(text);
+  const written = midSentenceCapitals(text, starts, headingSpans(text));
+  assert.deepEqual([...written], []);
+  assert.equal(
+    suppressedAsAnUnevidencedCapital(["Words"], 0, starts, [], [], written, isGiven),
+    true,
+  );
+});
+
+test("both channels see the same stripped token, closing quote included", () => {
+  // The candidate pattern treats `'` as a name character, so "words like
+  // 'Terrence'" arrives as `Terrence'`. Stripping `.,'’` on BOTH channels is what
+  // lets the tier recognise it; stripping only `.,` asks the tier about
+  // `terrence'` and is told no. This case is what the negative control moved.
+  const text = "Words like 'Terrence' stand out in that chapter.";
+  const starts = sentenceStarts(text);
+  const written = midSentenceCapitals(text, starts, headingSpans(text));
+  assert.equal(corroborated(["Terrence'"], written, isGiven), true);
+  // An opening quote counts as a sentence start, which is why this span reaches
+  // the guard at all — and the corroboration is what keeps it.
+  assert.equal(
+    suppressedAsAnUnevidencedCapital(["Terrence'"], 12, starts, [], [], written, isGiven),
+    false,
+  );
+});
+
+test("the document's own mid-sentence capital vouches for a later sentence start", () => {
+  // Channel one, with no tier involvement: the writer capitalised "Cade" at offset
+  // 6, where they had a lower-case alternative and declined it. That testimony
+  // carries the sentence-initial "Cade" at 21.
+  const text = "I saw Cade at lunch. Cade never sits with anyone else.";
+  const starts = sentenceStarts(text);
+  const written = midSentenceCapitals(text, starts, headingSpans(text));
+  assert.deepEqual([...written], ["cade"]);
+  assert.equal(capitalIsTheOnlyEvidence(["Cade"], 21, starts, []), true);
+  assert.equal(
+    suppressedAsAnUnevidencedCapital(["Cade"], 21, starts, [], [], written, isGiven),
+    false,
+  );
+});
+
+test("the given-name tier vouches on its own, with no capital to read", () => {
+  // Channel two. The document capitalises only "Johnson" mid-sentence, so "Sadie"
+  // at a sentence start has nothing but the tier — and that is enough.
+  const text = "Sadie came over. Later Johnson called. Nobody answered him.";
+  const starts = sentenceStarts(text);
+  const written = midSentenceCapitals(text, starts, headingSpans(text));
+  assert.deepEqual([...written].sort(), ["johnson"]);
+  assert.equal(
+    suppressedAsAnUnevidencedCapital(["Sadie"], 0, starts, [], [], written, isGiven),
+    false,
+  );
+});
+
+test("ANY token corroborates, not just the first", () => {
+  // The heading rule is what made this load-bearing. "My Brother Terrence Okonkwo"
+  // in a heading is multi-token but title-cased, so it reaches the guard; it leads
+  // with an honorific, so checking only the first token consults "Brother" and
+  // leaks the name. "Terrence" is the third token.
+  const text = "\n\nMy Brother Terrence Okonkwo\n\nHe taught me how to ride a bike.\n";
+  const starts = sentenceStarts(text);
+  const headings = headingSpans(text);
+  const written = midSentenceCapitals(text, starts, headings);
+  const run = ["Brother", "Terrence", "Okonkwo"];
+  assert.equal(capitalIsTheOnlyEvidence(run, 5, starts, [], headings), true);
+  assert.equal(corroborated(["Brother"], written, isGiven), false);
+  assert.equal(corroborated(run, written, isGiven), true);
+  assert.equal(
+    suppressedAsAnUnevidencedCapital(run, 5, starts, [], headings, written, isGiven),
+    false,
+  );
+});
+
+test("an emphasis shout cannot corroborate itself", () => {
+  // midSentenceCapitals excludes an entirely upper-case token, so "SLAM" is not
+  // its own testimony — without that exclusion every shout would clear the bar the
+  // emphasis rule had just raised.
+  const text = "And then *SLAM* the door shut behind us.";
+  const starts = sentenceStarts(text);
+  const emphasis = emphasisSpans(text);
+  const written = midSentenceCapitals(text, starts, headingSpans(text));
+  assert.deepEqual([...written], []);
+  assert.equal(
+    suppressedAsAnUnevidencedCapital(["SLAM"], 10, starts, emphasis, [], written, isGiven),
+    true,
+  );
+});
+
+test("a mid-sentence multi-token span never reaches the guard", () => {
+  // Not suppressed because `capitalIsTheOnlyEvidence` is already false: the shape
+  // is the evidence. The corroboration channels are irrelevant here, and the guard
+  // must not consult them — an oracle-free caller has to behave identically.
+  const text = "I asked Marisol Ybarra what she thought about the ending.";
+  const starts = sentenceStarts(text);
+  const written = midSentenceCapitals(text, starts, headingSpans(text));
+  assert.equal(capitalIsTheOnlyEvidence(["Marisol", "Ybarra"], 8, starts, []), false);
+  assert.equal(
+    suppressedAsAnUnevidencedCapital(
+      ["Marisol", "Ybarra"], 8, starts, [], [], written, () => false,
+    ),
+    false,
+  );
+});
+
+test("no tokens corroborate nothing", () => {
+  assert.equal(corroborated([], new Set(["terrence"]), isGiven), false);
 });

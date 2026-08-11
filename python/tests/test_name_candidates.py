@@ -23,13 +23,19 @@ from vicary.local_classifier import LocalNameClassifier
 from vicary.name_candidates import (
     _PRECEDENCE,
     CapitalisationHabit,
+    _capital_is_the_only_evidence,
+    _emphasis_spans,
     _heading_spans,
+    _mid_sentence_capitals,
+    _sentence_starts,
     capitalisation_habit,
     classify_tags,
+    corroborated,
     find_candidates,
     is_public_landmark,
     mask_candidates,
     relation_led_title_is_internally_mixed,
+    suppressed_as_an_unevidenced_capital,
 )
 
 #: The frames the capitalisation route cannot reach on its own. Still named
@@ -1356,3 +1362,120 @@ def test_the_precedence_table_is_total_and_ordered() -> None:
     # A keeping row has no placeholder; a masking one always does.
     for row in _PRECEDENCE:
         assert (row.kind is None) is (not row.mask), row
+
+
+# ---------------------------------------------------------------------------
+# The sentence-initial corroboration guard
+#
+# These pin the same answers `typescript/test/candidates.test.ts` pins, recorded
+# by running both implementations over one corpus and diffing rather than by
+# reading either source. They live here as well as there because the guard was
+# extracted from a closure inside `find_candidates` and was previously reachable
+# only through it — a rule with no direct test is a rule whose port has nothing
+# to check itself against.
+#
+# ~98% precise on real prose: 133 occurrences over 101 distinct spans suppressed,
+# 99 of the 101 correctly. NOT the defect and not to be "fixed" — the tier
+# feeding it was, and that was addressed in 0.1.0 by adding SSA births.
+# ---------------------------------------------------------------------------
+
+#: The stand-in given-name tier the probe used.
+_PROBE_GIVEN = frozenset({"terrence", "marisol", "sadie", "deshawn", "cade"})
+
+
+def _is_given(name: str) -> bool:
+    return name in _PROBE_GIVEN
+
+
+def _channels(text: str) -> tuple[frozenset[int], tuple, tuple, frozenset[str]]:
+    starts = _sentence_starts(text)
+    emphasis = _emphasis_spans(text)
+    headings = _heading_spans(text)
+    return starts, emphasis, headings, _mid_sentence_capitals(
+        text, starts, headings
+    )
+
+
+def test_an_unevidenced_sentence_initial_capital_is_suppressed() -> None:
+    """The whole purpose: orthography put that capital there, not the writer."""
+    text = "Words like 'Terrence' stand out in that chapter."
+    starts, emphasis, headings, written = _channels(text)
+    assert written == frozenset()
+    assert suppressed_as_an_unevidenced_capital(
+        ["Words"], 0, starts, emphasis, headings, written, _is_given
+    )
+
+
+def test_both_channels_see_the_same_stripped_token() -> None:
+    """Including the closing quote the candidate pattern hands over.
+
+    `'` is a name character so "words like 'Terrence'" arrives as `Terrence'`.
+    Stripping `.,'’` on both channels is what lets the tier recognise it.
+    """
+    text = "Words like 'Terrence' stand out in that chapter."
+    starts, emphasis, headings, written = _channels(text)
+    assert corroborated(["Terrence'"], written, _is_given)
+    assert not suppressed_as_an_unevidenced_capital(
+        ["Terrence'"], 12, starts, emphasis, headings, written, _is_given
+    )
+
+
+def test_the_documents_own_capital_vouches_for_a_later_sentence_start() -> None:
+    """Channel one, with no tier involvement."""
+    text = "I saw Cade at lunch. Cade never sits with anyone else."
+    starts, emphasis, headings, written = _channels(text)
+    assert written == frozenset({"cade"})
+    assert _capital_is_the_only_evidence(["Cade"], 21, starts, emphasis, headings)
+    assert not suppressed_as_an_unevidenced_capital(
+        ["Cade"], 21, starts, emphasis, headings, written, _is_given
+    )
+
+
+def test_the_given_name_tier_vouches_on_its_own() -> None:
+    """Channel two, with no capital to read."""
+    text = "Sadie came over. Later Johnson called. Nobody answered him."
+    starts, emphasis, headings, written = _channels(text)
+    assert written == frozenset({"johnson"})
+    assert not suppressed_as_an_unevidenced_capital(
+        ["Sadie"], 0, starts, emphasis, headings, written, _is_given
+    )
+
+
+def test_any_token_corroborates_not_just_the_first() -> None:
+    """A heading span leads with an honorific, so "Brother" is not the answer."""
+    text = "\n\nMy Brother Terrence Okonkwo\n\nHe taught me how to ride a bike.\n"
+    starts, emphasis, headings, written = _channels(text)
+    run = ["Brother", "Terrence", "Okonkwo"]
+    assert _capital_is_the_only_evidence(run, 5, starts, emphasis, headings)
+    assert not corroborated(["Brother"], written, _is_given)
+    assert corroborated(run, written, _is_given)
+    assert not suppressed_as_an_unevidenced_capital(
+        run, 5, starts, emphasis, headings, written, _is_given
+    )
+
+
+def test_an_emphasis_shout_cannot_corroborate_itself() -> None:
+    """An entirely upper-case token is excluded from the capital channel."""
+    text = "And then *SLAM* the door shut behind us."
+    starts, emphasis, headings, written = _channels(text)
+    assert written == frozenset()
+    assert suppressed_as_an_unevidenced_capital(
+        ["SLAM"], 10, starts, emphasis, headings, written, _is_given
+    )
+
+
+def test_a_mid_sentence_multi_token_span_never_reaches_the_guard() -> None:
+    """The shape is the evidence, so the channels are not consulted at all."""
+    text = "I asked Marisol Ybarra what she thought about the ending."
+    starts, emphasis, headings, written = _channels(text)
+    assert not _capital_is_the_only_evidence(
+        ["Marisol", "Ybarra"], 8, starts, emphasis, headings
+    )
+    assert not suppressed_as_an_unevidenced_capital(
+        ["Marisol", "Ybarra"], 8, starts, emphasis, headings, written,
+        lambda name: False,
+    )
+
+
+def test_no_tokens_corroborate_nothing() -> None:
+    assert not corroborated([], frozenset({"terrence"}), _is_given)

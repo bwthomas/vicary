@@ -6,14 +6,15 @@
  * the patterns that say what a word is, where a sentence begins, which runs of
  * capitals are a shout rather than a name, which lines are headings, which
  * stretches are already redacted; the title scan, which runs against the raw text
- * before any candidate exists; and the capitalisation-habit inference, which is
- * what the routes below will consult instead of obeying a capital.
+ * before any candidate exists; the capitalisation-habit inference, which is what
+ * the routes below consult instead of obeying a capital; the classification tag
+ * set and its precedence table; and the sentence-initial corroboration guard.
  *
- * What is NOT here yet: the lowercase route, the sentence-initial corroboration
- * guard, the relation override, and `findCandidates` itself. Nothing in this
- * module is wired into `redact` — the conformance scoreboard is unchanged by it on
- * purpose, because a piece of a detector that moves the number is a piece that was
- * scored before it was checked.
+ * What is NOT here yet: the lowercase route, the org/settlement arms' use of the
+ * table inside generation, the relation override, and `findCandidates` itself.
+ * Nothing in this module is wired into `redact` — the conformance scoreboard is
+ * unchanged by it on purpose, because a piece of a detector that moves the number
+ * is a piece that was scored before it was checked.
  *
  * Why generation runs before the notability lookup, rather than instead of it
  * -----------------------------------------------------------------------------
@@ -968,4 +969,78 @@ export function capitalIsTheOnlyEvidence(
   if (inHeading) return true;
   if (overlaps(emphasis, start, end)) return true;
   return starts.has(start);
+}
+
+/** Answers "is this a common given name?" — see the Python `GivenNameOracle`. */
+export type GivenNameOracle = (name: string) => boolean;
+
+/**
+ * A second signal, for a span whose capital proves nothing on its own.
+ *
+ * Two channels: the document's own mid-sentence capitalisation of the word
+ * (`writtenAsACapital`, from {@link midSentenceCapitals}), and the given-name
+ * tier. `isGiven` is passed in rather than defaulted so this is only reachable
+ * on the path where an oracle exists.
+ *
+ * ANY token counts, not just the first, and the heading rule is what made that
+ * distinction load-bearing. Before it, this was only ever reached for
+ * single-token spans, so "first token" and "any token" were the same thing. A
+ * heading is title-cased, so a multi-token span inside one also arrives here —
+ * and "My Brother Terrence Okonkwo" leads with an honorific, so checking only
+ * the first token consulted "Brother" and leaked the name.
+ */
+export function corroborated(
+  tokens: readonly string[],
+  writtenAsACapital: ReadonlySet<string>,
+  isGiven: GivenNameOracle,
+): boolean {
+  // Both channels see the same stripped token, and the strip set is `.,'’`
+  // rather than the `'’` {@link midSentenceCapitals} folds with. That asymmetry
+  // is deliberate and was a defect once: the capital channel stripped `.,'’` and
+  // the given-name channel got the raw token, so a name against a closing quote
+  // — "words like 'Terrence'", which the candidate pattern hands over as
+  // `Terrence'` because an apostrophe is a name character — asked the tier about
+  // `Terrence'` and was told no.
+  for (const token of tokens) {
+    const stripped = strip(token.toLowerCase(), ".,'’");
+    if (writtenAsACapital.has(stripped) || isGiven(stripped)) return true;
+  }
+  return false;
+}
+
+/**
+ * The sentence-initial guard: drop a span whose only evidence is a capital that
+ * orthography required, unless a second channel vouches for it.
+ *
+ * The two halves are separate functions because they answer separate questions —
+ * "is the capital all we have?" and "is there anything else?" — and this is the
+ * conjunction `findCandidates` applies.
+ *
+ * **Requiring a second signal is only sound when there is a second signal to
+ * require.** Without a given-name list the document's own capitalisation is the
+ * sole channel, and a name mentioned once at a sentence start is then genuinely
+ * indistinguishable from "Eventually" — so the no-oracle arm keeps its
+ * recall-maximal, precision-minimal character rather than becoming quietly
+ * stricter. That is why the caller reaches this only when an oracle was passed,
+ * and why this takes `isGiven` rather than treating its absence as permissive.
+ *
+ * Measured on real prose: 133 occurrences over 101 distinct spans suppressed, 99
+ * of the 101 correctly — about 98% precise. The two it gets wrong are names
+ * written once, at a sentence start, that no tier knows. **Do not "fix" it**; the
+ * tier feeding it was the defect, and that was addressed in 0.1.0 by adding SSA
+ * births to the given-name tier.
+ */
+export function suppressedAsAnUnevidencedCapital(
+  tokens: readonly string[],
+  start: number,
+  starts: ReadonlySet<number>,
+  emphasis: readonly Span[],
+  headings: readonly Span[],
+  writtenAsACapital: ReadonlySet<string>,
+  isGiven: GivenNameOracle,
+): boolean {
+  return (
+    capitalIsTheOnlyEvidence(tokens, start, starts, emphasis, headings) &&
+    !corroborated(tokens, writtenAsACapital, isGiven)
+  );
 }
