@@ -63,7 +63,13 @@ where = ["src"]
 # packaging was worth doing: the asset used to reach deployment through a
 # build-time copy allowlist that had already silently dropped a runtime file
 # once. Package data cannot be forgotten.
-vicary = ["data/*.txt.gz", "data/MANIFEST.json"]
+# `data/` is a VENDORED copy, reproduced from the repository's `asset/` by
+# `just asset-sync` and gitignored like every other front door's. So a wheel built
+# without that step ships no gazetteer and no stoplist, and loads empty — which
+# means redacting every public figure in every essay. Two guards, because this one
+# is worth two: `tests/test_packaging.py` asserts the files are present in the
+# working tree, and CI's python-build job greps the built wheel for them.
+vicary = ["data/*.txt.gz", "data/*.txt", "data/MANIFEST.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

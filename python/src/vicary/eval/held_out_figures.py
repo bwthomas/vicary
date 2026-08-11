@@ -4,10 +4,10 @@ Why this file exists
 --------------------
 The short (bare-surname) tier's two thresholds were both chosen while the redact
 literals in :mod:`vicary.eval.fixture` were visible —
-:data:`~vicary.build.gazetteer.SHORT_MIN_SITELINKS` sits in the gap between
+:data:`~vicary_build.gazetteer.SHORT_MIN_SITELINKS` sits in the gap between
 the highest private-name surname in that fixture (84, "Bell") and the lowest
 required KEEP (145, "Thoreau"), and
-:data:`~vicary.build.gazetteer.SHORT_MAX_US_SURNAME_POPULATION` was set at
+:data:`~vicary_build.gazetteer.SHORT_MAX_US_SURNAME_POPULATION` was set at
 25,000 partly to leave "Lincoln" (16,477 bearers) a margin. The builder's own
 docstring says so, and says the honest test is a held-out surname list.
 

@@ -15,6 +15,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from vicary_build import gazetteer as builder
+from vicary_build import manifest as build_manifest
 
 from vicary import (
     StudentIdentity,
@@ -22,22 +24,36 @@ from vicary import (
     build_redactor_if_enabled,
     gazetteer,
 )
-from vicary.build import gazetteer as builder
 
 # --- build plumbing ---------------------------------------------------------
 
 
-def test_the_builder_writes_where_the_runtime_reads() -> None:
+def test_the_builder_writes_the_bytes_the_runtime_reads() -> None:
     """The silent no-op rebuild.
 
-    ``ASSET_RELPATH`` was resolved against the *build* module's directory, so a
-    full Wikidata rebuild wrote ``src/vicary/build/data/notability.txt.gz`` while
-    the loader and ``MANIFEST.json`` both read ``src/vicary/data/``. ``fetch``
-    then rewrote the manifest by checksumming the old asset and ``verify``
-    compared that asset against its own fresh checksum and passed. Hours of
-    fetching, a success message, and not one byte of the shipped asset changed.
+    The build's output path was once resolved against the *build module's*
+    directory while the loader and ``MANIFEST.json`` were resolved against the
+    package's ``data/``, one level up. A full Wikidata rebuild wrote somewhere
+    nothing read, ``fetch`` rewrote the manifest by checksumming the old asset, and
+    ``verify`` compared that asset against its own fresh checksum and passed. Hours
+    of fetching, a success message, and not one byte of the shipped asset changed.
+
+    The two paths are now deliberately different files — the build writes the
+    canonical copy, the runtime reads a vendored one — so identity is the wrong
+    assertion and the bytes are the right one. Asserted through the digest the
+    manifest records, which is the same thing every other front door checks.
     """
-    assert builder.default_out() == assets.resolve()[0]
+    built = builder.default_out()
+    loaded, is_bundled = assets.resolve()
+    assert is_bundled, "override set; this test is about the vendored copy"
+    assert built != loaded, (
+        "the build must not write into a package's vendored directory — that is "
+        "what made one front door the owner of the shared asset"
+    )
+    assert build_manifest.sha256_of(built) == assets.sha256_of(loaded), (
+        "the vendored copy is stale. Run `just asset-sync`: a rebuild that changes "
+        "nothing the runtime loads reports success and ships the old gazetteer."
+    )
 
 
 def test_every_tier_the_fold_produces_survives_the_write(tmp_path: Path) -> None:

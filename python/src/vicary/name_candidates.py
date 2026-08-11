@@ -86,6 +86,8 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from vicary import lexicon
+
 #: Answers "is this a public figure, or otherwise topical?" ``True`` means keep.
 #: Injected rather than hardcoded so the inbound pass (recall-biased) and the
 #: outbound pass (precision-biased) can supply different oracles, and so the
@@ -206,55 +208,20 @@ _LANDMARK_SUFFIXES: frozenset[str] = frozenset(
     }
 )
 
-#: Capitalised words that are not names. Deliberately broad: this list is the
-#: only thing standing between candidate generation and "mask every capitalised
-#: word", and a capitalised ordinary word is overwhelmingly sentence-initial.
-#: Skewed toward over-inclusion on purpose — a missed name is one span and shows
-#: up in the recall number, while a wrongly-masked common word corrupts every
-#: essay that uses it and shows up nowhere unless somebody reads the prose.
-_STOP_WORDS: frozenset[str] = frozenset(
-    word.lower()
-    for word in """
-    a an the this that these those there here it its it's
-    i me my mine myself we us our ours ourselves you your yours
-    he him his she her hers they them their theirs who whom whose which what
-    and or but so because although though however therefore thus hence yet
-    if then else when while until since before after during once whenever
-    for from to into onto out off over under above below between among across
-    through around about against along beside besides beyond within without
-    at by in on up down near next last first second third finally
-    is am are was were be been being have has had having do does did doing
-    can could will would shall should may might must let lets
-    not no nor none nothing never always sometimes often usually rarely
-    all any both each every few many more most much several some such
-    another other others same different new old good bad better best worst
-    great big small long short high low young happy sad hard easy
-    one two three four five six seven eight nine ten hundred thousand million
-    also even just only really very too still again ever else quite rather
-    call called come came go went get got give gave take took make made
-    see saw look looked think thought know knew say said tell told ask asked
-    want wanted need needed try tried help helped work worked feel felt
-    find found keep kept leave left put set start started stop stopped
-    remember remembered learn learned teach taught write wrote read
-    everyone everybody someone somebody anyone anybody nobody everything
-    something anything people person thing things time times day days
-    year years week weeks month months hour hours minute minutes
-    school schools class classes teacher teachers student students friend
-    friends family families home house mom dad mother father parent parents
-    brother sister sisters brothers grandma grandpa
-    life world way ways place places part parts kind sort lot lots
-    yes yeah ok okay maybe perhaps well now today tomorrow yesterday
-    january february march april may june july august september october
-    november december monday tuesday wednesday thursday friday saturday sunday
-    mr mrs ms dr am pm usa us u.s tv
-    im ive ill id dont cant wont didnt isnt aint thats theres whats
-    as than instead unless whether either neither plus versus etc
-    getting making looking thinking talking playing living walking running
-    sitting standing growing learning moving trying using
-    back away together alone everywhere somewhere anywhere nowhere
-    right wrong true false sure certain important special favorite
-    """.split()
-)
+#: Capitalised words that are not names, read from the vendored lexicon.
+#:
+#: Deliberately broad: this list is the only thing standing between candidate
+#: generation and "mask every capitalised word", and a capitalised ordinary word
+#: is overwhelmingly sentence-initial. Skewed toward over-inclusion on purpose — a
+#: missed name is one span and shows up in the recall number, while a wrongly-masked
+#: common word corrupts every essay that uses it and shows up nowhere unless
+#: somebody reads the prose.
+#:
+#: It is *data*, not a literal, because all three front doors need the same 421
+#: words and a hand-transliterated stoplist diverges silently — see
+#: :mod:`vicary.lexicon`. Loaded at import so an incomplete install fails on
+#: import rather than on the first essay.
+_STOP_WORDS: frozenset[str] = lexicon.load("stop_words")
 
 #: Contraction and possessive tails. ``[A-Z][A-Za-z'’]*`` matches "I'm" as one
 #: token, so without stripping these the stoplist never sees the word — "I'm"

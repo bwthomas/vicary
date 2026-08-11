@@ -35,10 +35,13 @@ put them back.
 
 Subpackages, none of which the runtime path imports:
 
-* :mod:`vicary.build`   — rebuild the gazetteer asset from its public upstreams.
 * :mod:`vicary.eval`    — the measurement corpus, fixture, and scoring harness.
 * :mod:`vicary.bedrock` — the optional AWS Bedrock Guardrail arm, which exists
   mainly so the offline detector has an external baseline to be scored against.
+
+Rebuilding the gazetteer is deliberately NOT here. It is the repository's build
+mechanism, shared by all three front doors and owned by none of them, so
+``pip install vicary`` carries the asset and not the SPARQL client that made it.
 """
 
 from vicary._version import __version__

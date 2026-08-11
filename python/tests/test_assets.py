@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import dataclasses
 import gzip
-import json
 from pathlib import Path
 
 import pytest
@@ -323,15 +322,7 @@ def test_verify_says_so_rather_than_printing_a_meaningless_ok(
     assert "not manifest-checked" in out
 
 
-def test_the_manifest_round_trips(tmp_path: Path) -> None:
-    """``write_manifest`` must produce what ``manifest`` parses, or ``fetch``
-    leaves the package unverifiable."""
-    written = assets.write_manifest(
-        {assets.NOTABILITY_ASSET: {"sources": ["https://example.invalid/x"]}},
-        path=tmp_path / "MANIFEST.json",
-    )
-    payload = json.loads(written.read_text(encoding="utf-8"))
-    entry = payload["assets"][assets.NOTABILITY_ASSET]
-    assert entry["sha256"] == assets.sha256_of(assets.bundled_path())
-    assert entry["tiers"] == assets.record_for().tiers
-    assert entry["min_package_version"] == __version__
+# The manifest round-trip test moved to `asset/tests/test_manifest.py` with the
+# writer. This module tests the reader, and a reader tested against its own writer
+# is a check of the library against itself — which is exactly the reason writing
+# left the package.

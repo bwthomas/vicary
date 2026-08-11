@@ -19,8 +19,15 @@
         "short": 1229,
         "title": 38024
       }
+    },
+    "stop_words.txt": {
+      "bytes": 3996,
+      "entries": 421,
+      "format": 1,
+      "min_package_version": "0.2.0",
+      "sha256": "f4dfe89490efe47c7520dac3b9185f39c0eeb397f3ab33f5d1c1211591dfcf30"
     }
   },
   "manifest_version": 1,
-  "written_by": "vicary 0.1.0"
+  "written_by": "vicary 0.2.0"
 }

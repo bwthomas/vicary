@@ -12,6 +12,7 @@ __pycache__/
 # `python/tests/test_packaging.py` is the guard; this comment is why it exists.
 #
 # Adding a language means adding its output here, anchored, not relaxing these.
+/build/
 /python/build/
 /python/dist/
 /python/.venv/
@@ -21,9 +22,17 @@ __pycache__/
 /ruby/pkg/
 /ruby/*.gem
 
-# Vendored asset copies. Reproduced from python/src/vicary/data by each package's
-# sync step, and NOT tracked: a second tracked copy is a second thing to bump per
-# asset cut, which is how two front doors end up shipping different gazetteers.
+# Vendored asset copies. Reproduced from `asset/` — the tracked, canonical output
+# of the build mechanism — by each package's sync step, and NOT tracked: a second
+# tracked copy is a second thing to bump per asset cut, which is how two front
+# doors end up shipping different gazetteers.
+#
+# All THREE are listed, Python included. The Python copy used to be the tracked
+# original that the other two vendored from, which made one of three equal front
+# doors the owner of the shared input. The cost of the symmetry is that a wheel
+# built without `just asset-sync` ships no gazetteer; `python/tests/test_packaging.py`
+# and CI's python-build job both fail when it does.
+/python/src/vicary/data/
 /typescript/assets/
 /ruby/assets/
 

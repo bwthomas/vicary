@@ -1,11 +1,12 @@
 """Build the offline notability gazetteer from Wikidata.
 
-Run this to regenerate ``src/vicary/data/notability.txt.gz``. It is a build-time
-tool, never imported on the request path — the runtime side is
-:mod:`vicary.gazetteer`, which only reads the asset this writes.
+Run this to regenerate ``asset/data/notability.txt.gz``, the one tracked copy all
+three front doors vendor from. It is a build-time tool, never imported on any
+request path — the runtime side is each front door's own gazetteer module, which
+only reads the asset this writes.
 
-    python -m vicary.build.gazetteer            # fetch + write
-    python -m vicary.build.gazetteer --stats    # report, write nothing
+    python -m vicary_build fetch            # fetch + write
+    python -m vicary_build fetch --stats    # report, write nothing
 
 Why Wikidata, and why by sitelink count
 ---------------------------------------
@@ -79,32 +80,38 @@ from collections.abc import Callable
 from datetime import date
 from pathlib import Path
 
-# One source of truth with the candidate generator: this is a build tool, so
-# importing the runtime stoplist is free and keeps the two from drifting.
-from vicary import config
-from vicary._version import __version__
-from vicary.name_candidates import _STOP_WORDS as _TITLE_ORDINARY_WORDS
+from vicary_build import config, lexicon
 
-#: Where the asset lands, relative to the *package* — ``src/vicary/data/`` — not
-#: to this module, which lives one level down in ``src/vicary/build/``.
+#: Ordinary words that must not be treated as a work title. The same 421 words the
+#: detectors use, read from the language-neutral lexicon rather than imported from
+#: one of the three front doors — a build tool that imports one of its own
+#: consumers is not shared, whatever directory it sits in.
+_TITLE_ORDINARY_WORDS = lexicon.load("stop_words")
+
+#: The version stamped into the User-Agent and the asset's metadata. One number
+#: for all three front doors, read from the repository's ``VERSION``.
+__version__ = config.version()
+
+#: The asset's filename inside :data:`vicary_build.config.DATA_DIR`.
 #:
-#: The ``.parent.parent`` in :func:`default_out` is load-bearing and was a live
-#: silent no-op until 2026-08-06. Resolved against this module's own directory it
-#: wrote ``src/vicary/build/data/notability.txt.gz``, which nothing reads:
-#: :mod:`vicary.assets` resolves the runtime asset and ``MANIFEST.json`` against
-#: ``src/vicary/data/``. So ``vicary-assets fetch`` spent the whole Wikidata
-#: rebuild, wrote the new asset somewhere unreferenced, rewrote the manifest by
-#: checksumming the OLD asset, ran ``verify`` against that same old asset and
-#: printed a pass. A rebuild that changes nothing and reports success is worse
-#: than one that fails, which is why the tier counts are now asserted against the
-#: loaded gazetteer by a unit test rather than trusted from the build log —
-#: ``test_the_manifest_tier_counts_match_the_loaded_gazetteer``.
-ASSET_RELPATH = Path("data") / "notability.txt.gz"
+#: An earlier arrangement resolved this against the *module* directory while the
+#: runtime resolved it against the package's ``data/``, and the two disagreed by
+#: one level. That was a live silent no-op until 2026-08-06: ``vicary-assets
+#: fetch`` spent the whole Wikidata rebuild, wrote the new asset somewhere
+#: unreferenced, rewrote the manifest by checksumming the OLD asset, verified that
+#: same old asset and printed a pass. A rebuild that changes nothing and reports
+#: success is worse than one that fails.
+#:
+#: There is now exactly one directory in the repository this can mean, which is
+#: most of why the asset moved out of the Python package. The tier counts are
+#: still asserted against the *loaded* gazetteer by a unit test rather than
+#: trusted from the build log — ``test_the_manifest_tier_counts_match_the_loaded_gazetteer``.
+ASSET_NAME = "notability.txt.gz"
 
 
 def default_out() -> Path:
     """Absolute path the build writes when ``--out`` is not given."""
-    return Path(__file__).resolve().parent.parent / ASSET_RELPATH
+    return config.DATA_DIR / ASSET_NAME
 
 #: On-disk format version. Bump when the tier semantics change, so a stale
 #: asset fails loudly rather than answering differently.
@@ -952,7 +959,7 @@ def read_ssa_given_names(source: str | Path) -> dict[str, int]:
 
     Accepts the distributed ``names.zip`` or a directory of extracted
     ``yob<year>.txt`` files. Local-only by design — see
-    :data:`vicary.config.BUILD_SSA_NAMES_ZIP_ENV_VAR` for why there is no
+    :data:`vicary_build.config.SSA_NAMES_ZIP_ENV_VAR` for why there is no
     download path to fall back on.
     """
     path = Path(source).expanduser()
@@ -990,13 +997,13 @@ def fetch_ssa_given_names() -> dict[str, int]:
     `given` tier of nothing, which reads as a quiet recall regression rather than
     as a missing file.
     """
-    source = config.get(config.BUILD_SSA_NAMES_ZIP_ENV_VAR)
+    source = config.get(config.SSA_NAMES_ZIP_ENV_VAR)
     if not source:
         raise RuntimeError(
             f"the `given` tier needs the SSA baby-names archive. Download "
             f"{SSA_GIVEN_NAMES_URL} by hand — ssa.gov returns HTTP 403 to some "
             f"networks on every path — and set "
-            f"{config.BUILD_SSA_NAMES_ZIP_ENV_VAR} to it."
+            f"{config.SSA_NAMES_ZIP_ENV_VAR} to it."
         )
     return read_ssa_given_names(source)
 

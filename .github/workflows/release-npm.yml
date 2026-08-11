@@ -91,7 +91,7 @@ jobs:
           npm pack --dry-run --json > /tmp/pack.json
           node -e '
             const files = require("/tmp/pack.json")[0].files.map(f => f.path);
-            for (const need of ["assets/notability.txt.gz", "assets/MANIFEST.json"]) {
+            for (const need of ["assets/notability.txt.gz", "assets/MANIFEST.json", "assets/stop_words.txt"]) {
               if (!files.includes(need)) {
                 console.error(`tarball is missing ${need}`);
                 process.exit(1);

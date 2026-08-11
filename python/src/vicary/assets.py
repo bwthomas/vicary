@@ -1,12 +1,17 @@
 """Where the data asset comes from, and proof that it is the one we think it is.
 
 vicary's notability lookup is a 2.1 MB compressed asset built from two public
-upstreams (see :mod:`vicary.build.gazetteer`). It ships **inside the wheel** as
-package data. That is not a relocation, it is the removal of a defect class: the
-asset previously reached deployment through a build-time file-copy allowlist, and
-an allowlist that must be remembered is an allowlist that gets forgotten — the
-failure mode being a container that builds clean and raises at request time
-instead.
+upstreams by the repository's build mechanism, which is deliberately outside every
+package — see ``asset/README.md``. It ships **inside the wheel** as package data.
+That is not a relocation, it is the removal of a defect class: the asset previously
+reached deployment through a build-time file-copy allowlist, and an allowlist that
+must be remembered is an allowlist that gets forgotten — the failure mode being a
+container that builds clean and raises at request time instead.
+
+The copy in ``src/vicary/data/`` is *vendored*, gitignored, and reproduced by
+``just asset-sync`` from the one tracked original all three front doors share. This
+package is a consumer of that asset on the same terms as the npm package and the
+gem; it does not own it, and it cannot rebuild it.
 
 Three things live here.
 
@@ -29,9 +34,9 @@ embedded header, not against the bundled manifest. Pointing somewhere else is th
 entire purpose of the override; refusing to load what it points at would make it
 useless.
 
-**A front door for rebuilding.** ``python -m vicary.assets`` — ``show``,
-``verify``, ``fetch``. The builder was always here; what did not exist was a way
-to ask an installed copy what it is holding.
+**A way to ask an installed copy what it is holding.** ``python -m vicary.assets``
+— ``show`` and ``verify``. There is no ``fetch``: rebuilding is the build
+mechanism's job, so installing this library does not install a SPARQL client.
 """
 
 from __future__ import annotations
@@ -106,8 +111,8 @@ def manifest() -> dict[str, AssetRecord]:
     except FileNotFoundError as exc:
         raise AssetError(
             f"asset manifest missing at {path}. The installed vicary package is "
-            "incomplete — reinstall it, or regenerate the manifest with "
-            "`python -m vicary.assets fetch`."
+            "incomplete — reinstall it, or vendor the asset from a checkout with "
+            "`just asset-sync`."
         ) from exc
     except (OSError, ValueError) as exc:
         raise AssetError(f"cannot read asset manifest at {path}: {exc}") from exc
@@ -290,53 +295,16 @@ def describe(path: Path) -> dict:
     return info
 
 
-def write_manifest(
-    assets: dict[str, dict],
-    *,
-    path: Path | None = None,
-    min_package_version: str = __version__,
-) -> Path:
-    """(Re)write ``MANIFEST.json`` from assets on disk.
-
-    Called by ``fetch`` after a rebuild. ``min_package_version`` defaults to the
-    version doing the writing, which is the correct floor: the code that produced
-    an asset is by definition able to read it.
-    """
-    target = path or manifest_path()
-    entries: dict[str, dict] = {}
-    payload: dict = {
-        "manifest_version": 1,
-        "written_by": f"vicary {__version__}",
-        "assets": entries,
-    }
-    for name, extra in assets.items():
-        asset = DATA_DIR / name
-        described = describe(asset)
-        entries[name] = {
-            "format": described["format"],
-            "sha256": sha256_of(asset),
-            "bytes": asset.stat().st_size,
-            "tiers": described["tiers"],
-            "cut_date": described["meta"].get("cut_date", ""),
-            "min_package_version": min_package_version,
-            **extra,
-        }
-    target.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
-                      encoding="utf-8")
-    return target
+# `write_manifest` used to live here, called by a `fetch` subcommand. Both moved to
+# `asset/vicary_build/` when the build mechanism left the package. The manifest is
+# how three implementations prove they loaded the same bytes, and a library that
+# could rewrite it could also paper over a mismatch it caused — the check would
+# become a check of the library against itself. So this module only reads.
 
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
-
-#: Upstreams recorded in the manifest for provenance. Read from the builder so
-#: there is one place they are declared.
-def _default_sources() -> tuple[str, ...]:
-    from vicary.build import gazetteer as builder
-
-    return (builder.SPARQL_ENDPOINT, builder.CENSUS_SURNAMES_URL)
-
 
 def _cmd_show(args: argparse.Namespace) -> int:
     path, is_bundled = resolve(args.name)
@@ -389,22 +357,6 @@ def _cmd_verify(args: argparse.Namespace) -> int:
     return 1
 
 
-def _cmd_fetch(args: argparse.Namespace) -> int:
-    from vicary.build import gazetteer as builder
-
-    argv: list[str] = []
-    if args.stats:
-        argv.append("--stats")
-    if args.cache_dir:
-        argv += ["--cache-dir", args.cache_dir]
-    rc = builder.main(argv) or 0
-    if rc or args.stats:
-        return rc
-    written = write_manifest({args.name: {"sources": list(_default_sources())}})
-    print(f"manifest rewritten: {written}")
-    return _cmd_verify(args)
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m vicary.assets",
@@ -420,20 +372,10 @@ def main(argv: list[str] | None = None) -> int:
     check = sub.add_parser("verify", help="checksum the asset against the manifest")
     check.set_defaults(func=_cmd_verify)
 
-    fetch = sub.add_parser(
-        "fetch",
-        help="rebuild the asset from its upstreams and rewrite the manifest",
-    )
-    fetch.add_argument("--stats", action="store_true",
-                       help="report what a rebuild would produce; write nothing")
-    # Forwarded to the builder. Without this the documented rebuild command
-    # re-runs every SPARQL query against donated infrastructure on each attempt,
-    # which makes a threshold sweep — the reason the cache exists — cost ~30
-    # queries per step instead of one fetch and N offline re-folds.
-    fetch.add_argument("--cache-dir", default=None,
-                       help="cache raw SPARQL rows here and reuse them "
-                            "(delete it after changing a query)")
-    fetch.set_defaults(func=_cmd_fetch)
+    # No `fetch`. Rebuilding the asset is the build mechanism's job — `python -m
+    # vicary_build fetch`, or `just asset-fetch` — and it lives outside every
+    # package precisely so that installing one front door does not install a SPARQL
+    # client, and so that no single front door owns the shared input.
 
     args = parser.parse_args(argv)
     if not getattr(args, "func", None):

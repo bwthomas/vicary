@@ -232,9 +232,9 @@ Two keeps are refused anyway: tokens of the student's own name (identity masking
 is exact-match, so it never enters the notable set), and any token a *second,
 private* full name in the same essay also claims.
 
-It ships as package data, and `data/MANIFEST.json` records its SHA-256, byte
-count, tier counts, cut date, upstream sources, and the minimum vicary version
-that can read it. `load()` checks all of that and **raises rather than
+It ships as package data — vendored from the repository's `asset/`, which no front
+door owns — and `data/MANIFEST.json` records its SHA-256, byte count, tier counts,
+cut date, upstream sources, and the minimum vicary version that can read it. `load()` checks all of that and **raises rather than
 degrading**: an empty gazetteer would mask every public figure in every essay,
 which is privacy-safe, product-hostile, and indistinguishable from
 over-aggressive tuning until somebody notices months later.
@@ -242,12 +242,15 @@ over-aggressive tuning until somebody notices months later.
 ```sh
 vicary-assets show      # tier counts, cut date, provenance, which file is loaded
 vicary-assets verify    # checksum the installed asset against the manifest
-vicary-assets fetch     # rebuild from Wikidata + Census, rewrite the manifest
 ```
 
-`fetch` reaches the network and takes a while. Both endpoints are donated
-infrastructure; a deployment doing large rebuilds should set
-`vicary.build.gazetteer.USER_AGENT_SUFFIX` to a contact address.
+There is deliberately no `fetch`. Rebuilding the gazetteer is the repository's build
+mechanism, not this package: installing a redaction library should not install a
+SPARQL client, and three front doors that each rebuild their own gazetteer are three
+detectors sharing a name. From a checkout it is `just asset-fetch`; it reaches the
+network and takes a while, and both endpoints are donated infrastructure, so a
+deployment doing large rebuilds should set the builder's `USER_AGENT_SUFFIX` to a
+contact address.
 
 ## How it reads the writer's capitalisation
 

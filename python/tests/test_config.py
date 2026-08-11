@@ -292,11 +292,11 @@ NEW_SINCE_EXTRACTION = {
     # Newer still, and inert unset: outbound inherits inbound, so there is no
     # prior behaviour for a legacy name to preserve.
     config.NAME_DETECTION_OUTBOUND_ENV_VAR,
-    # Build-time only, and read by no deployment: it points the gazetteer builder
-    # at a locally-downloaded SSA archive. Nothing ever set an older name for it
-    # because nothing outside a rebuild reads it at all.
-    config.BUILD_SSA_NAMES_ZIP_ENV_VAR,
 }
+# `VICARY_BUILD_SSA_NAMES_ZIP` used to be listed here. It is build-time only and
+# read by no deployment, which is why it left this module entirely — it now lives
+# in `asset/vicary_build/config.py` with the rest of the build mechanism, where it
+# is not on the surface a host integrating the library reads.
 
 
 def _declared_names() -> set[str]:

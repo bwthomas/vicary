@@ -48,7 +48,9 @@ redaction API, so it is the property that gets gated.
 python/        the Python package  (src/, tests/, pyproject.toml)
 typescript/    the npm package
 ruby/          the gem
+asset/         the shared gazetteer, and the mechanism that builds it
 conformance/   the spec, as language-neutral data: fixture frames and the gates
+VERSION        the one number all three front doors declare
 .github/       one CI workflow across all three; one release workflow per registry
 ```
 
@@ -56,6 +58,13 @@ Each language directory is a self-contained package: its own manifest, its own
 `LICENSE`, its own README for its registry page, and its own build output (all
 `.gitignore`d **anchored** — see the comment in `.gitignore` for the release this
 nearly broke).
+
+`asset/` is deliberately none of their property. It holds the tracked gazetteer,
+the language-neutral word lists, and the code that fetches them from Wikidata, the
+US Census and SSA — and every front door vendors a gitignored copy from it by its
+own sync step. It used to live inside the Python package, which made one of three
+peers the structural owner of the shared input and shipped a SPARQL client to every
+host that ran `pip install vicary`. See [`asset/README.md`](asset/README.md).
 
 ## The asset is the product; the language is the wrapper
 
@@ -68,6 +77,13 @@ It is vendored into each published package, deliberately, rather than fetched at
 build time: "no network, no per-request cost" is the claim, and a build-time
 fetch puts a fetch back in the story.
 
+The 421-word stoplist that decides what becomes a name candidate at all is shared
+on the same terms, for a sharper reason: a word list transliterated by hand into a
+second language diverges silently, and the divergence shows up as prose corruption
+in one language and not the others — which no parity check on *masked output* would
+catch, because a missing stop word changes what gets masked in essays nobody put in
+a fixture.
+
 ## Working in here
 
 ```sh
@@ -75,7 +91,13 @@ just --list          # every task
 just test            # every language's suite
 just gates           # the nine gates (four need data you supply — see below)
 just conformance     # the shared suite, across every implementation present
+just asset-sync      # vendor the shared asset into every front door present
 ```
+
+**A fresh checkout has no gazetteer until `just asset-sync` runs.** The vendored
+copies are gitignored in all three packages, so importing the library raises rather
+than answering from an empty one — which is the intended failure. `just py-setup`
+does the sync for you.
 
 Four of the nine gates need data that is not packaged: three need an essay corpus
 you supply, one needs the US Census surname file. They **skip** when it is

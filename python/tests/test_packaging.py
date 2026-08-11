@@ -8,15 +8,23 @@ could see it: the files are on disk, imports resolve, the suite passes, and a
 locally built wheel even carries them, because setuptools reads the working
 tree rather than the index.
 
-What it actually costs, in a package that ships an offline asset: a release
-built from a clean checkout has no ``vicary.build``, so ``vicary-assets fetch``
-— the only way to rebuild the gazetteer — raises ImportError for whoever
-installs it. The asset-integrity check passes the whole time, because the asset
-is fine; it is the thing that regenerates it that is missing.
+What it actually cost, in a package that ships an offline asset: a release built
+from a clean checkout had no builder at all, so the only way to rebuild the
+gazetteer raised ImportError for whoever installed it. The asset-integrity check
+passed the whole time, because the asset was fine; it was the thing that
+regenerates it that was missing.
 
 CI on a fresh checkout catches this as a side effect (imports fail, and ruff
 reclassifies the missing package as third-party). That is a coincidence, and a
 coincidence is not a guard, so the property gets asserted directly.
+
+The second test here is the same defect class from the other direction. The
+gazetteer and the stoplist are now *deliberately* untracked in this package —
+they are vendored from the repository's ``asset/`` by ``just asset-sync``, so that
+no one of three front doors owns the shared input. The cost of that symmetry is
+that a wheel built in a tree where the sync never ran installs cleanly and loads
+nothing, which means redacting every public figure in every essay. So the files
+are asserted present on disk, where the tracking test cannot look for them.
 """
 
 from __future__ import annotations
@@ -83,3 +91,56 @@ def test_every_source_file_is_tracked() -> None:
         "pattern — `build/` matches src/vicary/build/, `dist/` would match a "
         "package called dist, and so on."
     )
+
+
+#: What the wheel must carry. Not globbed: a glob that matched nothing would pass,
+#: and "no gazetteer" is exactly the state this asserts against.
+REQUIRED_PACKAGE_DATA = (
+    "data/notability.txt.gz",
+    "data/MANIFEST.json",
+    "data/stop_words.txt",
+)
+
+
+def test_the_vendored_asset_is_present_for_a_build() -> None:
+    """The other half of the tracking question, for files that are not tracked.
+
+    `.gitignore` keeps ``src/vicary/data/`` out of the index on purpose, so
+    ``git ls-files`` can say nothing about it and the test above cannot cover it.
+    setuptools reads the working tree, which is what makes this the right question:
+    is the payload on disk *right now*, at the moment a wheel would be built.
+    """
+    missing = [
+        name
+        for name in REQUIRED_PACKAGE_DATA
+        if not (PACKAGE_ROOT / "src" / "vicary" / name).is_file()
+    ]
+    assert not missing, (
+        "the vendored asset payload is incomplete: "
+        + ", ".join(missing)
+        + ". Run `just asset-sync` (or `just py-setup`). A wheel built now would "
+        "install cleanly and load an empty gazetteer, which means masking every "
+        "public figure in every essay — privacy-safe, product-hostile, and "
+        "indistinguishable from over-tuning until somebody reads the output."
+    )
+
+
+def test_the_vendored_asset_matches_the_repositorys_copy() -> None:
+    """A stale vendored copy is worse than a missing one: it loads.
+
+    Two front doors shipping different gazetteers is the failure this whole
+    arrangement exists to prevent, and it starts as one package's ``data/`` being
+    a cut behind.
+    """
+    if not _is_a_git_checkout():
+        pytest.skip("not a checkout — nothing to compare the vendored copy against")
+    from vicary_build import config as build_config
+    from vicary_build import manifest as build_manifest
+
+    from vicary import assets
+
+    for name in ("notability.txt.gz", "MANIFEST.json"):
+        canonical = build_config.DATA_DIR / name
+        assert build_manifest.sha256_of(canonical) == assets.sha256_of(
+            PACKAGE_ROOT / "src" / "vicary" / "data" / name
+        ), f"vendored {name} is stale — run `just asset-sync`"

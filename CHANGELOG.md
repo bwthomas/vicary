@@ -1,5 +1,83 @@
 # Changelog
 
+## 0.2.0 — 2026-08-11
+
+The build mechanism left the Python package, so the shared asset is shared rather
+than borrowed; and two identity patterns that had never matched anything now do.
+
+**Breaking for anybody who imported `vicary.build` or ran `vicary-assets fetch`.**
+Neither exists. Rebuilding the gazetteer is `just asset-fetch` from a checkout. The
+detector's output on the 51 conformance frames is byte-identical to 0.1.1.
+
+### The lookups are the build mechanism's, not the Python package's
+
+* **`vicary.build` moved out of the package to `asset/vicary_build/`.** It fetched
+  from Wikidata, the US Census and SSA — so `pip install vicary` shipped a SPARQL
+  client to every host running a library whose whole claim is "no model, no network,
+  no per-request cost".
+* **The tracked gazetteer moved to `asset/data/`, and every front door now vendors a
+  gitignored copy** — Python included. It used to be the tracked original that the
+  npm package and the gem copied from, which made one of three peers the structural
+  owner of the shared input. Parity between peers is checkable; parity with an
+  original is just copying.
+* **`vicary-assets fetch` is gone; `show` and `verify` remain.** Writing the manifest
+  moved to the build mechanism with everything else. The manifest is how three
+  implementations prove they loaded the same bytes, and a library that could rewrite
+  it could paper over a mismatch it caused — the check would become a check of the
+  library against itself.
+* **`VICARY_BUILD_SSA_NAMES_ZIP` is no longer declared by `vicary.config`.** Same
+  variable, same name, read by the build tool. It was on the surface a host
+  integrating the library reads, where it looked like something that mattered at
+  request time.
+* **A manifest refresh no longer raises an untouched asset's `min_package_version`.**
+  It is preserved unless that asset was rebuilt or its format changed. Stamping the
+  current version into every entry would make older installs refuse a file they can
+  read perfectly well — the check failing closed against its own user, for a reason
+  no error message explains. Recorded upstream sources are preserved for the same
+  reason.
+
+### The stoplist is data in all three languages, not a literal in each
+
+* **The 421-word stoplist is now `asset/lexicon/stop_words.txt`**, vendored beside
+  the gazetteer and read at import. A word list transliterated by hand into a second
+  language diverges silently, and the divergence shows up as prose corruption in one
+  language and not the others — which no parity check on *masked output* would catch,
+  because a missing stop word changes what gets masked in essays nobody put in a
+  fixture.
+* **Each lexicon declares its own distinct-word count, and every reader asserts it.**
+  Same discipline as the gazetteer's per-tier counts, for the same reason running the
+  other way: a short read here makes the redactor *more* aggressive, which looks
+  privacy-safe and passes any check that only asks whether something was masked.
+* **This is why the version had to move.** The published 0.1.1 wheel carries no
+  lexicon, and shipping different package contents under one number is not a thing
+  to do quietly.
+
+### Two identity patterns that silently matched nothing now match
+
+* **A curly possessive is masked with the name.** `_word_pattern`'s second
+  alternative was a byte-for-byte repeat of its first rather than the curly form it
+  resembled, so `Marguerite’s` — what a word processor actually emits — missed while
+  `Marguerite's` worked.
+* **A surname ending in punctuation is masked.** The pattern closed with `\b`, which
+  cannot hold after a `)` or a `.`, so a caller passing suffixed roster data
+  (`O'Brien (Jr.)`) got no masking for it at all while looking configured. The
+  boundary is now asserted only on the side that has a word character to assert
+  against, which is identical to `\b` for every literal that does not end in
+  punctuation.
+* **The plural-family tail (`s'`) works.** It was in the pattern all along and the
+  old trailing boundary made it unreachable.
+* No golden byte moved: no conformance frame contains a curly apostrophe or a
+  punctuation-edged identity literal. Each fix was verified red against the defect it
+  covers, and the fourth guard was verified red against the naive version of the
+  second fix.
+
+### One detector, one number, asserted
+
+* **`VERSION` at the repository root is the single source.** `asset/tests/test_version.py`
+  fails when any of the four manifests disagrees with it, and the release workflow
+  runs it. The per-package tag checks catch a mistyped tag; they cannot catch three
+  packages that each agree with their own tag and disagree with each other.
+
 ## 0.1.1 — 2026-08-10
 
 Nothing about the detector changed. This release exists because a package's

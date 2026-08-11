@@ -90,7 +90,7 @@ jobs:
           # `gem build` lists what it packed, but reading the built artifact is the
           # claim that matters: a gemspec glob that stops matching is silent.
           tar -xOf vicary-*.gem data.tar.gz | tar -tzf - > /tmp/members.txt
-          for need in assets/notability.txt.gz assets/MANIFEST.json; do
+          for need in assets/notability.txt.gz assets/MANIFEST.json assets/stop_words.txt; do
             grep -qx "$need" /tmp/members.txt \
               || { echo "gem is missing $need"; exit 1; }
           done

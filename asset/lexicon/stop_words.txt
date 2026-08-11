@@ -1,0 +1,63 @@
+#!lexicon 1
+#!list stop_words 421
+# Ordinary words that must never become name candidates.
+#
+# Language-neutral on purpose. This list is the only thing standing between
+# candidate generation and "mask every capitalised word", so all three front doors
+# have to work from the same 421 words — a stoplist transliterated by hand into a
+# second language is a second detector wearing the first one's name, and the
+# difference shows up as prose corruption in one language and not the others,
+# which no parity check on masked output would catch.
+#
+# Skewed toward over-inclusion deliberately. A missed name is one span and shows
+# up in the recall number; a wrongly-masked common word corrupts every essay that
+# uses it and shows up nowhere unless somebody reads the prose.
+#
+# Format: `#!` lines are directives, `#` lines are comments, and every other line
+# contributes whitespace-separated words. The count on the `#!list` directive is
+# the number of DISTINCT words after case-folding, and each front door asserts it
+# against what it parsed. That is not ceremony: a short read here silently makes
+# the redactor MORE aggressive, which looks privacy-safe and passes any check that
+# only asks whether something was masked.
+#
+# A word appearing twice is not an error — the groupings below are thematic and
+# overlap ("else", "may", "us"), and enforcing uniqueness in the source would make
+# the list harder to read for no benefit.
+  a an the this that these those there here it its it's
+  i me my mine myself we us our ours ourselves you your yours
+  he him his she her hers they them their theirs who whom whose which what
+  and or but so because although though however therefore thus hence yet
+  if then else when while until since before after during once whenever
+  for from to into onto out off over under above below between among across
+  through around about against along beside besides beyond within without
+  at by in on up down near next last first second third finally
+  is am are was were be been being have has had having do does did doing
+  can could will would shall should may might must let lets
+  not no nor none nothing never always sometimes often usually rarely
+  all any both each every few many more most much several some such
+  another other others same different new old good bad better best worst
+  great big small long short high low young happy sad hard easy
+  one two three four five six seven eight nine ten hundred thousand million
+  also even just only really very too still again ever else quite rather
+  call called come came go went get got give gave take took make made
+  see saw look looked think thought know knew say said tell told ask asked
+  want wanted need needed try tried help helped work worked feel felt
+  find found keep kept leave left put set start started stop stopped
+  remember remembered learn learned teach taught write wrote read
+  everyone everybody someone somebody anyone anybody nobody everything
+  something anything people person thing things time times day days
+  year years week weeks month months hour hours minute minutes
+  school schools class classes teacher teachers student students friend
+  friends family families home house mom dad mother father parent parents
+  brother sister sisters brothers grandma grandpa
+  life world way ways place places part parts kind sort lot lots
+  yes yeah ok okay maybe perhaps well now today tomorrow yesterday
+  january february march april may june july august september october
+  november december monday tuesday wednesday thursday friday saturday sunday
+  mr mrs ms dr am pm usa us u.s tv
+  im ive ill id dont cant wont didnt isnt aint thats theres whats
+  as than instead unless whether either neither plus versus etc
+  getting making looking thinking talking playing living walking running
+  sitting standing growing learning moving trying using
+  back away together alone everywhere somewhere anywhere nowhere
+  right wrong true false sure certain important special favorite

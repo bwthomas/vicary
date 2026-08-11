@@ -1,0 +1,33 @@
+# The build mechanism, installable so the three front doors and the evaluation
+# harness can import it without sys.path games.
+#
+# NOT published to any registry, and deliberately not a dependency of any of the
+# three packages. It is a development tool for whoever cuts an asset: `pip install
+# -e ../asset` from the Python venv, or `just py-setup`, which does it.
+#
+# It is written in Python because the asset is built once, by one person, and
+# Python has the SPARQL and zip handling in its standard library. That is an
+# implementation detail of the tool, not a privilege for the Python front door —
+# what it emits is language-neutral data, checksummed, that all three vendor
+# identically.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vicary-build"
+version = "0.2.0"
+description = "Build vicary's shared gazetteer asset from its public upstreams"
+requires-python = ">=3.11"
+# Stdlib only, like the redaction path. A build that needed a SPARQL client
+# library would be a build a contributor cannot run from a clean checkout.
+dependencies = []
+
+[tool.setuptools]
+packages = ["vicary_build"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

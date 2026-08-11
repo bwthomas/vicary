@@ -30,7 +30,7 @@ placeholder pays more for over-redaction than these tiers assume.
 
 Five tiers, and why the query is not decomposed into tokens
 -----------------------------------------------------------
-The asset (built by :mod:`vicary.build.gazetteer`) carries five sets: ``full``
+The asset (built by :mod:`vicary_build.gazetteer`) carries five sets: ``full``
 (multi-token names of humans with >= 10 sitelinks), ``short`` (single-token and
 particle-led surnames of humans with >= 100 sitelinks), ``place`` (public
 geography and named landmarks, settlements excluded), ``given`` (common given
@@ -93,7 +93,7 @@ from vicary import assets, config
 logger = logging.getLogger(__name__)
 
 #: Asset location, relative to this module. Written by
-#: ``vicary.build.gazetteer`` and read here; nothing else should touch it.
+#: ``vicary_build.gazetteer`` and read here; nothing else should touch it.
 ASSET_RELPATH = Path("data") / assets.NOTABILITY_ASSET
 
 #: On-disk format this reader understands. A mismatch raises: an asset whose
@@ -152,7 +152,7 @@ ROLE_TITLES = frozenset(
 #: Curly quotes and dashes that NFKD leaves alone. Student prose is full of them
 #: — a word processor turns every apostrophe curly — and without this mapping
 #: "Lincoln’s" folds to "lincoln s" and misses every tier. Kept identical to
-#: ``vicary.build.gazetteer._SMART_QUOTES``; a unit test pins them together.
+#: ``vicary_build.gazetteer._SMART_QUOTES``; a unit test pins them together.
 _SMART_QUOTES = str.maketrans(
     {
         "‘": "'", "’": "'", "ʼ": "'", "′": "'",
@@ -182,7 +182,7 @@ def normalize(name: str) -> str:
     dropped, because ``Terrence's older brother`` presents the name as
     ``Terrence's`` and a lookup that misses on the clitic is a leak.
 
-    Must fold identically to ``vicary.build.gazetteer.normalize``; a unit
+    Must fold identically to ``vicary_build.gazetteer.normalize``; a unit
     test pins the two together over a shared vector set.
     """
     folded = name.translate(_SMART_QUOTES)

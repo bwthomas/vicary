@@ -25,10 +25,11 @@ from fnmatch import fnmatch
 from pathlib import Path
 
 import pytest
+from vicary_build import config as build_config
+from vicary_build import gazetteer as build_gazetteer
 
-from vicary import assets, config
+from vicary import assets
 from vicary import gazetteer as gazetteer_module
-from vicary.build import gazetteer as build_gazetteer
 from vicary.eval import fixture
 from vicary.gazetteer import (
     FULL_NAME,
@@ -68,7 +69,7 @@ def gazetteer() -> Gazetteer:
     if not asset_path().exists():
         pytest.skip(
             f"gazetteer asset not built at {asset_path()}; "
-            "run `python -m vicary.build.gazetteer`"
+            "run `python -m vicary_build fetch`"
         )
     return load(force=True)
 
@@ -1002,7 +1003,6 @@ def test_the_ssa_build_refuses_to_guess_when_the_archive_is_absent(
     produces a bearer-derived tier under a format number promising a
     births-derived one — a recall regression that presents as nothing at all.
     """
-    monkeypatch.setenv(config.BUILD_SSA_NAMES_ZIP_ENV_VAR, "")
-    monkeypatch.delenv(config.BUILD_SSA_NAMES_ZIP_ENV_VAR, raising=False)
+    monkeypatch.delenv(build_config.SSA_NAMES_ZIP_ENV_VAR, raising=False)
     with pytest.raises(RuntimeError, match="SSA baby-names archive"):
         build_gazetteer.fetch_ssa_given_names()

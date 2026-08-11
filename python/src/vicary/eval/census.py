@@ -84,7 +84,7 @@ def load_census(source: str | None = None, *, allow_network: bool = False
     download; without it, a missing local copy raises rather than returning a
     partial dict that would read as a lower exposure rate than the truth.
     """
-    from vicary.build import gazetteer as builder
+    from vicary_build import gazetteer as builder
 
     path = source or census_source()
     if path:

@@ -15,13 +15,19 @@ _default:
 # Python
 # ---------------------------------------------------------------------------
 
-# Create the Python venv and install the package with its dev extras.
+# Create the Python venv, install the package with its dev extras and the build
+# mechanism, and vendor the asset. The vendor step is not optional: `data/` is a
+# gitignored copy in every front door now, so a fresh checkout has no gazetteer
+# and no stoplist until this runs, and importing vicary raises rather than
+# answering from an empty one.
 py-setup:
     cd python && python3 -m venv .venv && .venv/bin/pip install -q --upgrade pip \
-      && .venv/bin/pip install -q -e '.[dev]'
+      && .venv/bin/pip install -q -e '.[dev]' && .venv/bin/pip install -q -e ../asset
+    @just asset-sync-python
 
 py-lint:
     cd python && .venv/bin/ruff check src tests && .venv/bin/mypy src/vicary
+    cd python && .venv/bin/ruff check ../asset/vicary_build ../asset/tests
 
 py-test:
     cd python && .venv/bin/python -m pytest -m "not gates" -q
@@ -30,8 +36,42 @@ py-test:
 py-gates:
     cd python && .venv/bin/python -m pytest -m gates -s -q
 
-py-build:
+# Vendor first, always. `python/src/vicary/data/` is gitignored, so a build in a
+# tree where the sync has not run produces a wheel that installs cleanly and loads
+# an empty gazetteer — which redacts every public figure in every essay.
+py-build: asset-sync-python
     cd python && rm -rf dist && .venv/bin/python -m build && .venv/bin/python -m twine check dist/*
+
+# ---------------------------------------------------------------------------
+# The shared asset — see asset/README.md
+# ---------------------------------------------------------------------------
+
+# Rebuild the gazetteer from its public upstreams and rewrite the manifest. Slow
+# (a full Wikidata sweep) and it reaches the network. Needs
+# VICARY_BUILD_SSA_NAMES_ZIP; READ THE MANIFEST DIFF afterwards.
+asset-fetch:
+    cd python && .venv/bin/python -m vicary_build fetch
+
+# What a rebuild would produce, writing nothing.
+asset-stats:
+    cd python && .venv/bin/python -m vicary_build fetch --stats
+
+# Vendor the tracked payload into every front door present. This is what makes
+# "all three load the same bytes" true rather than intended.
+asset-sync:
+    @just asset-sync-python
+    @if [ -f typescript/package.json ]; then cd typescript && npm run sync-assets; \
+      else echo "SKIPPED typescript — no package.json yet"; fi
+    @if [ -f ruby/Rakefile ]; then cd ruby && rake sync_assets; \
+      else echo "SKIPPED ruby — no Rakefile yet"; fi
+
+asset-sync-python:
+    cd python && .venv/bin/python -m vicary_build vendor src/vicary/data
+
+# The build mechanism's own tests. Its own suite because it is not part of any
+# front door: it is the thing all three consume.
+asset-test:
+    cd python && .venv/bin/python -m pytest ../asset/tests -q
 
 # ---------------------------------------------------------------------------
 # Across every front door
@@ -41,6 +81,7 @@ py-build:
 # skipped out loud, never silently: a run that tested one of three and said
 # nothing is the failure mode this whole repository exists to prevent.
 test:
+    @just asset-test
     @just py-test
     @if [ -f typescript/package.json ]; then cd typescript && npm test; \
       else echo "SKIPPED typescript — no package.json yet"; fi
