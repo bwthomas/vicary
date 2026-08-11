@@ -2,7 +2,7 @@
  * The port's tokenisation and capitalisation primitives, against the shared spec.
  *
  * `conformance/frames.json` scores finished output, which is the right final bar
- * and a poor first one: a port with nothing implemented scores 0 of 36 and learns
+ * and a poor first one: a port with nothing implemented scores 0 of 38 and learns
  * nothing about which of the forty-odd primitives underneath is wrong.
  * `primitives.json` is that missing layer — generated from the Python functions,
  * byte-compared against a fresh export by `python/tests/test_conformance.py`, and

@@ -167,8 +167,8 @@ def test_reading_the_document_back_reproduces_every_frame(
 ) -> None:
     """Field-for-field, not count-for-count.
 
-    The export omits defaulted span fields to stay readable, so "52 frames in,
-    52 frames out" is satisfied by a reader that drops `kept_by` on every span.
+    The export omits defaulted span fields to stay readable, so "54 frames in,
+    54 frames out" is satisfied by a reader that drops `kept_by` on every span.
     Comparing the dataclasses is what makes the omission safe.
     """
     rebuilt = conformance.frames_from_document(committed_frames)
@@ -240,7 +240,7 @@ def test_the_golden_output_pins_placeholder_numbering_where_it_is_not_positional
 
     This is the assertion that keeps the golden layer honest. If every frame's
     placeholders happened to run 1, 2, 3 left to right, a port could assume
-    positional numbering, pass all 52 frames, and still be wrong the first time a
+    positional numbering, pass all 54 frames, and still be wrong the first time a
     real essay hands it a nickname before the full name it belongs to. The
     fixture does contain such a frame; this fails if it ever stops containing one,
     because then the suite has stopped testing the risk it was built for.

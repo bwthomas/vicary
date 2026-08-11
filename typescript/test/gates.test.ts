@@ -65,7 +65,7 @@ test("the measured values match the Python gate report", () => {
   assert.equal(measurement("keep_precision").value, 100);
   assert.match(measurement("keep_precision").detail, /^21\/21 /);
   assert.equal(measurement("round_trip").value, 100);
-  assert.match(measurement("round_trip").detail, /^52\/52 /);
+  assert.match(measurement("round_trip").detail, /^54\/54 /);
   assert.equal(measurement("unaccounted_violations").value, 0);
   assert.equal(measurement("asset_entries").value, 360793);
 });

@@ -182,11 +182,35 @@ def _luhn_ok(digits: str) -> bool:
     return total % 10 == 0
 
 
-#: (placeholder, pattern) in application order. CARD is handled separately
-#: because it needs the Luhn gate.
-_STRUCTURED: tuple[tuple[str, re.Pattern[str]], ...] = (
+#: The two structured patterns that run BEFORE identity interpolation, because
+#: their match text can legitimately *contain* the writer's own name:
+#: ``first.last@district.org`` and a profile URL ending in a name slug. Identity
+#: interpolation is a literal-name substitution, so running it first left these
+#: shredded rather than masked — ``{NAME_2}.{NAME_1}{USERNAME_1}.k12.oh.us``
+#: instead of ``{EMAIL_1}``, with the domain tail surviving in the clear and the
+#: span unrestorable on the round trip.
+#:
+#: Putting them first is safe in the direction that matters, and that asymmetry
+#: is the whole argument. Both are anchored on structure a name cannot supply —
+#: EMAIL needs an ``@`` and a dotted TLD, URL needs a scheme or a ``www.`` — so
+#: neither can reach into prose and take a bare surname out of it. The general
+#: ordering rule below is unchanged: patterns that *could* eat a name out of
+#: running text still run after identity.
+_STRUCTURED_BEFORE_IDENTITY: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("{EMAIL}", _EMAIL),
     ("{URL}", _URL),
+)
+
+#: (placeholder, pattern) in application order, running AFTER identity
+#: interpolation. CARD is handled separately because it needs the Luhn gate.
+#:
+#: Every pattern here is either bare digits (SSN, IP, PHONE) or loose enough to
+#: swallow a surname it should not (ADDRESS matches four capitalised words before
+#: a street suffix), which is exactly why identity goes first. Numbering is
+#: unaffected by where a pattern sits in these two tuples: the minter counts per
+#: kind, so ``{EMAIL_1}`` is the first email whether emails are matched before or
+#: after names.
+_STRUCTURED: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("{US_SOCIAL_SECURITY_NUMBER}", _SSN),
     ("{IP_ADDRESS}", _IP),
     ("{PHONE}", _PHONE),
@@ -445,10 +469,15 @@ class LocalNameClassifier:
         #: construction, so exact, free and zero-false-positive — the first rung
         #: of the notability filter, ahead of any gazetteer.
         self.topical = topical
-        # Identity patterns run FIRST: a name is the span most likely to be
+        # Identity patterns run early: a name is the span most likely to be
         # partially consumed by a looser pattern (an address line can swallow a
         # surname), and masking it first makes that impossible.
+        #
+        # Early, not first. Email and URL precede it, because those two are the
+        # patterns whose own match text contains a name — see
+        # `_STRUCTURED_BEFORE_IDENTITY` for why that direction is the safe one.
         self._patterns: list[tuple[str, re.Pattern[str]]] = [
+            *_STRUCTURED_BEFORE_IDENTITY,
             *identity_patterns(self.identity),
             *_STRUCTURED,
         ]

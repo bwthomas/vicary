@@ -1,5 +1,48 @@
 # Changelog
 
+## Unreleased
+
+The Ruby gem published, and exercising the published artifact found an email that
+came apart instead of masking.
+
+### An email or URL carrying the writer's own name masks whole
+
+* **A school-issued address was shredded rather than masked.** Identity
+  interpolation is a literal-name substitution and it ran ahead of every
+  structured pattern, so `marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us`
+  came out as `{NAME_2}.{NAME_1}{USERNAME_1}.k12.oh.us` — four placeholders of
+  three wrong kinds, the domain tail `.k12.oh.us` left in the clear, and a span
+  the round trip could not restore. Not a leak of the name or the address, and
+  that is exactly why it survived: every presence-based check passes on it.
+  `first.last@district.org` is the ordinary shape of a school address, so this was
+  the common case, not the corner.
+* **EMAIL and URL now run before identity interpolation; everything else still
+  runs after.** The asymmetry is the argument. Both patterns are anchored on
+  structure a name cannot supply — EMAIL needs an `@` and a dotted TLD, URL needs
+  a scheme or a `www.` — so neither can reach into prose and take a bare surname
+  out of it, while ADDRESS (four capitalised words before a street suffix) plainly
+  can and therefore still follows identity.
+* **No existing frame's output moved.** Numbering is per kind, so `{EMAIL_1}` is
+  the first email whether emails are matched before or after names; the golden
+  regenerated with 53 insertions and one deletion, that deletion being the fixture
+  version. The old `structured-email` frame could not have caught this — its local
+  part is `m.delacroix2011`, abbreviated and digit-suffixed, so no token in it
+  equals the writer's name and the ordering never mattered.
+* **Two frames added, so the fixture is 54 and the masking-required bar is 38** —
+  the email and the URL, both pinned in Python, TypeScript and Ruby, plus unit
+  pins on both directions of the ordering. Fixture version `2026-08-11.2`.
+* **The reference had it too.** Found by running the *published* gem, then
+  reproduced against the Python arm before touching either port, so the fix landed
+  in the reference first and the ports followed its bytes rather than each other's.
+
+### The gem is published
+
+* **`vicary 0.2.0` is on RubyGems**, via trusted publishing with no API key in the
+  repository. The push probe ran first and ended in the authenticated 403 it is
+  designed to provoke, which is what established that the publisher's repository,
+  workflow filename, environment and audience claims all match before a real push
+  depended on them.
+
 ## 0.2.0 — 2026-08-11
 
 The build mechanism left the Python package, so the shared asset is shared rather

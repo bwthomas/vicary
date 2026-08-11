@@ -119,7 +119,7 @@ module Vicary
       # The primitives spec — the layer underneath the frames.
       #
       # `frames.json` scores finished output, which is the right final bar and a
-      # poor first one: a port with nothing implemented scores 0 of 36 and learns
+      # poor first one: a port with nothing implemented scores 0 of 38 and learns
       # nothing about which of the forty-odd primitives underneath is wrong.
       # `primitives.json` is that missing layer, generated from the Python
       # functions and byte-compared against a fresh export by

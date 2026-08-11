@@ -1,6 +1,6 @@
 """The fixture and the gates as language-neutral data — the spec three ports share.
 
-Why this module exists. The fixture is 52 frames of ground truth and the gates
+Why this module exists. The fixture is 54 frames of ground truth and the gates
 are nine bars, and both lived only as Python literals. A TypeScript or Ruby port
 that passed a fixture it *transcribed by hand* would prove nothing: the two
 suites could disagree about what the right answer is and both stay green. So the

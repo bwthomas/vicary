@@ -12,12 +12,12 @@ and it answers in single-digit milliseconds.
 | front door | package | status |
 |---|---|---|
 | Python | [`vicary`](https://pypi.org/project/vicary/) on PyPI | **published**, 9 of 9 gates PASS — see [`python/`](python/) |
-| TypeScript | `vicary` on npm | detector complete, **36 of 36**, 5 of 5 measurable gates PASS; unpublished — npm refuses the unscoped name as too similar to `vary`, and the appeal is open — see [`typescript/`](typescript/) |
-| Ruby | [`vicary`](https://rubygems.org/gems/vicary) on RubyGems | **published**, **36 of 36** — see [`ruby/`](ruby/) |
+| TypeScript | `vicary` on npm | detector complete, **38 of 38**, 5 of 5 measurable gates PASS; unpublished — npm refuses the unscoped name as too similar to `vary`, and the appeal is open — see [`typescript/`](typescript/) |
+| Ruby | [`vicary`](https://rubygems.org/gems/vicary) on RubyGems | **published**, **38 of 38** — see [`ruby/`](ruby/) |
 
 That fraction is the number of masking-required fixture frames the port reproduces
 byte-for-byte, printed by every `npm test` / `rake test` run and ratcheted by it.
-Both ports reach all 36 (and 52 of 52 overall) against the
+Both ports reach all 38 (and 54 of 54 overall) against the
 `local-gazetteer-lowercase` arm, numbering included — the detector is ported in
 each, not just the structured pass. All three load the identical gazetteer bytes:
 same sha256, same seven tier counts, checked against the manifest rather than
@@ -31,14 +31,14 @@ scoreboard prints `NOT MEASURED` beside each on every run rather than letting a
 green suite imply a clear gate set. Ruby does not measure the gates yet, and says
 so the same way.
 
-**36 of 36 is the bar to publish, not the bar to trust.** Measured on the Ruby
+**38 of 38 is the bar to publish, not the bar to trust.** Measured on the Ruby
 port the day it landed: of eleven deliberate mutations to its candidate
 generator, the frames caught one. So each port is checked at three depths — the
 frames, the shared `primitives.json` corpus underneath them, and a differential
 probe that runs both implementations over prose no fixture contains and diffs the
 bytes. The third exists because the first two are single-line corpora, and
 several rules only diverge across a newline. Both release workflows refuse to
-publish until the number reaches 36 of 36 regardless.
+publish until the number reaches 38 of 38 regardless.
 
 The full narrative — modes, the data asset, how it reads the writer's
 capitalisation, what was measured and what it deliberately does not do — is in

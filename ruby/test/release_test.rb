@@ -20,15 +20,15 @@ require_relative "../scripts/registry_serves"
 class ReleaseGateTest < Minitest::Test
   def board(matched:, requiring:)
     Vicary::Conformance::Scoreboard.new(
-      fixture_version: "test", reference_arm: "test", total: 52, matched: matched,
+      fixture_version: "test", reference_arm: "test", total: 54, matched: matched,
       requiring_masking: requiring, matched_requiring_masking: matched, outcomes: [],
     )
   end
 
   def test_an_incomplete_port_may_not_publish
-    decision = ReleaseGate.decide(board(matched: 0, requiring: 36))
+    decision = ReleaseGate.decide(board(matched: 0, requiring: 38))
     refute decision.publishable,
-           "a port matching 0 of 36 masking-required frames was cleared to publish. " \
+           "a port matching 0 of 38 masking-required frames was cleared to publish. " \
            "That is a gem called vicary that does not redact."
     assert_includes decision.reason, "REFUSING TO PUBLISH"
   end
@@ -36,16 +36,18 @@ class ReleaseGateTest < Minitest::Test
   def test_one_frame_short_may_not_publish
     # The interesting boundary. An off-by-one here reads as done on every log line
     # that prints a ratio and rounds it.
-    decision = ReleaseGate.decide(board(matched: 35, requiring: 36))
-    refute decision.publishable, "35 of 36 was cleared to publish"
+    decision = ReleaseGate.decide(board(matched: 37, requiring: 38))
+    refute decision.publishable, "37 of 38 was cleared to publish"
   end
 
   def test_a_complete_port_may_publish
-    # The branch that has never run in this repository. If the gate only ever
-    # refuses, it is indistinguishable from a gate that is stuck shut, and the
-    # first real release is where that gets discovered.
-    decision = ReleaseGate.decide(board(matched: 36, requiring: 36))
-    assert decision.publishable, "36 of 36 was refused: the gate is stuck shut"
+    # The branch this test existed to reach before any release had. If the gate
+    # only ever refuses, it is indistinguishable from a gate that is stuck shut,
+    # and the first real release is where that would have got discovered. 0.2.0
+    # has since taken it for real, which is confirmation and not a replacement:
+    # this runs on every commit and costs no version number.
+    decision = ReleaseGate.decide(board(matched: 38, requiring: 38))
+    assert decision.publishable, "38 of 38 was refused: the gate is stuck shut"
     assert_includes decision.reason, "byte-for-byte"
   end
 

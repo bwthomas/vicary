@@ -51,7 +51,7 @@ from vicary.local_classifier import StudentIdentity
 #: Bump on any change to the frames. Recorded on every eval row and used in the
 #: resume key, because a resumed record built from a different fixture is a
 #: foreign record, not a consenting one.
-FIXTURE_VERSION: str = "2026-08-11.1"
+FIXTURE_VERSION: str = "2026-08-11.2"
 
 VERDICT_REDACT: str = "redact"
 VERDICT_KEEP: str = "keep"
@@ -774,6 +774,38 @@ STRUCTURED_FRAMES: tuple[Frame, ...] = (
         sentence="I sent it to m.delacroix2011@westfieldhigh.k12.oh.us by mistake.",
         spans=(Span("EMAIL", "m.delacroix2011@westfieldhigh.k12.oh.us",
                     expect="{EMAIL}"),),
+    ),
+    # The two frames below exist because `structured-email` above cannot fail the
+    # way real addresses do. Its local part is abbreviated and digit-suffixed, so
+    # no token in it equals the writer's own name, and identity interpolation
+    # leaves it alone whatever order the passes run in. School-issued addresses
+    # are `first.last@district` and profile URLs end in a name slug, so both DO
+    # contain the writer's name — and with identity interpolation running first,
+    # both came apart into name placeholders with the domain tail surviving in
+    # the clear: `{NAME_2}.{NAME_1}{USERNAME_1}.k12.oh.us`. Not a leak of the name
+    # or the address, but the wrong number of placeholders of the wrong kinds, and
+    # a span the round trip cannot restore. Ordering is what fixes it, so ordering
+    # is what these pin.
+    Frame(
+        frame_id="structured-email-is-the-writers-own-name",
+        sentence="I sent it to marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us"
+                 " by mistake.",
+        spans=(Span("EMAIL",
+                    "marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us",
+                    expect="{EMAIL}"),),
+        note="The local part is the identity's exact first and last name, which is "
+             "what a school-issued address looks like. Masks whole or not at all.",
+    ),
+    Frame(
+        frame_id="structured-url-ends-in-the-writers-own-name",
+        sentence="My page is https://westfieldhigh.k12.oh.us/students/"
+                 "marguerite-delacroix-whitfield now.",
+        spans=(Span("URL",
+                    "https://westfieldhigh.k12.oh.us/students/"
+                    "marguerite-delacroix-whitfield",
+                    expect="{URL}"),),
+        note="Same defect through the other pattern whose match text carries a "
+             "name: the slug is the identity, the host is the school.",
     ),
     Frame(
         frame_id="structured-age",

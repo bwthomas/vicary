@@ -19,11 +19,12 @@ module Vicary
   #
   # **Order is the contract, not an optimisation.** The first pattern to claim a
   # span wins, and placeholder indices follow mint order, so reordering these
-  # tables changes the output bytes even when it changes no verdict. Identity
-  # runs first (an address line can otherwise swallow a surname); EMAIL before
-  # PHONE; SSN and CARD before the generic digit runs; ZIP and AGE last, because
-  # both are bare digits and would claim characters belonging to a phone, card or
-  # address.
+  # tables changes the output bytes even when it changes no verdict. EMAIL and URL
+  # run first, because a school-issued address and a profile URL *contain* the
+  # writer's name and both are anchored too tightly to take one out of prose;
+  # identity next (an address line can otherwise swallow a surname); SSN and CARD
+  # before the generic digit runs; ZIP and AGE last, because both are bare digits
+  # and would claim characters belonging to a phone, card or address.
   #
   # ## Regex dialect
   #
@@ -141,13 +142,34 @@ module Vicary
     # Date of birth, explicitly labelled.
     DOB = %r{\b(?:date\s+of\s+birth|d\.?o\.?b\.?|born\s+on)\s*:?\s*\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b}i
 
-    # (placeholder kind, pattern) in application order.
+    # The two structured patterns that run BEFORE identity interpolation, because
+    # their match text can legitimately *contain* the writer's own name:
+    # `first.last@district.org` and a profile URL ending in a name slug. Identity
+    # interpolation is a literal-name substitution, so running it first left these
+    # shredded rather than masked — `{NAME_2}.{NAME_1}{USERNAME_1}.k12.oh.us`
+    # instead of `{EMAIL_1}`, with the domain tail surviving in the clear and the
+    # span unrestorable on the round trip.
+    #
+    # Putting them first is safe in the direction that matters, and that asymmetry
+    # is the whole argument. Both are anchored on structure a name cannot supply —
+    # EMAIL needs an `@` and a dotted TLD, URL needs a scheme or a `www.` — so
+    # neither can reach into prose and take a bare surname out of it. Patterns
+    # that *could* still run after identity.
+    STRUCTURED_BEFORE_IDENTITY = [
+      ["EMAIL", EMAIL],
+      ["URL", URL_PATTERN],
+    ].freeze
+
+    # (placeholder kind, pattern) in application order, running AFTER identity
+    # interpolation.
     #
     # CARD is handled separately because it needs the Luhn gate; ZIP and AGE run
     # after it for the reason in the module docstring.
+    #
+    # Numbering is unaffected by which of these two tables a pattern sits in: the
+    # minter counts per kind, so `{EMAIL_1}` is the first email whether emails are
+    # matched before or after names.
     STRUCTURED = [
-      ["EMAIL", EMAIL],
-      ["URL", URL_PATTERN],
       ["US_SOCIAL_SECURITY_NUMBER", SSN],
       ["IP_ADDRESS", IP],
       ["PHONE", PHONE],
@@ -286,10 +308,15 @@ module Vicary
         masked = text
         n = 0
 
-        # Identity patterns run FIRST: a name is the span most likely to be
+        # Identity patterns run early: a name is the span most likely to be
         # partially consumed by a looser pattern (an address line can swallow a
         # surname), and masking it first makes that impossible.
-        (identity_patterns(identity) + STRUCTURED).each do |kind, pattern|
+        #
+        # Early, not first. Email and URL precede it, because those two are the
+        # patterns whose own match text contains a name — see
+        # STRUCTURED_BEFORE_IDENTITY for why that direction is the safe one.
+        patterns = STRUCTURED_BEFORE_IDENTITY + identity_patterns(identity) + STRUCTURED
+        patterns.each do |kind, pattern|
           masked, count = minter.substitute(kind, pattern, masked)
           n += count
         end

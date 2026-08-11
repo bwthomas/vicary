@@ -9,8 +9,8 @@
  * **The ratchet.** `MATCHED_REQUIRING_MASKING_RATCHET` is the number of
  * masking-required frames this port currently reproduces byte-for-byte. It is a
  * floor: raise it when you land detector work, and a regression that drops below
- * it fails the build. It is deliberately expressed over the 36 frames that
- * require masking rather than all 52, because 16 frames expect nothing to be
+ * it fails the build. It is deliberately expressed over the 38 frames that
+ * require masking rather than all 54, because 16 frames expect nothing to be
  * masked and a do-nothing implementation matches every one of them — a ratchet
  * over 52 would start at 16 and read as progress.
  *
@@ -41,7 +41,7 @@ import { redact, redactWithReport, restore } from "../src/redact.js";
  * same claim, and the two fail differently. That one names the frames that broke;
  * this one says how far the port fell, which is what a bisect reads.
  */
-const MATCHED_REQUIRING_MASKING_RATCHET = 36;
+const MATCHED_REQUIRING_MASKING_RATCHET = 38;
 
 const spec = loadSpec();
 const gates = loadGates();
@@ -61,9 +61,9 @@ const gateReport = measureGates(
 console.log(report(board, gates, reportGates(gateReport)));
 
 test("the spec loads with every frame and its golden output", () => {
-  assert.equal(spec.frames.length, 52);
-  assert.equal(spec.golden.size, 52);
-  assert.equal(spec.fixtureVersion, "2026-08-11.1");
+  assert.equal(spec.frames.length, 54);
+  assert.equal(spec.golden.size, 54);
+  assert.equal(spec.fixtureVersion, "2026-08-11.2");
   assert.equal(spec.referenceArm, "local-gazetteer-lowercase");
 });
 
@@ -93,12 +93,12 @@ test("the nine gates load, with four declaring data no package ships", () => {
 
 test("both implementations agree on which frames require masking", () => {
   // Derived from the golden output rather than asserted as a constant, so this
-  // tracks the spec instead of a number somebody typed. 36 of 52 today; if the
+  // tracks the spec instead of a number somebody typed. 38 of 54 today; if the
   // fixture grows, the ratchet's denominator moves with it and the failure
   // message says so.
   assert.equal(
     board.requiringMasking + (board.total - board.requiringMasking),
-    52,
+    54,
   );
   assert.ok(
     board.requiringMasking > 0,

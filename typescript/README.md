@@ -10,7 +10,7 @@ conformance suite in [`conformance/`](../conformance): for every fixture frame i
 must produce **byte-identical output to the Python implementation, placeholder
 numbering included**.
 
-`npm run conformance` reports **36 of 36 masking-required frames** and 52 of 52
+`npm run conformance` reports **38 of 38 masking-required frames** and 54 of 54
 overall, against the `local-gazetteer-lowercase` arm. Run it rather than trusting
 this paragraph — the scoreboard prints on every test run, and this line is a
 copy of a number that moves.

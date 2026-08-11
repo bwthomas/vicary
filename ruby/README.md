@@ -10,7 +10,7 @@ conformance suite in [`conformance/`](../conformance): for every fixture frame i
 must produce **byte-identical output to the Python implementation, placeholder
 numbering included**.
 
-It clears that bar — 36 of 36 masking-required frames, 52 of 52 overall.
+It clears that bar — 38 of 38 masking-required frames, 54 of 54 overall.
 
 ```ruby
 require "vicary"

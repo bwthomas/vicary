@@ -303,7 +303,7 @@ test("a hyphenated surname survives escaping", () => {
 // verdict, so the order is pinned here
 // ---------------------------------------------------------------------------
 
-test("identity runs before the structured patterns", () => {
+test("identity runs before the loose structured patterns", () => {
   // An address line can otherwise swallow a surname, and a name half-eaten by
   // another pattern leaks the remainder.
   const result = redactWithReport(
@@ -312,6 +312,35 @@ test("identity runs before the structured patterns", () => {
   );
   const tokens = [...result.restoreMap.keys()];
   assert.deepEqual(tokens, ["{NAME_1}", "{ADDRESS_1}"]);
+});
+
+test("email and URL are claimed before identity, not after", () => {
+  // The other side of the ordering, and the direction that was wrong: a
+  // school-issued address IS the writer's name, so identity interpolation
+  // running first shredded it into
+  // `{NAME_2}.{NAME_1}{USERNAME_1}.k12.oh.us` — the wrong number of
+  // placeholders, of the wrong kinds, with the domain tail left in the clear and
+  // the span unrestorable. Both patterns are anchored on structure a name cannot
+  // supply, so claiming them first cannot cost a surname in prose.
+  const email = redactWithReport(
+    "I sent it to marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us by mistake.",
+    IDENTITY,
+  );
+  assert.equal(email.text, "I sent it to {EMAIL_1} by mistake.");
+  assert.deepEqual([...email.restoreMap.keys()], ["{EMAIL_1}"]);
+
+  const url = redactWithReport(
+    "My page is https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield now.",
+    IDENTITY,
+  );
+  assert.equal(url.text, "My page is {URL_1} now.");
+  assert.deepEqual([...url.restoreMap.keys()], ["{URL_1}"]);
+
+  // And the round trip the shredded form could not survive.
+  assert.equal(
+    restore(email.text, email.restoreMap),
+    "I sent it to marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us by mistake.",
+  );
 });
 
 test("a phone is claimed before the bare-digit patterns", () => {

@@ -1,6 +1,6 @@
 {
   "document_version": 1,
-  "fixture_version": "2026-08-11.1",
+  "fixture_version": "2026-08-11.2",
   "frames": [
     {
       "frame_id": "kinship-possessive",
@@ -700,6 +700,32 @@
       ]
     },
     {
+      "frame_id": "structured-email-is-the-writers-own-name",
+      "group": "structured",
+      "note": "The local part is the identity's exact first and last name, which is what a school-issued address looks like. Masks whole or not at all.",
+      "sentence": "I sent it to marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us by mistake.",
+      "spans": [
+        {
+          "entity": "EMAIL",
+          "expect": "{EMAIL}",
+          "literal": "marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us"
+        }
+      ]
+    },
+    {
+      "frame_id": "structured-url-ends-in-the-writers-own-name",
+      "group": "structured",
+      "note": "Same defect through the other pattern whose match text carries a name: the slug is the identity, the host is the school.",
+      "sentence": "My page is https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield now.",
+      "spans": [
+        {
+          "entity": "URL",
+          "expect": "{URL}",
+          "literal": "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield"
+        }
+      ]
+    },
+    {
       "frame_id": "structured-age",
       "group": "structured",
       "sentence": "I am 14 years old and this is the first thing I finished.",
@@ -1280,6 +1306,19 @@
         "{EMAIL_1}"
       ]
     },
+    "structured-email-is-the-writers-own-name": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{EMAIL_1}",
+          "marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "masked": "I sent it to {EMAIL_1} by mistake.",
+      "placeholders": [
+        "{EMAIL_1}"
+      ]
+    },
     "structured-phone": {
       "aligns": true,
       "mapping": [
@@ -1315,6 +1354,19 @@
         ]
       ],
       "masked": "It is posted at {URL_1} now.",
+      "placeholders": [
+        "{URL_1}"
+      ]
+    },
+    "structured-url-ends-in-the-writers-own-name": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{URL_1}",
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield"
+        ]
+      ],
+      "masked": "My page is {URL_1} now.",
       "placeholders": [
         "{URL_1}"
       ]

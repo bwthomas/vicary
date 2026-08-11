@@ -169,6 +169,55 @@ def test_the_roster_order_is_masked(student: StudentIdentity) -> None:
     )
 
 
+def test_an_email_that_is_the_writers_own_name_masks_whole(
+    student: StudentIdentity,
+) -> None:
+    """A school-issued address IS the writer's name, so ordering decides this.
+
+    Identity interpolation is a literal-name substitution. Running it ahead of
+    the email pattern shredded the address into
+    ``{NAME_2}.{NAME_1}{USERNAME_1}.k12.oh.us`` — the wrong number of
+    placeholders, of the wrong kinds, with the domain tail surviving in the clear
+    and the span unrestorable on the round trip. EMAIL and URL therefore run
+    before identity; both are anchored on structure a name cannot supply, so
+    neither can take a bare surname out of prose.
+    """
+    assert _mask_numbered(
+        "I sent it to marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us"
+        " by mistake.",
+        student,
+    ) == "I sent it to {EMAIL_1} by mistake."
+
+
+def test_a_url_ending_in_the_writers_own_name_masks_whole(
+    student: StudentIdentity,
+) -> None:
+    """The same defect through the other name-bearing pattern."""
+    assert _mask_numbered(
+        "My page is https://westfieldhigh.k12.oh.us/students/"
+        "marguerite-delacroix-whitfield now.",
+        student,
+    ) == "My page is {URL_1} now."
+
+
+def test_identity_still_precedes_the_loose_patterns(
+    student: StudentIdentity,
+) -> None:
+    """The ordering that moving email and URL forward must not have cost.
+
+    ADDRESS matches up to four capitalised words before a street suffix, so it
+    would swallow a surname sitting in front of one. Identity runs ahead of it,
+    and still does.
+
+    The sentence's full stop is inside the address span, not after it — the
+    pattern ends `{_STREET_SUFFIX}\\b\\.?` so that "St." keeps its abbreviating
+    period, and restore puts the character back either way.
+    """
+    assert _mask_numbered("Marguerite lives at 1428 Elm Street.", student) == (
+        "{NAME_1} lives at {ADDRESS_1}"
+    )
+
+
 def test_a_possessive_name_is_masked_with_the_name(student: StudentIdentity) -> None:
     """'Marguerite's essay' — how a name actually appears in student prose."""
     out = _mask("This is Marguerite's essay.", student)

@@ -2,7 +2,7 @@
 
 # The gate that decides whether this gem may be published.
 #
-# A port that publishes while it reproduces 0 of 36 masking-required frames is a
+# A port that publishes while it reproduces 0 of 38 masking-required frames is a
 # gem called `vicary` that does not redact — worse than no gem, because a host
 # that installs it gets silence instead of an error. So the release workflow
 # refuses to push unless every masking-required frame matches the reference
@@ -19,7 +19,7 @@
 #
 # Here it reads the scoreboard object the harness already returns, so there is no
 # text to misparse, and `test/release_test.rb` exercises the decision in both
-# directions — refuse at 0 of 36, allow at 36 of 36 — without a network, a
+# directions — refuse at 0 of 38, allow at 38 of 38 — without a network, a
 # credential, or a tag.
 #
 # Usage:

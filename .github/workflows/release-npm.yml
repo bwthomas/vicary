@@ -9,13 +9,13 @@
 #
 # THE GATE THAT MATTERS IS CONFORMANCE, NOT THE TESTS.
 #
-# A port that publishes while it reproduces 0 of 36 masking-required frames is a
+# A port that publishes while it reproduces 0 of 38 masking-required frames is a
 # package called `vicary` that does not redact — worse than no package, because a
 # host that installs it gets silence instead of an error. So this workflow refuses
 # to publish unless the conformance scoreboard reports every masking-required frame
 # matching the reference output byte-for-byte. It reads the number off the
 # scoreboard rather than trusting an exit code, and it stays exactly as strict now
-# that the number is 36 of 36: the gate is what keeps a regression from shipping,
+# that the number is 38 of 38: the gate is what keeps a regression from shipping,
 # not what was keeping an unfinished port from shipping.
 name: release-npm
 
@@ -23,7 +23,7 @@ name: release-npm
 # manual-dispatch only while the detector was unported: the conformance gate below
 # would have refused on every `v*` tag, which is a permanent red check on every
 # Python release, and "is the release green?" stops having an answer. The port now
-# reproduces 36 of 36 masking-required frames, so the gate passes on its own merits
+# reproduces 38 of 38 masking-required frames, so the gate passes on its own merits
 # rather than being routed around. The gate itself never moved.
 on:
   push:
