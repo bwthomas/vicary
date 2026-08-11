@@ -1,7 +1,8 @@
 # vicary (TypeScript)
 
-The npm front door. **Not published yet** — the conformance bar is met; the
-release still is not cut.
+The npm front door. **Not published yet** — the conformance bar is met, but npm
+refuses the unscoped name `vicary` as too similar to the existing `vary`. An
+appeal is open; the fallback is the scoped `@bwthomas/vicary`.
 
 The detector, the data asset and the measured numbers are described in the
 [project README](https://github.com/bwthomas/vicary#readme). What lives here is a
@@ -38,7 +39,7 @@ port measures the five that need no operator-supplied data, and all five hold:
 |---|---|---|
 | held-out recall | >= 100 % | **100 %** (16/16 spans) |
 | KEEP precision | >= 100 % | **100 %** (21/21 spans) |
-| round-trip | >= 100 % | **100 %** (52/52 frames) |
+| round-trip | >= 100 % | **100 %** (54/54 frames) |
 | unaccounted violations | == 0 | **0** |
 | asset entries | >= 1 | **360,793** |
 

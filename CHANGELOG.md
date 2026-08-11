@@ -35,6 +35,21 @@ came apart instead of masking.
   reproduced against the Python arm before touching either port, so the fix landed
   in the reference first and the ports followed its bytes rather than each other's.
 
+### One narrative, at the root
+
+* **The full narrative moved from `python/README.md` up to the repository
+  README**, which is what that file said would happen when the second front door
+  shipped. All three package READMEs are now the same shape — install, call,
+  check, and a link up — so there is one description of the detector instead of
+  three that drift. PyPI renders the shorter Python front door as a result.
+* **Two documented numbers were wrong and are now reconciled against
+  `conformance/gates.json` rather than carried forward.** The measurement table
+  cited fixture `2026-08-06.3` and an over-firing bar of ≤ 0.72 spans/essay; the
+  bar has been 0.6 since the SSA births change, which the 0.2.0 notes describe
+  and the table had not caught up with. The five corpus-free gates and the four
+  needing operator data are now separate tables, because a single table listing
+  both invites reading CI as having measured all nine.
+
 ### The gem is published
 
 * **`vicary 0.2.0` is on RubyGems**, via trusted publishing with no API key in the

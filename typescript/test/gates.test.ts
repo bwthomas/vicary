@@ -3,7 +3,7 @@
  *
  * Five of the nine need no operator-supplied data. Their values are checked
  * against the Python gate report rather than against a hand-written
- * expectation — held-out recall 16/16, KEEP precision 21/21, round-trip 52/52,
+ * expectation — held-out recall 16/16, KEEP precision 21/21, round-trip 54/54,
  * unaccounted violations 0, asset entries 360,793. A port that agrees only with
  * itself proves nothing about the claim the repository makes.
  *

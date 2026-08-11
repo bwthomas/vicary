@@ -1,7 +1,7 @@
 # vicary (Ruby)
 
-The RubyGems front door. **Not published yet** — the gem name is claimed by a
-pending trusted publisher and the first release has not run.
+The RubyGems front door. **Published** — [`vicary` on RubyGems](https://rubygems.org/gems/vicary),
+via trusted publishing, so no API key lives in this repository.
 
 The detector, the data asset and the measured numbers are described in the
 [project README](https://github.com/bwthomas/vicary#readme). What lives here is a
@@ -31,7 +31,7 @@ Three layers, because each catches what the one above it cannot.
 
 | command | what it says |
 |---|---|
-| `rake conformance` | the scoreboard against the 52 frames — the final bar, and a coarse first one |
+| `rake conformance` | the scoreboard against the 54 frames — the final bar, and a coarse first one |
 | `rake test` | the unit suites, including `primitives_test.rb`: forty-odd primitives over the shared corpus, which says *which brick* is crooked |
 | `rake parity` | gazetteer verdicts, name by name, against the Python reference |
 | `rake redaction_parity` | masked bytes against the Python reference, on prose no fixture contains |

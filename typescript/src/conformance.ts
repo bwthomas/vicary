@@ -6,7 +6,7 @@
  * `conformance/README.md` for the bar; the short version is that every frame's
  * masked output must be byte-identical **including placeholder numbering**.
  *
- * **Why the scoreboard reports two denominators.** 16 of the 52 frames expect
+ * **Why the scoreboard reports two denominators.** 16 of the 54 frames expect
  * nothing to be masked — they exist to catch over-redaction. An implementation
  * that returns its input unchanged therefore scores 16 of 52 and looks a third of
  * the way done while detecting nothing at all. So the number that leads is

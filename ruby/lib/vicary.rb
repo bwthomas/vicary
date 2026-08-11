@@ -17,7 +17,7 @@
 #
 # Three layers check that claim, and each catches what the one above it cannot:
 #
-# * `rake conformance` scores the 52 frames — the final bar, and a coarse first
+# * `rake conformance` scores the 54 frames — the final bar, and a coarse first
 #   one;
 # * `rake test` runs `test/primitives_test.rb`, forty-odd primitives over the
 #   shared `primitives.json` corpus, which says *which brick is crooked*;
