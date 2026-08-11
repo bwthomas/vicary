@@ -31,8 +31,14 @@ import {
 } from "../src/conformance.js";
 import { redact } from "../src/redact.js";
 
-/** Raise this when detector work lands. Never lower it to make a build pass. */
-const MATCHED_REQUIRING_MASKING_RATCHET = 0;
+/**
+ * Raise this when detector work lands. Never lower it to make a build pass.
+ *
+ * 8 — the structured entities and the interpolated identity. The remaining 27
+ * all need candidate generation: a third-party name, a hometown to type
+ * {LOCATION}, or an organisation.
+ */
+const MATCHED_REQUIRING_MASKING_RATCHET = 8;
 
 const spec = loadSpec();
 const gates = loadGates();
