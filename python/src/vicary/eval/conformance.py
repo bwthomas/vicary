@@ -269,6 +269,28 @@ PRIMITIVE_CORPUS: dict[str, str] = {
     # otherwise reject the seed before the routes could collide. `possessive`
     # above has the first half and not the second.
     "possessive_lowercase_habit": "i saw Marisol's older brother. i waved back.",
+    # The four below close the masking gates, on the same argument as the six
+    # above: each removes a rule that no corpus text separated from its absence.
+    #
+    # A public landmark, which is the precedence table's only KEEP that reaches
+    # the corpus. Without it the table's verdict can be ignored entirely and
+    # nothing says so.
+    "landmark": "We drove all the way to see the Lincoln Memorial.",
+    # A relation attached to a name whose tier is NOT overridable. The refusal
+    # must not fire here — a bare iconic surname has its own document-level rule
+    # with its own guard, which is why the tier list excludes it.
+    "iconic_relation": "My neighbor Robinson taught me how to throw a curveball.",
+    # A full name the oracle keeps, and the bare surname it establishes later in
+    # the same document. The shape literary analysis actually writes.
+    "corroborated_surname": (
+        "Richard Wright wrote that book. Wright knew exactly what he meant."
+    ),
+    # ...and the sentence-level exception to it: a neighbour who happens to share
+    # the surname is not protected by the author's fame.
+    "corroborated_surname_refused": (
+        "Richard Wright wrote that book. Wright, who lives two doors down from "
+        "us, taught me to throw."
+    ),
     # A work title with a first-person relation attached in front of it, which
     # withdraws the title protection. Without this the refusal could be deleted
     # and every case still passed.
@@ -560,12 +582,25 @@ PRIMITIVE_GIVEN_NAMES: tuple[str, ...] = (
 #: to prevent and which no boolean case above can show.
 #:
 #: * ``tier(name)`` -> ``"full_name"`` if ``name.lower()`` is in ``full_names``,
-#:   ``"place"`` if it is in ``settlements``, otherwise ``"not_notable"``
+#:   ``"iconic_short"`` if it is in ``iconic_surnames``, ``"place"`` if it is in
+#:   ``settlements``, otherwise ``"not_notable"`` — checked in that order
 #: * ``is_notable(name)`` -> ``tier(name) != "not_notable"``
 PRIMITIVE_FULL_NAMES: tuple[str, ...] = (
     "j. r. r. tolkien", "narciso rodriguez", "richard wright", "t.s. eliot",
     "vincent van gogh",
 )
+
+#: The `iconic_short` tier: a bare surname famous enough to stand alone. Carried
+#: because it is the tier a first-person relation may NOT override — it has its
+#: own document-level rule and its own guard — so it is what separates the
+#: overridable-tier check from a port that refuses every keep it can reach.
+PRIMITIVE_ICONIC_SURNAMES: tuple[str, ...] = ("robinson",)
+
+#: The ``keep`` set, as a stand-in for the assignment prompt's own names. Both
+#: entries appear in the corpus in their bare form AND with a possessive tail, so
+#: the arm that folds "Narciso's" into the keep is separated from one that matches
+#: the citation form only — which was a live over-fire, not a hypothetical.
+PRIMITIVE_KEEPS: tuple[str, ...] = ("Marisol", "Narciso")
 
 #: Names for the surname-folding functions, which take a name rather than a text
 #: or a token list. Each entry is here for a shape rather than for coverage: the
@@ -599,6 +634,8 @@ def _primitive_given(token: str) -> bool:
 def _primitive_tier(name: str) -> str:
     if name.lower() in PRIMITIVE_FULL_NAMES:
         return "full_name"
+    if name.lower() in PRIMITIVE_ICONIC_SURNAMES:
+        return "iconic_short"
     if name.lower() in PRIMITIVE_SETTLEMENTS:
         return "place"
     return "not_notable"
@@ -639,6 +676,17 @@ def build_primitives_document() -> dict[str, Any]:
             for c in nc.find_candidates(text, **kwargs)
         ]
 
+    def masked(numbered: bool = True, **kwargs: Any) -> Any:
+        # A fresh minter per text, because numbering is per-document: one minter
+        # shared across the corpus would make every case depend on the iteration
+        # order of the case before it.
+        def run(text: str) -> list[Any]:
+            minter = nc.PlaceholderMinter() if numbered else None
+            out, n = nc.mask_candidates(text, minter=minter, **kwargs)
+            return [out, n]
+
+        return run
+
     def over_spans(fn: Any) -> dict[str, Any]:
         return {
             name: fn(text, text.index(needle), text.index(needle) + len(needle))
@@ -654,11 +702,13 @@ def build_primitives_document() -> dict[str, Any]:
         "token_lists": lists,
         "stop_tokens": list(PRIMITIVE_STOP_TOKENS),
         "name_forms": list(PRIMITIVE_NAME_FORMS),
+        "keeps": list(PRIMITIVE_KEEPS),
         "oracles": {
             "settlements": list(PRIMITIVE_SETTLEMENTS),
             "titles": list(PRIMITIVE_TITLES),
             "given_names": list(PRIMITIVE_GIVEN_NAMES),
             "full_names": list(PRIMITIVE_FULL_NAMES),
+            "iconic_surnames": list(PRIMITIVE_ICONIC_SURNAMES),
         },
         # The classification policy itself, as data. Emitted because it is the
         # one part of the detector a port can get wrong while passing every
@@ -881,6 +931,57 @@ def build_primitives_document() -> dict[str, Any]:
                         _primitive_notable,
                         tier=_primitive_tier,
                     )
+                )
+            ),
+            # Masking, as `[masked_text, spans_masked]`. The end of the detector,
+            # and the only section where the placeholder NUMBERS are visible —
+            # which is the property ports diverge on first, because indices follow
+            # discovery order and discovery order is an iteration detail.
+            #
+            # Four arms, and each isolates one gate that the others cannot see:
+            # the full wiring; the same without a minter, which pins the
+            # unnumbered arm the numbered one is supposed to reproduce; a `keep`
+            # set, which is the only arm where the possessive fold into the keep
+            # is reachable; and no notability oracle, which is the recall-maximal
+            # posture a caller gets by supplying nothing.
+            "mask_candidates": over_corpus(
+                masked(
+                    notable=_primitive_notable,
+                    notability_tier=_primitive_tier,
+                    given_name=_primitive_given,
+                    title=_primitive_title,
+                    title_prefix=_primitive_title_prefix,
+                    settlement=_primitive_settlement,
+                )
+            ),
+            "mask_candidates_unnumbered": over_corpus(
+                masked(
+                    numbered=False,
+                    notable=_primitive_notable,
+                    notability_tier=_primitive_tier,
+                    given_name=_primitive_given,
+                    title=_primitive_title,
+                    title_prefix=_primitive_title_prefix,
+                    settlement=_primitive_settlement,
+                )
+            ),
+            "mask_candidates_with_keeps": over_corpus(
+                masked(
+                    keep=frozenset(PRIMITIVE_KEEPS),
+                    notable=_primitive_notable,
+                    notability_tier=_primitive_tier,
+                    given_name=_primitive_given,
+                    title=_primitive_title,
+                    title_prefix=_primitive_title_prefix,
+                    settlement=_primitive_settlement,
+                )
+            ),
+            "mask_candidates_without_notability": over_corpus(
+                masked(
+                    given_name=_primitive_given,
+                    title=_primitive_title,
+                    title_prefix=_primitive_title_prefix,
+                    settlement=_primitive_settlement,
                 )
             ),
             # The outbound counterpart, which includes the first name that

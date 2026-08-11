@@ -23,6 +23,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { loadPrimitives } from "../src/conformance.js";
+import { PlaceholderMinter } from "../src/minter.js";
 import {
   ALLCAPS_RUN,
   ANY_TOKEN,
@@ -57,6 +58,7 @@ import {
   establishedNameTokens,
   findCandidates,
   findTitleSpans,
+  maskCandidates,
   headingSpans,
   isStop,
   midSentenceCapitals,
@@ -92,6 +94,7 @@ const isTitlePrefix = (key: string) =>
   titles.some((title) => title === key || title.startsWith(`${key} `));
 const givenNames = new Set(spec.oracles.givenNames);
 const fullNames = new Set(spec.oracles.fullNames);
+const iconicSurnames = new Set(spec.oracles.iconicSurnames);
 const isGiven = (token: string) => givenNames.has(token.toLowerCase());
 /** The tier oracle's three answers, spelled exactly as the generator states them.
  * `place` is here rather than folded into "not full_name" because it is the tier
@@ -100,9 +103,11 @@ const isGiven = (token: string) => givenNames.has(token.toLowerCase());
 const tierOf = (name: string) =>
   fullNames.has(name.toLowerCase())
     ? "full_name"
-    : settlements.has(name.toLowerCase())
-      ? "place"
-      : "not_notable";
+    : iconicSurnames.has(name.toLowerCase())
+      ? "iconic_short"
+      : settlements.has(name.toLowerCase())
+        ? "place"
+        : "not_notable";
 const isNotable = (name: string) => tierOf(name) !== "not_notable";
 
 /** The oracle set the spec's `find_candidates` section is generated with. */
@@ -116,6 +121,14 @@ const wired = {
 /** `[start, end, text, kind]` per candidate — the shape the generator emits. */
 const asRows = (candidates: readonly Candidate[]) =>
   candidates.map((c) => [c.start, c.end, c.text, c.kind]);
+
+/** The full masking wiring the spec's `mask_candidates` arm is generated with. */
+const masking = { ...wired, notable: isNotable, notabilityTier: tierOf };
+const keeps = new Set(spec.keeps);
+/** `[masked_text, spans_masked]`, with a FRESH minter per text — numbering is
+ * per-document, and one minter across the corpus would make every case depend on
+ * the case before it. */
+const asMasked = (r: { text: string; count: number }) => [r.text, r.count];
 
 /** `[start, end, matched]` per match — the shape the generator emits. */
 function matches(pattern: RegExp, text: string): [number, number, string][] {
@@ -324,6 +337,23 @@ section("established_name_tokens", corpus, (text: string) =>
   [...establishedNameTokens(text, isNotable, new Set(), tierOf)].sort(),
 );
 
+section("mask_candidates", corpus, (text: string) =>
+  asMasked(maskCandidates(text, { ...masking, minter: new PlaceholderMinter() })),
+);
+section("mask_candidates_unnumbered", corpus, (text: string) =>
+  asMasked(maskCandidates(text, masking)),
+);
+section("mask_candidates_with_keeps", corpus, (text: string) =>
+  asMasked(
+    maskCandidates(text, {
+      ...masking, keep: keeps, minter: new PlaceholderMinter(),
+    }),
+  ),
+);
+section("mask_candidates_without_notability", corpus, (text: string) =>
+  asMasked(maskCandidates(text, { ...wired, minter: new PlaceholderMinter() })),
+);
+
 test("the spec's corroborating tier is this build's", () => {
   // The policy string, checked separately for the reason `constants` is: a port
   // that compared against "person" or "notable" corroborates nothing, and every
@@ -352,6 +382,8 @@ test("every section the spec carries is checked by this file", () => {
     "find_candidates", "find_candidates_without_oracles",
     "find_candidates_permissive_given",
     "corroborated_surnames", "established_name_tokens",
+    "mask_candidates", "mask_candidates_unnumbered",
+    "mask_candidates_with_keeps", "mask_candidates_without_notability",
   ]);
   assert.deepEqual(
     Object.keys(spec.cases).filter((name) => !checked.has(name)),

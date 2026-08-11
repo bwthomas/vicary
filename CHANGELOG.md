@@ -79,6 +79,25 @@ frame's masked output moved for any of the three.
   and `withoutClitic` strips the first clitic that matches. Swapping `"Mr"` and
   `"Mrs"` fails this assertion and nothing else, which is how that was confirmed.
 
+### Masking ports, and four more rules that nothing was checking
+
+* **`maskCandidates` is in TypeScript** — the four keep gates in order, the
+  right-to-left rewrite, and the minter. **The ratchet does not move: it is still
+  8 of 36.** Nothing calls it yet; `redact.ts` still raises. Wiring the identity
+  pass, the structured pass and the gazetteer-backed notability oracle is what
+  turns this into a score, and that is the next step, not this one.
+* **Four masking arms ship as spec data** — full wiring, unnumbered, with a
+  `keep` set, and without a notability oracle. This is the only place placeholder
+  *numbers* appear in the spec, and numbering is what ports diverge on first
+  because indices follow discovery order. `possessive` pins it end to end: three
+  spans, minted right to left, so the leftmost is `{NAME_3}`.
+* **Four more rules had nothing separating them from their absence**, found the
+  same way: the precedence table's keep verdict (no corpus text contained a
+  landmark), the overridable-tier check on the relation refusal, the
+  corroboration keep, and the sentence-level refusal of it. Four corpus entries
+  and an `iconic_short` tier in the stub oracle close them. Controls now catch
+  **24 of 24**.
+
 ### Candidate generation ports, and six rules that nothing was checking
 
 * **`findCandidates` and the surname machinery are in TypeScript** — both routes

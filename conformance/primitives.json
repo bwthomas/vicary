@@ -314,6 +314,150 @@
           "baaed"
         ]
       ],
+      "corroborated_surname": [
+        [
+          0,
+          7,
+          "Richard"
+        ],
+        [
+          8,
+          14,
+          "Wright"
+        ],
+        [
+          15,
+          20,
+          "wrote"
+        ],
+        [
+          21,
+          25,
+          "that"
+        ],
+        [
+          26,
+          30,
+          "book"
+        ],
+        [
+          32,
+          38,
+          "Wright"
+        ],
+        [
+          39,
+          43,
+          "knew"
+        ],
+        [
+          44,
+          51,
+          "exactly"
+        ],
+        [
+          52,
+          56,
+          "what"
+        ],
+        [
+          57,
+          59,
+          "he"
+        ],
+        [
+          60,
+          65,
+          "meant"
+        ]
+      ],
+      "corroborated_surname_refused": [
+        [
+          0,
+          7,
+          "Richard"
+        ],
+        [
+          8,
+          14,
+          "Wright"
+        ],
+        [
+          15,
+          20,
+          "wrote"
+        ],
+        [
+          21,
+          25,
+          "that"
+        ],
+        [
+          26,
+          30,
+          "book"
+        ],
+        [
+          32,
+          38,
+          "Wright"
+        ],
+        [
+          40,
+          43,
+          "who"
+        ],
+        [
+          44,
+          49,
+          "lives"
+        ],
+        [
+          50,
+          53,
+          "two"
+        ],
+        [
+          54,
+          59,
+          "doors"
+        ],
+        [
+          60,
+          64,
+          "down"
+        ],
+        [
+          65,
+          69,
+          "from"
+        ],
+        [
+          70,
+          72,
+          "us"
+        ],
+        [
+          74,
+          80,
+          "taught"
+        ],
+        [
+          81,
+          83,
+          "me"
+        ],
+        [
+          84,
+          86,
+          "to"
+        ],
+        [
+          87,
+          92,
+          "throw"
+        ]
+      ],
       "determiner_seed": [
         [
           0,
@@ -600,6 +744,58 @@
           "back"
         ]
       ],
+      "iconic_relation": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          11,
+          "neighbor"
+        ],
+        [
+          12,
+          20,
+          "Robinson"
+        ],
+        [
+          21,
+          27,
+          "taught"
+        ],
+        [
+          28,
+          30,
+          "me"
+        ],
+        [
+          31,
+          34,
+          "how"
+        ],
+        [
+          35,
+          37,
+          "to"
+        ],
+        [
+          38,
+          43,
+          "throw"
+        ],
+        [
+          44,
+          45,
+          "a"
+        ],
+        [
+          46,
+          55,
+          "curveball"
+        ]
+      ],
       "inconsistent": [
         [
           0,
@@ -762,6 +958,58 @@
           43,
           48,
           "Eliot"
+        ]
+      ],
+      "landmark": [
+        [
+          0,
+          2,
+          "We"
+        ],
+        [
+          3,
+          8,
+          "drove"
+        ],
+        [
+          9,
+          12,
+          "all"
+        ],
+        [
+          13,
+          16,
+          "the"
+        ],
+        [
+          17,
+          20,
+          "way"
+        ],
+        [
+          21,
+          23,
+          "to"
+        ],
+        [
+          24,
+          27,
+          "see"
+        ],
+        [
+          28,
+          31,
+          "the"
+        ],
+        [
+          32,
+          39,
+          "Lincoln"
+        ],
+        [
+          40,
+          48,
+          "Memorial"
         ]
       ],
       "lowercase_particle_tail": [
@@ -1992,6 +2240,30 @@
           "The"
         ]
       ],
+      "corroborated_surname": [
+        [
+          0,
+          14,
+          "Richard Wright"
+        ],
+        [
+          32,
+          38,
+          "Wright"
+        ]
+      ],
+      "corroborated_surname_refused": [
+        [
+          0,
+          14,
+          "Richard Wright"
+        ],
+        [
+          32,
+          38,
+          "Wright"
+        ]
+      ],
       "determiner_seed": [],
       "empty": [],
       "headings": [
@@ -2047,6 +2319,18 @@
           "Marguerite Delacroix"
         ]
       ],
+      "iconic_relation": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          12,
+          20,
+          "Robinson"
+        ]
+      ],
       "inconsistent": [
         [
           0,
@@ -2084,6 +2368,18 @@
           38,
           48,
           "T.S. Eliot"
+        ]
+      ],
+      "landmark": [
+        [
+          0,
+          2,
+          "We"
+        ],
+        [
+          32,
+          48,
+          "Lincoln Memorial"
         ]
       ],
       "lowercase_particle_tail": [],
@@ -2403,14 +2699,18 @@
       "allcaps": "silent",
       "bare_i": "inconsistent",
       "below_floor": "lowercase",
+      "corroborated_surname": "silent",
+      "corroborated_surname_refused": "silent",
       "determiner_seed": "lowercase",
       "empty": "silent",
       "headings": "consistent",
       "honorific": "silent",
       "hyphen": "silent",
       "hyphen_lowercase_tail": "lowercase",
+      "iconic_relation": "silent",
       "inconsistent": "inconsistent",
       "initials": "silent",
+      "landmark": "consistent",
       "lowercase_particle_tail": "lowercase",
       "lowercase_writer": "lowercase",
       "one_mark": "silent",
@@ -2439,14 +2739,18 @@
       "allcaps": "silent",
       "bare_i": "inconsistent",
       "below_floor": "lowercase",
+      "corroborated_surname": "silent",
+      "corroborated_surname_refused": "silent",
       "determiner_seed": "lowercase",
       "empty": "silent",
       "headings": "silent",
       "honorific": "silent",
       "hyphen": "silent",
       "hyphen_lowercase_tail": "lowercase",
+      "iconic_relation": "silent",
       "inconsistent": "inconsistent",
       "initials": "silent",
+      "landmark": "consistent",
       "lowercase_particle_tail": "lowercase",
       "lowercase_writer": "lowercase",
       "one_mark": "silent",
@@ -2614,17 +2918,25 @@
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "corroborated_surname": [
+        "wright"
+      ],
+      "corroborated_surname_refused": [
+        "wright"
+      ],
       "determiner_seed": [],
       "empty": [],
       "headings": [],
       "honorific": [],
       "hyphen": [],
       "hyphen_lowercase_tail": [],
+      "iconic_relation": [],
       "inconsistent": [],
       "initials": [
         "eliot",
         "tolkien"
       ],
+      "landmark": [],
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
@@ -2656,14 +2968,18 @@
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "corroborated_surname": [],
+      "corroborated_surname_refused": [],
       "determiner_seed": [],
       "empty": [],
       "headings": [],
       "honorific": [],
       "hyphen": [],
       "hyphen_lowercase_tail": [],
+      "iconic_relation": [],
       "inconsistent": [],
       "initials": [],
+      "landmark": [],
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
@@ -2710,18 +3026,28 @@
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "corroborated_surname": [
+        "richard",
+        "wright"
+      ],
+      "corroborated_surname_refused": [
+        "richard",
+        "wright"
+      ],
       "determiner_seed": [],
       "empty": [],
       "headings": [],
       "honorific": [],
       "hyphen": [],
       "hyphen_lowercase_tail": [],
+      "iconic_relation": [],
       "inconsistent": [],
       "initials": [
         "eliot",
         "t.s",
         "tolkien"
       ],
+      "landmark": [],
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
@@ -2786,6 +3112,34 @@
         ]
       ],
       "below_floor": [],
+      "corroborated_surname": [
+        [
+          0,
+          14,
+          "Richard Wright",
+          "NAME"
+        ],
+        [
+          32,
+          38,
+          "Wright",
+          "NAME"
+        ]
+      ],
+      "corroborated_surname_refused": [
+        [
+          0,
+          14,
+          "Richard Wright",
+          "NAME"
+        ],
+        [
+          32,
+          38,
+          "Wright",
+          "NAME"
+        ]
+      ],
       "determiner_seed": [],
       "empty": [],
       "headings": [
@@ -2838,6 +3192,14 @@
           "NAME"
         ]
       ],
+      "iconic_relation": [
+        [
+          12,
+          20,
+          "Robinson",
+          "NAME"
+        ]
+      ],
       "inconsistent": [
         [
           10,
@@ -2875,6 +3237,14 @@
           38,
           48,
           "T.S. Eliot",
+          "NAME"
+        ]
+      ],
+      "landmark": [
+        [
+          32,
+          48,
+          "Lincoln Memorial",
           "NAME"
         ]
       ],
@@ -3133,6 +3503,34 @@
           "NAME"
         ]
       ],
+      "corroborated_surname": [
+        [
+          0,
+          14,
+          "Richard Wright",
+          "NAME"
+        ],
+        [
+          32,
+          38,
+          "Wright",
+          "NAME"
+        ]
+      ],
+      "corroborated_surname_refused": [
+        [
+          0,
+          14,
+          "Richard Wright",
+          "NAME"
+        ],
+        [
+          32,
+          38,
+          "Wright",
+          "NAME"
+        ]
+      ],
       "determiner_seed": [],
       "empty": [],
       "headings": [
@@ -3203,6 +3601,14 @@
           "NAME"
         ]
       ],
+      "iconic_relation": [
+        [
+          12,
+          20,
+          "Robinson",
+          "NAME"
+        ]
+      ],
       "inconsistent": [
         [
           10,
@@ -3240,6 +3646,14 @@
           38,
           48,
           "T.S. Eliot",
+          "NAME"
+        ]
+      ],
+      "landmark": [
+        [
+          32,
+          48,
+          "Lincoln Memorial",
           "NAME"
         ]
       ],
@@ -3496,6 +3910,34 @@
         ]
       ],
       "below_floor": [],
+      "corroborated_surname": [
+        [
+          0,
+          14,
+          "Richard Wright",
+          "NAME"
+        ],
+        [
+          32,
+          38,
+          "Wright",
+          "NAME"
+        ]
+      ],
+      "corroborated_surname_refused": [
+        [
+          0,
+          14,
+          "Richard Wright",
+          "NAME"
+        ],
+        [
+          32,
+          38,
+          "Wright",
+          "NAME"
+        ]
+      ],
       "determiner_seed": [],
       "empty": [],
       "headings": [
@@ -3560,6 +4002,14 @@
           "NAME"
         ]
       ],
+      "iconic_relation": [
+        [
+          12,
+          20,
+          "Robinson",
+          "NAME"
+        ]
+      ],
       "inconsistent": [
         [
           10,
@@ -3597,6 +4047,14 @@
           38,
           48,
           "T.S. Eliot",
+          "NAME"
+        ]
+      ],
+      "landmark": [
+        [
+          32,
+          48,
+          "Lincoln Memorial",
           "NAME"
         ]
       ],
@@ -3800,6 +4258,8 @@
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "corroborated_surname": [],
+      "corroborated_surname_refused": [],
       "determiner_seed": [],
       "empty": [],
       "headings": [
@@ -3815,8 +4275,10 @@
       "honorific": [],
       "hyphen": [],
       "hyphen_lowercase_tail": [],
+      "iconic_relation": [],
       "inconsistent": [],
       "initials": [],
+      "landmark": [],
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
@@ -4067,6 +4529,120 @@
           "baaed"
         ]
       ],
+      "corroborated_surname": [
+        [
+          15,
+          20,
+          "wrote"
+        ],
+        [
+          21,
+          25,
+          "that"
+        ],
+        [
+          26,
+          30,
+          "book"
+        ],
+        [
+          39,
+          43,
+          "knew"
+        ],
+        [
+          44,
+          51,
+          "exactly"
+        ],
+        [
+          52,
+          56,
+          "what"
+        ],
+        [
+          57,
+          59,
+          "he"
+        ],
+        [
+          60,
+          65,
+          "meant"
+        ]
+      ],
+      "corroborated_surname_refused": [
+        [
+          15,
+          20,
+          "wrote"
+        ],
+        [
+          21,
+          25,
+          "that"
+        ],
+        [
+          26,
+          30,
+          "book"
+        ],
+        [
+          40,
+          43,
+          "who"
+        ],
+        [
+          44,
+          49,
+          "lives"
+        ],
+        [
+          50,
+          53,
+          "two"
+        ],
+        [
+          54,
+          59,
+          "doors"
+        ],
+        [
+          60,
+          64,
+          "down"
+        ],
+        [
+          65,
+          69,
+          "from"
+        ],
+        [
+          70,
+          72,
+          "us"
+        ],
+        [
+          74,
+          80,
+          "taught"
+        ],
+        [
+          81,
+          83,
+          "me"
+        ],
+        [
+          84,
+          86,
+          "to"
+        ],
+        [
+          87,
+          92,
+          "throw"
+        ]
+      ],
       "determiner_seed": [
         [
           0,
@@ -4268,6 +4844,48 @@
           "back"
         ]
       ],
+      "iconic_relation": [
+        [
+          3,
+          11,
+          "neighbor"
+        ],
+        [
+          21,
+          27,
+          "taught"
+        ],
+        [
+          28,
+          30,
+          "me"
+        ],
+        [
+          31,
+          34,
+          "how"
+        ],
+        [
+          35,
+          37,
+          "to"
+        ],
+        [
+          38,
+          43,
+          "throw"
+        ],
+        [
+          44,
+          45,
+          "a"
+        ],
+        [
+          46,
+          55,
+          "curveball"
+        ]
+      ],
       "inconsistent": [
         [
           3,
@@ -4370,6 +4988,43 @@
           34,
           37,
           "did"
+        ]
+      ],
+      "landmark": [
+        [
+          3,
+          8,
+          "drove"
+        ],
+        [
+          9,
+          12,
+          "all"
+        ],
+        [
+          13,
+          16,
+          "the"
+        ],
+        [
+          17,
+          20,
+          "way"
+        ],
+        [
+          21,
+          23,
+          "to"
+        ],
+        [
+          24,
+          27,
+          "see"
+        ],
+        [
+          28,
+          31,
+          "the"
         ]
       ],
       "lowercase_particle_tail": [
@@ -5212,6 +5867,622 @@
         ]
       ]
     },
+    "mask_candidates": {
+      "accented": [
+        "naïve café {NAME_1}ée went home. i did too.",
+        1
+      ],
+      "allcaps": [
+        "MY BEST FRIEND {NAME_1} WOULD NEVER.",
+        1
+      ],
+      "bare_i": [
+        "The {NAME_3} barked at {NAME_2}. i ran. Then {NAME_1} came over.",
+        3
+      ],
+      "below_floor": [
+        "The dog barked. The cat ran. The bird flew. The fish swam. The cow mooed. The pig oinked. The hen clucked. The duck quacked. The goat bleated. The horse neighed. the sheep baaed.",
+        0
+      ],
+      "corroborated_surname": [
+        "Richard Wright wrote that book. Wright knew exactly what he meant.",
+        0
+      ],
+      "corroborated_surname_refused": [
+        "Richard Wright wrote that book. {NAME_1}, who lives two doors down from us, taught me to throw.",
+        1
+      ],
+      "determiner_seed": [
+        "terrence and i stayed up late. the terrence okonkwo i knew moved away.",
+        0
+      ],
+      "empty": [
+        "",
+        0
+      ],
+      "headings": [
+        "Horse Families\n\nThe first horses were small. They lived in herds.\n\nBreeds I Like\n\nMy favourite is the {NAME_1}.",
+        1
+      ],
+      "honorific": [
+        "{NAME_2} taught us. {NAME_1} did not.",
+        2
+      ],
+      "hyphen": [
+        "{NAME_2} and {NAME_1} were there.",
+        2
+      ],
+      "hyphen_lowercase_tail": [
+        "{NAME_2}-{NAME_1} waved at us. i waved back.",
+        2
+      ],
+      "iconic_relation": [
+        "My neighbor Robinson taught me how to throw a curveball.",
+        0
+      ],
+      "inconsistent": [
+        "My cousin {NAME_3} came over. my aunt {NAME_2} drove. we went to Akron. then {NAME_1} showed up. i was tired.",
+        3
+      ],
+      "initials": [
+        "J. R. R. Tolkien wrote it, and so did T.S. Eliot.",
+        0
+      ],
+      "landmark": [
+        "We drove all the way to see the Lincoln Memorial.",
+        0
+      ],
+      "lowercase_particle_tail": [
+        "marisol de and i went home. we stayed late.",
+        0
+      ],
+      "lowercase_writer": [
+        "then {NAME_1} showed up. i was so happy. we went home.",
+        1
+      ],
+      "one_mark": [
+        "I met {NAME_1} today. She was nice.",
+        1
+      ],
+      "particle": [
+        "My inspiration, Vincent van Gogh, painted for years.",
+        0
+      ],
+      "plain": [
+        "My cousin {NAME_1} came over that summer.",
+        1
+      ],
+      "possessive": [
+        "{NAME_3} older brother, {NAME_2} friend, and {NAME_1} hat.",
+        3
+      ],
+      "possessive_lowercase_habit": [
+        "i saw {NAME_1} older brother. i waved back.",
+        1
+      ],
+      "protected": [
+        "{NAME_1} met @PERSON2 and {LOCATION} last June.",
+        0
+      ],
+      "quoted": [
+        "vivid words like \"Giggles filled the school\" stand out",
+        0
+      ],
+      "shout": [
+        "Then SLAM! the door closed and {NAME_1} laughed.",
+        1
+      ],
+      "silent_prose": [
+        "Nothing here is capitalised mid sentence at all. It is only prose.",
+        0
+      ],
+      "single_quoted": [
+        "He used words like '{NAME_2}' and '{NAME_1}' in the story.",
+        2
+      ],
+      "title_book": [
+        "I read To Kill a Mockingbird last year.",
+        0
+      ],
+      "title_curly": [
+        "We read Charlotte’s Web in class.",
+        0
+      ],
+      "title_is_relation": [
+        "My cousin {NAME_1} came over that summer and never left.",
+        1
+      ],
+      "title_lower": [
+        "i read to kill a mockingbird last year.",
+        0
+      ],
+      "title_nested": [
+        "The Lion King is my favourite film.",
+        0
+      ],
+      "title_none": [
+        "Nothing here matches any title at all.",
+        0
+      ],
+      "title_relation": [
+        "My neighbor {NAME_1} walked me to the bus stop.",
+        1
+      ],
+      "two_marks": [
+        "I met {NAME_2} today. I also saw {NAME_1} there.",
+        2
+      ],
+      "typo_capitaliser": [
+        "{NAME_3} went to Akron. She met {NAME_2}. They saw {NAME_1}. We drove home. She waved. He smiled. They left. It rained. We slept. boy did we laugh. She called again. He answered.",
+        3
+      ],
+      "wrapped": [
+        "The INternet as we know it today first\nappeared in a lab in {NAME_1}.",
+        1
+      ]
+    },
+    "mask_candidates_unnumbered": {
+      "accented": [
+        "naïve café {NAME}ée went home. i did too.",
+        1
+      ],
+      "allcaps": [
+        "MY BEST FRIEND {NAME} WOULD NEVER.",
+        1
+      ],
+      "bare_i": [
+        "The {NAME} barked at {NAME}. i ran. Then {NAME} came over.",
+        3
+      ],
+      "below_floor": [
+        "The dog barked. The cat ran. The bird flew. The fish swam. The cow mooed. The pig oinked. The hen clucked. The duck quacked. The goat bleated. The horse neighed. the sheep baaed.",
+        0
+      ],
+      "corroborated_surname": [
+        "Richard Wright wrote that book. Wright knew exactly what he meant.",
+        0
+      ],
+      "corroborated_surname_refused": [
+        "Richard Wright wrote that book. {NAME}, who lives two doors down from us, taught me to throw.",
+        1
+      ],
+      "determiner_seed": [
+        "terrence and i stayed up late. the terrence okonkwo i knew moved away.",
+        0
+      ],
+      "empty": [
+        "",
+        0
+      ],
+      "headings": [
+        "Horse Families\n\nThe first horses were small. They lived in herds.\n\nBreeds I Like\n\nMy favourite is the {NAME}.",
+        1
+      ],
+      "honorific": [
+        "{NAME} taught us. {NAME} did not.",
+        2
+      ],
+      "hyphen": [
+        "{NAME} and {NAME} were there.",
+        2
+      ],
+      "hyphen_lowercase_tail": [
+        "{NAME}-{NAME} waved at us. i waved back.",
+        2
+      ],
+      "iconic_relation": [
+        "My neighbor Robinson taught me how to throw a curveball.",
+        0
+      ],
+      "inconsistent": [
+        "My cousin {NAME} came over. my aunt {NAME} drove. we went to Akron. then {NAME} showed up. i was tired.",
+        3
+      ],
+      "initials": [
+        "J. R. R. Tolkien wrote it, and so did T.S. Eliot.",
+        0
+      ],
+      "landmark": [
+        "We drove all the way to see the Lincoln Memorial.",
+        0
+      ],
+      "lowercase_particle_tail": [
+        "marisol de and i went home. we stayed late.",
+        0
+      ],
+      "lowercase_writer": [
+        "then {NAME} showed up. i was so happy. we went home.",
+        1
+      ],
+      "one_mark": [
+        "I met {NAME} today. She was nice.",
+        1
+      ],
+      "particle": [
+        "My inspiration, Vincent van Gogh, painted for years.",
+        0
+      ],
+      "plain": [
+        "My cousin {NAME} came over that summer.",
+        1
+      ],
+      "possessive": [
+        "{NAME} older brother, {NAME} friend, and {NAME} hat.",
+        3
+      ],
+      "possessive_lowercase_habit": [
+        "i saw {NAME} older brother. i waved back.",
+        1
+      ],
+      "protected": [
+        "{NAME_1} met @PERSON2 and {LOCATION} last June.",
+        0
+      ],
+      "quoted": [
+        "vivid words like \"Giggles filled the school\" stand out",
+        0
+      ],
+      "shout": [
+        "Then SLAM! the door closed and {NAME} laughed.",
+        1
+      ],
+      "silent_prose": [
+        "Nothing here is capitalised mid sentence at all. It is only prose.",
+        0
+      ],
+      "single_quoted": [
+        "He used words like '{NAME}' and '{NAME}' in the story.",
+        2
+      ],
+      "title_book": [
+        "I read To Kill a Mockingbird last year.",
+        0
+      ],
+      "title_curly": [
+        "We read Charlotte’s Web in class.",
+        0
+      ],
+      "title_is_relation": [
+        "My cousin {NAME} came over that summer and never left.",
+        1
+      ],
+      "title_lower": [
+        "i read to kill a mockingbird last year.",
+        0
+      ],
+      "title_nested": [
+        "The Lion King is my favourite film.",
+        0
+      ],
+      "title_none": [
+        "Nothing here matches any title at all.",
+        0
+      ],
+      "title_relation": [
+        "My neighbor {NAME} walked me to the bus stop.",
+        1
+      ],
+      "two_marks": [
+        "I met {NAME} today. I also saw {NAME} there.",
+        2
+      ],
+      "typo_capitaliser": [
+        "{NAME} went to Akron. She met {NAME}. They saw {NAME}. We drove home. She waved. He smiled. They left. It rained. We slept. boy did we laugh. She called again. He answered.",
+        3
+      ],
+      "wrapped": [
+        "The INternet as we know it today first\nappeared in a lab in {NAME}.",
+        1
+      ]
+    },
+    "mask_candidates_with_keeps": {
+      "accented": [
+        "naïve café {NAME_1}ée went home. i did too.",
+        1
+      ],
+      "allcaps": [
+        "MY BEST FRIEND {NAME_1} WOULD NEVER.",
+        1
+      ],
+      "bare_i": [
+        "The {NAME_2} barked at Marisol. i ran. Then {NAME_1} came over.",
+        2
+      ],
+      "below_floor": [
+        "The dog barked. The cat ran. The bird flew. The fish swam. The cow mooed. The pig oinked. The hen clucked. The duck quacked. The goat bleated. The horse neighed. the sheep baaed.",
+        0
+      ],
+      "corroborated_surname": [
+        "Richard Wright wrote that book. Wright knew exactly what he meant.",
+        0
+      ],
+      "corroborated_surname_refused": [
+        "Richard Wright wrote that book. {NAME_1}, who lives two doors down from us, taught me to throw.",
+        1
+      ],
+      "determiner_seed": [
+        "terrence and i stayed up late. the terrence okonkwo i knew moved away.",
+        0
+      ],
+      "empty": [
+        "",
+        0
+      ],
+      "headings": [
+        "Horse Families\n\nThe first horses were small. They lived in herds.\n\nBreeds I Like\n\nMy favourite is the {NAME_1}.",
+        1
+      ],
+      "honorific": [
+        "{NAME_2} taught us. {NAME_1} did not.",
+        2
+      ],
+      "hyphen": [
+        "{NAME_2} and {NAME_1} were there.",
+        2
+      ],
+      "hyphen_lowercase_tail": [
+        "{NAME_2}-{NAME_1} waved at us. i waved back.",
+        2
+      ],
+      "iconic_relation": [
+        "My neighbor Robinson taught me how to throw a curveball.",
+        0
+      ],
+      "inconsistent": [
+        "My cousin {NAME_2} came over. my aunt Marisol drove. we went to Akron. then {NAME_1} showed up. i was tired.",
+        2
+      ],
+      "initials": [
+        "J. R. R. Tolkien wrote it, and so did T.S. Eliot.",
+        0
+      ],
+      "landmark": [
+        "We drove all the way to see the Lincoln Memorial.",
+        0
+      ],
+      "lowercase_particle_tail": [
+        "marisol de and i went home. we stayed late.",
+        0
+      ],
+      "lowercase_writer": [
+        "then {NAME_1} showed up. i was so happy. we went home.",
+        1
+      ],
+      "one_mark": [
+        "I met Marisol today. She was nice.",
+        0
+      ],
+      "particle": [
+        "My inspiration, Vincent van Gogh, painted for years.",
+        0
+      ],
+      "plain": [
+        "My cousin {NAME_1} came over that summer.",
+        1
+      ],
+      "possessive": [
+        "{NAME_2} older brother, Narciso's friend, and {NAME_1} hat.",
+        2
+      ],
+      "possessive_lowercase_habit": [
+        "i saw Marisol's older brother. i waved back.",
+        0
+      ],
+      "protected": [
+        "{NAME_1} met @PERSON2 and {LOCATION} last June.",
+        0
+      ],
+      "quoted": [
+        "vivid words like \"Giggles filled the school\" stand out",
+        0
+      ],
+      "shout": [
+        "Then SLAM! the door closed and Marisol laughed.",
+        0
+      ],
+      "silent_prose": [
+        "Nothing here is capitalised mid sentence at all. It is only prose.",
+        0
+      ],
+      "single_quoted": [
+        "He used words like '{NAME_1}' and 'Marisol' in the story.",
+        1
+      ],
+      "title_book": [
+        "I read To Kill a Mockingbird last year.",
+        0
+      ],
+      "title_curly": [
+        "We read Charlotte’s Web in class.",
+        0
+      ],
+      "title_is_relation": [
+        "My cousin {NAME_1} came over that summer and never left.",
+        1
+      ],
+      "title_lower": [
+        "i read to kill a mockingbird last year.",
+        0
+      ],
+      "title_nested": [
+        "The Lion King is my favourite film.",
+        0
+      ],
+      "title_none": [
+        "Nothing here matches any title at all.",
+        0
+      ],
+      "title_relation": [
+        "My neighbor {NAME_1} walked me to the bus stop.",
+        1
+      ],
+      "two_marks": [
+        "I met Marisol today. I also saw {NAME_1} there.",
+        1
+      ],
+      "typo_capitaliser": [
+        "Marisol went to Akron. She met {NAME_2}. They saw {NAME_1}. We drove home. She waved. He smiled. They left. It rained. We slept. boy did we laugh. She called again. He answered.",
+        2
+      ],
+      "wrapped": [
+        "The INternet as we know it today first\nappeared in a lab in {NAME_1}.",
+        1
+      ]
+    },
+    "mask_candidates_without_notability": {
+      "accented": [
+        "naïve café {NAME_1}ée went home. i did too.",
+        1
+      ],
+      "allcaps": [
+        "MY BEST FRIEND {NAME_1} WOULD NEVER.",
+        1
+      ],
+      "bare_i": [
+        "The {NAME_3} barked at {NAME_2}. i ran. Then {NAME_1} came over.",
+        3
+      ],
+      "below_floor": [
+        "The dog barked. The cat ran. The bird flew. The fish swam. The cow mooed. The pig oinked. The hen clucked. The duck quacked. The goat bleated. The horse neighed. the sheep baaed.",
+        0
+      ],
+      "corroborated_surname": [
+        "{NAME_2} wrote that book. {NAME_1} knew exactly what he meant.",
+        2
+      ],
+      "corroborated_surname_refused": [
+        "{NAME_2} wrote that book. {NAME_1}, who lives two doors down from us, taught me to throw.",
+        2
+      ],
+      "determiner_seed": [
+        "terrence and i stayed up late. the terrence okonkwo i knew moved away.",
+        0
+      ],
+      "empty": [
+        "",
+        0
+      ],
+      "headings": [
+        "Horse Families\n\nThe first horses were small. They lived in herds.\n\nBreeds I Like\n\nMy favourite is the {NAME_1}.",
+        1
+      ],
+      "honorific": [
+        "{NAME_2} taught us. {NAME_1} did not.",
+        2
+      ],
+      "hyphen": [
+        "{NAME_2} and {NAME_1} were there.",
+        2
+      ],
+      "hyphen_lowercase_tail": [
+        "{NAME_2}-{NAME_1} waved at us. i waved back.",
+        2
+      ],
+      "iconic_relation": [
+        "My neighbor {NAME_1} taught me how to throw a curveball.",
+        1
+      ],
+      "inconsistent": [
+        "My cousin {NAME_3} came over. my aunt {NAME_2} drove. we went to {LOCATION_1}. then {NAME_1} showed up. i was tired.",
+        4
+      ],
+      "initials": [
+        "{NAME_2} wrote it, and so did {NAME_1}.",
+        2
+      ],
+      "landmark": [
+        "We drove all the way to see the Lincoln Memorial.",
+        0
+      ],
+      "lowercase_particle_tail": [
+        "marisol de and i went home. we stayed late.",
+        0
+      ],
+      "lowercase_writer": [
+        "then {NAME_1} showed up. i was so happy. we went home.",
+        1
+      ],
+      "one_mark": [
+        "I met {NAME_1} today. She was nice.",
+        1
+      ],
+      "particle": [
+        "My inspiration, {NAME_1}, painted for years.",
+        1
+      ],
+      "plain": [
+        "My cousin {NAME_1} came over that summer.",
+        1
+      ],
+      "possessive": [
+        "{NAME_3} older brother, {NAME_2} friend, and {NAME_1} hat.",
+        3
+      ],
+      "possessive_lowercase_habit": [
+        "i saw {NAME_1} older brother. i waved back.",
+        1
+      ],
+      "protected": [
+        "{NAME_1} met @PERSON2 and {LOCATION} last June.",
+        0
+      ],
+      "quoted": [
+        "vivid words like \"Giggles filled the school\" stand out",
+        0
+      ],
+      "shout": [
+        "Then SLAM! the door closed and {NAME_1} laughed.",
+        1
+      ],
+      "silent_prose": [
+        "Nothing here is capitalised mid sentence at all. It is only prose.",
+        0
+      ],
+      "single_quoted": [
+        "He used words like '{NAME_2}' and '{NAME_1}' in the story.",
+        2
+      ],
+      "title_book": [
+        "I read To Kill a Mockingbird last year.",
+        0
+      ],
+      "title_curly": [
+        "We read Charlotte’s Web in class.",
+        0
+      ],
+      "title_is_relation": [
+        "My cousin {NAME_1} came over that summer and never left.",
+        1
+      ],
+      "title_lower": [
+        "i read to kill a mockingbird last year.",
+        0
+      ],
+      "title_nested": [
+        "The Lion King is my favourite film.",
+        0
+      ],
+      "title_none": [
+        "Nothing here matches any title at all.",
+        0
+      ],
+      "title_relation": [
+        "My neighbor {NAME_1} walked me to the bus stop.",
+        1
+      ],
+      "two_marks": [
+        "I met {NAME_2} today. I also saw {NAME_1} there.",
+        2
+      ],
+      "typo_capitaliser": [
+        "{NAME_3} went to {LOCATION_1}. She met {NAME_2}. They saw {NAME_1}. We drove home. She waved. He smiled. They left. It rained. We slept. boy did we laugh. She called again. He answered.",
+        4
+      ],
+      "wrapped": [
+        "The INternet as we know it today first\nappeared in a lab in {NAME_1}.",
+        1
+      ]
+    },
     "masks_with_settlement": {
       "allcaps_run": true,
       "bare_honorific": true,
@@ -5239,6 +6510,12 @@
         "terrence"
       ],
       "below_floor": [],
+      "corroborated_surname": [
+        "wright"
+      ],
+      "corroborated_surname_refused": [
+        "wright"
+      ],
       "determiner_seed": [],
       "empty": [],
       "headings": [
@@ -5257,6 +6534,9 @@
       "hyphen_lowercase_tail": [
         "delacroix-marisol"
       ],
+      "iconic_relation": [
+        "robinson"
+      ],
       "inconsistent": [
         "akron",
         "deshawn",
@@ -5266,6 +6546,10 @@
       "initials": [
         "s",
         "t"
+      ],
+      "landmark": [
+        "lincoln",
+        "memorial"
       ],
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
@@ -5343,6 +6627,12 @@
         "terrence"
       ],
       "below_floor": [],
+      "corroborated_surname": [
+        "wright"
+      ],
+      "corroborated_surname_refused": [
+        "wright"
+      ],
       "determiner_seed": [],
       "empty": [],
       "headings": [
@@ -5358,6 +6648,9 @@
       "hyphen_lowercase_tail": [
         "delacroix-marisol"
       ],
+      "iconic_relation": [
+        "robinson"
+      ],
       "inconsistent": [
         "akron",
         "deshawn",
@@ -5367,6 +6660,10 @@
       "initials": [
         "s",
         "t"
+      ],
+      "landmark": [
+        "lincoln",
+        "memorial"
       ],
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
@@ -5531,14 +6828,18 @@
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "corroborated_surname": [],
+      "corroborated_surname_refused": [],
       "determiner_seed": [],
       "empty": [],
       "headings": [],
       "honorific": [],
       "hyphen": [],
       "hyphen_lowercase_tail": [],
+      "iconic_relation": [],
       "inconsistent": [],
       "initials": [],
+      "landmark": [],
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
@@ -5651,6 +6952,14 @@
         143,
         162
       ],
+      "corroborated_surname": [
+        0,
+        32
+      ],
+      "corroborated_surname_refused": [
+        0,
+        32
+      ],
       "determiner_seed": [
         0,
         31
@@ -5677,6 +6986,9 @@
         0,
         50
       ],
+      "iconic_relation": [
+        0
+      ],
       "inconsistent": [
         0,
         30,
@@ -5690,6 +7002,9 @@
         6,
         9,
         43
+      ],
+      "landmark": [
+        0
       ],
       "lowercase_particle_tail": [
         0,
@@ -5913,14 +7228,18 @@
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "corroborated_surname": [],
+      "corroborated_surname_refused": [],
       "determiner_seed": [],
       "empty": [],
       "headings": [],
       "honorific": [],
       "hyphen": [],
       "hyphen_lowercase_tail": [],
+      "iconic_relation": [],
       "inconsistent": [],
       "initials": [],
+      "landmark": [],
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
@@ -5979,14 +7298,18 @@
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "corroborated_surname": [],
+      "corroborated_surname_refused": [],
       "determiner_seed": [],
       "empty": [],
       "headings": [],
       "honorific": [],
       "hyphen": [],
       "hyphen_lowercase_tail": [],
+      "iconic_relation": [],
       "inconsistent": [],
       "initials": [],
+      "landmark": [],
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
@@ -6427,6 +7750,150 @@
           "baaed"
         ]
       ],
+      "corroborated_surname": [
+        [
+          0,
+          7,
+          "Richard"
+        ],
+        [
+          8,
+          14,
+          "Wright"
+        ],
+        [
+          15,
+          20,
+          "wrote"
+        ],
+        [
+          21,
+          25,
+          "that"
+        ],
+        [
+          26,
+          30,
+          "book"
+        ],
+        [
+          32,
+          38,
+          "Wright"
+        ],
+        [
+          39,
+          43,
+          "knew"
+        ],
+        [
+          44,
+          51,
+          "exactly"
+        ],
+        [
+          52,
+          56,
+          "what"
+        ],
+        [
+          57,
+          59,
+          "he"
+        ],
+        [
+          60,
+          65,
+          "meant"
+        ]
+      ],
+      "corroborated_surname_refused": [
+        [
+          0,
+          7,
+          "Richard"
+        ],
+        [
+          8,
+          14,
+          "Wright"
+        ],
+        [
+          15,
+          20,
+          "wrote"
+        ],
+        [
+          21,
+          25,
+          "that"
+        ],
+        [
+          26,
+          30,
+          "book"
+        ],
+        [
+          32,
+          38,
+          "Wright"
+        ],
+        [
+          40,
+          43,
+          "who"
+        ],
+        [
+          44,
+          49,
+          "lives"
+        ],
+        [
+          50,
+          53,
+          "two"
+        ],
+        [
+          54,
+          59,
+          "doors"
+        ],
+        [
+          60,
+          64,
+          "down"
+        ],
+        [
+          65,
+          69,
+          "from"
+        ],
+        [
+          70,
+          72,
+          "us"
+        ],
+        [
+          74,
+          80,
+          "taught"
+        ],
+        [
+          81,
+          83,
+          "me"
+        ],
+        [
+          84,
+          86,
+          "to"
+        ],
+        [
+          87,
+          92,
+          "throw"
+        ]
+      ],
       "determiner_seed": [
         [
           0,
@@ -6713,6 +8180,58 @@
           "back"
         ]
       ],
+      "iconic_relation": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          11,
+          "neighbor"
+        ],
+        [
+          12,
+          20,
+          "Robinson"
+        ],
+        [
+          21,
+          27,
+          "taught"
+        ],
+        [
+          28,
+          30,
+          "me"
+        ],
+        [
+          31,
+          34,
+          "how"
+        ],
+        [
+          35,
+          37,
+          "to"
+        ],
+        [
+          38,
+          43,
+          "throw"
+        ],
+        [
+          44,
+          45,
+          "a"
+        ],
+        [
+          46,
+          55,
+          "curveball"
+        ]
+      ],
       "inconsistent": [
         [
           0,
@@ -6875,6 +8394,58 @@
           43,
           48,
           "Eliot"
+        ]
+      ],
+      "landmark": [
+        [
+          0,
+          2,
+          "We"
+        ],
+        [
+          3,
+          8,
+          "drove"
+        ],
+        [
+          9,
+          12,
+          "all"
+        ],
+        [
+          13,
+          16,
+          "the"
+        ],
+        [
+          17,
+          20,
+          "way"
+        ],
+        [
+          21,
+          23,
+          "to"
+        ],
+        [
+          24,
+          27,
+          "see"
+        ],
+        [
+          28,
+          31,
+          "the"
+        ],
+        [
+          32,
+          39,
+          "Lincoln"
+        ],
+        [
+          40,
+          48,
+          "Memorial"
         ]
       ],
       "lowercase_particle_tail": [
@@ -8023,14 +9594,18 @@
     "allcaps": "MY BEST FRIEND DESHAWN PRITCHARD WOULD NEVER.",
     "bare_i": "The Dog barked at Marisol. i ran. Then Terrence came over.",
     "below_floor": "The dog barked. The cat ran. The bird flew. The fish swam. The cow mooed. The pig oinked. The hen clucked. The duck quacked. The goat bleated. The horse neighed. the sheep baaed.",
+    "corroborated_surname": "Richard Wright wrote that book. Wright knew exactly what he meant.",
+    "corroborated_surname_refused": "Richard Wright wrote that book. Wright, who lives two doors down from us, taught me to throw.",
     "determiner_seed": "terrence and i stayed up late. the terrence okonkwo i knew moved away.",
     "empty": "",
     "headings": "Horse Families\n\nThe first horses were small. They lived in herds.\n\nBreeds I Like\n\nMy favourite is the Arabian.",
     "honorific": "Mrs. Okonkwo taught us. Dr Ruiz did not.",
     "hyphen": "Marguerite Delacroix-Whitfield and O'Brien were there.",
     "hyphen_lowercase_tail": "Marguerite Delacroix-marisol okonkwo waved at us. i waved back.",
+    "iconic_relation": "My neighbor Robinson taught me how to throw a curveball.",
     "inconsistent": "My cousin Terrence came over. my aunt Marisol drove. we went to Akron. then Deshawn showed up. i was tired.",
     "initials": "J. R. R. Tolkien wrote it, and so did T.S. Eliot.",
+    "landmark": "We drove all the way to see the Lincoln Memorial.",
     "lowercase_particle_tail": "marisol de and i went home. we stayed late.",
     "lowercase_writer": "then terrence okonkwo showed up. i was so happy. we went home.",
     "one_mark": "I met Marisol today. She was nice.",
@@ -8058,6 +9633,10 @@
     "tier": "full_name"
   },
   "document_version": 1,
+  "keeps": [
+    "Marisol",
+    "Narciso"
+  ],
   "name_forms": [
     "Richard Wright",
     "Wright",
@@ -8088,6 +9667,9 @@
       "renée",
       "terrence",
       "vincent"
+    ],
+    "iconic_surnames": [
+      "robinson"
     ],
     "settlements": [
       "acme inc.",

@@ -40,6 +40,7 @@
  */
 
 import { load as loadLexicon } from "./lexicon.js";
+import { PlaceholderMinter } from "./minter.js";
 
 /**
  * Python's `\b` is Unicode-aware; JavaScript's is ASCII-only, so `\b` before a
@@ -1859,4 +1860,131 @@ export function findCandidates(
     }
   }
   return out;
+}
+
+/** The oracles and arms {@link maskCandidates} takes, all of them optional. */
+export interface MaskOptions extends CandidateOptions {
+  /** Returns true for a public figure. Absent, nothing is kept, which is the
+   * recall-maximal, precision-minimal posture — supply the gazetteer for
+   * production. */
+  readonly notable?: NotabilityOracle;
+  /** Exact strings to keep regardless, case-insensitively. The `promptContext`
+   * leg: a name in the assignment prompt or source passage is topical by
+   * construction, exact, and free. */
+  readonly keep?: ReadonlySet<string>;
+  /** Keep a bare surname when the same document also writes a full name the
+   * oracle keeps. No effect without `notable`, since there is nothing to
+   * corroborate from. */
+  readonly corroborate?: boolean;
+  /** Which tier vouched for a name. Needed by `titleRelationRefusal`: the boolean
+   * oracle cannot say, and overriding every tier would redact "my hero Abraham
+   * Lincoln". */
+  readonly notabilityTier?: NotabilityTierOracle;
+  /** Numbers the placeholders so masking is reversible. Shared with the caller's
+   * identity and structured passes so indices do not collide across them. Absent,
+   * the unnumbered `{NAME}` is emitted and the output is not restorable. */
+  readonly minter?: PlaceholderMinter;
+  /** Refuse corroboration for a bare surname whose local context marks it as
+   * someone in the writer's life. No effect without `corroborate`. */
+  readonly relationRefusal?: boolean;
+}
+
+/**
+ * Mask every candidate the notability filter does not keep.
+ *
+ * Returns the masked text and how many spans were replaced.
+ *
+ * The order of the four gates is the policy, and each one is the exception to the
+ * one before it: the prompt's own keeps win outright, then the precedence table
+ * decides mask-or-keep, then the notability oracle keeps a public figure *unless*
+ * a first-person relation is attached to the name, then a document-established
+ * surname keeps *unless* the sentence says this one is somebody the writer knows.
+ */
+export function maskCandidates(
+  text: string,
+  options: MaskOptions = {},
+): { text: string; count: number } {
+  const {
+    notable,
+    keep = new Set<string>(),
+    settlement,
+    corroborate = true,
+    notabilityTier,
+    minter,
+    relationRefusal = true,
+    titleRelationRefusal = true,
+  } = options;
+
+  const loweredKeep = new Set([...keep].map((k) => k.toLowerCase()));
+  const candidates = findCandidates(text, options);
+  const established =
+    corroborate && notable !== undefined
+      ? corroboratedSurnames(candidates, notable, keep, notabilityTier)
+      : new Set<string>();
+
+  let out = text;
+  let count = 0;
+  // Right to left so earlier offsets stay valid as the text shrinks. The sort is
+  // stable in both languages and ties are NOT reversed, which is what keeps the
+  // minter handing out the same indices as the reference.
+  const ordered = [...candidates].sort((a, b) => b.start - a.start);
+  for (const candidate of ordered) {
+    const name = candidate.text;
+    // The possessive folds into the keep, for the same reason it folds into
+    // corroboration: literary analysis writes "Wright's" far more often than
+    // "Wright", and a keep list that only matched the citation form would miss the
+    // shape students actually use.
+    if (
+      loweredKeep.has(name.toLowerCase()) ||
+      loweredKeep.has(surnameTokens(name).join(" "))
+    ) {
+      continue;
+    }
+    // The table decides keep-or-mask, and it is the only thing that does. A bare
+    // landmark-suffix test here kept 383 real settlements — a student's hometown
+    // leaked whenever it was named after a park, lake, valley or falls.
+    if (!resolve(classifyTags(name.split(/\s+/).filter(Boolean), settlement)).mask) {
+      continue;
+    }
+    if (notable !== undefined && notable(name)) {
+      // ...unless a work title is standing in for a person the writer knows.
+      // "Alice Adams" is a 1921 novel and also 589 real people's names in this
+      // tier alone; no threshold separates them from the curriculum, so the
+      // separation has to come from the sentence.
+      if (
+        !(
+          titleRelationRefusal &&
+          notabilityTier !== undefined &&
+          OVERRIDABLE_TIERS.has(notabilityTier(name)) &&
+          namesSomeoneTheWriterKnows(text, candidate.start, candidate.end)
+        )
+      ) {
+        continue;
+      }
+    }
+    // Only the bare form corroborates. "Coach Wright" and "Priya Wright" stay
+    // masked even where "Wright" is established.
+    const bare = bareSurnameKey(name);
+    if (established.size > 0 && bare !== null && established.has(bare)) {
+      // ...unless the local context says this one is someone in the writer's life
+      // who happens to share the surname. Corroboration is a document-level
+      // inference and this is the sentence-level exception to it; without it a
+      // neighbour named Robinson is protected by Jackie Robinson's fame.
+      if (
+        !(
+          relationRefusal &&
+          namesSomeoneInTheWritersLife(text, candidate.start, candidate.end)
+        )
+      ) {
+        continue;
+      }
+    }
+    const placeholder =
+      minter === undefined
+        ? placeholderFor(candidate.kind)
+        : minter.mint(candidate.kind, name);
+    out = out.slice(0, candidate.start) + placeholder + out.slice(candidate.end);
+    count += 1;
+  }
+  return { text: out, count };
 }

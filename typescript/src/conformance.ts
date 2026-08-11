@@ -183,11 +183,15 @@ export interface Primitives {
    * text, a token list or a span — the fourth input group.
    */
   nameForms: string[];
+  /** The `keep` set the masking arm is generated with — the assignment prompt's
+   * own names, as a stand-in. */
+  keeps: string[];
   oracles: {
     settlements: string[];
     titles: string[];
     givenNames: string[];
     fullNames: string[];
+    iconicSurnames: string[];
   };
   /** The classification policy, in order. See `PRECEDENCE` in `candidates.ts`. */
   precedence: PrecedenceRow[];
@@ -237,11 +241,13 @@ export function loadPrimitives(directory?: string): Primitives {
     tokenLists: raw.token_lists as Record<string, string[]>,
     stopTokens: raw.stop_tokens as string[],
     nameForms: raw.name_forms as string[],
+    keeps: raw.keeps as string[],
     oracles: {
       settlements: raw.oracles.settlements as string[],
       titles: raw.oracles.titles as string[],
       givenNames: raw.oracles.given_names as string[],
       fullNames: raw.oracles.full_names as string[],
+      iconicSurnames: raw.oracles.iconic_surnames as string[],
     },
     precedence: raw.precedence as PrecedenceRow[],
     suffixes: raw.suffixes as { organization: string[]; landmark: string[] },

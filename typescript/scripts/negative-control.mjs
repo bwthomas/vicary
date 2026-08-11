@@ -93,6 +93,52 @@ const CONTROLS = [
     from: "relationLedTitleIsInternallyMixed(text, s, e)) &&",
     to: "false) &&",
   },
+  // --- the masking gates ---
+  {
+    rule: "a keep matches the possessive as well as the citation form",
+    from: `loweredKeep.has(surnameTokens(name).join(" "))`,
+    to: "false",
+  },
+  {
+    rule: "the precedence table, not a suffix, decides keep-or-mask",
+    from: "if (!resolve(classifyTags(name.split(/\\s+/).filter(Boolean), settlement)).mask) {",
+    to: "if (false) {",
+  },
+  {
+    rule: "a notable name is kept",
+    from: "if (notable !== undefined && notable(name)) {",
+    to: "if (false) {",
+  },
+  {
+    rule: "only an overridable tier's keep may be refused",
+    from: "OVERRIDABLE_TIERS.has(notabilityTier(name)) &&",
+    to: "true &&",
+  },
+  {
+    rule: "an attached first-person relation outranks a tier keep",
+    from: "namesSomeoneTheWriterKnows(text, candidate.start, candidate.end)",
+    to: "true",
+  },
+  {
+    rule: "a document-established bare surname is kept",
+    from: "if (established.size > 0 && bare !== null && established.has(bare)) {",
+    to: "if (false) {",
+  },
+  {
+    rule: "the sentence may refuse a document-level corroboration",
+    from: "namesSomeoneInTheWritersLife(text, candidate.start, candidate.end)",
+    to: "true",
+  },
+  {
+    rule: "masking runs right to left so earlier offsets stay valid",
+    from: "const ordered = [...candidates].sort((a, b) => b.start - a.start);",
+    to: "const ordered = [...candidates].sort((a, b) => a.start - b.start);",
+  },
+  {
+    rule: "without a minter the unnumbered placeholder is emitted",
+    from: "minter === undefined\n        ? placeholderFor(candidate.kind)",
+    to: "false\n        ? placeholderFor(candidate.kind)",
+  },
 ];
 
 const original = readFileSync(SOURCE, "utf8");
