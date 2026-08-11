@@ -12,17 +12,19 @@ and it answers in single-digit milliseconds.
 | front door | package | status |
 |---|---|---|
 | Python | [`vicary`](https://pypi.org/project/vicary/) on PyPI | **published**, 9 of 9 gates PASS — see [`python/`](python/) |
-| TypeScript | `vicary` on npm | detector complete, **36 of 36**; unpublished, gates unmeasured — see [`typescript/`](typescript/) |
+| TypeScript | `vicary` on npm | detector complete, **36 of 36**, 5 of 5 measurable gates PASS; unpublished — see [`typescript/`](typescript/) |
 | Ruby | `vicary` on RubyGems | asset layer + conformance harness; detector **0 of 36** — see [`ruby/`](ruby/) |
 
 That fraction is the number of masking-required fixture frames the port reproduces
 byte-for-byte, printed by every `npm test` / `rake test` run and ratcheted by it.
 TypeScript reaches all 36 (and 52 of 52 overall) against the
 `local-gazetteer-lowercase` arm, numbering included — the detector is ported, not
-just the structured pass. What that number does **not** cover is the nine gates in
-`conformance/gates.json`: the port measures none of them, four need corpus or
-census data no package ships, and the scoreboard prints `NOT MEASURED` beside each
-on every run rather than letting a green suite imply a clear gate set.
+just the structured pass. It also measures **five of the nine gates** in
+`conformance/gates.json` — held-out recall, KEEP precision, round-trip,
+unaccounted violations and asset entries — and all five hold, at the same values
+Python reports. The other four need an essay corpus or the Census surname file
+that no package here ships; the scoreboard prints `NOT MEASURED` beside each on
+every run rather than letting a green suite imply a clear gate set.
 
 Ruby is still the earlier state, and the paragraph the TypeScript port used to
 share: its frames are carried by the structured pass and the identity

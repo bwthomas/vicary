@@ -9,21 +9,25 @@
 #
 # THE GATE THAT MATTERS IS CONFORMANCE, NOT THE TESTS.
 #
-# A port that publishes while it reproduces 0 of 35 masking-required frames is a
+# A port that publishes while it reproduces 0 of 36 masking-required frames is a
 # package called `vicary` that does not redact — worse than no package, because a
 # host that installs it gets silence instead of an error. So this workflow refuses
 # to publish unless the conformance scoreboard reports every masking-required frame
-# matching the reference output byte-for-byte. Until the detector is ported, a `v*`
-# tag builds, tests, prints the scoreboard, and stops. That is the correct outcome.
+# matching the reference output byte-for-byte. It reads the number off the
+# scoreboard rather than trusting an exit code, and it stays exactly as strict now
+# that the number is 36 of 36: the gate is what keeps a regression from shipping,
+# not what was keeping an unfinished port from shipping.
 name: release-npm
 
-# NO TAG TRIGGER YET, DELIBERATELY. The conformance gate below would refuse on
-# every `v*` tag until the detector is ported, which means a permanent red check on
-# every Python release — and "is the release green?" stops having an answer. So this
-# is manual-dispatch only for now, and the commit that raises the ratchet to 35 of
-# 35 is the commit that adds `push: tags: ["v*"]` back. The gate stays either way;
-# what changes is whether an unfinished port fails somebody else's release.
+# The tag trigger is back, because the reason it was removed is gone. It was
+# manual-dispatch only while the detector was unported: the conformance gate below
+# would have refused on every `v*` tag, which is a permanent red check on every
+# Python release, and "is the release green?" stops having an answer. The port now
+# reproduces 36 of 36 masking-required frames, so the gate passes on its own merits
+# rather than being routed around. The gate itself never moved.
 on:
+  push:
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -70,7 +74,7 @@ jobs:
         run: |
           npm run conformance | tee /tmp/conformance.txt
           # Parse the scoreboard's leading line rather than trusting an exit code:
-          # the suite passes at 0 of 35 on purpose, because a ratchet that failed
+          # the suite passed at 0 of 36 on purpose, because a ratchet that failed
           # the build for being incomplete would make the port unmergeable. The
           # PUBLISH gate is the stricter one, and it reads the number.
           line=$(grep 'frames requiring masking' /tmp/conformance.txt)

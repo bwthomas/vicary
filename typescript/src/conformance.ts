@@ -364,7 +364,16 @@ export function score(
  * held is a different statement from nine of nine, and a badge cannot tell them
  * apart.
  */
-export function report(board: Scoreboard, gates: GateSpec): string {
+export function report(
+  board: Scoreboard,
+  gates: GateSpec,
+  /** A rendered gate block from `gates.ts`. Passed in rather than computed here
+   * because measuring a gate needs the detector and the asset, and this module
+   * is the spec loader — importing them would make the loader depend on the
+   * thing it exists to score. Absent, the unmeasured block below is printed,
+   * which is the honest output for a caller that measured nothing. */
+  gateBlock?: string,
+): string {
   const lines: string[] = [];
   lines.push(`conformance — fixture ${board.fixtureVersion}, arm ${board.referenceArm}`);
   lines.push("-".repeat(58));
@@ -381,6 +390,10 @@ export function report(board: Scoreboard, gates: GateSpec): string {
       `identity function scores that many)`,
   );
   lines.push("-".repeat(58));
+  if (gateBlock !== undefined) {
+    lines.push(gateBlock);
+    return lines.join("\n");
+  }
   lines.push("  gates:");
   for (const gate of gates.gates) {
     const needs =
@@ -393,8 +406,7 @@ export function report(board: Scoreboard, gates: GateSpec): string {
     );
   }
   lines.push(
-    "  -> no gate is measured by this port yet. A green run here means the " +
-      "spec loads,",
+    "  -> the caller measured no gate. A green run here means the spec loads,",
   );
   lines.push("     never that the gate set is clear.");
   return lines.join("\n");

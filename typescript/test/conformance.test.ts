@@ -29,6 +29,8 @@ import {
   score,
   type Identity,
 } from "../src/conformance.js";
+import { load } from "../src/gazetteer.js";
+import { measureGates, reportGates } from "../src/gates.js";
 import { redact, redactWithReport, restore } from "../src/redact.js";
 
 /**
@@ -47,9 +49,16 @@ const board = score(spec, (sentence: string, identity: Identity) =>
   redact(sentence, identity),
 );
 
+const gateReport = measureGates(
+  spec,
+  gates,
+  (sentence: string, identity: Identity) => redact(sentence, identity),
+  { assetEntries: load().entryCount },
+);
+
 // Printed unconditionally, including on a green run. The report is the artifact;
 // a pass with no numbers is the state this project has a written rule against.
-console.log(report(board, gates));
+console.log(report(board, gates, reportGates(gateReport)));
 
 test("the spec loads with every frame and its golden output", () => {
   assert.equal(spec.frames.length, 52);

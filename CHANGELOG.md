@@ -79,6 +79,34 @@ frame's masked output moved for any of the three.
   and `withoutClitic` strips the first clitic that matches. Swapping `"Mr"` and
   `"Mrs"` fails this assertion and nothing else, which is how that was confirmed.
 
+### TypeScript measures five of the nine gates, and the tag trigger comes back
+
+* **`gates.ts` measures every gate needing no operator-supplied data** — held-out
+  recall, KEEP precision, round-trip, unaccounted violations, asset entries — and
+  all five hold. Recovered from the port's own output by chunk alignment, not read
+  out of the golden: the spec already carries `aligns` and `mapping`, and quoting
+  those back would make the port's gate report a restatement of Python's.
+* **Reconciled against `pytest tests/test_gates.py -s`**, counts and all: 16/16
+  held-out spans, 21/21 KEEP spans, 52/52 frames round-tripping, 0 unaccounted
+  violations, 360,793 asset entries. 100% of a wrong denominator is still 100%,
+  so the denominators are asserted too.
+* **The four gates that need a corpus or the Census file stay `NOT MEASURED`**,
+  printed per gate and asserted to stay that way. Five of nine held is a different
+  statement from nine of nine, and a gate quietly reduced out of the denominator
+  is how the second becomes the first without anybody deciding it should.
+* **The accepted-violation list is an exact set, and its staleness check came
+  with it.** `leak NAME:Robinson` is the one documented, deliberately unpaid cost.
+  A violation that stops occurring fails the build too, so a fixed defect cannot
+  leave an exemption behind to shelter the next defect of the same shape.
+* **The `v*` tag trigger is restored in `release-npm.yml`.** It was removed
+  because the conformance gate would have refused on every tag while the port was
+  unfinished, making every Python release show a permanent red check. The gate
+  itself is unchanged and still reads the number off the scoreboard.
+* Found while writing this: the `wrong-type` check compared `expect` to a
+  re-braced kind, so **every correctly-typed span was a violation** — 41 of them,
+  each reading "expected {NAME} got {NAME}". Visible only because the gate was
+  measured rather than assumed to agree.
+
 ### The TypeScript detector is wired end to end: 8 of 36 to 36 of 36
 
 * **`redact` calls the whole detector** — the identity and structured pass, then
