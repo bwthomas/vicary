@@ -18,6 +18,11 @@ task :conformance do
   ruby "-Ilib -Itest test/conformance_test.rb"
 end
 
+desc "Diff this port's gazetteer verdicts against the Python reference"
+task :parity do
+  ruby "scripts/parity_probe.rb"
+end
+
 desc "Build the gem, vendoring the asset first"
 task build: :sync_assets do
   sh "gem build vicary.gemspec"

@@ -30,6 +30,6 @@ module Vicary
           "than returning the text unchanged, because a redactor that silently " \
           "does nothing is worse than one that is absent: the caller cannot " \
           "tell. Track progress with `rake conformance`; use the Python package " \
-          "(pip install vicary) until it reports 35 of 35."
+          "(pip install vicary) until it reports 36 of 36."
   end
 end

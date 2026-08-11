@@ -9,7 +9,7 @@
 #
 # THE GATE THAT MATTERS IS CONFORMANCE, NOT THE TESTS.
 #
-# A port that publishes while it reproduces 0 of 35 masking-required frames is a
+# A port that publishes while it reproduces 0 of 36 masking-required frames is a
 # gem called `vicary` that does not redact — worse than no gem, because a host that
 # installs it gets silence instead of an error. So this refuses to publish unless
 # the conformance scoreboard reports every masking-required frame matching the
@@ -20,8 +20,8 @@ name: release-gem
 # NO TAG TRIGGER YET, DELIBERATELY. The conformance gate below would refuse on
 # every `v*` tag until the detector is ported, which means a permanent red check on
 # every Python release — and "is the release green?" stops having an answer. So this
-# is manual-dispatch only for now, and the commit that raises the ratchet to 35 of
-# 35 is the commit that adds `push: tags: ["v*"]` back. The gate stays either way;
+# is manual-dispatch only for now, and the commit that raises the ratchet to 36 of
+# 36 is the commit that adds `push: tags: ["v*"]` back. The gate stays either way;
 # what changes is whether an unfinished port fails somebody else's release.
 on:
   workflow_dispatch:
@@ -66,7 +66,7 @@ jobs:
         run: |
           rake conformance | tee /tmp/conformance.txt
           # Parse the scoreboard rather than trusting an exit code: the suite
-          # passes at 0 of 35 on purpose, because a ratchet that failed the build
+          # passes at 0 of 36 on purpose, because a ratchet that failed the build
           # for being incomplete would make the port unmergeable. The PUBLISH gate
           # is the stricter one, and it reads the number.
           line=$(grep 'frames requiring masking' /tmp/conformance.txt)
