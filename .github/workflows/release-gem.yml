@@ -96,6 +96,49 @@ jobs:
           done
           echo "gem carries the gazetteer asset"
 
-      - uses: rubygems/release-gem@v1
-        with:
-          await-release: false
+      # Credentials from the workflow's OIDC identity, then a plain `gem push` of
+      # the artifact the step above just read the inside of.
+      #
+      # NOT `rubygems/release-gem`, which was here first and would have failed on
+      # this repository's first gem release in four separate ways. That action
+      # runs `bundle exec rake release`, which wants: a Gemfile (there is none —
+      # the gem has no runtime dependencies, deliberately); a `release` task from
+      # `bundler/gem_tasks` (the Rakefile does not require it); `contents: write`,
+      # because `rake release` pushes a git tag; and a `working-directory` input,
+      # because a job-level `defaults.run.working-directory` does not reach inside
+      # a composite action. It would also have re-tagged a version whose tag is
+      # the very thing that triggered the run.
+      #
+      # None of that is wanted here. The tag already exists, the gem is already
+      # built, and its contents are already verified. What is left is the upload.
+      # Pinned to an exact version because this repository publishes no moving
+      # major tag: `refs/tags/v1` and `refs/tags/v2` do not exist, only `v1.0.0`,
+      # `v2.0.0` and `v2.1.0`, so `@v2` resolves to nothing and the step fails to
+      # load. This is the same commit `rubygems/release-gem@v1` pins internally.
+      - uses: rubygems/configure-rubygems-credentials@v2.1.0
+
+      - name: Push the gem
+        run: gem push vicary-*.gem
+
+      # `gem push` reporting success is the system describing itself. Ask the
+      # registry instead — the same reason the wheel is installed into a clean
+      # interpreter over in release.yml rather than trusted to `twine check`.
+      - name: RubyGems must actually be serving the version we just pushed
+        run: |
+          version=$(ruby -Ilib -e 'require "vicary/version"; print Vicary::VERSION')
+          for attempt in $(seq 1 12); do
+            published=$(curl -sf "https://rubygems.org/api/v1/versions/vicary.json" \
+              | ruby -rjson -e 'puts JSON.parse(STDIN.read).map { |v| v["number"] }' 2>/dev/null || true)
+            case "$published" in
+              *"$version"*)
+                echo "rubygems.org is serving vicary $version"
+                exit 0
+                ;;
+            esac
+            echo "attempt $attempt: rubygems.org does not list $version yet"
+            sleep 10
+          done
+          echo "pushed vicary $version but rubygems.org never served it."
+          echo "The push reported success; the registry disagrees. Do not treat"
+          echo "this release as published until that is reconciled."
+          exit 1
