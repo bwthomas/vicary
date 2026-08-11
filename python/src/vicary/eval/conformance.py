@@ -65,6 +65,7 @@ REFERENCE_ARM = "local-gazetteer-lowercase"
 CONFORMANCE_DIRNAME = "conformance"
 FRAMES_FILENAME = "frames.json"
 GATES_FILENAME = "gates.json"
+PRIMITIVES_FILENAME = "primitives.json"
 
 
 def conformance_dir() -> Path | None:
@@ -166,6 +167,231 @@ def _golden_for(frames: tuple[fx.Frame, ...]) -> dict[str, dict[str, Any]]:
             "aligns": alignment.ok,
         }
     return golden
+
+
+# ---------------------------------------------------------------------------
+# The primitives layer — what a port checks BEFORE it can produce a frame
+# ---------------------------------------------------------------------------
+#
+# `frames.json` scores finished output, which is the right final bar and a poor
+# first one: a port with nothing implemented scores 0 of 35 and gets no signal at
+# all about which of the forty-odd primitives underneath it is wrong. The first
+# port paid that cost by hand — a throwaway probe that ran both implementations
+# over a corpus and diffed the JSON, which found a real divergence (JavaScript's
+# `\b` is ASCII-only where Python's is Unicode-aware) that no frame would have
+# isolated. Every later port would otherwise re-derive the same expectations by
+# hand, which is transcription, which is the thing this directory exists to avoid.
+#
+# So the probe becomes an export. Same direction of truth as the other two
+# documents: the Python functions are the source, this is generated from them,
+# and `tests/test_conformance.py` byte-compares the committed file against a fresh
+# export so it cannot drift.
+#
+# It is deliberately NOT scored and NOT a gate. A port can be green here and mask
+# nothing; the frames are still what says a port works. This layer only says which
+# brick is crooked.
+
+#: Texts every primitive is evaluated over. Chosen to exercise a named behaviour
+#: each, not for coverage of English: an all-caps sentence, a shout inside
+#: mixed-case prose, an opening quote, a hard-wrapped line that is not a heading,
+#: our own placeholders, a curly possessive, an accented word, and one document
+#: per capitalisation-habit state.
+PRIMITIVE_CORPUS: dict[str, str] = {
+    "empty": "",
+    "plain": "My cousin Terrence Okonkwo came over that summer.",
+    "honorific": "Mrs. Okonkwo taught us. Dr Ruiz did not.",
+    "allcaps": "MY BEST FRIEND DESHAWN PRITCHARD WOULD NEVER.",
+    "shout": "Then SLAM! the door closed and Marisol laughed.",
+    "quoted": 'vivid words like "Giggles filled the school" stand out',
+    "headings": (
+        "Horse Families\n\nThe first horses were small. They lived in herds.\n\n"
+        "Breeds I Like\n\nMy favourite is the Arabian."
+    ),
+    "wrapped": "The INternet as we know it today first\nappeared in a lab in Ohio.",
+    "protected": "{NAME_1} met @PERSON2 and {LOCATION} last June.",
+    "particle": "My inspiration, Vincent van Gogh, painted for years.",
+    "initials": "J. R. R. Tolkien wrote it, and so did T.S. Eliot.",
+    "hyphen": "Marguerite Delacroix-Whitfield and O'Brien were there.",
+    "possessive": "Terrence's older brother, Narciso's friend, and Lincoln’s hat.",
+    # The `\b` case. Python reads the diaeresis as a word character and emits
+    # `na`; a reader whose word boundary is ASCII-only also emits `ve`.
+    "accented": "naïve café Renée went home. i did too.",
+    "lowercase_writer": "then terrence okonkwo showed up. i was so happy. we went home.",
+    "bare_i": "The Dog barked at Marisol. i ran. Then Terrence came over.",
+    "silent_prose": "Nothing here is capitalised mid sentence at all. It is only prose.",
+    "inconsistent": (
+        "My cousin Terrence came over. my aunt Marisol drove. "
+        "we went to Akron. then Deshawn showed up. i was tired."
+    ),
+    "one_mark": "I met Marisol today. She was nice.",
+    "two_marks": "I met Marisol today. I also saw Deshawn there.",
+    # The rate asymmetry, as a pair one percentage point apart. Above the floor a
+    # 8.3% drop rate reads as typos; below it a 9.1% rate is taken as the habit,
+    # because there is no presence signal to weigh it against.
+    "typo_capitaliser": (
+        "Marisol went to Akron. She met Deshawn. They saw Terrence. We drove home. "
+        "She waved. He smiled. They left. It rained. We slept. boy did we laugh. "
+        "She called again. He answered."
+    ),
+    "below_floor": (
+        "The dog barked. The cat ran. The bird flew. The fish swam. The cow mooed. "
+        "The pig oinked. The hen clucked. The duck quacked. The goat bleated. "
+        "The horse neighed. the sheep baaed."
+    ),
+    "title_book": "I read To Kill a Mockingbird last year.",
+    "title_nested": "The Lion King is my favourite film.",
+    "title_curly": "We read Charlotte’s Web in class.",
+    "title_lower": "i read to kill a mockingbird last year.",
+    "title_none": "Nothing here matches any title at all.",
+}
+
+#: Already-split spans, for the functions that take tokens rather than text.
+PRIMITIVE_TOKEN_LISTS: dict[str, list[str]] = {
+    "two_names": ["Terrence", "Okonkwo"],
+    "allcaps_run": ["My", "Best", "Friend", "Deshawn", "Pritchard", "Would", "Never"],
+    "honorific_and_name": ["Mrs.", "Okonkwo"],
+    "bare_honorific": ["Mrs."],
+    "honorific_then_stop": ["Dr", "The"],
+    "interior_stop": ["Coach", "Ruiz", "And", "Marisol"],
+    "landmark": ["The", "Lincoln", "Memorial"],
+    "civic": ["Akron", "Public", "Library"],
+    "township": ["Springfield", "Township"],
+    "org_suffix": ["Acme", "Inc."],
+    "settlement": ["Akron"],
+    "school": ["Westfield", "High", "School"],
+}
+
+#: Single tokens for the stoplist predicate, each standing for a rule rather than
+#: a word: a clitic, a curly clitic, an un-apostrophized spelling, a bare clitic.
+PRIMITIVE_STOP_TOKENS: tuple[str, ...] = (
+    "The", "the", "Mrs.", "Mrs", "I'm", "I’m", "As", "Terrence", "Okonkwo",
+    "im", "dont", "thats", "n't", "'s", "Dr", "Coach", "SLAM", "a", "A",
+    "Won't", "Won’t", "he'd", "'", "It's", "Favorite", "favorite", "I",
+)
+
+#: The stand-in oracles, emitted as data so every port wires the SAME ones.
+#: Real gazetteer tiers cannot be used here: they are 2.1 MB of asset, and a
+#: primitive that disagrees would then be indistinguishable from a tier lookup
+#: that disagreed. Semantics, which a port must implement exactly:
+#:
+#: * ``is_settlement(name)``   -> ``name.lower()`` is in ``settlements``
+#: * ``is_title(text)``        -> ``text.lower()``, curly apostrophes folded to
+#:                                ``'``, is in ``titles``
+#: * ``is_title_prefix(key)``  -> some entry of ``titles`` equals ``key`` or
+#:                                starts with ``key + " "``
+PRIMITIVE_SETTLEMENTS: tuple[str, ...] = (
+    "acme inc.", "akron", "akron public library", "springfield township",
+    "westfield high school",
+)
+PRIMITIVE_TITLES: tuple[str, ...] = (
+    "charlotte's web", "the lion", "the lion king", "to kill a mockingbird",
+)
+
+
+def _primitive_settlement(name: str) -> bool:
+    return name.lower() in PRIMITIVE_SETTLEMENTS
+
+
+def _primitive_title(text: str) -> bool:
+    return text.lower().replace("’", "'") in PRIMITIVE_TITLES
+
+
+def _primitive_title_prefix(key: str) -> bool:
+    return any(t == key or t.startswith(key + " ") for t in PRIMITIVE_TITLES)
+
+
+def _finds(pattern: Any, text: str) -> list[list[Any]]:
+    """``[start, end, matched]`` per match — the shape every port can produce."""
+    return [[m.start(), m.end(), m.group(0)] for m in pattern.finditer(text)]
+
+
+def build_primitives_document() -> dict[str, Any]:
+    """Every tokenisation and capitalisation primitive, over the shared corpus.
+
+    One entry per function, keyed by corpus name, so a failing port is told which
+    primitive disagrees on which input rather than which frame came out wrong.
+    """
+    from vicary import name_candidates as nc
+
+    corpus = PRIMITIVE_CORPUS
+    lists = PRIMITIVE_TOKEN_LISTS
+
+    def over_corpus(fn: Any) -> dict[str, Any]:
+        return {name: fn(text) for name, text in corpus.items()}
+
+    def over_lists(fn: Any) -> dict[str, Any]:
+        return {name: fn(tokens) for name, tokens in lists.items()}
+
+    def spans(fn: Any) -> Any:
+        return lambda text: [list(s) for s in fn(text)]
+
+    return {
+        "document_version": DOCUMENT_VERSION,
+        "corpus": corpus,
+        "token_lists": lists,
+        "stop_tokens": list(PRIMITIVE_STOP_TOKENS),
+        "oracles": {
+            "settlements": list(PRIMITIVE_SETTLEMENTS),
+            "titles": list(PRIMITIVE_TITLES),
+        },
+        "constants": {
+            "allcaps_run": nc._ALLCAPS_RUN,
+            "drops_capitals_min_rate": nc._DROPS_CAPITALS_MIN_RATE,
+            "heading_max_chars": nc._HEADING_MAX_CHARS,
+            "lowercase_min_tokens": nc._LOWERCASE_MIN_TOKENS,
+            "marks_proper_nouns_min": nc._MARKS_PROPER_NOUNS_MIN,
+            "stop_words": len(nc._STOP_WORDS),
+            "title_max_tokens": nc._TITLE_MAX_TOKENS,
+        },
+        "cases": {
+            "is_stop": {t: nc._is_stop(t) for t in PRIMITIVE_STOP_TOKENS},
+            "trim": over_lists(lambda t: nc._trim(t)),
+            "classify": over_lists(lambda t: nc._classify(t)),
+            "classify_with_settlement": over_lists(
+                lambda t: nc._classify(t, _primitive_settlement)
+            ),
+            "word_token": over_corpus(lambda x: _finds(nc._WORD_TOKEN, x)),
+            "lower_token": over_corpus(lambda x: _finds(nc._LOWER_TOKEN, x)),
+            "any_token": over_corpus(lambda x: _finds(nc._ANY_TOKEN, x)),
+            "candidate_re": over_corpus(lambda x: _finds(nc._CANDIDATE_RE, x)),
+            "protected": over_corpus(lambda x: _finds(nc._PROTECTED, x)),
+            "sentence_starts": over_corpus(lambda x: sorted(nc._sentence_starts(x))),
+            "emphasis_spans": over_corpus(spans(nc._emphasis_spans)),
+            "heading_spans": over_corpus(spans(nc._heading_spans)),
+            "title_spans": over_corpus(
+                lambda x: [
+                    list(s)
+                    for s in nc.find_title_spans(
+                        x, _primitive_title, _primitive_title_prefix
+                    )
+                ]
+            ),
+            "title_spans_requires_capital": over_corpus(
+                lambda x: [
+                    list(s)
+                    for s in nc.find_title_spans(
+                        x, _primitive_title, _primitive_title_prefix, True
+                    )
+                ]
+            ),
+            "capitalisation_habit": over_corpus(
+                lambda x: nc.capitalisation_habit(x).value
+            ),
+            "capitalisation_habit_with_headings": over_corpus(
+                lambda x: nc.capitalisation_habit(x, nc._heading_spans(x)).value
+            ),
+            "mid_sentence_capitals": over_corpus(
+                lambda x: sorted(nc._mid_sentence_capitals(x, nc._sentence_starts(x)))
+            ),
+            "mid_sentence_capitals_with_headings": over_corpus(
+                lambda x: sorted(
+                    nc._mid_sentence_capitals(
+                        x, nc._sentence_starts(x), nc._heading_spans(x)
+                    )
+                )
+            ),
+        },
+    }
 
 
 def build_frames_document() -> dict[str, Any]:
@@ -422,6 +648,7 @@ def main(argv: list[str] | None = None) -> int:
 
     frames_doc = dumps(build_frames_document())
     gates_doc = dumps(build_gates_document())
+    primitives_doc = dumps(build_primitives_document())
 
     if not args.write:
         print(frames_doc, end="")
@@ -434,8 +661,10 @@ def main(argv: list[str] | None = None) -> int:
     directory.mkdir(parents=True, exist_ok=True)
     (directory / FRAMES_FILENAME).write_text(frames_doc, encoding="utf-8")
     (directory / GATES_FILENAME).write_text(gates_doc, encoding="utf-8")
+    (directory / PRIMITIVES_FILENAME).write_text(primitives_doc, encoding="utf-8")
     print(f"wrote {directory / FRAMES_FILENAME}")
     print(f"wrote {directory / GATES_FILENAME}")
+    print(f"wrote {directory / PRIMITIVES_FILENAME}")
     return 0
 
 

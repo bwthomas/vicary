@@ -162,6 +162,40 @@ export function loadSpec(directory?: string): Spec {
   };
 }
 
+/**
+ * The primitives layer: the tokenisation and capitalisation answers a port must
+ * reproduce before any frame can come out right.
+ *
+ * Deliberately untyped past this shape. Every section is `caseName -> answer`,
+ * and the answer's type is whatever that primitive returns — spans, strings,
+ * booleans, nested token runs. A discriminated union over eighteen sections would
+ * be a transliteration of the generator's structure, which is the thing this file
+ * exists to avoid; the test compares with `deepEqual` and does not need to know.
+ */
+export interface Primitives {
+  corpus: Record<string, string>;
+  tokenLists: Record<string, string[]>;
+  stopTokens: string[];
+  oracles: { settlements: string[]; titles: string[] };
+  constants: Record<string, number>;
+  cases: Record<string, Record<string, unknown>>;
+}
+
+/** Load `conformance/primitives.json`. */
+export function loadPrimitives(directory?: string): Primitives {
+  const dir = directory ?? conformanceDir();
+  const raw = JSON.parse(readFileSync(join(dir, "primitives.json"), "utf8"));
+  requireVersion(raw.document_version, "primitives.json");
+  return {
+    corpus: raw.corpus as Record<string, string>,
+    tokenLists: raw.token_lists as Record<string, string[]>,
+    stopTokens: raw.stop_tokens as string[],
+    oracles: raw.oracles as { settlements: string[]; titles: string[] },
+    constants: raw.constants as Record<string, number>,
+    cases: raw.cases as Record<string, Record<string, unknown>>,
+  };
+}
+
 /** Load `conformance/gates.json`. */
 export function loadGates(directory?: string): GateSpec {
   const dir = directory ?? conformanceDir();

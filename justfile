@@ -129,6 +129,8 @@ sync-conformance:
 _conformance-check:
     @test -f conformance/frames.json \
       || { echo "conformance/frames.json is missing — there is no spec to run"; exit 1; }
+    @test -f conformance/primitives.json \
+      || { echo "conformance/primitives.json is missing — the ports would check their tokenisation against nothing"; exit 1; }
 
 # Everything CI runs, in CI's order.
 ci: lint test gates conformance

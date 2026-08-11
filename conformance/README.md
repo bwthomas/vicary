@@ -1,16 +1,55 @@
 # conformance — the spec all three front doors run against
 
-Two files, generated from the Python implementation and consumed by every port:
+Three files, generated from the Python implementation and consumed by every port:
 
 | file | what it is |
 |---|---|
 | `frames.json` | the 51 fixture frames, the student identity the detector is told, and the **golden output** the reference arm produces for each frame |
 | `gates.json` | the nine gates: what is measured, the bar, and which gates need data no package ships |
+| `primitives.json` | the tokenisation and capitalisation answers underneath a frame: 18 primitives over 27 texts and 12 token lists |
 
-Regenerate with `just sync-conformance`. Never hand-edit them: `frames.json` is
+Regenerate with `just sync-conformance`. Never hand-edit them: all three are
 compared byte-for-byte against a fresh export by
 `python/tests/test_conformance.py`, so an edit that is not a regeneration fails
 the build — which is the point.
+
+## Why there is a primitives layer as well as a frames layer
+
+`frames.json` scores finished output. That is the right *final* bar and a poor
+first one: a port with nothing implemented scores 0 of 35 and learns nothing about
+which of the forty-odd primitives underneath it is wrong. The TypeScript port paid
+that cost by hand — a throwaway probe that ran both implementations over a corpus
+and diffed the JSON. It found a real divergence no frame would have isolated
+(JavaScript's `\b` is ASCII-only where Python's is Unicode-aware, so a
+transliterated `\b[a-z]` matches `ve` inside `naïve`), and every later port would
+otherwise have re-derived the same expectations by hand. Hand-derived expectations
+are transcription, which is what this directory exists to prevent.
+
+So the probe became an export. `primitives.json` carries the corpus, the token
+lists, the stand-in oracles, the thresholds, and one answer per primitive per
+input.
+
+**It is not scored and it is not a gate.** A port can be green against it and mask
+nothing; the frames still decide whether a port works. This layer only says which
+brick is crooked, and says it in one run instead of a bisect — a failure names the
+primitive and the input, e.g. `lower_token[accented]`.
+
+Three things travel with it, each because leaving it out was a real way to be
+wrong:
+
+* **The oracles are data.** `settlements` and `titles` are stand-ins, not gazetteer
+  tiers, so a disagreeing primitive can never be confused with a disagreeing tier
+  lookup. Their semantics are exact and a port must match them: `is_settlement` is
+  `name.lower() in settlements`; `is_title` folds curly apostrophes to `'` and
+  lower-cases before the lookup; `is_title_prefix(key)` is true when some title
+  equals `key` or starts with `key + " "`.
+* **The thresholds are data.** A port that reads the corpus off this file and its
+  own thresholds off a literal it typed can pass every case here and still be tuned
+  differently, because the corpus may simply not contain the input that separates
+  2 from 3.
+* **The corpus reaches all four capitalisation states.** A state no example
+  produces is a state a port can get wrong for free — and `silent` is the one with
+  a written rule against reading it as consent.
 
 ## The bar
 

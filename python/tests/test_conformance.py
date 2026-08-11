@@ -85,6 +85,55 @@ def test_the_committed_gates_file_is_a_current_export(
     )
 
 
+def test_the_committed_primitives_file_is_a_current_export(
+    conformance_directory: Path,
+) -> None:
+    on_disk = (
+        conformance_directory / conformance.PRIMITIVES_FILENAME
+    ).read_text("utf-8")
+    fresh = conformance.dumps(conformance.build_primitives_document())
+    assert on_disk == fresh, (
+        "conformance/primitives.json is stale — a tokenisation or capitalisation "
+        "primitive changed and the file the ports check themselves against did "
+        "not. Regenerate with `just sync-conformance` and READ THE DIFF: unlike "
+        "`golden`, a change here is invisible in masked output until it reaches a "
+        "frame, so this file is where a port finds out first."
+    )
+
+
+def test_every_primitive_case_covers_the_whole_corpus() -> None:
+    """A section that skips an input is a hole no port can see.
+
+    The document is a lookup table, so a missing key reads to a port as "nothing
+    to check here" rather than as a gap. That is the same silent-shrinkage failure
+    the asset's declared tier counts exist to prevent, one layer up.
+    """
+    document = conformance.build_primitives_document()
+    corpus = set(document["corpus"])
+    lists = set(document["token_lists"])
+    over_lists = {"trim", "classify", "classify_with_settlement"}
+
+    for section, cases in document["cases"].items():
+        if section == "is_stop":
+            assert set(cases) == set(document["stop_tokens"]), section
+        elif section in over_lists:
+            assert set(cases) == lists, section
+        else:
+            assert set(cases) == corpus, section
+
+
+def test_the_primitive_corpus_exercises_every_capitalisation_state() -> None:
+    """Four states, and a corpus that reaches three of them pins three.
+
+    The state a corpus never produces is the state a port can get wrong for free —
+    and `silent` is the one with a written rule against reading it as consent, so
+    it is the one most worth having an example of.
+    """
+    document = conformance.build_primitives_document()
+    observed = set(document["cases"]["capitalisation_habit"].values())
+    assert observed == {"consistent", "inconsistent", "lowercase", "silent"}
+
+
 # ---------------------------------------------------------------------------
 # 2. The file is lossless.
 # ---------------------------------------------------------------------------

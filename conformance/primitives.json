@@ -1,0 +1,5382 @@
+{
+  "cases": {
+    "any_token": {
+      "accented": [
+        [
+          0,
+          2,
+          "na"
+        ],
+        [
+          3,
+          5,
+          "ve"
+        ],
+        [
+          6,
+          9,
+          "caf"
+        ],
+        [
+          11,
+          14,
+          "Ren"
+        ],
+        [
+          15,
+          16,
+          "e"
+        ],
+        [
+          17,
+          21,
+          "went"
+        ],
+        [
+          22,
+          26,
+          "home"
+        ],
+        [
+          28,
+          29,
+          "i"
+        ],
+        [
+          30,
+          33,
+          "did"
+        ],
+        [
+          34,
+          37,
+          "too"
+        ]
+      ],
+      "allcaps": [
+        [
+          0,
+          2,
+          "MY"
+        ],
+        [
+          3,
+          7,
+          "BEST"
+        ],
+        [
+          8,
+          14,
+          "FRIEND"
+        ],
+        [
+          15,
+          22,
+          "DESHAWN"
+        ],
+        [
+          23,
+          32,
+          "PRITCHARD"
+        ],
+        [
+          33,
+          38,
+          "WOULD"
+        ],
+        [
+          39,
+          44,
+          "NEVER"
+        ]
+      ],
+      "bare_i": [
+        [
+          0,
+          3,
+          "The"
+        ],
+        [
+          4,
+          7,
+          "Dog"
+        ],
+        [
+          8,
+          14,
+          "barked"
+        ],
+        [
+          15,
+          17,
+          "at"
+        ],
+        [
+          18,
+          25,
+          "Marisol"
+        ],
+        [
+          27,
+          28,
+          "i"
+        ],
+        [
+          29,
+          32,
+          "ran"
+        ],
+        [
+          34,
+          38,
+          "Then"
+        ],
+        [
+          39,
+          47,
+          "Terrence"
+        ],
+        [
+          48,
+          52,
+          "came"
+        ],
+        [
+          53,
+          57,
+          "over"
+        ]
+      ],
+      "below_floor": [
+        [
+          0,
+          3,
+          "The"
+        ],
+        [
+          4,
+          7,
+          "dog"
+        ],
+        [
+          8,
+          14,
+          "barked"
+        ],
+        [
+          16,
+          19,
+          "The"
+        ],
+        [
+          20,
+          23,
+          "cat"
+        ],
+        [
+          24,
+          27,
+          "ran"
+        ],
+        [
+          29,
+          32,
+          "The"
+        ],
+        [
+          33,
+          37,
+          "bird"
+        ],
+        [
+          38,
+          42,
+          "flew"
+        ],
+        [
+          44,
+          47,
+          "The"
+        ],
+        [
+          48,
+          52,
+          "fish"
+        ],
+        [
+          53,
+          57,
+          "swam"
+        ],
+        [
+          59,
+          62,
+          "The"
+        ],
+        [
+          63,
+          66,
+          "cow"
+        ],
+        [
+          67,
+          72,
+          "mooed"
+        ],
+        [
+          74,
+          77,
+          "The"
+        ],
+        [
+          78,
+          81,
+          "pig"
+        ],
+        [
+          82,
+          88,
+          "oinked"
+        ],
+        [
+          90,
+          93,
+          "The"
+        ],
+        [
+          94,
+          97,
+          "hen"
+        ],
+        [
+          98,
+          105,
+          "clucked"
+        ],
+        [
+          107,
+          110,
+          "The"
+        ],
+        [
+          111,
+          115,
+          "duck"
+        ],
+        [
+          116,
+          123,
+          "quacked"
+        ],
+        [
+          125,
+          128,
+          "The"
+        ],
+        [
+          129,
+          133,
+          "goat"
+        ],
+        [
+          134,
+          141,
+          "bleated"
+        ],
+        [
+          143,
+          146,
+          "The"
+        ],
+        [
+          147,
+          152,
+          "horse"
+        ],
+        [
+          153,
+          160,
+          "neighed"
+        ],
+        [
+          162,
+          165,
+          "the"
+        ],
+        [
+          166,
+          171,
+          "sheep"
+        ],
+        [
+          172,
+          177,
+          "baaed"
+        ]
+      ],
+      "empty": [],
+      "headings": [
+        [
+          0,
+          5,
+          "Horse"
+        ],
+        [
+          6,
+          14,
+          "Families"
+        ],
+        [
+          16,
+          19,
+          "The"
+        ],
+        [
+          20,
+          25,
+          "first"
+        ],
+        [
+          26,
+          32,
+          "horses"
+        ],
+        [
+          33,
+          37,
+          "were"
+        ],
+        [
+          38,
+          43,
+          "small"
+        ],
+        [
+          45,
+          49,
+          "They"
+        ],
+        [
+          50,
+          55,
+          "lived"
+        ],
+        [
+          56,
+          58,
+          "in"
+        ],
+        [
+          59,
+          64,
+          "herds"
+        ],
+        [
+          67,
+          73,
+          "Breeds"
+        ],
+        [
+          74,
+          75,
+          "I"
+        ],
+        [
+          76,
+          80,
+          "Like"
+        ],
+        [
+          82,
+          84,
+          "My"
+        ],
+        [
+          85,
+          94,
+          "favourite"
+        ],
+        [
+          95,
+          97,
+          "is"
+        ],
+        [
+          98,
+          101,
+          "the"
+        ],
+        [
+          102,
+          109,
+          "Arabian"
+        ]
+      ],
+      "honorific": [
+        [
+          0,
+          3,
+          "Mrs"
+        ],
+        [
+          5,
+          12,
+          "Okonkwo"
+        ],
+        [
+          13,
+          19,
+          "taught"
+        ],
+        [
+          20,
+          22,
+          "us"
+        ],
+        [
+          24,
+          26,
+          "Dr"
+        ],
+        [
+          27,
+          31,
+          "Ruiz"
+        ],
+        [
+          32,
+          35,
+          "did"
+        ],
+        [
+          36,
+          39,
+          "not"
+        ]
+      ],
+      "hyphen": [
+        [
+          0,
+          10,
+          "Marguerite"
+        ],
+        [
+          11,
+          30,
+          "Delacroix-Whitfield"
+        ],
+        [
+          31,
+          34,
+          "and"
+        ],
+        [
+          35,
+          42,
+          "O'Brien"
+        ],
+        [
+          43,
+          47,
+          "were"
+        ],
+        [
+          48,
+          53,
+          "there"
+        ]
+      ],
+      "inconsistent": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          9,
+          "cousin"
+        ],
+        [
+          10,
+          18,
+          "Terrence"
+        ],
+        [
+          19,
+          23,
+          "came"
+        ],
+        [
+          24,
+          28,
+          "over"
+        ],
+        [
+          30,
+          32,
+          "my"
+        ],
+        [
+          33,
+          37,
+          "aunt"
+        ],
+        [
+          38,
+          45,
+          "Marisol"
+        ],
+        [
+          46,
+          51,
+          "drove"
+        ],
+        [
+          53,
+          55,
+          "we"
+        ],
+        [
+          56,
+          60,
+          "went"
+        ],
+        [
+          61,
+          63,
+          "to"
+        ],
+        [
+          64,
+          69,
+          "Akron"
+        ],
+        [
+          71,
+          75,
+          "then"
+        ],
+        [
+          76,
+          83,
+          "Deshawn"
+        ],
+        [
+          84,
+          90,
+          "showed"
+        ],
+        [
+          91,
+          93,
+          "up"
+        ],
+        [
+          95,
+          96,
+          "i"
+        ],
+        [
+          97,
+          100,
+          "was"
+        ],
+        [
+          101,
+          106,
+          "tired"
+        ]
+      ],
+      "initials": [
+        [
+          0,
+          1,
+          "J"
+        ],
+        [
+          3,
+          4,
+          "R"
+        ],
+        [
+          6,
+          7,
+          "R"
+        ],
+        [
+          9,
+          16,
+          "Tolkien"
+        ],
+        [
+          17,
+          22,
+          "wrote"
+        ],
+        [
+          23,
+          25,
+          "it"
+        ],
+        [
+          27,
+          30,
+          "and"
+        ],
+        [
+          31,
+          33,
+          "so"
+        ],
+        [
+          34,
+          37,
+          "did"
+        ],
+        [
+          38,
+          39,
+          "T"
+        ],
+        [
+          40,
+          41,
+          "S"
+        ],
+        [
+          43,
+          48,
+          "Eliot"
+        ]
+      ],
+      "lowercase_writer": [
+        [
+          0,
+          4,
+          "then"
+        ],
+        [
+          5,
+          13,
+          "terrence"
+        ],
+        [
+          14,
+          21,
+          "okonkwo"
+        ],
+        [
+          22,
+          28,
+          "showed"
+        ],
+        [
+          29,
+          31,
+          "up"
+        ],
+        [
+          33,
+          34,
+          "i"
+        ],
+        [
+          35,
+          38,
+          "was"
+        ],
+        [
+          39,
+          41,
+          "so"
+        ],
+        [
+          42,
+          47,
+          "happy"
+        ],
+        [
+          49,
+          51,
+          "we"
+        ],
+        [
+          52,
+          56,
+          "went"
+        ],
+        [
+          57,
+          61,
+          "home"
+        ]
+      ],
+      "one_mark": [
+        [
+          0,
+          1,
+          "I"
+        ],
+        [
+          2,
+          5,
+          "met"
+        ],
+        [
+          6,
+          13,
+          "Marisol"
+        ],
+        [
+          14,
+          19,
+          "today"
+        ],
+        [
+          21,
+          24,
+          "She"
+        ],
+        [
+          25,
+          28,
+          "was"
+        ],
+        [
+          29,
+          33,
+          "nice"
+        ]
+      ],
+      "particle": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          14,
+          "inspiration"
+        ],
+        [
+          16,
+          23,
+          "Vincent"
+        ],
+        [
+          24,
+          27,
+          "van"
+        ],
+        [
+          28,
+          32,
+          "Gogh"
+        ],
+        [
+          34,
+          41,
+          "painted"
+        ],
+        [
+          42,
+          45,
+          "for"
+        ],
+        [
+          46,
+          51,
+          "years"
+        ]
+      ],
+      "plain": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          9,
+          "cousin"
+        ],
+        [
+          10,
+          18,
+          "Terrence"
+        ],
+        [
+          19,
+          26,
+          "Okonkwo"
+        ],
+        [
+          27,
+          31,
+          "came"
+        ],
+        [
+          32,
+          36,
+          "over"
+        ],
+        [
+          37,
+          41,
+          "that"
+        ],
+        [
+          42,
+          48,
+          "summer"
+        ]
+      ],
+      "possessive": [
+        [
+          0,
+          10,
+          "Terrence's"
+        ],
+        [
+          11,
+          16,
+          "older"
+        ],
+        [
+          17,
+          24,
+          "brother"
+        ],
+        [
+          26,
+          35,
+          "Narciso's"
+        ],
+        [
+          36,
+          42,
+          "friend"
+        ],
+        [
+          44,
+          47,
+          "and"
+        ],
+        [
+          48,
+          57,
+          "Lincoln’s"
+        ],
+        [
+          58,
+          61,
+          "hat"
+        ]
+      ],
+      "protected": [
+        [
+          1,
+          5,
+          "NAME"
+        ],
+        [
+          9,
+          12,
+          "met"
+        ],
+        [
+          14,
+          20,
+          "PERSON"
+        ],
+        [
+          22,
+          25,
+          "and"
+        ],
+        [
+          27,
+          35,
+          "LOCATION"
+        ],
+        [
+          37,
+          41,
+          "last"
+        ],
+        [
+          42,
+          46,
+          "June"
+        ]
+      ],
+      "quoted": [
+        [
+          0,
+          5,
+          "vivid"
+        ],
+        [
+          6,
+          11,
+          "words"
+        ],
+        [
+          12,
+          16,
+          "like"
+        ],
+        [
+          18,
+          25,
+          "Giggles"
+        ],
+        [
+          26,
+          32,
+          "filled"
+        ],
+        [
+          33,
+          36,
+          "the"
+        ],
+        [
+          37,
+          43,
+          "school"
+        ],
+        [
+          45,
+          50,
+          "stand"
+        ],
+        [
+          51,
+          54,
+          "out"
+        ]
+      ],
+      "shout": [
+        [
+          0,
+          4,
+          "Then"
+        ],
+        [
+          5,
+          9,
+          "SLAM"
+        ],
+        [
+          11,
+          14,
+          "the"
+        ],
+        [
+          15,
+          19,
+          "door"
+        ],
+        [
+          20,
+          26,
+          "closed"
+        ],
+        [
+          27,
+          30,
+          "and"
+        ],
+        [
+          31,
+          38,
+          "Marisol"
+        ],
+        [
+          39,
+          46,
+          "laughed"
+        ]
+      ],
+      "silent_prose": [
+        [
+          0,
+          7,
+          "Nothing"
+        ],
+        [
+          8,
+          12,
+          "here"
+        ],
+        [
+          13,
+          15,
+          "is"
+        ],
+        [
+          16,
+          27,
+          "capitalised"
+        ],
+        [
+          28,
+          31,
+          "mid"
+        ],
+        [
+          32,
+          40,
+          "sentence"
+        ],
+        [
+          41,
+          43,
+          "at"
+        ],
+        [
+          44,
+          47,
+          "all"
+        ],
+        [
+          49,
+          51,
+          "It"
+        ],
+        [
+          52,
+          54,
+          "is"
+        ],
+        [
+          55,
+          59,
+          "only"
+        ],
+        [
+          60,
+          65,
+          "prose"
+        ]
+      ],
+      "title_book": [
+        [
+          0,
+          1,
+          "I"
+        ],
+        [
+          2,
+          6,
+          "read"
+        ],
+        [
+          7,
+          9,
+          "To"
+        ],
+        [
+          10,
+          14,
+          "Kill"
+        ],
+        [
+          15,
+          16,
+          "a"
+        ],
+        [
+          17,
+          28,
+          "Mockingbird"
+        ],
+        [
+          29,
+          33,
+          "last"
+        ],
+        [
+          34,
+          38,
+          "year"
+        ]
+      ],
+      "title_curly": [
+        [
+          0,
+          2,
+          "We"
+        ],
+        [
+          3,
+          7,
+          "read"
+        ],
+        [
+          8,
+          19,
+          "Charlotte’s"
+        ],
+        [
+          20,
+          23,
+          "Web"
+        ],
+        [
+          24,
+          26,
+          "in"
+        ],
+        [
+          27,
+          32,
+          "class"
+        ]
+      ],
+      "title_lower": [
+        [
+          0,
+          1,
+          "i"
+        ],
+        [
+          2,
+          6,
+          "read"
+        ],
+        [
+          7,
+          9,
+          "to"
+        ],
+        [
+          10,
+          14,
+          "kill"
+        ],
+        [
+          15,
+          16,
+          "a"
+        ],
+        [
+          17,
+          28,
+          "mockingbird"
+        ],
+        [
+          29,
+          33,
+          "last"
+        ],
+        [
+          34,
+          38,
+          "year"
+        ]
+      ],
+      "title_nested": [
+        [
+          0,
+          3,
+          "The"
+        ],
+        [
+          4,
+          8,
+          "Lion"
+        ],
+        [
+          9,
+          13,
+          "King"
+        ],
+        [
+          14,
+          16,
+          "is"
+        ],
+        [
+          17,
+          19,
+          "my"
+        ],
+        [
+          20,
+          29,
+          "favourite"
+        ],
+        [
+          30,
+          34,
+          "film"
+        ]
+      ],
+      "title_none": [
+        [
+          0,
+          7,
+          "Nothing"
+        ],
+        [
+          8,
+          12,
+          "here"
+        ],
+        [
+          13,
+          20,
+          "matches"
+        ],
+        [
+          21,
+          24,
+          "any"
+        ],
+        [
+          25,
+          30,
+          "title"
+        ],
+        [
+          31,
+          33,
+          "at"
+        ],
+        [
+          34,
+          37,
+          "all"
+        ]
+      ],
+      "two_marks": [
+        [
+          0,
+          1,
+          "I"
+        ],
+        [
+          2,
+          5,
+          "met"
+        ],
+        [
+          6,
+          13,
+          "Marisol"
+        ],
+        [
+          14,
+          19,
+          "today"
+        ],
+        [
+          21,
+          22,
+          "I"
+        ],
+        [
+          23,
+          27,
+          "also"
+        ],
+        [
+          28,
+          31,
+          "saw"
+        ],
+        [
+          32,
+          39,
+          "Deshawn"
+        ],
+        [
+          40,
+          45,
+          "there"
+        ]
+      ],
+      "typo_capitaliser": [
+        [
+          0,
+          7,
+          "Marisol"
+        ],
+        [
+          8,
+          12,
+          "went"
+        ],
+        [
+          13,
+          15,
+          "to"
+        ],
+        [
+          16,
+          21,
+          "Akron"
+        ],
+        [
+          23,
+          26,
+          "She"
+        ],
+        [
+          27,
+          30,
+          "met"
+        ],
+        [
+          31,
+          38,
+          "Deshawn"
+        ],
+        [
+          40,
+          44,
+          "They"
+        ],
+        [
+          45,
+          48,
+          "saw"
+        ],
+        [
+          49,
+          57,
+          "Terrence"
+        ],
+        [
+          59,
+          61,
+          "We"
+        ],
+        [
+          62,
+          67,
+          "drove"
+        ],
+        [
+          68,
+          72,
+          "home"
+        ],
+        [
+          74,
+          77,
+          "She"
+        ],
+        [
+          78,
+          83,
+          "waved"
+        ],
+        [
+          85,
+          87,
+          "He"
+        ],
+        [
+          88,
+          94,
+          "smiled"
+        ],
+        [
+          96,
+          100,
+          "They"
+        ],
+        [
+          101,
+          105,
+          "left"
+        ],
+        [
+          107,
+          109,
+          "It"
+        ],
+        [
+          110,
+          116,
+          "rained"
+        ],
+        [
+          118,
+          120,
+          "We"
+        ],
+        [
+          121,
+          126,
+          "slept"
+        ],
+        [
+          128,
+          131,
+          "boy"
+        ],
+        [
+          132,
+          135,
+          "did"
+        ],
+        [
+          136,
+          138,
+          "we"
+        ],
+        [
+          139,
+          144,
+          "laugh"
+        ],
+        [
+          146,
+          149,
+          "She"
+        ],
+        [
+          150,
+          156,
+          "called"
+        ],
+        [
+          157,
+          162,
+          "again"
+        ],
+        [
+          164,
+          166,
+          "He"
+        ],
+        [
+          167,
+          175,
+          "answered"
+        ]
+      ],
+      "wrapped": [
+        [
+          0,
+          3,
+          "The"
+        ],
+        [
+          4,
+          12,
+          "INternet"
+        ],
+        [
+          13,
+          15,
+          "as"
+        ],
+        [
+          16,
+          18,
+          "we"
+        ],
+        [
+          19,
+          23,
+          "know"
+        ],
+        [
+          24,
+          26,
+          "it"
+        ],
+        [
+          27,
+          32,
+          "today"
+        ],
+        [
+          33,
+          38,
+          "first"
+        ],
+        [
+          39,
+          47,
+          "appeared"
+        ],
+        [
+          48,
+          50,
+          "in"
+        ],
+        [
+          51,
+          52,
+          "a"
+        ],
+        [
+          53,
+          56,
+          "lab"
+        ],
+        [
+          57,
+          59,
+          "in"
+        ],
+        [
+          60,
+          64,
+          "Ohio"
+        ]
+      ]
+    },
+    "candidate_re": {
+      "accented": [
+        [
+          11,
+          14,
+          "Ren"
+        ]
+      ],
+      "allcaps": [
+        [
+          0,
+          44,
+          "MY BEST FRIEND DESHAWN PRITCHARD WOULD NEVER"
+        ]
+      ],
+      "bare_i": [
+        [
+          0,
+          7,
+          "The Dog"
+        ],
+        [
+          18,
+          25,
+          "Marisol"
+        ],
+        [
+          34,
+          47,
+          "Then Terrence"
+        ]
+      ],
+      "below_floor": [
+        [
+          0,
+          3,
+          "The"
+        ],
+        [
+          16,
+          19,
+          "The"
+        ],
+        [
+          29,
+          32,
+          "The"
+        ],
+        [
+          44,
+          47,
+          "The"
+        ],
+        [
+          59,
+          62,
+          "The"
+        ],
+        [
+          74,
+          77,
+          "The"
+        ],
+        [
+          90,
+          93,
+          "The"
+        ],
+        [
+          107,
+          110,
+          "The"
+        ],
+        [
+          125,
+          128,
+          "The"
+        ],
+        [
+          143,
+          146,
+          "The"
+        ]
+      ],
+      "empty": [],
+      "headings": [
+        [
+          0,
+          19,
+          "Horse Families\n\nThe"
+        ],
+        [
+          45,
+          49,
+          "They"
+        ],
+        [
+          67,
+          84,
+          "Breeds I Like\n\nMy"
+        ],
+        [
+          102,
+          109,
+          "Arabian"
+        ]
+      ],
+      "honorific": [
+        [
+          0,
+          12,
+          "Mrs. Okonkwo"
+        ],
+        [
+          24,
+          31,
+          "Dr Ruiz"
+        ]
+      ],
+      "hyphen": [
+        [
+          0,
+          30,
+          "Marguerite Delacroix-Whitfield"
+        ],
+        [
+          35,
+          42,
+          "O'Brien"
+        ]
+      ],
+      "inconsistent": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          10,
+          18,
+          "Terrence"
+        ],
+        [
+          38,
+          45,
+          "Marisol"
+        ],
+        [
+          64,
+          69,
+          "Akron"
+        ],
+        [
+          76,
+          83,
+          "Deshawn"
+        ]
+      ],
+      "initials": [
+        [
+          0,
+          16,
+          "J. R. R. Tolkien"
+        ],
+        [
+          38,
+          48,
+          "T.S. Eliot"
+        ]
+      ],
+      "lowercase_writer": [],
+      "one_mark": [
+        [
+          0,
+          1,
+          "I"
+        ],
+        [
+          6,
+          13,
+          "Marisol"
+        ],
+        [
+          21,
+          24,
+          "She"
+        ]
+      ],
+      "particle": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          16,
+          32,
+          "Vincent van Gogh"
+        ]
+      ],
+      "plain": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          10,
+          26,
+          "Terrence Okonkwo"
+        ]
+      ],
+      "possessive": [
+        [
+          0,
+          10,
+          "Terrence's"
+        ],
+        [
+          26,
+          35,
+          "Narciso's"
+        ],
+        [
+          48,
+          57,
+          "Lincoln’s"
+        ]
+      ],
+      "protected": [
+        [
+          1,
+          5,
+          "NAME"
+        ],
+        [
+          14,
+          20,
+          "PERSON"
+        ],
+        [
+          27,
+          35,
+          "LOCATION"
+        ],
+        [
+          42,
+          46,
+          "June"
+        ]
+      ],
+      "quoted": [
+        [
+          18,
+          25,
+          "Giggles"
+        ]
+      ],
+      "shout": [
+        [
+          0,
+          9,
+          "Then SLAM"
+        ],
+        [
+          31,
+          38,
+          "Marisol"
+        ]
+      ],
+      "silent_prose": [
+        [
+          0,
+          7,
+          "Nothing"
+        ],
+        [
+          49,
+          51,
+          "It"
+        ]
+      ],
+      "title_book": [
+        [
+          0,
+          1,
+          "I"
+        ],
+        [
+          7,
+          14,
+          "To Kill"
+        ],
+        [
+          17,
+          28,
+          "Mockingbird"
+        ]
+      ],
+      "title_curly": [
+        [
+          0,
+          2,
+          "We"
+        ],
+        [
+          8,
+          23,
+          "Charlotte’s Web"
+        ]
+      ],
+      "title_lower": [],
+      "title_nested": [
+        [
+          0,
+          13,
+          "The Lion King"
+        ]
+      ],
+      "title_none": [
+        [
+          0,
+          7,
+          "Nothing"
+        ]
+      ],
+      "two_marks": [
+        [
+          0,
+          1,
+          "I"
+        ],
+        [
+          6,
+          13,
+          "Marisol"
+        ],
+        [
+          21,
+          22,
+          "I"
+        ],
+        [
+          32,
+          39,
+          "Deshawn"
+        ]
+      ],
+      "typo_capitaliser": [
+        [
+          0,
+          7,
+          "Marisol"
+        ],
+        [
+          16,
+          21,
+          "Akron"
+        ],
+        [
+          23,
+          26,
+          "She"
+        ],
+        [
+          31,
+          38,
+          "Deshawn"
+        ],
+        [
+          40,
+          44,
+          "They"
+        ],
+        [
+          49,
+          57,
+          "Terrence"
+        ],
+        [
+          59,
+          61,
+          "We"
+        ],
+        [
+          74,
+          77,
+          "She"
+        ],
+        [
+          85,
+          87,
+          "He"
+        ],
+        [
+          96,
+          100,
+          "They"
+        ],
+        [
+          107,
+          109,
+          "It"
+        ],
+        [
+          118,
+          120,
+          "We"
+        ],
+        [
+          146,
+          149,
+          "She"
+        ],
+        [
+          164,
+          166,
+          "He"
+        ]
+      ],
+      "wrapped": [
+        [
+          0,
+          12,
+          "The INternet"
+        ],
+        [
+          60,
+          64,
+          "Ohio"
+        ]
+      ]
+    },
+    "capitalisation_habit": {
+      "accented": "lowercase",
+      "allcaps": "silent",
+      "bare_i": "inconsistent",
+      "below_floor": "lowercase",
+      "empty": "silent",
+      "headings": "consistent",
+      "honorific": "silent",
+      "hyphen": "silent",
+      "inconsistent": "inconsistent",
+      "initials": "silent",
+      "lowercase_writer": "lowercase",
+      "one_mark": "silent",
+      "particle": "consistent",
+      "plain": "consistent",
+      "possessive": "consistent",
+      "protected": "silent",
+      "quoted": "lowercase",
+      "shout": "lowercase",
+      "silent_prose": "silent",
+      "title_book": "consistent",
+      "title_curly": "consistent",
+      "title_lower": "lowercase",
+      "title_nested": "consistent",
+      "title_none": "silent",
+      "two_marks": "consistent",
+      "typo_capitaliser": "consistent",
+      "wrapped": "silent"
+    },
+    "capitalisation_habit_with_headings": {
+      "accented": "lowercase",
+      "allcaps": "silent",
+      "bare_i": "inconsistent",
+      "below_floor": "lowercase",
+      "empty": "silent",
+      "headings": "silent",
+      "honorific": "silent",
+      "hyphen": "silent",
+      "inconsistent": "inconsistent",
+      "initials": "silent",
+      "lowercase_writer": "lowercase",
+      "one_mark": "silent",
+      "particle": "consistent",
+      "plain": "consistent",
+      "possessive": "consistent",
+      "protected": "silent",
+      "quoted": "lowercase",
+      "shout": "lowercase",
+      "silent_prose": "silent",
+      "title_book": "consistent",
+      "title_curly": "consistent",
+      "title_lower": "lowercase",
+      "title_nested": "consistent",
+      "title_none": "silent",
+      "two_marks": "consistent",
+      "typo_capitaliser": "consistent",
+      "wrapped": "silent"
+    },
+    "classify": {
+      "allcaps_run": "NAME",
+      "bare_honorific": "NAME",
+      "civic": "NAME",
+      "honorific_and_name": "NAME",
+      "honorific_then_stop": "NAME",
+      "interior_stop": "NAME",
+      "landmark": "NAME",
+      "org_suffix": "ORGANIZATION",
+      "school": "ORGANIZATION",
+      "settlement": "NAME",
+      "township": "NAME",
+      "two_names": "NAME"
+    },
+    "classify_with_settlement": {
+      "allcaps_run": "NAME",
+      "bare_honorific": "NAME",
+      "civic": "LOCATION",
+      "honorific_and_name": "NAME",
+      "honorific_then_stop": "NAME",
+      "interior_stop": "NAME",
+      "landmark": "NAME",
+      "org_suffix": "ORGANIZATION",
+      "school": "ORGANIZATION",
+      "settlement": "LOCATION",
+      "township": "LOCATION",
+      "two_names": "NAME"
+    },
+    "emphasis_spans": {
+      "accented": [],
+      "allcaps": [],
+      "bare_i": [],
+      "below_floor": [],
+      "empty": [],
+      "headings": [],
+      "honorific": [],
+      "hyphen": [],
+      "inconsistent": [],
+      "initials": [],
+      "lowercase_writer": [],
+      "one_mark": [],
+      "particle": [],
+      "plain": [],
+      "possessive": [],
+      "protected": [
+        [
+          1,
+          5
+        ],
+        [
+          14,
+          20
+        ],
+        [
+          27,
+          35
+        ]
+      ],
+      "quoted": [],
+      "shout": [
+        [
+          5,
+          9
+        ]
+      ],
+      "silent_prose": [],
+      "title_book": [],
+      "title_curly": [],
+      "title_lower": [],
+      "title_nested": [],
+      "title_none": [],
+      "two_marks": [],
+      "typo_capitaliser": [],
+      "wrapped": []
+    },
+    "heading_spans": {
+      "accented": [],
+      "allcaps": [],
+      "bare_i": [],
+      "below_floor": [],
+      "empty": [],
+      "headings": [
+        [
+          0,
+          14
+        ],
+        [
+          67,
+          80
+        ]
+      ],
+      "honorific": [],
+      "hyphen": [],
+      "inconsistent": [],
+      "initials": [],
+      "lowercase_writer": [],
+      "one_mark": [],
+      "particle": [],
+      "plain": [],
+      "possessive": [],
+      "protected": [],
+      "quoted": [
+        [
+          0,
+          54
+        ]
+      ],
+      "shout": [],
+      "silent_prose": [],
+      "title_book": [],
+      "title_curly": [],
+      "title_lower": [],
+      "title_nested": [],
+      "title_none": [],
+      "two_marks": [],
+      "typo_capitaliser": [],
+      "wrapped": [
+        [
+          0,
+          38
+        ]
+      ]
+    },
+    "is_stop": {
+      "'": false,
+      "'s": false,
+      "A": true,
+      "As": true,
+      "Coach": false,
+      "Dr": true,
+      "Favorite": true,
+      "I": true,
+      "I'm": true,
+      "It's": true,
+      "I’m": true,
+      "Mrs": true,
+      "Mrs.": true,
+      "Okonkwo": false,
+      "SLAM": false,
+      "Terrence": false,
+      "The": true,
+      "Won't": false,
+      "Won’t": false,
+      "a": true,
+      "dont": true,
+      "favorite": true,
+      "he'd": true,
+      "im": true,
+      "n't": false,
+      "thats": true,
+      "the": true
+    },
+    "lower_token": {
+      "accented": [
+        [
+          0,
+          2,
+          "na"
+        ],
+        [
+          6,
+          9,
+          "caf"
+        ],
+        [
+          17,
+          21,
+          "went"
+        ],
+        [
+          22,
+          26,
+          "home"
+        ],
+        [
+          28,
+          29,
+          "i"
+        ],
+        [
+          30,
+          33,
+          "did"
+        ],
+        [
+          34,
+          37,
+          "too"
+        ]
+      ],
+      "allcaps": [],
+      "bare_i": [
+        [
+          8,
+          14,
+          "barked"
+        ],
+        [
+          15,
+          17,
+          "at"
+        ],
+        [
+          27,
+          28,
+          "i"
+        ],
+        [
+          29,
+          32,
+          "ran"
+        ],
+        [
+          48,
+          52,
+          "came"
+        ],
+        [
+          53,
+          57,
+          "over"
+        ]
+      ],
+      "below_floor": [
+        [
+          4,
+          7,
+          "dog"
+        ],
+        [
+          8,
+          14,
+          "barked"
+        ],
+        [
+          20,
+          23,
+          "cat"
+        ],
+        [
+          24,
+          27,
+          "ran"
+        ],
+        [
+          33,
+          37,
+          "bird"
+        ],
+        [
+          38,
+          42,
+          "flew"
+        ],
+        [
+          48,
+          52,
+          "fish"
+        ],
+        [
+          53,
+          57,
+          "swam"
+        ],
+        [
+          63,
+          66,
+          "cow"
+        ],
+        [
+          67,
+          72,
+          "mooed"
+        ],
+        [
+          78,
+          81,
+          "pig"
+        ],
+        [
+          82,
+          88,
+          "oinked"
+        ],
+        [
+          94,
+          97,
+          "hen"
+        ],
+        [
+          98,
+          105,
+          "clucked"
+        ],
+        [
+          111,
+          115,
+          "duck"
+        ],
+        [
+          116,
+          123,
+          "quacked"
+        ],
+        [
+          129,
+          133,
+          "goat"
+        ],
+        [
+          134,
+          141,
+          "bleated"
+        ],
+        [
+          147,
+          152,
+          "horse"
+        ],
+        [
+          153,
+          160,
+          "neighed"
+        ],
+        [
+          162,
+          165,
+          "the"
+        ],
+        [
+          166,
+          171,
+          "sheep"
+        ],
+        [
+          172,
+          177,
+          "baaed"
+        ]
+      ],
+      "empty": [],
+      "headings": [
+        [
+          20,
+          25,
+          "first"
+        ],
+        [
+          26,
+          32,
+          "horses"
+        ],
+        [
+          33,
+          37,
+          "were"
+        ],
+        [
+          38,
+          43,
+          "small"
+        ],
+        [
+          50,
+          55,
+          "lived"
+        ],
+        [
+          56,
+          58,
+          "in"
+        ],
+        [
+          59,
+          64,
+          "herds"
+        ],
+        [
+          85,
+          94,
+          "favourite"
+        ],
+        [
+          95,
+          97,
+          "is"
+        ],
+        [
+          98,
+          101,
+          "the"
+        ]
+      ],
+      "honorific": [
+        [
+          13,
+          19,
+          "taught"
+        ],
+        [
+          20,
+          22,
+          "us"
+        ],
+        [
+          32,
+          35,
+          "did"
+        ],
+        [
+          36,
+          39,
+          "not"
+        ]
+      ],
+      "hyphen": [
+        [
+          31,
+          34,
+          "and"
+        ],
+        [
+          43,
+          47,
+          "were"
+        ],
+        [
+          48,
+          53,
+          "there"
+        ]
+      ],
+      "inconsistent": [
+        [
+          3,
+          9,
+          "cousin"
+        ],
+        [
+          19,
+          23,
+          "came"
+        ],
+        [
+          24,
+          28,
+          "over"
+        ],
+        [
+          30,
+          32,
+          "my"
+        ],
+        [
+          33,
+          37,
+          "aunt"
+        ],
+        [
+          46,
+          51,
+          "drove"
+        ],
+        [
+          53,
+          55,
+          "we"
+        ],
+        [
+          56,
+          60,
+          "went"
+        ],
+        [
+          61,
+          63,
+          "to"
+        ],
+        [
+          71,
+          75,
+          "then"
+        ],
+        [
+          84,
+          90,
+          "showed"
+        ],
+        [
+          91,
+          93,
+          "up"
+        ],
+        [
+          95,
+          96,
+          "i"
+        ],
+        [
+          97,
+          100,
+          "was"
+        ],
+        [
+          101,
+          106,
+          "tired"
+        ]
+      ],
+      "initials": [
+        [
+          17,
+          22,
+          "wrote"
+        ],
+        [
+          23,
+          25,
+          "it"
+        ],
+        [
+          27,
+          30,
+          "and"
+        ],
+        [
+          31,
+          33,
+          "so"
+        ],
+        [
+          34,
+          37,
+          "did"
+        ]
+      ],
+      "lowercase_writer": [
+        [
+          0,
+          4,
+          "then"
+        ],
+        [
+          5,
+          13,
+          "terrence"
+        ],
+        [
+          14,
+          21,
+          "okonkwo"
+        ],
+        [
+          22,
+          28,
+          "showed"
+        ],
+        [
+          29,
+          31,
+          "up"
+        ],
+        [
+          33,
+          34,
+          "i"
+        ],
+        [
+          35,
+          38,
+          "was"
+        ],
+        [
+          39,
+          41,
+          "so"
+        ],
+        [
+          42,
+          47,
+          "happy"
+        ],
+        [
+          49,
+          51,
+          "we"
+        ],
+        [
+          52,
+          56,
+          "went"
+        ],
+        [
+          57,
+          61,
+          "home"
+        ]
+      ],
+      "one_mark": [
+        [
+          2,
+          5,
+          "met"
+        ],
+        [
+          14,
+          19,
+          "today"
+        ],
+        [
+          25,
+          28,
+          "was"
+        ],
+        [
+          29,
+          33,
+          "nice"
+        ]
+      ],
+      "particle": [
+        [
+          3,
+          14,
+          "inspiration"
+        ],
+        [
+          24,
+          27,
+          "van"
+        ],
+        [
+          34,
+          41,
+          "painted"
+        ],
+        [
+          42,
+          45,
+          "for"
+        ],
+        [
+          46,
+          51,
+          "years"
+        ]
+      ],
+      "plain": [
+        [
+          3,
+          9,
+          "cousin"
+        ],
+        [
+          27,
+          31,
+          "came"
+        ],
+        [
+          32,
+          36,
+          "over"
+        ],
+        [
+          37,
+          41,
+          "that"
+        ],
+        [
+          42,
+          48,
+          "summer"
+        ]
+      ],
+      "possessive": [
+        [
+          9,
+          10,
+          "s"
+        ],
+        [
+          11,
+          16,
+          "older"
+        ],
+        [
+          17,
+          24,
+          "brother"
+        ],
+        [
+          34,
+          35,
+          "s"
+        ],
+        [
+          36,
+          42,
+          "friend"
+        ],
+        [
+          44,
+          47,
+          "and"
+        ],
+        [
+          56,
+          57,
+          "s"
+        ],
+        [
+          58,
+          61,
+          "hat"
+        ]
+      ],
+      "protected": [
+        [
+          9,
+          12,
+          "met"
+        ],
+        [
+          22,
+          25,
+          "and"
+        ],
+        [
+          37,
+          41,
+          "last"
+        ]
+      ],
+      "quoted": [
+        [
+          0,
+          5,
+          "vivid"
+        ],
+        [
+          6,
+          11,
+          "words"
+        ],
+        [
+          12,
+          16,
+          "like"
+        ],
+        [
+          26,
+          32,
+          "filled"
+        ],
+        [
+          33,
+          36,
+          "the"
+        ],
+        [
+          37,
+          43,
+          "school"
+        ],
+        [
+          45,
+          50,
+          "stand"
+        ],
+        [
+          51,
+          54,
+          "out"
+        ]
+      ],
+      "shout": [
+        [
+          11,
+          14,
+          "the"
+        ],
+        [
+          15,
+          19,
+          "door"
+        ],
+        [
+          20,
+          26,
+          "closed"
+        ],
+        [
+          27,
+          30,
+          "and"
+        ],
+        [
+          39,
+          46,
+          "laughed"
+        ]
+      ],
+      "silent_prose": [
+        [
+          8,
+          12,
+          "here"
+        ],
+        [
+          13,
+          15,
+          "is"
+        ],
+        [
+          16,
+          27,
+          "capitalised"
+        ],
+        [
+          28,
+          31,
+          "mid"
+        ],
+        [
+          32,
+          40,
+          "sentence"
+        ],
+        [
+          41,
+          43,
+          "at"
+        ],
+        [
+          44,
+          47,
+          "all"
+        ],
+        [
+          52,
+          54,
+          "is"
+        ],
+        [
+          55,
+          59,
+          "only"
+        ],
+        [
+          60,
+          65,
+          "prose"
+        ]
+      ],
+      "title_book": [
+        [
+          2,
+          6,
+          "read"
+        ],
+        [
+          15,
+          16,
+          "a"
+        ],
+        [
+          29,
+          33,
+          "last"
+        ],
+        [
+          34,
+          38,
+          "year"
+        ]
+      ],
+      "title_curly": [
+        [
+          3,
+          7,
+          "read"
+        ],
+        [
+          18,
+          19,
+          "s"
+        ],
+        [
+          24,
+          26,
+          "in"
+        ],
+        [
+          27,
+          32,
+          "class"
+        ]
+      ],
+      "title_lower": [
+        [
+          0,
+          1,
+          "i"
+        ],
+        [
+          2,
+          6,
+          "read"
+        ],
+        [
+          7,
+          9,
+          "to"
+        ],
+        [
+          10,
+          14,
+          "kill"
+        ],
+        [
+          15,
+          16,
+          "a"
+        ],
+        [
+          17,
+          28,
+          "mockingbird"
+        ],
+        [
+          29,
+          33,
+          "last"
+        ],
+        [
+          34,
+          38,
+          "year"
+        ]
+      ],
+      "title_nested": [
+        [
+          14,
+          16,
+          "is"
+        ],
+        [
+          17,
+          19,
+          "my"
+        ],
+        [
+          20,
+          29,
+          "favourite"
+        ],
+        [
+          30,
+          34,
+          "film"
+        ]
+      ],
+      "title_none": [
+        [
+          8,
+          12,
+          "here"
+        ],
+        [
+          13,
+          20,
+          "matches"
+        ],
+        [
+          21,
+          24,
+          "any"
+        ],
+        [
+          25,
+          30,
+          "title"
+        ],
+        [
+          31,
+          33,
+          "at"
+        ],
+        [
+          34,
+          37,
+          "all"
+        ]
+      ],
+      "two_marks": [
+        [
+          2,
+          5,
+          "met"
+        ],
+        [
+          14,
+          19,
+          "today"
+        ],
+        [
+          23,
+          27,
+          "also"
+        ],
+        [
+          28,
+          31,
+          "saw"
+        ],
+        [
+          40,
+          45,
+          "there"
+        ]
+      ],
+      "typo_capitaliser": [
+        [
+          8,
+          12,
+          "went"
+        ],
+        [
+          13,
+          15,
+          "to"
+        ],
+        [
+          27,
+          30,
+          "met"
+        ],
+        [
+          45,
+          48,
+          "saw"
+        ],
+        [
+          62,
+          67,
+          "drove"
+        ],
+        [
+          68,
+          72,
+          "home"
+        ],
+        [
+          78,
+          83,
+          "waved"
+        ],
+        [
+          88,
+          94,
+          "smiled"
+        ],
+        [
+          101,
+          105,
+          "left"
+        ],
+        [
+          110,
+          116,
+          "rained"
+        ],
+        [
+          121,
+          126,
+          "slept"
+        ],
+        [
+          128,
+          131,
+          "boy"
+        ],
+        [
+          132,
+          135,
+          "did"
+        ],
+        [
+          136,
+          138,
+          "we"
+        ],
+        [
+          139,
+          144,
+          "laugh"
+        ],
+        [
+          150,
+          156,
+          "called"
+        ],
+        [
+          157,
+          162,
+          "again"
+        ],
+        [
+          167,
+          175,
+          "answered"
+        ]
+      ],
+      "wrapped": [
+        [
+          13,
+          15,
+          "as"
+        ],
+        [
+          16,
+          18,
+          "we"
+        ],
+        [
+          19,
+          23,
+          "know"
+        ],
+        [
+          24,
+          26,
+          "it"
+        ],
+        [
+          27,
+          32,
+          "today"
+        ],
+        [
+          33,
+          38,
+          "first"
+        ],
+        [
+          39,
+          47,
+          "appeared"
+        ],
+        [
+          48,
+          50,
+          "in"
+        ],
+        [
+          51,
+          52,
+          "a"
+        ],
+        [
+          53,
+          56,
+          "lab"
+        ],
+        [
+          57,
+          59,
+          "in"
+        ]
+      ]
+    },
+    "mid_sentence_capitals": {
+      "accented": [
+        "ren"
+      ],
+      "allcaps": [],
+      "bare_i": [
+        "dog",
+        "marisol",
+        "terrence"
+      ],
+      "below_floor": [],
+      "empty": [],
+      "headings": [
+        "arabian",
+        "families",
+        "i",
+        "like"
+      ],
+      "honorific": [
+        "ruiz"
+      ],
+      "hyphen": [
+        "delacroix-whitfield",
+        "o'brien"
+      ],
+      "inconsistent": [
+        "akron",
+        "deshawn",
+        "marisol",
+        "terrence"
+      ],
+      "initials": [
+        "s",
+        "t"
+      ],
+      "lowercase_writer": [],
+      "one_mark": [
+        "marisol"
+      ],
+      "particle": [
+        "gogh",
+        "vincent"
+      ],
+      "plain": [
+        "okonkwo",
+        "terrence"
+      ],
+      "possessive": [
+        "lincoln’s",
+        "narciso's"
+      ],
+      "protected": [
+        "june"
+      ],
+      "quoted": [],
+      "shout": [
+        "marisol"
+      ],
+      "silent_prose": [],
+      "title_book": [
+        "kill",
+        "mockingbird",
+        "to"
+      ],
+      "title_curly": [
+        "charlotte’s",
+        "web"
+      ],
+      "title_lower": [],
+      "title_nested": [
+        "king",
+        "lion"
+      ],
+      "title_none": [],
+      "two_marks": [
+        "deshawn",
+        "marisol"
+      ],
+      "typo_capitaliser": [
+        "akron",
+        "deshawn",
+        "terrence"
+      ],
+      "wrapped": [
+        "internet",
+        "ohio"
+      ]
+    },
+    "mid_sentence_capitals_with_headings": {
+      "accented": [
+        "ren"
+      ],
+      "allcaps": [],
+      "bare_i": [
+        "dog",
+        "marisol",
+        "terrence"
+      ],
+      "below_floor": [],
+      "empty": [],
+      "headings": [
+        "arabian"
+      ],
+      "honorific": [
+        "ruiz"
+      ],
+      "hyphen": [
+        "delacroix-whitfield",
+        "o'brien"
+      ],
+      "inconsistent": [
+        "akron",
+        "deshawn",
+        "marisol",
+        "terrence"
+      ],
+      "initials": [
+        "s",
+        "t"
+      ],
+      "lowercase_writer": [],
+      "one_mark": [
+        "marisol"
+      ],
+      "particle": [
+        "gogh",
+        "vincent"
+      ],
+      "plain": [
+        "okonkwo",
+        "terrence"
+      ],
+      "possessive": [
+        "lincoln’s",
+        "narciso's"
+      ],
+      "protected": [
+        "june"
+      ],
+      "quoted": [],
+      "shout": [
+        "marisol"
+      ],
+      "silent_prose": [],
+      "title_book": [
+        "kill",
+        "mockingbird",
+        "to"
+      ],
+      "title_curly": [
+        "charlotte’s",
+        "web"
+      ],
+      "title_lower": [],
+      "title_nested": [
+        "king",
+        "lion"
+      ],
+      "title_none": [],
+      "two_marks": [
+        "deshawn",
+        "marisol"
+      ],
+      "typo_capitaliser": [
+        "akron",
+        "deshawn",
+        "terrence"
+      ],
+      "wrapped": [
+        "ohio"
+      ]
+    },
+    "protected": {
+      "accented": [],
+      "allcaps": [],
+      "bare_i": [],
+      "below_floor": [],
+      "empty": [],
+      "headings": [],
+      "honorific": [],
+      "hyphen": [],
+      "inconsistent": [],
+      "initials": [],
+      "lowercase_writer": [],
+      "one_mark": [],
+      "particle": [],
+      "plain": [],
+      "possessive": [],
+      "protected": [
+        [
+          0,
+          8,
+          "{NAME_1}"
+        ],
+        [
+          13,
+          21,
+          "@PERSON2"
+        ],
+        [
+          26,
+          36,
+          "{LOCATION}"
+        ]
+      ],
+      "quoted": [],
+      "shout": [],
+      "silent_prose": [],
+      "title_book": [],
+      "title_curly": [],
+      "title_lower": [],
+      "title_nested": [],
+      "title_none": [],
+      "two_marks": [],
+      "typo_capitaliser": [],
+      "wrapped": []
+    },
+    "sentence_starts": {
+      "accented": [
+        0,
+        28
+      ],
+      "allcaps": [
+        0
+      ],
+      "bare_i": [
+        0,
+        27,
+        34
+      ],
+      "below_floor": [
+        0,
+        16,
+        29,
+        44,
+        59,
+        74,
+        90,
+        107,
+        125,
+        143,
+        162
+      ],
+      "empty": [
+        0
+      ],
+      "headings": [
+        0,
+        16,
+        45,
+        67,
+        82
+      ],
+      "honorific": [
+        0,
+        5,
+        24
+      ],
+      "hyphen": [
+        0
+      ],
+      "inconsistent": [
+        0,
+        30,
+        53,
+        71,
+        95
+      ],
+      "initials": [
+        0,
+        3,
+        6,
+        9,
+        43
+      ],
+      "lowercase_writer": [
+        0,
+        33,
+        49
+      ],
+      "one_mark": [
+        0,
+        21
+      ],
+      "particle": [
+        0
+      ],
+      "plain": [
+        0
+      ],
+      "possessive": [
+        0
+      ],
+      "protected": [
+        0
+      ],
+      "quoted": [
+        0,
+        18
+      ],
+      "shout": [
+        0,
+        11
+      ],
+      "silent_prose": [
+        0,
+        49
+      ],
+      "title_book": [
+        0
+      ],
+      "title_curly": [
+        0
+      ],
+      "title_lower": [
+        0
+      ],
+      "title_nested": [
+        0
+      ],
+      "title_none": [
+        0
+      ],
+      "two_marks": [
+        0,
+        21
+      ],
+      "typo_capitaliser": [
+        0,
+        23,
+        40,
+        59,
+        74,
+        85,
+        96,
+        107,
+        118,
+        128,
+        146,
+        164
+      ],
+      "wrapped": [
+        0,
+        39
+      ]
+    },
+    "title_spans": {
+      "accented": [],
+      "allcaps": [],
+      "bare_i": [],
+      "below_floor": [],
+      "empty": [],
+      "headings": [],
+      "honorific": [],
+      "hyphen": [],
+      "inconsistent": [],
+      "initials": [],
+      "lowercase_writer": [],
+      "one_mark": [],
+      "particle": [],
+      "plain": [],
+      "possessive": [],
+      "protected": [],
+      "quoted": [],
+      "shout": [],
+      "silent_prose": [],
+      "title_book": [
+        [
+          7,
+          28
+        ]
+      ],
+      "title_curly": [
+        [
+          8,
+          23
+        ]
+      ],
+      "title_lower": [
+        [
+          7,
+          28
+        ]
+      ],
+      "title_nested": [
+        [
+          0,
+          13
+        ]
+      ],
+      "title_none": [],
+      "two_marks": [],
+      "typo_capitaliser": [],
+      "wrapped": []
+    },
+    "title_spans_requires_capital": {
+      "accented": [],
+      "allcaps": [],
+      "bare_i": [],
+      "below_floor": [],
+      "empty": [],
+      "headings": [],
+      "honorific": [],
+      "hyphen": [],
+      "inconsistent": [],
+      "initials": [],
+      "lowercase_writer": [],
+      "one_mark": [],
+      "particle": [],
+      "plain": [],
+      "possessive": [],
+      "protected": [],
+      "quoted": [],
+      "shout": [],
+      "silent_prose": [],
+      "title_book": [
+        [
+          7,
+          28
+        ]
+      ],
+      "title_curly": [
+        [
+          8,
+          23
+        ]
+      ],
+      "title_lower": [],
+      "title_nested": [
+        [
+          0,
+          13
+        ]
+      ],
+      "title_none": [],
+      "two_marks": [],
+      "typo_capitaliser": [],
+      "wrapped": []
+    },
+    "trim": {
+      "allcaps_run": [
+        [
+          "Deshawn",
+          "Pritchard"
+        ]
+      ],
+      "bare_honorific": [],
+      "civic": [
+        [
+          "Akron",
+          "Public",
+          "Library"
+        ]
+      ],
+      "honorific_and_name": [
+        [
+          "Mrs.",
+          "Okonkwo"
+        ]
+      ],
+      "honorific_then_stop": [],
+      "interior_stop": [
+        [
+          "Coach",
+          "Ruiz"
+        ],
+        [
+          "Marisol"
+        ]
+      ],
+      "landmark": [
+        [
+          "Lincoln",
+          "Memorial"
+        ]
+      ],
+      "org_suffix": [
+        [
+          "Acme",
+          "Inc."
+        ]
+      ],
+      "school": [
+        [
+          "Westfield"
+        ]
+      ],
+      "settlement": [
+        [
+          "Akron"
+        ]
+      ],
+      "township": [
+        [
+          "Springfield",
+          "Township"
+        ]
+      ],
+      "two_names": [
+        [
+          "Terrence",
+          "Okonkwo"
+        ]
+      ]
+    },
+    "word_token": {
+      "accented": [
+        [
+          0,
+          2,
+          "na"
+        ],
+        [
+          3,
+          5,
+          "ve"
+        ],
+        [
+          6,
+          9,
+          "caf"
+        ],
+        [
+          11,
+          14,
+          "Ren"
+        ],
+        [
+          15,
+          16,
+          "e"
+        ],
+        [
+          17,
+          21,
+          "went"
+        ],
+        [
+          22,
+          26,
+          "home"
+        ],
+        [
+          28,
+          29,
+          "i"
+        ],
+        [
+          30,
+          33,
+          "did"
+        ],
+        [
+          34,
+          37,
+          "too"
+        ]
+      ],
+      "allcaps": [
+        [
+          0,
+          2,
+          "MY"
+        ],
+        [
+          3,
+          7,
+          "BEST"
+        ],
+        [
+          8,
+          14,
+          "FRIEND"
+        ],
+        [
+          15,
+          22,
+          "DESHAWN"
+        ],
+        [
+          23,
+          32,
+          "PRITCHARD"
+        ],
+        [
+          33,
+          38,
+          "WOULD"
+        ],
+        [
+          39,
+          44,
+          "NEVER"
+        ]
+      ],
+      "bare_i": [
+        [
+          0,
+          3,
+          "The"
+        ],
+        [
+          4,
+          7,
+          "Dog"
+        ],
+        [
+          8,
+          14,
+          "barked"
+        ],
+        [
+          15,
+          17,
+          "at"
+        ],
+        [
+          18,
+          25,
+          "Marisol"
+        ],
+        [
+          27,
+          28,
+          "i"
+        ],
+        [
+          29,
+          32,
+          "ran"
+        ],
+        [
+          34,
+          38,
+          "Then"
+        ],
+        [
+          39,
+          47,
+          "Terrence"
+        ],
+        [
+          48,
+          52,
+          "came"
+        ],
+        [
+          53,
+          57,
+          "over"
+        ]
+      ],
+      "below_floor": [
+        [
+          0,
+          3,
+          "The"
+        ],
+        [
+          4,
+          7,
+          "dog"
+        ],
+        [
+          8,
+          14,
+          "barked"
+        ],
+        [
+          16,
+          19,
+          "The"
+        ],
+        [
+          20,
+          23,
+          "cat"
+        ],
+        [
+          24,
+          27,
+          "ran"
+        ],
+        [
+          29,
+          32,
+          "The"
+        ],
+        [
+          33,
+          37,
+          "bird"
+        ],
+        [
+          38,
+          42,
+          "flew"
+        ],
+        [
+          44,
+          47,
+          "The"
+        ],
+        [
+          48,
+          52,
+          "fish"
+        ],
+        [
+          53,
+          57,
+          "swam"
+        ],
+        [
+          59,
+          62,
+          "The"
+        ],
+        [
+          63,
+          66,
+          "cow"
+        ],
+        [
+          67,
+          72,
+          "mooed"
+        ],
+        [
+          74,
+          77,
+          "The"
+        ],
+        [
+          78,
+          81,
+          "pig"
+        ],
+        [
+          82,
+          88,
+          "oinked"
+        ],
+        [
+          90,
+          93,
+          "The"
+        ],
+        [
+          94,
+          97,
+          "hen"
+        ],
+        [
+          98,
+          105,
+          "clucked"
+        ],
+        [
+          107,
+          110,
+          "The"
+        ],
+        [
+          111,
+          115,
+          "duck"
+        ],
+        [
+          116,
+          123,
+          "quacked"
+        ],
+        [
+          125,
+          128,
+          "The"
+        ],
+        [
+          129,
+          133,
+          "goat"
+        ],
+        [
+          134,
+          141,
+          "bleated"
+        ],
+        [
+          143,
+          146,
+          "The"
+        ],
+        [
+          147,
+          152,
+          "horse"
+        ],
+        [
+          153,
+          160,
+          "neighed"
+        ],
+        [
+          162,
+          165,
+          "the"
+        ],
+        [
+          166,
+          171,
+          "sheep"
+        ],
+        [
+          172,
+          177,
+          "baaed"
+        ]
+      ],
+      "empty": [],
+      "headings": [
+        [
+          0,
+          5,
+          "Horse"
+        ],
+        [
+          6,
+          14,
+          "Families"
+        ],
+        [
+          16,
+          19,
+          "The"
+        ],
+        [
+          20,
+          25,
+          "first"
+        ],
+        [
+          26,
+          32,
+          "horses"
+        ],
+        [
+          33,
+          37,
+          "were"
+        ],
+        [
+          38,
+          43,
+          "small"
+        ],
+        [
+          45,
+          49,
+          "They"
+        ],
+        [
+          50,
+          55,
+          "lived"
+        ],
+        [
+          56,
+          58,
+          "in"
+        ],
+        [
+          59,
+          64,
+          "herds"
+        ],
+        [
+          67,
+          73,
+          "Breeds"
+        ],
+        [
+          74,
+          75,
+          "I"
+        ],
+        [
+          76,
+          80,
+          "Like"
+        ],
+        [
+          82,
+          84,
+          "My"
+        ],
+        [
+          85,
+          94,
+          "favourite"
+        ],
+        [
+          95,
+          97,
+          "is"
+        ],
+        [
+          98,
+          101,
+          "the"
+        ],
+        [
+          102,
+          109,
+          "Arabian"
+        ]
+      ],
+      "honorific": [
+        [
+          0,
+          3,
+          "Mrs"
+        ],
+        [
+          5,
+          12,
+          "Okonkwo"
+        ],
+        [
+          13,
+          19,
+          "taught"
+        ],
+        [
+          20,
+          22,
+          "us"
+        ],
+        [
+          24,
+          26,
+          "Dr"
+        ],
+        [
+          27,
+          31,
+          "Ruiz"
+        ],
+        [
+          32,
+          35,
+          "did"
+        ],
+        [
+          36,
+          39,
+          "not"
+        ]
+      ],
+      "hyphen": [
+        [
+          0,
+          10,
+          "Marguerite"
+        ],
+        [
+          11,
+          30,
+          "Delacroix-Whitfield"
+        ],
+        [
+          31,
+          34,
+          "and"
+        ],
+        [
+          35,
+          42,
+          "O'Brien"
+        ],
+        [
+          43,
+          47,
+          "were"
+        ],
+        [
+          48,
+          53,
+          "there"
+        ]
+      ],
+      "inconsistent": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          9,
+          "cousin"
+        ],
+        [
+          10,
+          18,
+          "Terrence"
+        ],
+        [
+          19,
+          23,
+          "came"
+        ],
+        [
+          24,
+          28,
+          "over"
+        ],
+        [
+          30,
+          32,
+          "my"
+        ],
+        [
+          33,
+          37,
+          "aunt"
+        ],
+        [
+          38,
+          45,
+          "Marisol"
+        ],
+        [
+          46,
+          51,
+          "drove"
+        ],
+        [
+          53,
+          55,
+          "we"
+        ],
+        [
+          56,
+          60,
+          "went"
+        ],
+        [
+          61,
+          63,
+          "to"
+        ],
+        [
+          64,
+          69,
+          "Akron"
+        ],
+        [
+          71,
+          75,
+          "then"
+        ],
+        [
+          76,
+          83,
+          "Deshawn"
+        ],
+        [
+          84,
+          90,
+          "showed"
+        ],
+        [
+          91,
+          93,
+          "up"
+        ],
+        [
+          95,
+          96,
+          "i"
+        ],
+        [
+          97,
+          100,
+          "was"
+        ],
+        [
+          101,
+          106,
+          "tired"
+        ]
+      ],
+      "initials": [
+        [
+          0,
+          1,
+          "J"
+        ],
+        [
+          3,
+          4,
+          "R"
+        ],
+        [
+          6,
+          7,
+          "R"
+        ],
+        [
+          9,
+          16,
+          "Tolkien"
+        ],
+        [
+          17,
+          22,
+          "wrote"
+        ],
+        [
+          23,
+          25,
+          "it"
+        ],
+        [
+          27,
+          30,
+          "and"
+        ],
+        [
+          31,
+          33,
+          "so"
+        ],
+        [
+          34,
+          37,
+          "did"
+        ],
+        [
+          38,
+          39,
+          "T"
+        ],
+        [
+          40,
+          41,
+          "S"
+        ],
+        [
+          43,
+          48,
+          "Eliot"
+        ]
+      ],
+      "lowercase_writer": [
+        [
+          0,
+          4,
+          "then"
+        ],
+        [
+          5,
+          13,
+          "terrence"
+        ],
+        [
+          14,
+          21,
+          "okonkwo"
+        ],
+        [
+          22,
+          28,
+          "showed"
+        ],
+        [
+          29,
+          31,
+          "up"
+        ],
+        [
+          33,
+          34,
+          "i"
+        ],
+        [
+          35,
+          38,
+          "was"
+        ],
+        [
+          39,
+          41,
+          "so"
+        ],
+        [
+          42,
+          47,
+          "happy"
+        ],
+        [
+          49,
+          51,
+          "we"
+        ],
+        [
+          52,
+          56,
+          "went"
+        ],
+        [
+          57,
+          61,
+          "home"
+        ]
+      ],
+      "one_mark": [
+        [
+          0,
+          1,
+          "I"
+        ],
+        [
+          2,
+          5,
+          "met"
+        ],
+        [
+          6,
+          13,
+          "Marisol"
+        ],
+        [
+          14,
+          19,
+          "today"
+        ],
+        [
+          21,
+          24,
+          "She"
+        ],
+        [
+          25,
+          28,
+          "was"
+        ],
+        [
+          29,
+          33,
+          "nice"
+        ]
+      ],
+      "particle": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          14,
+          "inspiration"
+        ],
+        [
+          16,
+          23,
+          "Vincent"
+        ],
+        [
+          24,
+          27,
+          "van"
+        ],
+        [
+          28,
+          32,
+          "Gogh"
+        ],
+        [
+          34,
+          41,
+          "painted"
+        ],
+        [
+          42,
+          45,
+          "for"
+        ],
+        [
+          46,
+          51,
+          "years"
+        ]
+      ],
+      "plain": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          9,
+          "cousin"
+        ],
+        [
+          10,
+          18,
+          "Terrence"
+        ],
+        [
+          19,
+          26,
+          "Okonkwo"
+        ],
+        [
+          27,
+          31,
+          "came"
+        ],
+        [
+          32,
+          36,
+          "over"
+        ],
+        [
+          37,
+          41,
+          "that"
+        ],
+        [
+          42,
+          48,
+          "summer"
+        ]
+      ],
+      "possessive": [
+        [
+          0,
+          10,
+          "Terrence's"
+        ],
+        [
+          11,
+          16,
+          "older"
+        ],
+        [
+          17,
+          24,
+          "brother"
+        ],
+        [
+          26,
+          35,
+          "Narciso's"
+        ],
+        [
+          36,
+          42,
+          "friend"
+        ],
+        [
+          44,
+          47,
+          "and"
+        ],
+        [
+          48,
+          57,
+          "Lincoln’s"
+        ],
+        [
+          58,
+          61,
+          "hat"
+        ]
+      ],
+      "protected": [
+        [
+          1,
+          5,
+          "NAME"
+        ],
+        [
+          9,
+          12,
+          "met"
+        ],
+        [
+          14,
+          20,
+          "PERSON"
+        ],
+        [
+          22,
+          25,
+          "and"
+        ],
+        [
+          27,
+          35,
+          "LOCATION"
+        ],
+        [
+          37,
+          41,
+          "last"
+        ],
+        [
+          42,
+          46,
+          "June"
+        ]
+      ],
+      "quoted": [
+        [
+          0,
+          5,
+          "vivid"
+        ],
+        [
+          6,
+          11,
+          "words"
+        ],
+        [
+          12,
+          16,
+          "like"
+        ],
+        [
+          18,
+          25,
+          "Giggles"
+        ],
+        [
+          26,
+          32,
+          "filled"
+        ],
+        [
+          33,
+          36,
+          "the"
+        ],
+        [
+          37,
+          43,
+          "school"
+        ],
+        [
+          45,
+          50,
+          "stand"
+        ],
+        [
+          51,
+          54,
+          "out"
+        ]
+      ],
+      "shout": [
+        [
+          0,
+          4,
+          "Then"
+        ],
+        [
+          5,
+          9,
+          "SLAM"
+        ],
+        [
+          11,
+          14,
+          "the"
+        ],
+        [
+          15,
+          19,
+          "door"
+        ],
+        [
+          20,
+          26,
+          "closed"
+        ],
+        [
+          27,
+          30,
+          "and"
+        ],
+        [
+          31,
+          38,
+          "Marisol"
+        ],
+        [
+          39,
+          46,
+          "laughed"
+        ]
+      ],
+      "silent_prose": [
+        [
+          0,
+          7,
+          "Nothing"
+        ],
+        [
+          8,
+          12,
+          "here"
+        ],
+        [
+          13,
+          15,
+          "is"
+        ],
+        [
+          16,
+          27,
+          "capitalised"
+        ],
+        [
+          28,
+          31,
+          "mid"
+        ],
+        [
+          32,
+          40,
+          "sentence"
+        ],
+        [
+          41,
+          43,
+          "at"
+        ],
+        [
+          44,
+          47,
+          "all"
+        ],
+        [
+          49,
+          51,
+          "It"
+        ],
+        [
+          52,
+          54,
+          "is"
+        ],
+        [
+          55,
+          59,
+          "only"
+        ],
+        [
+          60,
+          65,
+          "prose"
+        ]
+      ],
+      "title_book": [
+        [
+          0,
+          1,
+          "I"
+        ],
+        [
+          2,
+          6,
+          "read"
+        ],
+        [
+          7,
+          9,
+          "To"
+        ],
+        [
+          10,
+          14,
+          "Kill"
+        ],
+        [
+          15,
+          16,
+          "a"
+        ],
+        [
+          17,
+          28,
+          "Mockingbird"
+        ],
+        [
+          29,
+          33,
+          "last"
+        ],
+        [
+          34,
+          38,
+          "year"
+        ]
+      ],
+      "title_curly": [
+        [
+          0,
+          2,
+          "We"
+        ],
+        [
+          3,
+          7,
+          "read"
+        ],
+        [
+          8,
+          19,
+          "Charlotte’s"
+        ],
+        [
+          20,
+          23,
+          "Web"
+        ],
+        [
+          24,
+          26,
+          "in"
+        ],
+        [
+          27,
+          32,
+          "class"
+        ]
+      ],
+      "title_lower": [
+        [
+          0,
+          1,
+          "i"
+        ],
+        [
+          2,
+          6,
+          "read"
+        ],
+        [
+          7,
+          9,
+          "to"
+        ],
+        [
+          10,
+          14,
+          "kill"
+        ],
+        [
+          15,
+          16,
+          "a"
+        ],
+        [
+          17,
+          28,
+          "mockingbird"
+        ],
+        [
+          29,
+          33,
+          "last"
+        ],
+        [
+          34,
+          38,
+          "year"
+        ]
+      ],
+      "title_nested": [
+        [
+          0,
+          3,
+          "The"
+        ],
+        [
+          4,
+          8,
+          "Lion"
+        ],
+        [
+          9,
+          13,
+          "King"
+        ],
+        [
+          14,
+          16,
+          "is"
+        ],
+        [
+          17,
+          19,
+          "my"
+        ],
+        [
+          20,
+          29,
+          "favourite"
+        ],
+        [
+          30,
+          34,
+          "film"
+        ]
+      ],
+      "title_none": [
+        [
+          0,
+          7,
+          "Nothing"
+        ],
+        [
+          8,
+          12,
+          "here"
+        ],
+        [
+          13,
+          20,
+          "matches"
+        ],
+        [
+          21,
+          24,
+          "any"
+        ],
+        [
+          25,
+          30,
+          "title"
+        ],
+        [
+          31,
+          33,
+          "at"
+        ],
+        [
+          34,
+          37,
+          "all"
+        ]
+      ],
+      "two_marks": [
+        [
+          0,
+          1,
+          "I"
+        ],
+        [
+          2,
+          5,
+          "met"
+        ],
+        [
+          6,
+          13,
+          "Marisol"
+        ],
+        [
+          14,
+          19,
+          "today"
+        ],
+        [
+          21,
+          22,
+          "I"
+        ],
+        [
+          23,
+          27,
+          "also"
+        ],
+        [
+          28,
+          31,
+          "saw"
+        ],
+        [
+          32,
+          39,
+          "Deshawn"
+        ],
+        [
+          40,
+          45,
+          "there"
+        ]
+      ],
+      "typo_capitaliser": [
+        [
+          0,
+          7,
+          "Marisol"
+        ],
+        [
+          8,
+          12,
+          "went"
+        ],
+        [
+          13,
+          15,
+          "to"
+        ],
+        [
+          16,
+          21,
+          "Akron"
+        ],
+        [
+          23,
+          26,
+          "She"
+        ],
+        [
+          27,
+          30,
+          "met"
+        ],
+        [
+          31,
+          38,
+          "Deshawn"
+        ],
+        [
+          40,
+          44,
+          "They"
+        ],
+        [
+          45,
+          48,
+          "saw"
+        ],
+        [
+          49,
+          57,
+          "Terrence"
+        ],
+        [
+          59,
+          61,
+          "We"
+        ],
+        [
+          62,
+          67,
+          "drove"
+        ],
+        [
+          68,
+          72,
+          "home"
+        ],
+        [
+          74,
+          77,
+          "She"
+        ],
+        [
+          78,
+          83,
+          "waved"
+        ],
+        [
+          85,
+          87,
+          "He"
+        ],
+        [
+          88,
+          94,
+          "smiled"
+        ],
+        [
+          96,
+          100,
+          "They"
+        ],
+        [
+          101,
+          105,
+          "left"
+        ],
+        [
+          107,
+          109,
+          "It"
+        ],
+        [
+          110,
+          116,
+          "rained"
+        ],
+        [
+          118,
+          120,
+          "We"
+        ],
+        [
+          121,
+          126,
+          "slept"
+        ],
+        [
+          128,
+          131,
+          "boy"
+        ],
+        [
+          132,
+          135,
+          "did"
+        ],
+        [
+          136,
+          138,
+          "we"
+        ],
+        [
+          139,
+          144,
+          "laugh"
+        ],
+        [
+          146,
+          149,
+          "She"
+        ],
+        [
+          150,
+          156,
+          "called"
+        ],
+        [
+          157,
+          162,
+          "again"
+        ],
+        [
+          164,
+          166,
+          "He"
+        ],
+        [
+          167,
+          175,
+          "answered"
+        ]
+      ],
+      "wrapped": [
+        [
+          0,
+          3,
+          "The"
+        ],
+        [
+          4,
+          12,
+          "INternet"
+        ],
+        [
+          13,
+          15,
+          "as"
+        ],
+        [
+          16,
+          18,
+          "we"
+        ],
+        [
+          19,
+          23,
+          "know"
+        ],
+        [
+          24,
+          26,
+          "it"
+        ],
+        [
+          27,
+          32,
+          "today"
+        ],
+        [
+          33,
+          38,
+          "first"
+        ],
+        [
+          39,
+          47,
+          "appeared"
+        ],
+        [
+          48,
+          50,
+          "in"
+        ],
+        [
+          51,
+          52,
+          "a"
+        ],
+        [
+          53,
+          56,
+          "lab"
+        ],
+        [
+          57,
+          59,
+          "in"
+        ],
+        [
+          60,
+          64,
+          "Ohio"
+        ]
+      ]
+    }
+  },
+  "constants": {
+    "allcaps_run": 3,
+    "drops_capitals_min_rate": 0.1,
+    "heading_max_chars": 60,
+    "lowercase_min_tokens": 2,
+    "marks_proper_nouns_min": 2,
+    "stop_words": 421,
+    "title_max_tokens": 8
+  },
+  "corpus": {
+    "accented": "naïve café Renée went home. i did too.",
+    "allcaps": "MY BEST FRIEND DESHAWN PRITCHARD WOULD NEVER.",
+    "bare_i": "The Dog barked at Marisol. i ran. Then Terrence came over.",
+    "below_floor": "The dog barked. The cat ran. The bird flew. The fish swam. The cow mooed. The pig oinked. The hen clucked. The duck quacked. The goat bleated. The horse neighed. the sheep baaed.",
+    "empty": "",
+    "headings": "Horse Families\n\nThe first horses were small. They lived in herds.\n\nBreeds I Like\n\nMy favourite is the Arabian.",
+    "honorific": "Mrs. Okonkwo taught us. Dr Ruiz did not.",
+    "hyphen": "Marguerite Delacroix-Whitfield and O'Brien were there.",
+    "inconsistent": "My cousin Terrence came over. my aunt Marisol drove. we went to Akron. then Deshawn showed up. i was tired.",
+    "initials": "J. R. R. Tolkien wrote it, and so did T.S. Eliot.",
+    "lowercase_writer": "then terrence okonkwo showed up. i was so happy. we went home.",
+    "one_mark": "I met Marisol today. She was nice.",
+    "particle": "My inspiration, Vincent van Gogh, painted for years.",
+    "plain": "My cousin Terrence Okonkwo came over that summer.",
+    "possessive": "Terrence's older brother, Narciso's friend, and Lincoln’s hat.",
+    "protected": "{NAME_1} met @PERSON2 and {LOCATION} last June.",
+    "quoted": "vivid words like \"Giggles filled the school\" stand out",
+    "shout": "Then SLAM! the door closed and Marisol laughed.",
+    "silent_prose": "Nothing here is capitalised mid sentence at all. It is only prose.",
+    "title_book": "I read To Kill a Mockingbird last year.",
+    "title_curly": "We read Charlotte’s Web in class.",
+    "title_lower": "i read to kill a mockingbird last year.",
+    "title_nested": "The Lion King is my favourite film.",
+    "title_none": "Nothing here matches any title at all.",
+    "two_marks": "I met Marisol today. I also saw Deshawn there.",
+    "typo_capitaliser": "Marisol went to Akron. She met Deshawn. They saw Terrence. We drove home. She waved. He smiled. They left. It rained. We slept. boy did we laugh. She called again. He answered.",
+    "wrapped": "The INternet as we know it today first\nappeared in a lab in Ohio."
+  },
+  "document_version": 1,
+  "oracles": {
+    "settlements": [
+      "acme inc.",
+      "akron",
+      "akron public library",
+      "springfield township",
+      "westfield high school"
+    ],
+    "titles": [
+      "charlotte's web",
+      "the lion",
+      "the lion king",
+      "to kill a mockingbird"
+    ]
+  },
+  "stop_tokens": [
+    "The",
+    "the",
+    "Mrs.",
+    "Mrs",
+    "I'm",
+    "I’m",
+    "As",
+    "Terrence",
+    "Okonkwo",
+    "im",
+    "dont",
+    "thats",
+    "n't",
+    "'s",
+    "Dr",
+    "Coach",
+    "SLAM",
+    "a",
+    "A",
+    "Won't",
+    "Won’t",
+    "he'd",
+    "'",
+    "It's",
+    "Favorite",
+    "favorite",
+    "I"
+  ],
+  "token_lists": {
+    "allcaps_run": [
+      "My",
+      "Best",
+      "Friend",
+      "Deshawn",
+      "Pritchard",
+      "Would",
+      "Never"
+    ],
+    "bare_honorific": [
+      "Mrs."
+    ],
+    "civic": [
+      "Akron",
+      "Public",
+      "Library"
+    ],
+    "honorific_and_name": [
+      "Mrs.",
+      "Okonkwo"
+    ],
+    "honorific_then_stop": [
+      "Dr",
+      "The"
+    ],
+    "interior_stop": [
+      "Coach",
+      "Ruiz",
+      "And",
+      "Marisol"
+    ],
+    "landmark": [
+      "The",
+      "Lincoln",
+      "Memorial"
+    ],
+    "org_suffix": [
+      "Acme",
+      "Inc."
+    ],
+    "school": [
+      "Westfield",
+      "High",
+      "School"
+    ],
+    "settlement": [
+      "Akron"
+    ],
+    "township": [
+      "Springfield",
+      "Township"
+    ],
+    "two_names": [
+      "Terrence",
+      "Okonkwo"
+    ]
+  }
+}
