@@ -12,8 +12,8 @@ and it answers in single-digit milliseconds.
 | front door | package | status |
 |---|---|---|
 | Python | [`vicary`](https://pypi.org/project/vicary/) on PyPI | **published**, 9 of 9 gates PASS — see [`python/`](python/) |
-| TypeScript | `vicary` on npm | detector complete, **36 of 36**, 5 of 5 measurable gates PASS; unpublished — see [`typescript/`](typescript/) |
-| Ruby | `vicary` on RubyGems | detector complete, **36 of 36**; unpublished — see [`ruby/`](ruby/) |
+| TypeScript | `vicary` on npm | detector complete, **36 of 36**, 5 of 5 measurable gates PASS; unpublished — npm refuses the unscoped name as too similar to `vary`, and the appeal is open — see [`typescript/`](typescript/) |
+| Ruby | [`vicary`](https://rubygems.org/gems/vicary) on RubyGems | **published**, **36 of 36** — see [`ruby/`](ruby/) |
 
 That fraction is the number of masking-required fixture frames the port reproduces
 byte-for-byte, printed by every `npm test` / `rake test` run and ratcheted by it.
