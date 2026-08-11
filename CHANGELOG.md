@@ -9,9 +9,12 @@ patterns that had never matched anything now do.
 **Breaking for anybody who imported `vicary.build` or ran `vicary-assets fetch`.**
 Neither exists. Rebuilding the gazetteer is `just asset-fetch` from a checkout.
 
-**One deliberate change to detector output since 0.1.1**, described below: a span
-that is both a known settlement and landmark-shaped is now redacted. Every other
-byte of masked output on the conformance frames is unchanged.
+**Three deliberate changes to detector output since 0.1.1**, described below: a
+span that is both a known settlement and landmark-shaped is now redacted rather
+than kept; a settlement carrying an organisation suffix types `{LOCATION}` rather
+than `{ORGANIZATION}`; and a sentence-initial possessive can be vouched for by the
+writer's own capitalisation. Only the first changes any *verdict*. No conformance
+frame's masked output moved for any of the three.
 
 ### A hometown that ends in a landmark suffix is redacted, not kept
 
