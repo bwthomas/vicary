@@ -25,7 +25,7 @@ require "vicary"
 
 class ConformanceTest < Minitest::Test
   # Raise this when detector work lands. Never lower it to make a build pass.
-  MATCHED_REQUIRING_MASKING_RATCHET = 0
+  MATCHED_REQUIRING_MASKING_RATCHET = 36
 
   def self.board
     @board ||= begin
@@ -103,15 +103,54 @@ class ConformanceTest < Minitest::Test
   end
 
   def test_every_frame_matches_the_reference_output_byte_for_byte
+    # Was a `skip` while the detector was unported — reported every run, failing
+    # none. It is a hard assertion now that all 52 match: the completeness item
+    # existed to keep the gap visible, and a gap that is closed should fail the
+    # build if it reopens rather than go back to being a note.
     board = self.class.board
     failures = board.outcomes.reject(&:matched).map do |o|
       "#{o.frame_id}: expected #{o.expected.inspect}, got #{o.produced.inspect}" \
         "#{o.error ? " (#{o.error})" : ''}"
     end
-    if failures.any?
-      skip "the detector is not ported yet — #{failures.size} of #{board.total} " \
-           "frames differ. See ruby/README.md."
-    end
     assert_empty failures
+  end
+
+  def test_placeholders_are_numbered_in_the_references_order
+    # The bytes matching already implies this, and it is asserted separately
+    # anyway: a diff on this list names the defect ("{NAME_1} and {NAME_2} are
+    # swapped") where a diff on a whole sentence only shows that one exists.
+    # Numbering is where ports diverge first, so it gets its own failure message.
+    spec = self.class.spec
+    wrong = spec.frames.filter_map do |frame|
+      golden = spec.golden[frame.frame_id]
+      masked, _n, restore_map = Vicary.redact_with_report(frame.sentence, spec.identity)
+      # Order of first appearance IN THE TEXT, which is what the reference's
+      # `align()` records — NOT mint order. The two differ, and the difference is
+      # the whole point: the minter hands out indices in discovery order, and
+      # candidate generation discovers right to left, so a sentence whose second
+      # name is masked first reads "{NAME_2} … {NAME_1}". That is correct output
+      # and the golden says so.
+      emitted = restore_map.keys.select { |p| masked.include?(p) }
+                           .sort_by { |p| masked.index(p) }
+      next if emitted == golden.placeholders
+
+      "#{frame.frame_id}: expected #{golden.placeholders.inspect}, got #{emitted.inspect}"
+    end
+    assert_empty wrong
+  end
+
+  def test_the_restore_map_puts_every_frames_original_bytes_back
+    # The property numbering exists to buy, and the one the golden's `mapping`
+    # records. Masking that cannot be undone is a different product: the caller
+    # sends placeholders to a model and has no way to render the reply.
+    spec = self.class.spec
+    broken = spec.frames.filter_map do |frame|
+      masked, _n, restore_map = Vicary.redact_with_report(frame.sentence, spec.identity)
+      back = Vicary.restore(masked, restore_map)
+      next if back == frame.sentence
+
+      "#{frame.frame_id}: restored #{back.inspect}, expected #{frame.sentence.inspect}"
+    end
+    assert_empty broken
   end
 end

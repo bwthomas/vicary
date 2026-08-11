@@ -13,27 +13,32 @@ and it answers in single-digit milliseconds.
 |---|---|---|
 | Python | [`vicary`](https://pypi.org/project/vicary/) on PyPI | **published**, 9 of 9 gates PASS — see [`python/`](python/) |
 | TypeScript | `vicary` on npm | detector complete, **36 of 36**, 5 of 5 measurable gates PASS; unpublished — see [`typescript/`](typescript/) |
-| Ruby | `vicary` on RubyGems | asset layer + conformance harness; detector **0 of 36** — see [`ruby/`](ruby/) |
+| Ruby | `vicary` on RubyGems | detector complete, **36 of 36**; unpublished — see [`ruby/`](ruby/) |
 
 That fraction is the number of masking-required fixture frames the port reproduces
 byte-for-byte, printed by every `npm test` / `rake test` run and ratcheted by it.
-TypeScript reaches all 36 (and 52 of 52 overall) against the
-`local-gazetteer-lowercase` arm, numbering included — the detector is ported, not
-just the structured pass. It also measures **five of the nine gates** in
-`conformance/gates.json` — held-out recall, KEEP precision, round-trip,
-unaccounted violations and asset entries — and all five hold, at the same values
-Python reports. The other four need an essay corpus or the Census surname file
-that no package here ships; the scoreboard prints `NOT MEASURED` beside each on
-every run rather than letting a green suite imply a clear gate set.
+Both ports reach all 36 (and 52 of 52 overall) against the
+`local-gazetteer-lowercase` arm, numbering included — the detector is ported in
+each, not just the structured pass. All three load the identical gazetteer bytes:
+same sha256, same seven tier counts, checked against the manifest rather than
+against a copied constant.
 
-Ruby is still the earlier state, and the paragraph the TypeScript port used to
-share: its frames are carried by the structured pass and the identity
-interpolation alone, with no frame yet carried by a *detected* name. Both ports
-load the identical gazetteer bytes as Python — same sha256, same seven tier
-counts, checked against the manifest rather than against a copied constant — and
-Ruby still **raises rather than returning the text unchanged** when asked to
-redact, so it cannot be mistaken for a working redactor while it is not one. Both
-release workflows refuse to publish until the number reaches 36 of 36.
+TypeScript also measures **five of the nine gates** in `conformance/gates.json` —
+held-out recall, KEEP precision, round-trip, unaccounted violations and asset
+entries — and all five hold, at the same values Python reports. The other four
+need an essay corpus or the Census surname file that no package here ships; the
+scoreboard prints `NOT MEASURED` beside each on every run rather than letting a
+green suite imply a clear gate set. Ruby does not measure the gates yet, and says
+so the same way.
+
+**36 of 36 is the bar to publish, not the bar to trust.** Measured on the Ruby
+port the day it landed: of eleven deliberate mutations to its candidate
+generator, the frames caught one. So each port is checked at three depths — the
+frames, the shared `primitives.json` corpus underneath them, and a differential
+probe that runs both implementations over prose no fixture contains and diffs the
+bytes. The third exists because the first two are single-line corpora, and
+several rules only diverge across a newline. Both release workflows refuse to
+publish until the number reaches 36 of 36 regardless.
 
 The full narrative — modes, the data asset, how it reads the writer's
 capitalisation, what was measured and what it deliberately does not do — is in

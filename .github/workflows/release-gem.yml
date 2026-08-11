@@ -63,13 +63,16 @@
 # skipped outright whenever `push_probe` is set.
 name: release-gem
 
-# NO TAG TRIGGER YET, DELIBERATELY. The conformance gate below would refuse on
-# every `v*` tag until the detector is ported, which means a permanent red check on
-# every Python release — and "is the release green?" stops having an answer. So this
-# is manual-dispatch only for now, and the commit that raises the ratchet to 36 of
-# 36 is the commit that adds `push: tags: ["v*"]` back. The gate stays either way;
-# what changes is whether an unfinished port fails somebody else's release.
+# The tag trigger is back, in the commit that raised the ratchet to 36 of 36 —
+# which is exactly the deal the note here used to describe. It was removed because
+# the conformance gate would have refused on every `v*` tag while the port was
+# unfinished, which means a permanent red check on every Python release, and "is
+# the release green?" stops having an answer. The gate itself is unchanged and
+# still reads the number off the scoreboard; what changed is that the number is
+# now 36.
 on:
+  push:
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       push_probe:

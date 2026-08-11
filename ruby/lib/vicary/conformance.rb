@@ -116,6 +116,33 @@ module Vicary
         )
       end
 
+      # The primitives spec — the layer underneath the frames.
+      #
+      # `frames.json` scores finished output, which is the right final bar and a
+      # poor first one: a port with nothing implemented scores 0 of 36 and learns
+      # nothing about which of the forty-odd primitives underneath is wrong.
+      # `primitives.json` is that missing layer, generated from the Python
+      # functions and byte-compared against a fresh export by
+      # `python/tests/test_conformance.py`.
+      #
+      # Returned as the parsed document rather than as structs: it is a table of
+      # forty-odd differently-shaped sections, and a struct per section would be
+      # forty transcriptions of the thing the file exists to stop anyone
+      # transcribing.
+      def load_primitives(dir = nil)
+        dir = Pathname.new(dir || directory)
+        path = dir.join("primitives.json")
+        unless path.file?
+          raise SpecError,
+                "no primitives.json at #{path}. The ports would check their " \
+                "tokenisation against nothing."
+        end
+
+        raw = JSON.parse(path.read)
+        require_version(raw["document_version"], "primitives.json")
+        raw
+      end
+
       # Score an implementation against every frame.
       #
       # The block receives (sentence, identity) — the same input every Python arm

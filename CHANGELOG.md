@@ -79,6 +79,77 @@ frame's masked output moved for any of the three.
   and `withoutClitic` strips the first clitic that matches. Swapping `"Mr"` and
   `"Mrs"` fails this assertion and nothing else, which is how that was confirmed.
 
+### The Ruby detector is ported: 0 of 36 to 36 of 36
+
+* **`Vicary.redact` does the deciding**, through the same two passes in the same
+  order as the reference — the identity and structured pass, then candidate
+  generation, through one minter. `candidates.rb`, `structured.rb` and
+  `minter.rb` are new; `redact.rb` stopped raising `NotPortedError`. 52 of 52
+  frames byte-identical, placeholder numbering included.
+* **The restore map is checked, not just the masked bytes.** The Ruby
+  conformance suite compared `masked` alone, so a port could number correctly and
+  be unable to put the words back. It now asserts placeholders in the golden's
+  order of first appearance, and that `Vicary.restore` returns every frame's
+  original bytes.
+* **`primitives_test.rb` reads `conformance/primitives.json`** — forty-odd
+  primitives over the shared corpus, 2,526 assertions, with the completeness
+  check that fails when the spec carries a section this port does not check.
+
+### Three layers of checking, because the frames catch one mutation in eleven
+
+* **Measured on the finished port rather than argued.** Eleven deliberate
+  mutations to `candidates.rb`: reversed sort ties, swapped precedence rows, a
+  wrong corroborating tier, a deleted organisation suffix, reordered honorifics,
+  a disabled apostrophe trim, `ALLCAPS_RUN` at 99, `LOWERCASE_MIN_TOKENS` at 1,
+  and three anchor changes. **The 36 conformance frames caught one.** The
+  primitives spec caught seven. Three were inert — two provably so, and both are
+  recorded where somebody would otherwise "fix" them.
+* **The eleventh was real and both corpora were blind to it.** Writing `\z` as
+  the idiomatic Ruby `$` in `RELATION_ATTACHED_BEFORE` attaches "my cousin" on
+  one line to a name on the next, and leaves every frame and every primitive
+  green — because both corpora are single-line and the rule only diverges across
+  a newline. The same hazard sits in `ZIP`, where `$` masks any five-digit number
+  ending a line of a hard-wrapped essay.
+* **So `rake redaction_parity` runs both implementations over prose neither
+  corpus contains and diffs the bytes**, and `test/dialect_test.rb` pins each
+  Ruby-versus-Python regex difference *in both directions* — that the pattern as
+  written gives the reference answer, and that the idiomatic spelling gives a
+  different one. An assertion that only pinned the current answer would still
+  pass once the difference evaporated, and then it would be guarding nothing.
+* **One inherited comment was wrong and is corrected.** The TypeScript port
+  spells its word boundaries out because *JavaScript's* `\b` is ASCII-only. Ruby's
+  is Unicode-aware and already agrees with Python; carrying the rationale across
+  unchecked would have stated something false about Ruby. The lookarounds stay —
+  they are the form the shared spec pins — but as belt-and-braces, and the test
+  says which.
+
+### The gem's push path is proven without publishing a vicary that cannot redact
+
+* **`release-gem.yml` takes a `push_probe` input.** It runs the same workflow
+  file, in the same environment, with the same OIDC claims a release uses, mints
+  a real short-lived credential, and attempts a `gem push` that rubygems.org's own
+  authorization code is *required* to refuse: `Pusher#authorize` clears a
+  trusted-publisher key by exactly two routes, and a gem name no pending publisher
+  claims closes both. The probe asserts the refusal is the authenticated one (403
+  at the ownership check) rather than the unauthenticated one (401), so a
+  misconfigured publisher cannot read as a pass.
+* **It cannot publish by accident for three independent reasons**: the server
+  refuses it, the probe gem is built under `RUNNER_TEMP` where the publish step's
+  `vicary-*.gem` glob cannot reach it, and the publish steps are skipped outright
+  in probe mode.
+* **The conformance publish gate left workflow shell for
+  `scripts/release_gate.rb`**, reading the scoreboard object the harness returns
+  instead of scraping a column out of a human-readable report — and
+  `test/release_test.rb` now drives its *allow* branch, which no run in this
+  repository had ever reached. A gate that has only ever refused is
+  indistinguishable from one that is stuck shut.
+* **The post-push registry check left it too**, for `scripts/registry_serves.rb`,
+  so "the version is not published yet" and "I could not read the registry" stop
+  being the same output. The shell it replaces ended in `|| true`.
+* **The `v*` tag trigger is restored in `release-gem.yml`**, the deal its own
+  comment described: it comes back in the commit that raises the ratchet to 36 of
+  36. The gate is unchanged; the number moved.
+
 ### TypeScript measures five of the nine gates, and the tag trigger comes back
 
 * **`gates.ts` measures every gate needing no operator-supplied data** — held-out

@@ -23,6 +23,11 @@ task :parity do
   ruby "scripts/parity_probe.rb"
 end
 
+desc "Diff this port's masked output against the Python reference, on prose no fixture contains"
+task :redaction_parity do
+  ruby "scripts/redaction_parity.rb"
+end
+
 desc "Build the gem, vendoring the asset first"
 task build: :sync_assets do
   sh "gem build vicary.gemspec"
