@@ -12,7 +12,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { PlaceholderMinter, restore } from "../src/minter.js";
-import { redact, redactWithReport } from "../src/redact.js";
+import { NAMES_IDENTITY, redact, redactWithReport } from "../src/redact.js";
 import {
   escapeLiteral,
   identityPatterns,
@@ -221,7 +221,16 @@ test("an ambiguous given name is left alone standing on its own", () => {
   const kinds = patterns.map(([kind]) => kind);
   assert.equal(kinds.length, 3); // full, roster, surname — no bare "Grace"
   const text = "We had a Grace period before the deadline.";
-  assert.equal(redact(text, { ...IDENTITY, firstName: "Grace", lastName: "Okonkwo" }), text);
+  const identity = { ...IDENTITY, firstName: "Grace", lastName: "Okonkwo" };
+  assert.equal(redact(text, identity, { names: NAMES_IDENTITY }), text);
+  // Scoped to the identity level on purpose: this pins the identity ARM, and at
+  // the shippable level candidate generation reaches "Grace" on its own and
+  // masks it. Both readings are the reference's — checked against Python at both
+  // levels — so the level has to be named rather than assumed.
+  assert.equal(
+    redact(text, identity),
+    "We had a {NAME_1} period before the deadline.",
+  );
 });
 
 test("an ambiguous surname is left alone too", () => {
@@ -272,10 +281,12 @@ test("dropping that boundary does not widen an ordinary literal", () => {
   // The guard on the fix above: the assertion is dropped per-side, not
   // unconditionally, so a name that *can* be bounded still is.
   const unchanged = "I grew up near Okonkwoville.";
-  assert.equal(
-    redact(unchanged, { firstName: "", lastName: "Okonkwo", schoolName: "" }),
-    unchanged,
-  );
+  const identity = { firstName: "", lastName: "Okonkwo", schoolName: "" };
+  assert.equal(redact(unchanged, identity, { names: NAMES_IDENTITY }), unchanged);
+  // "Okonkwoville" is a capitalised span no oracle keeps, so the shippable level
+  // masks it as a name — which is over-firing on a coined place, not the boundary
+  // widening this test guards. Naming the level keeps the two apart.
+  assert.equal(redact(unchanged, identity), "I grew up near {NAME_1}.");
 });
 
 test("a hyphenated surname survives escaping", () => {

@@ -12,21 +12,26 @@ and it answers in single-digit milliseconds.
 | front door | package | status |
 |---|---|---|
 | Python | [`vicary`](https://pypi.org/project/vicary/) on PyPI | **published**, 9 of 9 gates PASS — see [`python/`](python/) |
-| TypeScript | `vicary` on npm | asset layer, primitives, candidate generation; detector **8 of 36** — see [`typescript/`](typescript/) |
+| TypeScript | `vicary` on npm | detector complete, **36 of 36**; unpublished, gates unmeasured — see [`typescript/`](typescript/) |
 | Ruby | `vicary` on RubyGems | asset layer + conformance harness; detector **0 of 36** — see [`ruby/`](ruby/) |
 
 That fraction is the number of masking-required fixture frames the port reproduces
 byte-for-byte, printed by every `npm test` / `rake test` run and ratcheted by it.
-TypeScript's 8 are seven frames masked entirely by the structured pass (phone,
-email, age, SSN, URL, username, card) plus `student-own-name`, where the name is
-*given* to the detector rather than found by it. **No frame is yet carried by a
-detected name**, which is the honest reading of the number: it is what a port
-scores with the structured pass and the identity interpolation alone. Both ports load the identical
-gazetteer bytes as Python — same sha256, same seven tier counts, checked against
-the manifest rather than against a copied constant — and both **raise rather than
-return the text unchanged** when asked to redact, so neither can be mistaken for a
-working redactor while it is not one. Their release workflows refuse to publish
-until that number reaches 36 of 36.
+TypeScript reaches all 36 (and 52 of 52 overall) against the
+`local-gazetteer-lowercase` arm, numbering included — the detector is ported, not
+just the structured pass. What that number does **not** cover is the nine gates in
+`conformance/gates.json`: the port measures none of them, four need corpus or
+census data no package ships, and the scoreboard prints `NOT MEASURED` beside each
+on every run rather than letting a green suite imply a clear gate set.
+
+Ruby is still the earlier state, and the paragraph the TypeScript port used to
+share: its frames are carried by the structured pass and the identity
+interpolation alone, with no frame yet carried by a *detected* name. Both ports
+load the identical gazetteer bytes as Python — same sha256, same seven tier
+counts, checked against the manifest rather than against a copied constant — and
+Ruby still **raises rather than returning the text unchanged** when asked to
+redact, so it cannot be mistaken for a working redactor while it is not one. Both
+release workflows refuse to publish until the number reaches 36 of 36.
 
 The full narrative — modes, the data asset, how it reads the writer's
 capitalisation, what was measured and what it deliberately does not do — is in

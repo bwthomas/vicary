@@ -79,6 +79,41 @@ frame's masked output moved for any of the three.
   and `withoutClitic` strips the first clitic that matches. Swapping `"Mr"` and
   `"Mrs"` fails this assertion and nothing else, which is how that was confirmed.
 
+### The TypeScript detector is wired end to end: 8 of 36 to 36 of 36
+
+* **`redact` calls the whole detector** — the identity and structured pass, then
+  candidate generation, through **one minter**, in that order. Generation runs
+  last for the reference's reason: a broad capitalised-word match run early
+  swallows the first token of an address or the local part of an email, and a name
+  half-eaten by another pattern leaks the remainder. The arm is
+  `local-gazetteer-lowercase`, which is the arm the golden was produced by.
+* **36 of 36 masking-required frames, 52 of 52 overall, numbering included.**
+  The ratchet moves to 36 and the completeness item stops being a `todo`: it was
+  reported-not-failing while the gap was open, and a closed gap should fail the
+  build if it reopens rather than go back to being a note.
+* **Verified against Python on text the fixture does not contain** — 15 held-out
+  compositions (lowercase writing, all-caps, a heading, a work title beside a
+  relative, a hometown chain, a shared-surname pair), **15 of 15 byte-identical**.
+  52 matching strings can be fitted; held-out agreement is the claim the product
+  actually makes.
+* **Two structured tests now name the level they were pinning.** "a Grace period"
+  and "Okonkwoville" survive the identity arm and are masked by the shippable
+  one — both readings are the reference's, checked against Python at both levels.
+  They asserted the identity arm's behaviour through a call that no longer runs
+  only the identity arm, so they now pass `names: NAMES_IDENTITY` and assert the
+  full arm's output alongside, rather than being loosened.
+* **Two contracts the byte comparison only covered implicitly are now asserted
+  directly**: placeholders appear in the reference's order (which is order of
+  first appearance *in the text*, not mint order — generation discovers right to
+  left, so `{NAME_2}` legitimately precedes `{NAME_1}`), and every frame's
+  restore map reproduces the original bytes.
+* **`redact`, `redactWithReport` and `restore` are exported from `index.ts`**,
+  with the three detection levels and the `Identity` type. They were deliberately
+  absent while the detector was partial. The nine gates remain **unmeasured** by
+  this port, four of them needing data no package ships, and the scoreboard still
+  prints `NOT MEASURED` beside each — a green suite means the frames match, not
+  that the gate set is clear.
+
 ### Masking ports, and four more rules that nothing was checking
 
 * **`maskCandidates` is in TypeScript** — the four keep gates in order, the

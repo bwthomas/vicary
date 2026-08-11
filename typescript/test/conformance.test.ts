@@ -29,16 +29,17 @@ import {
   score,
   type Identity,
 } from "../src/conformance.js";
-import { redact } from "../src/redact.js";
+import { redact, redactWithReport, restore } from "../src/redact.js";
 
 /**
  * Raise this when detector work lands. Never lower it to make a build pass.
  *
- * 8 — the structured entities and the interpolated identity. The remaining 28
- * all need candidate generation: a third-party name, a hometown to type
- * {LOCATION}, or an organisation.
+ * 36 — all of them, since candidate generation was wired into `redact`. It stays
+ * as a floor rather than being retired: the hard assertion below now carries the
+ * same claim, and the two fail differently. That one names the frames that broke;
+ * this one says how far the port fell, which is what a bisect reads.
  */
-const MATCHED_REQUIRING_MASKING_RATCHET = 8;
+const MATCHED_REQUIRING_MASKING_RATCHET = 36;
 
 const spec = loadSpec();
 const gates = loadGates();
@@ -107,17 +108,62 @@ test("the port does not regress below its ratchet", () => {
   );
 });
 
-test(
-  "every frame matches the reference output byte-for-byte",
-  { todo: "the detector is not ported yet — see typescript/README.md" },
-  () => {
-    const failures = board.outcomes
-      .filter((o) => !o.matched)
-      .map(
-        (o) =>
-          `${o.frameId}: expected ${JSON.stringify(o.expected)}, got ` +
-          `${JSON.stringify(o.produced)}${o.error ? ` (${o.error})` : ""}`,
+test("every frame matches the reference output byte-for-byte", () => {
+  // Was `{ todo: ... }` while the detector was unported — reported every run,
+  // failing none. It is a hard assertion now that all 52 match: the completeness
+  // item existed to keep the gap visible, and a gap that is closed should fail
+  // the build if it reopens rather than go back to being a note.
+  const failures = board.outcomes
+    .filter((o) => !o.matched)
+    .map(
+      (o) =>
+        `${o.frameId}: expected ${JSON.stringify(o.expected)}, got ` +
+        `${JSON.stringify(o.produced)}${o.error ? ` (${o.error})` : ""}`,
+    );
+  assert.deepEqual(failures, []);
+});
+
+test("placeholders are numbered in the reference's order", () => {
+  // The bytes matching already implies this, and it is asserted separately
+  // anyway: a diff on this list names the defect ("{NAME_1} and {NAME_2} are
+  // swapped") where a diff on a whole sentence only shows that one exists.
+  // Numbering is where ports diverge first, so it gets its own failure message.
+  const wrong: string[] = [];
+  for (const frame of spec.frames) {
+    const golden = spec.golden.get(frame.frameId)!;
+    const produced = redactWithReport(frame.sentence, spec.identity);
+    // Order of first appearance IN THE TEXT, which is what `align()` records —
+    // NOT mint order. The two differ, and the difference is the whole point: the
+    // minter hands out indices in discovery order, and candidate generation
+    // discovers right to left, so a sentence whose second name is masked first
+    // reads "{NAME_2} … {NAME_1}". That is correct output and the golden says so.
+    const emitted = [...produced.restoreMap.keys()]
+      .filter((p) => produced.text.includes(p))
+      .sort((a, b) => produced.text.indexOf(a) - produced.text.indexOf(b));
+    if (emitted.join(" ") !== golden.placeholders.join(" ")) {
+      wrong.push(
+        `${frame.frameId}: expected [${golden.placeholders.join(", ")}], got ` +
+          `[${emitted.join(", ")}]`,
       );
-    assert.deepEqual(failures, []);
-  },
-);
+    }
+  }
+  assert.deepEqual(wrong, []);
+});
+
+test("the restore map puts every frame's original bytes back", () => {
+  // The property numbering exists to buy, and the one the golden's `mapping`
+  // records. Masking that cannot be undone is a different product: the caller
+  // sends placeholders to a model and has no way to render the reply.
+  const broken: string[] = [];
+  for (const frame of spec.frames) {
+    const produced = redactWithReport(frame.sentence, spec.identity);
+    const back = restore(produced.text, produced.restoreMap);
+    if (back !== frame.sentence) {
+      broken.push(
+        `${frame.frameId}: restored ${JSON.stringify(back)}, expected ` +
+          `${JSON.stringify(frame.sentence)}`,
+      );
+    }
+  }
+  assert.deepEqual(broken, []);
+});
