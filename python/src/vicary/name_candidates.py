@@ -357,12 +357,21 @@ _CANDIDATE_RE = re.compile(
 _PROTECTED = re.compile(r"\{[A-Za-z_0-9]*\}|@[A-Za-z]+\d*")
 
 
-def _is_stop(token: str) -> bool:
-    word = token.lower().strip(".,")
+def _without_clitic(word: str) -> str:
+    """``word`` with one trailing contraction or possessive tail removed.
+
+    Returns ``word`` unchanged when there is nothing to remove, so a caller can
+    compare the two and tell whether the fold did anything. Only one tail comes
+    off — "Terrence's" is a name plus a possessive, not a name plus two.
+    """
     for clitic in _CLITICS:
         if word.endswith(clitic) and len(word) > len(clitic):
-            word = word[: -len(clitic)]
-            break
+            return word[: -len(clitic)]
+    return word
+
+
+def _is_stop(token: str) -> bool:
+    word = _without_clitic(token.lower().strip(".,"))
     return word.strip("'’") in _STOP_WORDS
 
 
@@ -399,33 +408,52 @@ class _Row:
 #: mask/keep verdict and the placeholder, and that is the whole classification
 #: policy — there is no second place where a span's nature is decided.
 #:
+#: **One principle orders the whole table: a lookup beats a guess, and a guess
+#: that masks beats a guess that keeps.** Tier membership is a lookup — the
+#: gazetteer positively asserts this exact string is a town. A suffix match is a
+#: guess from a word ending. Ranking them the other way is what leaked 383
+#: hometowns, and the same reasoning applies wherever the two meet.
+#:
 #: The order, and why each position is where it is:
 #:
-#: 1. ``ORGANIZATION`` over ``LOCATION`` preserves the behaviour that shipped, and
-#:    it is nearly free either way: the collision is 16 entries in a tier of
-#:    23,234 (0.07%), and *both* rows mask, so all that turns on it is which word
-#:    a student reads outbound. It is genuinely ambiguous in both directions —
-#:    "Falls Church" and "Cut Bank" are towns, "Byumba Hospital" and "Zeyrek
-#:    Mosque" are not — and nothing measures which way is better, so it stays put
-#:    rather than moving on taste.
-#: 2. ``LOCATION`` over ``LANDMARK`` is the redact-wins rule, and it is the row
-#:    that changes behaviour. The landmark suffix is a *guess* from a word ending;
-#:    settlement membership is a *lookup* in a tier that knows the town exists. A
-#:    guess must not beat a lookup when the guess keeps and the lookup masks. The
-#:    old order leaked 391 settlements whose last token is a landmark suffix — 8
-#:    independently notable, so 383 real towns — every one of them somebody's
-#:    hometown: park 94, lake 82, valley 60, falls 49, island 32, river 30,
-#:    mountain 12, gardens 12. This costs no real landmark, because a landmark the
-#:    gazetteer knows is notable and is not in the settlement tier; the row is a
-#:    backstop for landmarks it does *not* know, and those are not settlements
-#:    either.
-#: 3. ``LANDMARK`` over ``PERSON`` is not a redact-wins violation, because
-#:    ``PERSON`` is the absence of evidence rather than evidence. "Lincoln
-#:    Memorial" is the essay's subject and keeping it is the point of the row.
-#: 4. ``PERSON`` last, and always matching, so the table is total.
+#: 1. ``LOCATION`` first, because it is the only row backed by a lookup.
+#:    :func:`vicary.gazetteer.is_settlement` is an **exact** match on a normalised
+#:    key, not a prefix reading, so a span reaches this row only where the tier
+#:    vouches for the whole string. Measured on the real tier, of the 16 entries
+#:    that also carry an org suffix, 12 are ordinary American towns — Falls
+#:    Church, Cut Bank, Union, Agency, College, Council, Mount Union, West Union,
+#:    New Market, East New Market, Country Club, South Bank — and 4 are tier noise
+#:    (Byumba Hospital, Omkareshwar Temple, St Michael's Church, Zeyrek Mosque).
+#:    So ``LOCATION`` is the better label 12 times in 16, and it is what Blake
+#:    asked for on 2026-08-11: a place is the more identifying reading, so prefer
+#:    it when the evidence genuinely supports both.
+#: 2. ``ORGANIZATION`` second. The suffix is still direct evidence about *this*
+#:    string rather than a substring of it, and it is what types the case that
+#:    actually occurs — "Progressive Insurance" is not in anybody's settlement
+#:    tier, so the reorder above costs it nothing. The collision is 16 entries in
+#:    23,234 (0.07%), and both rows mask, so only the word a student reads
+#:    outbound turns on it.
+#: 3. ``LANDMARK`` third, and it is the row that keeps. A landmark suffix is a
+#:    guess like an org suffix, but it keeps rather than masks, so it ranks below
+#:    both — and below ``LOCATION`` for the reason this table exists: the old
+#:    order kept 391 settlements whose last token is a landmark suffix, 8
+#:    independently notable, so 383 real hometowns. By suffix: park 94, lake 82,
+#:    valley 60, falls 49, island 32, river 30, mountain 12, gardens 12. This
+#:    costs no real landmark, because a landmark the gazetteer knows is notable
+#:    and is not in the settlement tier; the row is a backstop for landmarks it
+#:    does *not* know, and those are not settlements either.
+#: 4. ``PERSON`` last, and always matching, so the table is total. Ranking it
+#:    below ``LANDMARK`` is not a redact-wins violation, because ``PERSON`` is the
+#:    absence of evidence rather than evidence — keeping "Lincoln Memorial" is the
+#:    landmark row's whole purpose.
+#:
+#: Nothing outside this table branches on the kind. It selects the placeholder
+#: string and the minter's numbering namespace; the mask/keep verdict is the
+#: ``mask`` column and nothing else reads it. So rows 1 and 2 trade label accuracy
+#: only, and carry no recall or privacy risk either way.
 _PRECEDENCE: tuple[_Row, ...] = (
-    _Row(ORGANIZATION, mask=True, kind="ORGANIZATION"),
     _Row(LOCATION, mask=True, kind="LOCATION"),
+    _Row(ORGANIZATION, mask=True, kind="ORGANIZATION"),
     _Row(LANDMARK, mask=False, kind=None),
     _Row(PERSON, mask=True, kind="NAME"),
 )
@@ -916,10 +944,31 @@ def corroborated(
     # asked the tier about `Terrence'` and was told no. Only reachable once the
     # capital is the sole evidence, which is why an opening quote counting as a
     # sentence start is what surfaced it.
-    return any(
-        stripped in written_as_a_capital or is_given(stripped)
-        for stripped in (t.lower().strip(".,'’") for t in tokens)
-    )
+    for token in tokens:
+        stripped = token.lower().strip(".,'’")
+        if stripped in written_as_a_capital or is_given(stripped):
+            return True
+        # ...and again with the possessive off. "Terrence's" at a sentence start
+        # is the shape this is for: the writer capitalised "Terrence" elsewhere in
+        # the document, which is testimony about the name, and the `'s` is not
+        # part of it. Without this the document's own capital cannot vouch for its
+        # own possessive, so the span is suppressed and the name ships.
+        #
+        # The gazetteer's `is_common_given_name` folds possessives itself, so the
+        # shipped arm already behaved this way through channel two and nothing
+        # here changes for it. What the fold buys is the *first* channel, which
+        # had no such normalisation, and independence from an oracle contract that
+        # was never written down — a host passing a plain set membership function
+        # got the suppression.
+        #
+        # Strictly additive: it can turn a False into a True and never the
+        # reverse, so it can only reduce suppression, never increase it.
+        folded = _without_clitic(stripped)
+        if folded != stripped and (
+            folded in written_as_a_capital or is_given(folded)
+        ):
+            return True
+    return False
 
 
 def suppressed_as_an_unevidenced_capital(

@@ -26,9 +26,19 @@ byte of masked output on the conformance frames is unchanged.
   "Akron" in the same sentence masked correctly.
 * **Classification is now a tag set plus one ordered precedence table**, rather
   than an `if` order split across two functions. A span carries every tag its
-  evidence supports — `ORGANIZATION`, `LOCATION`, `LANDMARK`, `PERSON` — and the
+  evidence supports — `LOCATION`, `ORGANIZATION`, `LANDMARK`, `PERSON` — and the
   first matching row of the table decides both the mask/keep verdict and the
-  placeholder. The fix above is that table's second row, not a special case.
+  placeholder. One principle orders it: a lookup beats a guess, and a guess that
+  masks beats a guess that keeps.
+* **A town whose name ends in an organisation suffix now types `{LOCATION}`, not
+  `{ORGANIZATION}`.** Same principle: the settlement tier is an *exact* lookup,
+  an org suffix is a guess from a word ending. Of the 16 tier entries carrying
+  both, 12 are ordinary towns — Falls Church, Cut Bank, Union, Agency, College,
+  Council, Mount Union, West Union, New Market, East New Market, Country Club,
+  South Bank — and 4 are tier noise. Both rows mask either way, so nothing about
+  *whether* a span is redacted changed; no conformance frame's output moved. It
+  costs the ordinary case nothing, because "Progressive Insurance" is in nobody's
+  settlement tier.
 * **A landmark the tiers do not know is still kept.** The suffix rule is a
   backstop, and it is unchanged where it is the only evidence: "Lincoln Memorial"
   and "Grand Canyon" are not in the settlement tier and are notable in their own
@@ -68,6 +78,21 @@ byte of masked output on the conformance frames is unchanged.
   read perfectly well — the check failing closed against its own user, for a reason
   no error message explains. Recorded upstream sources are preserved for the same
   reason.
+
+### A capital the writer chose now vouches for its own possessive
+
+* **"Terrence's" at a sentence start is no longer suppressed** when the document
+  capitalises "Terrence" elsewhere. The sentence-initial guard asks two channels
+  whether anything beyond the capital vouches for a span, and one of them — the
+  document's own mid-sentence capitalisation — had no possessive normalisation,
+  so it could not vouch for its own possessive.
+* **Nothing changed on the shipped gazetteer arm**, which is why this went
+  unnoticed: `is_common_given_name` folds possessives itself, so the *other*
+  channel was covering the gap. The fold now happens in the guard, so the rule no
+  longer depends on an oracle contract that was never written down — a host
+  passing a plain set membership function as `given_name` got the suppression.
+* Strictly additive: it can only reduce suppression, never increase it. A word
+  with no clitic to remove is unaffected, so the guard's purpose is intact.
 
 ### The stoplist is data in all three languages, not a literal in each
 

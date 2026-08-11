@@ -333,15 +333,25 @@ function isUpper(token: string): boolean {
   return token === token.toUpperCase() && token !== token.toLowerCase();
 }
 
-/** Whether `token` is an ordinary word that must never become a candidate. */
-export function isStop(token: string): boolean {
-  let word = strip(token.toLowerCase(), ".,");
+/**
+ * `word` with one trailing contraction or possessive tail removed.
+ *
+ * Returns `word` unchanged when there is nothing to remove, so a caller can
+ * compare the two and tell whether the fold did anything. Only one tail comes off
+ * — "Terrence's" is a name plus a possessive, not a name plus two.
+ */
+export function withoutClitic(word: string): string {
   for (const clitic of CLITICS) {
     if (word.endsWith(clitic) && word.length > clitic.length) {
-      word = word.slice(0, -clitic.length);
-      break;
+      return word.slice(0, -clitic.length);
     }
   }
+  return word;
+}
+
+/** Whether `token` is an ordinary word that must never become a candidate. */
+export function isStop(token: string): boolean {
+  const word = withoutClitic(strip(token.toLowerCase(), ".,"));
   return STOP_WORDS.has(strip(word, "'’"));
 }
 
@@ -380,22 +390,36 @@ export interface PrecedenceRow {
  * tell. The reference's frame set had no colliding span for the detector's whole
  * life, which is how 383 real settlements came to be kept.
  *
- * The order, and why each position is where it is:
+ * **One principle orders the whole table: a lookup beats a guess, and a guess
+ * that masks beats a guess that keeps.** Tier membership is a lookup — the
+ * gazetteer positively asserts this exact string is a town. A suffix match is a
+ * guess from a word ending.
  *
- * 1. `ORGANIZATION` over `LOCATION` is nearly free — the collision is 16 entries
- *    in a tier of 23,234, and both rows mask, so all that turns on it is which
- *    word a student reads outbound.
- * 2. `LOCATION` over `LANDMARK` is the redact-wins rule. A landmark suffix is a
- *    *guess* from a word ending; settlement membership is a *lookup*. A guess
- *    must not beat a lookup when the guess keeps and the lookup masks.
- * 3. `LANDMARK` over `PERSON` is not a redact-wins violation, because `PERSON` is
- *    the absence of evidence rather than evidence. Keeping "Lincoln Memorial" is
- *    the row's purpose.
- * 4. `PERSON` last, and always matching, so the table is total.
+ * 1. `LOCATION` first, the only row backed by a lookup. `isSettlement` is an
+ *    **exact** match on a normalised key, not a prefix reading, so a span reaches
+ *    this row only where the tier vouches for the whole string. Of the 16 real
+ *    tier entries that also carry an org suffix, 12 are ordinary towns (Falls
+ *    Church, Cut Bank, Union, Agency, College, Council, ...) and 4 are tier noise
+ *    (Byumba Hospital, Zeyrek Mosque, ...), so this is the better label 12 times
+ *    in 16 — and a place is the more identifying reading.
+ * 2. `ORGANIZATION` second. The suffix is still direct evidence about *this*
+ *    string, and it types the case that actually occurs: "Progressive Insurance"
+ *    is in nobody's settlement tier, so the order above costs it nothing.
+ * 3. `LANDMARK` third — a guess like an org suffix, but one that *keeps* rather
+ *    than masks, so it ranks below both. Ranking it above `LOCATION` is what kept
+ *    383 real hometowns whose names end in park, lake, valley or falls.
+ * 4. `PERSON` last, and always matching, so the table is total. Below `LANDMARK`
+ *    is not a redact-wins violation: `PERSON` is the absence of evidence, and
+ *    keeping "Lincoln Memorial" is the landmark row's whole purpose.
+ *
+ * Nothing outside this table branches on the kind — it selects the placeholder
+ * string and the minter's numbering namespace, while `mask` alone carries the
+ * verdict. So rows 1 and 2 trade label accuracy only, with no recall or privacy
+ * risk either way.
  */
 export const PRECEDENCE: readonly PrecedenceRow[] = [
-  { tag: "ORGANIZATION", mask: true, kind: "ORGANIZATION" },
   { tag: "LOCATION", mask: true, kind: "LOCATION" },
+  { tag: "ORGANIZATION", mask: true, kind: "ORGANIZATION" },
   { tag: "LANDMARK", mask: false, kind: null },
   { tag: "PERSON", mask: true, kind: "NAME" },
 ];
@@ -1004,6 +1028,23 @@ export function corroborated(
   for (const token of tokens) {
     const stripped = strip(token.toLowerCase(), ".,'’");
     if (writtenAsACapital.has(stripped) || isGiven(stripped)) return true;
+    // ...and again with the possessive off. "Terrence's" at a sentence start is
+    // the shape this is for: the writer capitalised "Terrence" elsewhere in the
+    // document, which is testimony about the name, and the `'s` is not part of
+    // it. Without this the document's own capital cannot vouch for its own
+    // possessive, so the span is suppressed and the name ships.
+    //
+    // The gazetteer's given-name tier folds possessives itself, so the shipped
+    // arm already behaved this way through channel two and nothing changes for
+    // it. What the fold buys is the *first* channel, which had no such
+    // normalisation, and independence from an oracle contract nobody wrote down.
+    //
+    // Strictly additive: it can turn a false into a true and never the reverse,
+    // so it can only reduce suppression, never increase it.
+    const folded = withoutClitic(stripped);
+    if (folded !== stripped && (writtenAsACapital.has(folded) || isGiven(folded))) {
+      return true;
+    }
   }
   return false;
 }

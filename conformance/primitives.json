@@ -2157,11 +2157,11 @@
       "honorific_then_stop": "NAME",
       "interior_stop": "NAME",
       "landmark": "NAME",
-      "org_suffix": "ORGANIZATION",
-      "school": "ORGANIZATION",
+      "org_suffix": "LOCATION",
+      "school": "LOCATION",
       "settlement": "LOCATION",
       "settlement_with_landmark_suffix": "LOCATION",
-      "settlement_with_org_suffix": "ORGANIZATION",
+      "settlement_with_org_suffix": "LOCATION",
       "township": "LOCATION",
       "two_names": "NAME"
     },
@@ -5435,14 +5435,14 @@
   },
   "precedence": [
     {
-      "kind": "ORGANIZATION",
-      "mask": true,
-      "tag": "ORGANIZATION"
-    },
-    {
       "kind": "LOCATION",
       "mask": true,
       "tag": "LOCATION"
+    },
+    {
+      "kind": "ORGANIZATION",
+      "mask": true,
+      "tag": "ORGANIZATION"
     },
     {
       "kind": null,

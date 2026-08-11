@@ -1284,17 +1284,36 @@ def test_the_settlement_tier_cannot_keep_a_span_or_stop_one_masking() -> None:
     assert "{LOCATION}" in typed and "{LOCATION}" not in plain
 
 
-def test_an_organization_suffix_beats_the_settlement_tier() -> None:
-    """Direct evidence about this string beats a tier hit on a substring of it.
+def test_an_organization_suffix_types_a_span_no_tier_vouches_for() -> None:
+    """The case that actually occurs: an org name in nobody's settlement tier.
 
-    "Akron Insurance" resolves as a settlement under a prefix reading and is an
-    organization. The suffix rule runs first.
+    The shipped oracle is an *exact* match, so "Akron Insurance" never reaches the
+    LOCATION row — only a prefix-reading oracle would claim it, and the gazetteer
+    is not one. This is what the ORGANIZATION row is for, and reordering the two
+    masking rows costs it nothing.
     """
     masked, _ = mask_candidates(
         "She works at Akron Insurance downtown.",
-        settlement=lambda name: name.lower().startswith("akron"),
+        settlement=lambda name: name == "Akron",
     )
     assert "{ORGANIZATION}" in masked, masked
+
+
+def test_the_settlement_tier_beats_an_organization_suffix() -> None:
+    """A town whose name ends in an org suffix types LOCATION, not ORGANIZATION.
+
+    Changed 2026-08-11 on Blake's call that a place is the more identifying
+    reading. Both rows mask either way, so nothing about *whether* a span is
+    redacted turns on this — only the word a student reads outbound. Measured on
+    the real tier: of the 16 entries carrying both, 12 are ordinary towns (Falls
+    Church, Cut Bank, Union, Agency, College, Council, ...) and 4 are tier noise,
+    so LOCATION is the better label 12 times in 16.
+    """
+    masked, _ = mask_candidates(
+        "We moved to Falls Church right before ninth grade.",
+        settlement=lambda name: name == "Falls Church",
+    )
+    assert "{LOCATION}" in masked, masked
 
 
 def test_a_landmark_the_settlement_tier_does_not_claim_is_kept() -> None:
@@ -1352,7 +1371,7 @@ def test_a_span_carries_every_tag_its_evidence_supports() -> None:
 def test_the_precedence_table_is_total_and_ordered() -> None:
     """Every tag has exactly one row, and the order is the one we argued for."""
     assert [row.tag for row in _PRECEDENCE] == [
-        "ORGANIZATION", "LOCATION", "LANDMARK", "PERSON",
+        "LOCATION", "ORGANIZATION", "LANDMARK", "PERSON",
     ]
     # The last row matches unconditionally, so no span reaches the end unresolved.
     assert _PRECEDENCE[-1].tag == "PERSON"
@@ -1479,3 +1498,40 @@ def test_a_mid_sentence_multi_token_span_never_reaches_the_guard() -> None:
 
 def test_no_tokens_corroborate_nothing() -> None:
     assert not corroborated([], frozenset({"terrence"}), _is_given)
+
+
+def test_the_documents_own_capital_vouches_for_its_own_possessive() -> None:
+    """"Terrence's" at a sentence start, corroborated by "Terrence" elsewhere.
+
+    Added 2026-08-11 on Blake's call. The writer capitalised "Terrence"
+    mid-sentence, which is testimony about the name; the `'s` is not part of the
+    name. Before the fold, channel one could not vouch for its own possessive, so
+    the span was suppressed and the name shipped — and only the gazetteer's own
+    possessive folding in ``is_common_given_name`` was hiding it, through the
+    *other* channel. Nothing moved on the shipped arm; this closes the case for a
+    host whose given-name oracle does not fold.
+    """
+    text = "I saw Terrence at lunch. Terrence's brother stayed home that day."
+    starts, emphasis, headings, written = _channels(text)
+    assert written == frozenset({"terrence"})
+
+    def no_oracle(name: str) -> bool:
+        return False
+
+    assert corroborated(["Terrence's"], written, no_oracle)
+    assert not suppressed_as_an_unevidenced_capital(
+        ["Terrence's"], 25, starts, emphasis, headings, written, no_oracle
+    )
+
+
+def test_the_possessive_fold_takes_one_tail_and_only_a_real_one() -> None:
+    """It cannot invent corroboration for a word that has no clitic."""
+    written = frozenset({"terrence"})
+
+    def no_oracle(name: str) -> bool:
+        return False
+
+    # "Words" has no tail to remove, so the fold is a no-op and it stays
+    # uncorroborated — the guard's whole purpose survives the change.
+    assert not corroborated(["Words"], written, no_oracle)
+    assert not corroborated(["Terrences"], written, no_oracle)

@@ -56,6 +56,7 @@ import {
   sentenceStarts,
   suppressedAsAnUnevidencedCapital,
   trim,
+  withoutClitic,
   type CapitalisationHabit,
   type Span,
 } from "../src/candidates.js";
@@ -178,14 +179,18 @@ test("without a settlement oracle every non-organization span is a NAME", () => 
   assert.equal(classify(["Springfield", "Township"]), "NAME");
 });
 
-test("the org suffix beats the settlement lookup", () => {
-  // Load-bearing rather than arbitrary: the suffix is direct evidence about *this*
-  // string, where the tier is evidence about a substring of it.
+test("the settlement lookup beats the org suffix", () => {
+  // Changed 2026-08-11: a lookup beats a guess, uniformly. The tier vouches for
+  // the whole string on an exact match; a suffix is a guess from a word ending.
+  // Both rows mask, so only the word a student reads outbound turns on it — and
+  // of the 16 real tier entries carrying both, 12 are ordinary towns.
   const settlement = (name: string) =>
     new Set(["akron", "acme inc.", "springfield township"]).has(name.toLowerCase());
-  assert.equal(classify(["Acme", "Inc."], settlement), "ORGANIZATION");
+  assert.equal(classify(["Acme", "Inc."], settlement), "LOCATION");
   assert.equal(classify(["Akron"], settlement), "LOCATION");
   assert.equal(classify(["Springfield", "Township"], settlement), "LOCATION");
+  // The case that actually occurs: no tier vouches, so the suffix types it.
+  assert.equal(classify(["Progressive", "Insurance"], settlement), "ORGANIZATION");
 });
 
 test("only the last token is consulted for an org suffix", () => {
@@ -887,4 +892,34 @@ test("a mid-sentence multi-token span never reaches the guard", () => {
 
 test("no tokens corroborate nothing", () => {
   assert.equal(corroborated([], new Set(["terrence"]), isGiven), false);
+});
+
+test("the document's own capital vouches for its own possessive", () => {
+  // Added 2026-08-11. The writer capitalised "Terrence" mid-sentence, which is
+  // testimony about the name; the `'s` is not part of it. Before the fold,
+  // channel one could not vouch for its own possessive — only the gazetteer's
+  // possessive folding, on the OTHER channel, was hiding that.
+  const text = "I saw Terrence at lunch. Terrence's brother stayed home that day.";
+  const starts = sentenceStarts(text);
+  const written = midSentenceCapitals(text, starts, headingSpans(text));
+  const noOracle = () => false;
+  assert.deepEqual([...written], ["terrence"]);
+  assert.equal(corroborated(["Terrence's"], written, noOracle), true);
+  assert.equal(
+    suppressedAsAnUnevidencedCapital(
+      ["Terrence's"], 25, starts, [], [], written, noOracle,
+    ),
+    false,
+  );
+});
+
+test("the possessive fold takes one tail and only a real one", () => {
+  // It cannot invent corroboration for a word with no clitic, so the guard's
+  // whole purpose survives the change.
+  const written = new Set(["terrence"]);
+  const noOracle = () => false;
+  assert.equal(corroborated(["Words"], written, noOracle), false);
+  assert.equal(corroborated(["Terrences"], written, noOracle), false);
+  assert.equal(withoutClitic("terrence's"), "terrence");
+  assert.equal(withoutClitic("terrence"), "terrence");
 });
