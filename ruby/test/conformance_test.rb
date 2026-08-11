@@ -10,9 +10,9 @@
 # **The ratchet.** MATCHED_REQUIRING_MASKING_RATCHET is the number of
 # masking-required frames this port currently reproduces byte-for-byte. It is a
 # floor: raise it when detector work lands, and a regression that drops below it
-# fails the build. It is expressed over the 35 frames that require masking rather
-# than all 51, because 16 frames expect nothing to be masked and a do-nothing
-# implementation matches every one — a ratchet over 51 would start at 16 and read
+# fails the build. It is expressed over the 36 frames that require masking rather
+# than all 52, because 16 frames expect nothing to be masked and a do-nothing
+# implementation matches every one — a ratchet over 52 would start at 16 and read
 # as progress.
 #
 # **Completeness is a separate, visible item.** `skip` reports it every run
@@ -52,9 +52,9 @@ class ConformanceTest < Minitest::Test
   end
 
   def test_the_spec_loads_with_every_frame_and_its_golden_output
-    assert_equal 51, self.class.spec.frames.size
-    assert_equal 51, self.class.spec.golden.size
-    assert_equal "2026-08-06.4", self.class.spec.fixture_version
+    assert_equal 52, self.class.spec.frames.size
+    assert_equal 52, self.class.spec.golden.size
+    assert_equal "2026-08-11.1", self.class.spec.fixture_version
     assert_equal "local-gazetteer-lowercase", self.class.spec.reference_arm
   end
 
@@ -85,7 +85,7 @@ class ConformanceTest < Minitest::Test
 
   def test_the_spec_says_which_frames_require_masking
     board = self.class.board
-    assert_equal 51, board.total
+    assert_equal 52, board.total
     assert_operator board.requiring_masking, :>, 0,
                     "no frame requires masking, which means the golden output " \
                     "is empty and this suite is scoring nothing"

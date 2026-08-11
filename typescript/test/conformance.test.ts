@@ -9,10 +9,10 @@
  * **The ratchet.** `MATCHED_REQUIRING_MASKING_RATCHET` is the number of
  * masking-required frames this port currently reproduces byte-for-byte. It is a
  * floor: raise it when you land detector work, and a regression that drops below
- * it fails the build. It is deliberately expressed over the 35 frames that
- * require masking rather than all 51, because 16 frames expect nothing to be
+ * it fails the build. It is deliberately expressed over the 36 frames that
+ * require masking rather than all 52, because 16 frames expect nothing to be
  * masked and a do-nothing implementation matches every one of them — a ratchet
- * over 51 would start at 16 and read as progress.
+ * over 52 would start at 16 and read as progress.
  *
  * **Completeness is a separate, visible, failing item.** `{ todo: ... }` reports
  * it every run without failing CI, so the gap is impossible to lose track of and
@@ -34,7 +34,7 @@ import { redact } from "../src/redact.js";
 /**
  * Raise this when detector work lands. Never lower it to make a build pass.
  *
- * 8 — the structured entities and the interpolated identity. The remaining 27
+ * 8 — the structured entities and the interpolated identity. The remaining 28
  * all need candidate generation: a third-party name, a hometown to type
  * {LOCATION}, or an organisation.
  */
@@ -51,9 +51,9 @@ const board = score(spec, (sentence: string, identity: Identity) =>
 console.log(report(board, gates));
 
 test("the spec loads with every frame and its golden output", () => {
-  assert.equal(spec.frames.length, 51);
-  assert.equal(spec.golden.size, 51);
-  assert.equal(spec.fixtureVersion, "2026-08-06.4");
+  assert.equal(spec.frames.length, 52);
+  assert.equal(spec.golden.size, 52);
+  assert.equal(spec.fixtureVersion, "2026-08-11.1");
   assert.equal(spec.referenceArm, "local-gazetteer-lowercase");
 });
 
@@ -83,12 +83,12 @@ test("the nine gates load, with four declaring data no package ships", () => {
 
 test("both implementations agree on which frames require masking", () => {
   // Derived from the golden output rather than asserted as a constant, so this
-  // tracks the spec instead of a number somebody typed. 35 of 51 today; if the
+  // tracks the spec instead of a number somebody typed. 36 of 52 today; if the
   // fixture grows, the ratchet's denominator moves with it and the failure
   // message says so.
   assert.equal(
     board.requiringMasking + (board.total - board.requiringMasking),
-    51,
+    52,
   );
   assert.ok(
     board.requiringMasking > 0,

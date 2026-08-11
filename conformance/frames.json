@@ -1,6 +1,6 @@
 {
   "document_version": 1,
-  "fixture_version": "2026-08-06.4",
+  "fixture_version": "2026-08-11.1",
   "frames": [
     {
       "frame_id": "kinship-possessive",
@@ -620,6 +620,27 @@
       ]
     },
     {
+      "frame_id": "intersect-hometown-that-ends-in-a-landmark-suffix",
+      "group": "intersect",
+      "held_out": true,
+      "note": "The two halves of the landmark rule, colliding on purpose. `intersect-landmark-and-hometown` has the same intent but a hometown of Akron, which cannot collide with anything — which is why it passed throughout and caught nothing.",
+      "sentence": "We moved from Allen Park to be closer to the Lincoln Memorial.",
+      "spans": [
+        {
+          "entity": "LOCATION",
+          "expect": "{LOCATION}",
+          "literal": "Allen Park",
+          "note": "A Michigan town of ~28,000, and the shape the frame set was missing until 2026-08-11. Its last token is a landmark suffix, so a suffix rule that outranks the settlement tier keeps it — which is how 383 real settlements leaked. Redact."
+        },
+        {
+          "entity": "LOCATION",
+          "literal": "Lincoln Memorial",
+          "note": "The control on that fix, in the same sentence and with the same suffix: no tier vouches for it, so the suffix is the only evidence and it is still kept. A change that closes the leak by deleting the landmark rule fails here.",
+          "verdict": "keep"
+        }
+      ]
+    },
+    {
       "frame_id": "intersect-name-beside-structured",
       "group": "intersect",
       "note": "Adjacent spans of different types. Pattern order decides who claims the boundary characters, and a name half-eaten by the phone pattern leaks the remainder.",
@@ -879,6 +900,19 @@
       "masked": "{NAME_1} sat behind me in that class all year long.",
       "placeholders": [
         "{NAME_1}"
+      ]
+    },
+    "intersect-hometown-that-ends-in-a-landmark-suffix": {
+      "aligns": true,
+      "mapping": [
+        [
+          "{LOCATION_1}",
+          "Allen Park"
+        ]
+      ],
+      "masked": "We moved from {LOCATION_1} to be closer to the Lincoln Memorial.",
+      "placeholders": [
+        "{LOCATION_1}"
       ]
     },
     "intersect-landmark-and-hometown": {

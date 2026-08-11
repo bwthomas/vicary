@@ -366,27 +366,122 @@ def _is_stop(token: str) -> bool:
     return word.strip("'’") in _STOP_WORDS
 
 
-def _classify(
+#: What a span can be. A span carries *every* tag its evidence supports, because
+#: the world does not hand out one nature per name: "Allen Park" is a real town of
+#: 28,000 people AND ends in a landmark suffix; "Falls Church" is a real town AND
+#: ends in an organisation suffix. Choosing between them is a decision, and the
+#: decision belongs in :data:`_PRECEDENCE` where it can be read, not in the order
+#: of two ``if`` statements in two different functions — which is where it lived
+#: until 2026-08-11, and which is how 383 real settlements came to be kept.
+ORGANIZATION: str = "ORGANIZATION"
+LOCATION: str = "LOCATION"
+LANDMARK: str = "LANDMARK"
+#: Carried by every candidate, unconditionally. A span reached the table at all
+#: because it is name-shaped, so this tag is not evidence of a person — it records
+#: that there is no evidence *beyond* the shape. Making it unconditional is what
+#: makes the table total: some row always matches, so there is no unresolved span.
+PERSON: str = "PERSON"
+
+
+@dataclass(frozen=True)
+class _Row:
+    """One row of the precedence table: a tag, and what it decides."""
+
+    tag: str
+    #: Mask or keep. This is the safety half of the verdict.
+    mask: bool
+    #: The placeholder kind, when masking. ``None`` on a keeping row, because a
+    #: span that is never masked has no placeholder to type.
+    kind: str | None
+
+
+#: The precedence table. The first row whose tag the span carries decides both the
+#: mask/keep verdict and the placeholder, and that is the whole classification
+#: policy — there is no second place where a span's nature is decided.
+#:
+#: The order, and why each position is where it is:
+#:
+#: 1. ``ORGANIZATION`` over ``LOCATION`` preserves the behaviour that shipped, and
+#:    it is nearly free either way: the collision is 16 entries in a tier of
+#:    23,234 (0.07%), and *both* rows mask, so all that turns on it is which word
+#:    a student reads outbound. It is genuinely ambiguous in both directions —
+#:    "Falls Church" and "Cut Bank" are towns, "Byumba Hospital" and "Zeyrek
+#:    Mosque" are not — and nothing measures which way is better, so it stays put
+#:    rather than moving on taste.
+#: 2. ``LOCATION`` over ``LANDMARK`` is the redact-wins rule, and it is the row
+#:    that changes behaviour. The landmark suffix is a *guess* from a word ending;
+#:    settlement membership is a *lookup* in a tier that knows the town exists. A
+#:    guess must not beat a lookup when the guess keeps and the lookup masks. The
+#:    old order leaked 391 settlements whose last token is a landmark suffix — 8
+#:    independently notable, so 383 real towns — every one of them somebody's
+#:    hometown: park 94, lake 82, valley 60, falls 49, island 32, river 30,
+#:    mountain 12, gardens 12. This costs no real landmark, because a landmark the
+#:    gazetteer knows is notable and is not in the settlement tier; the row is a
+#:    backstop for landmarks it does *not* know, and those are not settlements
+#:    either.
+#: 3. ``LANDMARK`` over ``PERSON`` is not a redact-wins violation, because
+#:    ``PERSON`` is the absence of evidence rather than evidence. "Lincoln
+#:    Memorial" is the essay's subject and keeping it is the point of the row.
+#: 4. ``PERSON`` last, and always matching, so the table is total.
+_PRECEDENCE: tuple[_Row, ...] = (
+    _Row(ORGANIZATION, mask=True, kind="ORGANIZATION"),
+    _Row(LOCATION, mask=True, kind="LOCATION"),
+    _Row(LANDMARK, mask=False, kind=None),
+    _Row(PERSON, mask=True, kind="NAME"),
+)
+
+
+def classify_tags(
     tokens: list[str], settlement: SettlementOracle | None = None
-) -> str:
-    """Which placeholder kind this span should mask as.
+) -> frozenset[str]:
+    """Every tag the evidence supports for this span. Decides nothing.
 
-    The org suffix wins over the settlement lookup, and the order is load-bearing
-    rather than arbitrary: "Springfield Township" and "Akron Public Library" both
-    resolve as settlements under a prefix match and both are organizations. The
-    suffix is direct evidence about *this* string; the tier is evidence about a
-    substring of it.
+    Separated from the decision on purpose: this function reads evidence and
+    :data:`_PRECEDENCE` applies policy, so changing what we do about a collision
+    is an edit to a table rather than to a detector.
 
-    ``settlement`` absent means every non-organization span types ``NAME`` — the
+    ``settlement`` absent means the ``LOCATION`` tag is never reachable — the
     behaviour before the tier existed, and the behaviour a caller that wires no
     oracles still gets.
     """
+    # No tokens is no evidence, which is exactly what a bare PERSON tag means.
+    # Guarded rather than left to raise because the predicate this replaced
+    # (`is_public_landmark`) short-circuited on the length test and so answered
+    # False for the empty string; callers reaching it that way must keep working.
+    if not tokens:
+        return frozenset({PERSON})
     tail = tokens[-1].lower().strip(".,")
+    tags = {PERSON}
     if tail in _ORG_SUFFIXES:
-        return "ORGANIZATION"
+        tags.add(ORGANIZATION)
     if settlement is not None and settlement(" ".join(tokens)):
-        return "LOCATION"
-    return "NAME"
+        tags.add(LOCATION)
+    # Multi-token only: a bare "Park" is a surname far more often than a place,
+    # and the suffix rule is about a modifier plus a category noun.
+    if len(tokens) > 1 and tail in _LANDMARK_SUFFIXES:
+        tags.add(LANDMARK)
+    return frozenset(tags)
+
+
+def _resolve(tags: frozenset[str]) -> _Row:
+    """The first row of :data:`_PRECEDENCE` this span carries the tag for."""
+    for row in _PRECEDENCE:
+        if row.tag in tags:
+            return row
+    # Unreachable: PERSON is unconditional, so the last row always matches.
+    raise AssertionError(f"no precedence row matched {sorted(tags)}")
+
+
+def _classify(
+    tokens: list[str], settlement: SettlementOracle | None = None
+) -> str:
+    """Which placeholder kind this span would mask as.
+
+    The kind half of the table's verdict. A span the table *keeps* has no
+    placeholder, and types ``NAME`` here as an inert default — nothing reads it,
+    because :func:`mask_candidates` asks the same table for the verdict first.
+    """
+    return _resolve(classify_tags(tokens, settlement)).kind or "NAME"
 
 
 def _trim(tokens: list[str]) -> list[list[str]]:
@@ -1202,9 +1297,16 @@ class PlaceholderMinter:
 
 
 def is_public_landmark(name: str) -> bool:
-    """A landmark is topical by construction, so it needs no gazetteer lookup."""
-    tokens = name.split()
-    return len(tokens) > 1 and tokens[-1].lower().strip(".,") in _LANDMARK_SUFFIXES
+    """Whether ``name`` carries the ``LANDMARK`` tag — a suffix guess, no lookup.
+
+    A tag, not a verdict. It says the span *looks* like a landmark, which is all a
+    word ending can say; whether that keeps the span is :data:`_PRECEDENCE`'s
+    call, and since 2026-08-11 a settlement lookup outranks it. Callers that
+    consult this directly are the ones with no settlement oracle in scope
+    (:func:`corroborated_surnames`, :func:`established_name_tokens`), where the
+    tag is the only evidence available and excluding is the safe direction.
+    """
+    return LANDMARK in classify_tags(name.split())
 
 
 def _surname_tokens(name: str) -> list[str]:
@@ -1678,7 +1780,13 @@ def mask_candidates(
         if (name.lower() in lowered_keep
                 or " ".join(_surname_tokens(name)) in lowered_keep):
             continue
-        if is_public_landmark(name):
+        # The table decides keep-or-mask, and it is the only thing that does.
+        # Before 2026-08-11 this line was a bare `is_public_landmark(name)`, which
+        # kept a span on a word ending alone and so kept 383 real settlements —
+        # a student's hometown leaked whenever it was named after a park, lake,
+        # valley or falls. The settlement tier now outranks the suffix; see
+        # :data:`_PRECEDENCE` for why that row sits where it does.
+        if not _resolve(classify_tags(name.split(), settlement)).mask:
             continue
         if notable is not None and notable(name):
             # ...unless a work title is standing in for a person the writer

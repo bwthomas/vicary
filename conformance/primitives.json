@@ -2037,8 +2037,117 @@
       "org_suffix": "ORGANIZATION",
       "school": "ORGANIZATION",
       "settlement": "NAME",
+      "settlement_with_landmark_suffix": "NAME",
+      "settlement_with_org_suffix": "ORGANIZATION",
       "township": "NAME",
       "two_names": "NAME"
+    },
+    "classify_tags": {
+      "allcaps_run": [
+        "PERSON"
+      ],
+      "bare_honorific": [
+        "PERSON"
+      ],
+      "civic": [
+        "LANDMARK",
+        "PERSON"
+      ],
+      "honorific_and_name": [
+        "PERSON"
+      ],
+      "honorific_then_stop": [
+        "PERSON"
+      ],
+      "interior_stop": [
+        "PERSON"
+      ],
+      "landmark": [
+        "LANDMARK",
+        "PERSON"
+      ],
+      "org_suffix": [
+        "ORGANIZATION",
+        "PERSON"
+      ],
+      "school": [
+        "ORGANIZATION",
+        "PERSON"
+      ],
+      "settlement": [
+        "PERSON"
+      ],
+      "settlement_with_landmark_suffix": [
+        "LANDMARK",
+        "PERSON"
+      ],
+      "settlement_with_org_suffix": [
+        "ORGANIZATION",
+        "PERSON"
+      ],
+      "township": [
+        "PERSON"
+      ],
+      "two_names": [
+        "PERSON"
+      ]
+    },
+    "classify_tags_with_settlement": {
+      "allcaps_run": [
+        "PERSON"
+      ],
+      "bare_honorific": [
+        "PERSON"
+      ],
+      "civic": [
+        "LANDMARK",
+        "LOCATION",
+        "PERSON"
+      ],
+      "honorific_and_name": [
+        "PERSON"
+      ],
+      "honorific_then_stop": [
+        "PERSON"
+      ],
+      "interior_stop": [
+        "PERSON"
+      ],
+      "landmark": [
+        "LANDMARK",
+        "PERSON"
+      ],
+      "org_suffix": [
+        "LOCATION",
+        "ORGANIZATION",
+        "PERSON"
+      ],
+      "school": [
+        "LOCATION",
+        "ORGANIZATION",
+        "PERSON"
+      ],
+      "settlement": [
+        "LOCATION",
+        "PERSON"
+      ],
+      "settlement_with_landmark_suffix": [
+        "LANDMARK",
+        "LOCATION",
+        "PERSON"
+      ],
+      "settlement_with_org_suffix": [
+        "LOCATION",
+        "ORGANIZATION",
+        "PERSON"
+      ],
+      "township": [
+        "LOCATION",
+        "PERSON"
+      ],
+      "two_names": [
+        "PERSON"
+      ]
     },
     "classify_with_settlement": {
       "allcaps_run": "NAME",
@@ -2051,6 +2160,8 @@
       "org_suffix": "ORGANIZATION",
       "school": "ORGANIZATION",
       "settlement": "LOCATION",
+      "settlement_with_landmark_suffix": "LOCATION",
+      "settlement_with_org_suffix": "ORGANIZATION",
       "township": "LOCATION",
       "two_names": "NAME"
     },
@@ -3197,6 +3308,22 @@
         ]
       ]
     },
+    "masks_with_settlement": {
+      "allcaps_run": true,
+      "bare_honorific": true,
+      "civic": true,
+      "honorific_and_name": true,
+      "honorific_then_stop": true,
+      "interior_stop": true,
+      "landmark": false,
+      "org_suffix": true,
+      "school": true,
+      "settlement": true,
+      "settlement_with_landmark_suffix": true,
+      "settlement_with_org_suffix": true,
+      "township": true,
+      "two_names": true
+    },
     "mid_sentence_capitals": {
       "accented": [
         "ren"
@@ -3687,6 +3814,18 @@
       "settlement": [
         [
           "Akron"
+        ]
+      ],
+      "settlement_with_landmark_suffix": [
+        [
+          "Allen",
+          "Park"
+        ]
+      ],
+      "settlement_with_org_suffix": [
+        [
+          "Falls",
+          "Church"
         ]
       ],
       "township": [
@@ -5282,6 +5421,8 @@
       "acme inc.",
       "akron",
       "akron public library",
+      "allen park",
+      "falls church",
       "springfield township",
       "westfield high school"
     ],
@@ -5292,6 +5433,28 @@
       "to kill a mockingbird"
     ]
   },
+  "precedence": [
+    {
+      "kind": "ORGANIZATION",
+      "mask": true,
+      "tag": "ORGANIZATION"
+    },
+    {
+      "kind": "LOCATION",
+      "mask": true,
+      "tag": "LOCATION"
+    },
+    {
+      "kind": null,
+      "mask": false,
+      "tag": "LANDMARK"
+    },
+    {
+      "kind": "NAME",
+      "mask": true,
+      "tag": "PERSON"
+    }
+  ],
   "stop_tokens": [
     "The",
     "the",
@@ -5369,6 +5532,14 @@
     ],
     "settlement": [
       "Akron"
+    ],
+    "settlement_with_landmark_suffix": [
+      "Allen",
+      "Park"
+    ],
+    "settlement_with_org_suffix": [
+      "Falls",
+      "Church"
     ],
     "township": [
       "Springfield",

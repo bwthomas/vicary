@@ -1,6 +1,6 @@
 """The fixture and the gates as language-neutral data — the spec three ports share.
 
-Why this module exists. The fixture is 51 frames of ground truth and the gates
+Why this module exists. The fixture is 52 frames of ground truth and the gates
 are nine bars, and both lived only as Python literals. A TypeScript or Ruby port
 that passed a fixture it *transcribed by hand* would prove nothing: the two
 suites could disagree about what the right answer is and both stay green. So the
@@ -259,6 +259,13 @@ PRIMITIVE_TOKEN_LISTS: dict[str, list[str]] = {
     "org_suffix": ["Acme", "Inc."],
     "settlement": ["Akron"],
     "school": ["Westfield", "High", "School"],
+    # The collision the precedence table exists to resolve: a real town whose
+    # last token is a landmark suffix. Carried as a primitive because a port that
+    # ordered the rows the other way would still pass every frame — the frame set
+    # had no example of this shape for the detector's whole life, which is how
+    # 383 real settlements leaked. See `precedence` below.
+    "settlement_with_landmark_suffix": ["Allen", "Park"],
+    "settlement_with_org_suffix": ["Falls", "Church"],
 }
 
 #: Single tokens for the stoplist predicate, each standing for a rule rather than
@@ -280,8 +287,8 @@ PRIMITIVE_STOP_TOKENS: tuple[str, ...] = (
 #: * ``is_title_prefix(key)``  -> some entry of ``titles`` equals ``key`` or
 #:                                starts with ``key + " "``
 PRIMITIVE_SETTLEMENTS: tuple[str, ...] = (
-    "acme inc.", "akron", "akron public library", "springfield township",
-    "westfield high school",
+    "acme inc.", "akron", "akron public library", "allen park", "falls church",
+    "springfield township", "westfield high school",
 )
 PRIMITIVE_TITLES: tuple[str, ...] = (
     "charlotte's web", "the lion", "the lion king", "to kill a mockingbird",
@@ -334,6 +341,15 @@ def build_primitives_document() -> dict[str, Any]:
             "settlements": list(PRIMITIVE_SETTLEMENTS),
             "titles": list(PRIMITIVE_TITLES),
         },
+        # The classification policy itself, as data. Emitted because it is the
+        # one part of the detector a port can get wrong while passing every
+        # frame: the rows are a total order, reordering two of them changes which
+        # spans survive, and only a colliding span can tell. A port reads these
+        # rows in order and takes the first whose tag the span carries.
+        "precedence": [
+            {"tag": row.tag, "mask": row.mask, "kind": row.kind}
+            for row in nc._PRECEDENCE
+        ],
         "constants": {
             "allcaps_run": nc._ALLCAPS_RUN,
             "drops_capitals_min_rate": nc._DROPS_CAPITALS_MIN_RATE,
@@ -349,6 +365,19 @@ def build_primitives_document() -> dict[str, Any]:
             "classify": over_lists(lambda t: nc._classify(t)),
             "classify_with_settlement": over_lists(
                 lambda t: nc._classify(t, _primitive_settlement)
+            ),
+            # Sorted so the comparison is over a set, not an iteration order.
+            "classify_tags": over_lists(lambda t: sorted(nc.classify_tags(t))),
+            "classify_tags_with_settlement": over_lists(
+                lambda t: sorted(nc.classify_tags(t, _primitive_settlement))
+            ),
+            # The verdict the table returns for each span — the half of
+            # classification that `classify` cannot show, because a kept span and
+            # a span typed NAME are the same string there.
+            "masks_with_settlement": over_lists(
+                lambda t: nc._resolve(
+                    nc.classify_tags(t, _primitive_settlement)
+                ).mask
             ),
             "word_token": over_corpus(lambda x: _finds(nc._WORD_TOKEN, x)),
             "lower_token": over_corpus(lambda x: _finds(nc._LOWER_TOKEN, x)),

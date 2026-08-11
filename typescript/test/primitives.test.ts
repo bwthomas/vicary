@@ -32,17 +32,20 @@ import {
   LOWERCASE_MIN_TOKENS,
   LOWER_TOKEN,
   MARKS_PROPER_NOUNS_MIN,
+  PRECEDENCE,
   PROTECTED,
   STOP_WORDS,
   TITLE_MAX_TOKENS,
   WORD_TOKEN,
   capitalisationHabit,
   classify,
+  classifyTags,
   emphasisSpans,
   findTitleSpans,
   headingSpans,
   isStop,
   midSentenceCapitals,
+  resolve,
   sentenceStarts,
   trim,
   type Span,
@@ -139,6 +142,24 @@ section("classify", lists, (tokens: string[]) => classify(tokens));
 section("classify_with_settlement", lists, (tokens: string[]) =>
   classify(tokens, isSettlement),
 );
+section("classify_tags", lists, (tokens: string[]) =>
+  [...classifyTags(tokens)].sort(),
+);
+section("classify_tags_with_settlement", lists, (tokens: string[]) =>
+  [...classifyTags(tokens, isSettlement)].sort(),
+);
+section("masks_with_settlement", lists, (tokens: string[]) =>
+  resolve(classifyTags(tokens, isSettlement)).mask,
+);
+
+test("the spec's precedence table is this build's precedence table", () => {
+  // The rows are emitted as data for the same reason the constants are: a port
+  // that reads the corpus off the spec and orders its own rows by hand can pass
+  // every case above and still resolve a collision the other way. `classify`
+  // cannot catch that on its own — a kept span and a span typed NAME are the
+  // same string there — which is what `masks_with_settlement` is for.
+  assert.deepEqual(spec.precedence, PRECEDENCE);
+});
 
 section("word_token", corpus, (text: string) => matches(WORD_TOKEN, text));
 section("lower_token", corpus, (text: string) => matches(LOWER_TOKEN, text));
@@ -178,6 +199,7 @@ test("every section the spec carries is checked by this file", () => {
   // close.
   const checked = new Set([
     "is_stop", "trim", "classify", "classify_with_settlement",
+    "classify_tags", "classify_tags_with_settlement", "masks_with_settlement",
     "word_token", "lower_token", "any_token", "candidate_re", "protected",
     "sentence_starts", "emphasis_spans", "heading_spans",
     "title_spans", "title_spans_requires_capital",

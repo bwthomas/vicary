@@ -351,31 +351,122 @@ export type SettlementOracle = (name: string) => boolean;
 export type TitleOracle = (name: string) => boolean;
 
 /**
- * Which placeholder kind this span should mask as.
+ * What a span can be. A span carries *every* tag its evidence supports, because
+ * the world does not hand out one nature per name: "Allen Park" is a real town of
+ * 28,000 people AND ends in a landmark suffix; "Falls Church" is a real town AND
+ * ends in an organisation suffix. Choosing between them is a decision, and the
+ * decision lives in {@link PRECEDENCE} where it can be read.
+ */
+export type Tag = "ORGANIZATION" | "LOCATION" | "LANDMARK" | "PERSON";
+
+/** One row of the precedence table: a tag, and what it decides. */
+export interface PrecedenceRow {
+  readonly tag: Tag;
+  /** Mask or keep. The safety half of the verdict. */
+  readonly mask: boolean;
+  /** The placeholder kind when masking; `null` on a keeping row. */
+  readonly kind: CandidateKind | null;
+}
+
+/**
+ * The precedence table. The first row whose tag the span carries decides both
+ * the mask/keep verdict and the placeholder, and that is the whole
+ * classification policy.
  *
- * The org suffix wins over the settlement lookup, and the order is load-bearing
- * rather than arbitrary: a name like "Westfield High School" resolves as a
- * settlement under a prefix match and is an organization. The suffix is direct
- * evidence about *this* string; the tier is evidence about a substring of it.
+ * Pinned against `precedence` in `conformance/primitives.json`, because this is
+ * the one part of the detector a port can get wrong while passing every frame:
+ * reordering two rows changes which spans survive, and only a colliding span can
+ * tell. The reference's frame set had no colliding span for the detector's whole
+ * life, which is how 383 real settlements came to be kept.
  *
- * The reference states the same rule with "Springfield Township" and "Akron
- * Public Library", which do not demonstrate it — neither `township` nor `library`
- * is an org suffix (`library` is a landmark suffix), so both type `LOCATION`
- * under a settlement oracle. Measured in both languages, and identical in both;
- * the example is wrong, not the behaviour.
+ * The order, and why each position is where it is:
  *
- * `settlement` absent means every non-organization span types `NAME` — the
+ * 1. `ORGANIZATION` over `LOCATION` is nearly free — the collision is 16 entries
+ *    in a tier of 23,234, and both rows mask, so all that turns on it is which
+ *    word a student reads outbound.
+ * 2. `LOCATION` over `LANDMARK` is the redact-wins rule. A landmark suffix is a
+ *    *guess* from a word ending; settlement membership is a *lookup*. A guess
+ *    must not beat a lookup when the guess keeps and the lookup masks.
+ * 3. `LANDMARK` over `PERSON` is not a redact-wins violation, because `PERSON` is
+ *    the absence of evidence rather than evidence. Keeping "Lincoln Memorial" is
+ *    the row's purpose.
+ * 4. `PERSON` last, and always matching, so the table is total.
+ */
+export const PRECEDENCE: readonly PrecedenceRow[] = [
+  { tag: "ORGANIZATION", mask: true, kind: "ORGANIZATION" },
+  { tag: "LOCATION", mask: true, kind: "LOCATION" },
+  { tag: "LANDMARK", mask: false, kind: null },
+  { tag: "PERSON", mask: true, kind: "NAME" },
+];
+
+/**
+ * Every tag the evidence supports for this span. Decides nothing.
+ *
+ * Separated from the decision on purpose: this reads evidence and
+ * {@link PRECEDENCE} applies policy, so changing what we do about a collision is
+ * an edit to a table rather than to a detector.
+ *
+ * `settlement` absent means the `LOCATION` tag is never reachable — the
  * behaviour before the tier existed, and the behaviour a caller that wires no
  * oracles still gets.
+ */
+export function classifyTags(
+  tokens: readonly string[],
+  settlement?: SettlementOracle,
+): ReadonlySet<Tag> {
+  // PERSON is unconditional: the span reached the table because it is
+  // name-shaped, so the tag records that there is no evidence *beyond* the
+  // shape. Making it unconditional is what makes the table total.
+  const tags = new Set<Tag>(["PERSON"]);
+  // No tokens is no evidence, which is what a bare PERSON tag already says.
+  if (tokens.length === 0) return tags;
+  const tail = strip(tokens[tokens.length - 1]!.toLowerCase(), ".,");
+  if (ORG_SUFFIXES.has(tail)) tags.add("ORGANIZATION");
+  if (settlement !== undefined && settlement(tokens.join(" "))) tags.add("LOCATION");
+  // Multi-token only: a bare "Park" is a surname far more often than a place.
+  if (tokens.length > 1 && LANDMARK_SUFFIXES.has(tail)) tags.add("LANDMARK");
+  return tags;
+}
+
+/** The first row of {@link PRECEDENCE} this span carries the tag for. */
+export function resolve(tags: ReadonlySet<Tag>): PrecedenceRow {
+  for (const row of PRECEDENCE) {
+    if (tags.has(row.tag)) return row;
+  }
+  // Unreachable: PERSON is unconditional, so the last row always matches.
+  throw new Error(`no precedence row matched ${[...tags].sort().join(",")}`);
+}
+
+/**
+ * Which placeholder kind this span would mask as.
+ *
+ * The kind half of the table's verdict. A span the table *keeps* has no
+ * placeholder, and types `NAME` here as an inert default — nothing reads it,
+ * because the masking pass asks the same table for the verdict first.
+ *
+ * Note on the reference's docstring, which is wrong in a way worth recording:
+ * it states the org-over-settlement rule with "Springfield Township" and "Akron
+ * Public Library", and neither demonstrates it — neither `township` nor
+ * `library` is an org suffix (`library` is a landmark suffix), so both type
+ * `LOCATION` under a settlement oracle. Measured in both languages and identical
+ * in both; the example is wrong, not the behaviour.
  */
 export function classify(
   tokens: readonly string[],
   settlement?: SettlementOracle,
 ): CandidateKind {
-  const tail = strip(tokens[tokens.length - 1]!.toLowerCase(), ".,");
-  if (ORG_SUFFIXES.has(tail)) return "ORGANIZATION";
-  if (settlement !== undefined && settlement(tokens.join(" "))) return "LOCATION";
-  return "NAME";
+  return resolve(classifyTags(tokens, settlement)).kind ?? "NAME";
+}
+
+/**
+ * Whether `name` carries the `LANDMARK` tag — a suffix guess, no lookup.
+ *
+ * A tag, not a verdict. It says the span *looks* like a landmark, which is all a
+ * word ending can say; whether that keeps the span is {@link PRECEDENCE}'s call,
+ * and a settlement lookup outranks it.
+ */
+export function isPublicLandmark(name: string): boolean {
+  return classifyTags(name.split(/\s+/).filter(Boolean)).has("LANDMARK");
 }
 
 /**

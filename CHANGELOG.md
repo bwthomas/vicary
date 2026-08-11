@@ -3,11 +3,44 @@
 ## 0.2.0 — 2026-08-11
 
 The build mechanism left the Python package, so the shared asset is shared rather
-than borrowed; and two identity patterns that had never matched anything now do.
+than borrowed; a hometown named after a park stops leaking; and two identity
+patterns that had never matched anything now do.
 
 **Breaking for anybody who imported `vicary.build` or ran `vicary-assets fetch`.**
-Neither exists. Rebuilding the gazetteer is `just asset-fetch` from a checkout. The
-detector's output on the 51 conformance frames is byte-identical to 0.1.1.
+Neither exists. Rebuilding the gazetteer is `just asset-fetch` from a checkout.
+
+**One deliberate change to detector output since 0.1.1**, described below: a span
+that is both a known settlement and landmark-shaped is now redacted. Every other
+byte of masked output on the conformance frames is unchanged.
+
+### A hometown that ends in a landmark suffix is redacted, not kept
+
+* **383 real settlements were being kept because their names end in a landmark
+  suffix.** `is_public_landmark` is a pure suffix rule, and it was consulted
+  *before* the settlement tier with an unconditional keep. The gazetteer's own
+  settlement tier holds 391 multi-token entries whose last token is a landmark
+  suffix — 8 independently notable, so 383 real towns — and a student's hometown
+  leaked whenever it was named after a park, lake, valley or falls: park 94,
+  lake 82, valley 60, falls 49, island 32, river 30, mountain 12, gardens 12.
+  "Allen Park", "Avon Lake" and "Asbury Park" all passed through untouched while
+  "Akron" in the same sentence masked correctly.
+* **Classification is now a tag set plus one ordered precedence table**, rather
+  than an `if` order split across two functions. A span carries every tag its
+  evidence supports — `ORGANIZATION`, `LOCATION`, `LANDMARK`, `PERSON` — and the
+  first matching row of the table decides both the mask/keep verdict and the
+  placeholder. The fix above is that table's second row, not a special case.
+* **A landmark the tiers do not know is still kept.** The suffix rule is a
+  backstop, and it is unchanged where it is the only evidence: "Lincoln Memorial"
+  and "Grand Canyon" are not in the settlement tier and are notable in their own
+  right.
+* **Nothing changes for a caller that wires no settlement oracle.** Without one
+  the `LOCATION` tag is unreachable, so the table resolves exactly as before.
+* **The table ships as spec data.** `conformance/primitives.json` carries the rows
+  themselves plus a `masks_with_settlement` section, because this is the one part
+  of the detector a port can get wrong while passing every frame — reordering two
+  rows changes which spans survive, and only a colliding span can tell. The frame
+  set had no colliding span for the detector's whole life, which is exactly how
+  this survived; `intersect-hometown-that-ends-in-a-landmark-suffix` is now one.
 
 ### The lookups are the build mechanism's, not the Python package's
 

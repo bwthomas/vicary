@@ -6,11 +6,11 @@
  * `conformance/README.md` for the bar; the short version is that every frame's
  * masked output must be byte-identical **including placeholder numbering**.
  *
- * **Why the scoreboard reports two denominators.** 16 of the 51 frames expect
+ * **Why the scoreboard reports two denominators.** 16 of the 52 frames expect
  * nothing to be masked — they exist to catch over-redaction. An implementation
- * that returns its input unchanged therefore scores 16 of 51 and looks a third of
+ * that returns its input unchanged therefore scores 16 of 52 and looks a third of
  * the way done while detecting nothing at all. So the number that leads is
- * `matched of framesRequiringMasking`, and the 51-frame total is reported beside
+ * `matched of framesRequiringMasking`, and the 52-frame total is reported beside
  * it rather than instead of it. A ratio whose numerator a null implementation can
  * inflate is not a measure of progress.
  */
@@ -18,6 +18,8 @@
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import type { PrecedenceRow } from "./candidates.js";
 
 export const DOCUMENT_VERSION = 1;
 
@@ -177,6 +179,8 @@ export interface Primitives {
   tokenLists: Record<string, string[]>;
   stopTokens: string[];
   oracles: { settlements: string[]; titles: string[] };
+  /** The classification policy, in order. See `PRECEDENCE` in `candidates.ts`. */
+  precedence: PrecedenceRow[];
   constants: Record<string, number>;
   cases: Record<string, Record<string, unknown>>;
 }
@@ -191,6 +195,7 @@ export function loadPrimitives(directory?: string): Primitives {
     tokenLists: raw.token_lists as Record<string, string[]>,
     stopTokens: raw.stop_tokens as string[],
     oracles: raw.oracles as { settlements: string[]; titles: string[] },
+    precedence: raw.precedence as PrecedenceRow[],
     constants: raw.constants as Record<string, number>,
     cases: raw.cases as Record<string, Record<string, unknown>>,
   };

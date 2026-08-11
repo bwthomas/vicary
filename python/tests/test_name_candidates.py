@@ -21,9 +21,11 @@ from vicary.eval.fixture import (
 )
 from vicary.local_classifier import LocalNameClassifier
 from vicary.name_candidates import (
+    _PRECEDENCE,
     CapitalisationHabit,
     _heading_spans,
     capitalisation_habit,
+    classify_tags,
     find_candidates,
     is_public_landmark,
     mask_candidates,
@@ -1289,14 +1291,68 @@ def test_an_organization_suffix_beats_the_settlement_tier() -> None:
     assert "{ORGANIZATION}" in masked, masked
 
 
-def test_a_kept_place_gets_no_location_placeholder() -> None:
-    """A keep has no placeholder to type, so the two tiers cannot collide.
+def test_a_landmark_the_settlement_tier_does_not_claim_is_kept() -> None:
+    """The landmark row still does its job, which is the backstop case.
 
-    "Lincoln Memorial" is a public landmark and the essay's subject. Even with a
-    settlement oracle that would happily claim it, it is never masked, so it can
-    never be mistyped.
+    "Lincoln Memorial" is a public landmark and the essay's subject. No gazetteer
+    lookup vouches for it here — the suffix is the only evidence there is, and on
+    that evidence alone the span is kept. This is the row's whole purpose: a
+    landmark the tiers do not know still survives.
     """
     text = "We went to see the Lincoln Memorial."
-    masked, n = mask_candidates(text, settlement=lambda name: True)
+    masked, n = mask_candidates(text, settlement=lambda name: False)
     assert masked == text, masked
     assert n == 0
+
+
+def test_a_settlement_beats_the_landmark_suffix() -> None:
+    """The redact-wins row, and the regression test for a real leak.
+
+    "Allen Park" is a Michigan town of ~28,000 people whose name ends in a
+    landmark suffix. Until 2026-08-11 the suffix guess outranked the settlement
+    lookup and the span was kept, so a student's hometown leaked whenever it was
+    named after a park, lake, valley or falls — 383 real settlements in the
+    shipped tier. A guess must not beat a lookup when the guess keeps.
+    """
+    masked, n = mask_candidates(
+        "We moved to Allen Park last summer.",
+        settlement=lambda name: name == "Allen Park",
+    )
+    assert masked == "We moved to {LOCATION} last summer.", masked
+    assert n == 1
+
+
+def test_a_span_carries_every_tag_its_evidence_supports() -> None:
+    """Tags are multi-label; the table, not the tag set, does the choosing."""
+    settlement = {"Allen Park", "Falls Church"}.__contains__
+
+    assert classify_tags(["Allen", "Park"], settlement) == frozenset(
+        {"PERSON", "LOCATION", "LANDMARK"}
+    )
+    assert classify_tags(["Falls", "Church"], settlement) == frozenset(
+        {"PERSON", "ORGANIZATION", "LOCATION"}
+    )
+    assert classify_tags(["Lincoln", "Memorial"], settlement) == frozenset(
+        {"PERSON", "LANDMARK"}
+    )
+    # PERSON is unconditional, which is what makes the table total.
+    assert classify_tags(["Terrence", "Okonkwo"], settlement) == frozenset(
+        {"PERSON"}
+    )
+    # A bare category noun is a surname far more often than a place.
+    assert classify_tags(["Park"], settlement) == frozenset({"PERSON"})
+
+
+def test_the_precedence_table_is_total_and_ordered() -> None:
+    """Every tag has exactly one row, and the order is the one we argued for."""
+    assert [row.tag for row in _PRECEDENCE] == [
+        "ORGANIZATION", "LOCATION", "LANDMARK", "PERSON",
+    ]
+    # The last row matches unconditionally, so no span reaches the end unresolved.
+    assert _PRECEDENCE[-1].tag == "PERSON"
+    # Exactly one row keeps. If a second one ever does, the argument in
+    # :data:`_PRECEDENCE` about redact-wins needs rewriting, not extending.
+    assert [row.tag for row in _PRECEDENCE if not row.mask] == ["LANDMARK"]
+    # A keeping row has no placeholder; a masking one always does.
+    for row in _PRECEDENCE:
+        assert (row.kind is None) is (not row.mask), row

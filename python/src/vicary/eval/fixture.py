@@ -51,7 +51,7 @@ from vicary.local_classifier import StudentIdentity
 #: Bump on any change to the frames. Recorded on every eval row and used in the
 #: resume key, because a resumed record built from a different fixture is a
 #: foreign record, not a consenting one.
-FIXTURE_VERSION: str = "2026-08-06.4"
+FIXTURE_VERSION: str = "2026-08-11.1"
 
 VERDICT_REDACT: str = "redact"
 VERDICT_KEEP: str = "keep"
@@ -713,6 +713,29 @@ INTERSECTION_FRAMES: tuple[Frame, ...] = (
                       "note it contains 'Lincoln', so a substring gazetteer "
                       "hit is not enough to decide either span."),
         ),
+        held_out=True,
+    ),
+    Frame(
+        frame_id="intersect-hometown-that-ends-in-a-landmark-suffix",
+        sentence="We moved from Allen Park to be closer to the Lincoln Memorial.",
+        spans=(
+            Span("LOCATION", "Allen Park", expect="{LOCATION}",
+                 note="A Michigan town of ~28,000, and the shape the frame set "
+                      "was missing until 2026-08-11. Its last token is a "
+                      "landmark suffix, so a suffix rule that outranks the "
+                      "settlement tier keeps it — which is how 383 real "
+                      "settlements leaked. Redact."),
+            Span("LOCATION", "Lincoln Memorial", verdict=VERDICT_KEEP,
+                 note="The control on that fix, in the same sentence and with "
+                      "the same suffix: no tier vouches for it, so the suffix "
+                      "is the only evidence and it is still kept. A change that "
+                      "closes the leak by deleting the landmark rule fails "
+                      "here."),
+        ),
+        note="The two halves of the landmark rule, colliding on purpose. "
+             "`intersect-landmark-and-hometown` has the same intent but a "
+             "hometown of Akron, which cannot collide with anything — which is "
+             "why it passed throughout and caught nothing.",
         held_out=True,
     ),
     Frame(
