@@ -12,7 +12,15 @@ __pycache__/
 # `python/tests/test_packaging.py` is the guard; this comment is why it exists.
 #
 # Adding a language means adding its output here, anchored, not relaxing these.
+#
+# The two ROOT entries are not hypothetical. `/build/` and `/dist/` are where
+# setuptools wrote before the Python package moved into `python/`, and the move
+# commit swept two 0.1.1 release artifacts into the index at `dist/` — 4.8 MB of
+# superseded wheel and sdist sitting at a public repository's root, which reads
+# like a release channel and is not one. Anchored entries are the fix; an
+# unanchored `dist/` would have matched a package named `dist`.
 /build/
+/dist/
 /python/build/
 /python/dist/
 /python/.venv/
