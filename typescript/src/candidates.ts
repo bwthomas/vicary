@@ -1,19 +1,19 @@
 /**
  * Find the person-names a student wrote, so the notability filter can decide.
  *
- * A port of `python/src/vicary/name_candidates.py`, landing in pieces. **This
- * piece is tokenisation and span boundaries**: the patterns that decide what a
- * word is, where a sentence begins, which runs of capitals are a shout rather
- * than a name, which lines are headings, and which stretches of text are already
- * redacted and must be left alone. It also carries the title scan, which runs
- * against the raw text before any candidate exists.
+ * A port of `python/src/vicary/name_candidates.py`, landing in pieces. **What is
+ * here so far** is everything that reads the text rather than deciding about it:
+ * the patterns that say what a word is, where a sentence begins, which runs of
+ * capitals are a shout rather than a name, which lines are headings, which
+ * stretches are already redacted; the title scan, which runs against the raw text
+ * before any candidate exists; and the capitalisation-habit inference, which is
+ * what the routes below will consult instead of obeying a capital.
  *
- * What is NOT here yet: the capitalisation-habit inference, the lowercase route,
- * the sentence-initial corroboration guard, the relation override, and
- * `findCandidates` itself. Nothing in this module is wired into `redact` — the
- * conformance scoreboard is unchanged by it on purpose, because a piece of a
- * detector that moves the number is a piece that was scored before it was
- * checked.
+ * What is NOT here yet: the lowercase route, the sentence-initial corroboration
+ * guard, the relation override, and `findCandidates` itself. Nothing in this
+ * module is wired into `redact` — the conformance scoreboard is unchanged by it on
+ * purpose, because a piece of a detector that moves the number is a piece that was
+ * scored before it was checked.
  *
  * Why generation runs before the notability lookup, rather than instead of it
  * -----------------------------------------------------------------------------
@@ -576,4 +576,305 @@ export function findTitleSpans(
     index += longest > 0 ? longest : 1;
   }
   return spans;
+}
+
+// ---------------------------------------------------------------------------
+// How this writer uses capital letters
+// ---------------------------------------------------------------------------
+
+/**
+ * A capitalised word that is *not* sentence-initial. "I" is excluded because
+ * every writer capitalises it whether or not they capitalise names, so it is the
+ * one capital that says nothing about their habits.
+ */
+export const MID_SENTENCE_CAP = /(?<=[a-z,;:]\s)([A-Z][a-z]{2,})/g;
+
+/**
+ * Mid-sentence capitals above which a document is taken to mark its proper nouns
+ * with capitals — at which point a *lowercase* token is evidence against a name.
+ *
+ * Measured on 36 un-scrubbed essay documents (~3,300 chars each, Project
+ * Gutenberg) against a lower-cased copy of the same text: as written the median is
+ * 10.5 and 35/36 documents are non-zero; lower-cased every document is 0. Clean
+ * separation, so the threshold is not delicate — 2 rather than 1 only to tolerate
+ * a single stray capital.
+ *
+ * **A rate was measured against this floor and rejected.** A count is
+ * length-blind, so the obvious repair is marks per 1,000 characters — and on the
+ * 27 un-scrubbed student documents that does not separate the deciding band, it
+ * only re-orders it. Both documents sitting at exactly 2 marks with the closest
+ * rates are decided *the wrong way round* by a rate: `141-693` marks "Powerball"
+ * twice in 3,478 characters (0.58 per 1k, a genuine capitaliser) and `141-433`
+ * marks "The" and "There" in 1,144 (1.75 per 1k, both artefacts of a sentence
+ * break the detector missed). A rate threshold demotes the real one and promotes
+ * the false one. What actually separates them is the *content* of the mark, which
+ * is per-token evidence — so the band falls through to
+ * {@link midSentenceCapitals} rather than being decided at document level, and
+ * that is what `INCONSISTENT` is for.
+ */
+export const MARKS_PROPER_NOUNS_MIN = 2;
+
+/**
+ * A sentence opening on a lower-case letter, which is the writer telling us
+ * directly that they are not keeping standard capitalisation. Matched at the start
+ * of the text as well as after a sentence break.
+ */
+export const LOWERCASE_SENTENCE_START = /(?:^|(?<=[.!?]\s))\s*[a-z]/g;
+
+/**
+ * A bare lower-case first-person "i" — the other unambiguous tell, and the one
+ * that survives a writer who does capitalise sentence openings. Non-global,
+ * because it is only ever searched: a global regex carries `lastIndex` between
+ * calls and would answer differently on its second question about the same text.
+ */
+export const BARE_LOWERCASE_I = new RegExp(
+  `${NOT_WORD_BEFORE}i(?![\\p{L}\\p{N}_])`,
+  "u",
+);
+
+/**
+ * One terminal-punctuation unit. The denominator for the drop rate, and it has to
+ * be this rather than {@link sentenceStarts}: that counts `\n` as a break too, and
+ * these documents are hard-wrapped, so it would report a wrapped line as a
+ * sentence and halve the rate. This is the population
+ * {@link LOWERCASE_SENTENCE_START} actually draws from.
+ */
+export const SENTENCE_UNIT = /[^.!?]+[.!?]*/g;
+
+/**
+ * Fraction of sentence openings that must be lower-case before a writer who *does*
+ * mark proper nouns is read as also dropping capitals, rather than as having made
+ * a typo. Read {@link capitalisationHabit} for the reason this is consulted on
+ * only one side of the floor — it is the load-bearing half.
+ *
+ * On the 27 un-scrubbed student documents the boolean "any lower-case opening"
+ * fires on 8, and the openings split in two with a gap between 12.5% and 7%:
+ *
+ * * habit — `my-fabit-book` 2 of 3 openings (67%), `141-433` 6 of 35 (17%),
+ *   `121-816` 1 of 8 (12.5%);
+ * * not — `my-first-tooth-gone` 1 of 14 (7%), `marching-to-his-own-beat` 3 of 60
+ *   (5%), `141-140` 2 of 41 (5%), `121-502` 1 of 25 (4%).
+ *
+ * Every opening in the second group was read, and they are line wraps, citations
+ * and one stylistic `Boy! did we cry`. `marching-to-his-own-beat` is an NWP anchor
+ * paper that marks 26 proper nouns correctly; the boolean called it a writer who
+ * does not keep standard capitalisation, on three artefacts.
+ */
+export const DROPS_CAPITALS_MIN_RATE = 0.1;
+
+/**
+ * What a document has told us about how its writer uses capital letters.
+ *
+ * This replaces two booleans — "does it capitalise its proper nouns" and "does it
+ * drop standard capitals" — which were consulted separately and *contradict each
+ * other on 7 of 27 un-scrubbed student documents*. `141-433` has two mid-sentence
+ * capitals and six lower-case sentence openings, so it was simultaneously a writer
+ * who capitalises and a writer who does not, and whichever predicate a call site
+ * happened to read decided the treatment.
+ *
+ * Four states, because the two signals are independent and all four cells occur:
+ *
+ * `consistent`
+ *     Marks its proper nouns, and does not drop sentence capitals. A lower-case
+ *     token here is evidence *against* a name. 15 of the 27.
+ * `inconsistent`
+ *     Does both. This is the writer the booleans had no cell for, and **both
+ *     document-level treatments are wrong for them** — suppressing the lowercase
+ *     route loses the names they wrote lower-case, and opening it wide fires on
+ *     ordinary words. So there is no document-level answer here on purpose: the
+ *     band falls through to per-token evidence ({@link midSentenceCapitals}),
+ *     which is the right granularity and already existed. 4 of the 27.
+ * `lowercase`
+ *     Drops capitals and marks nothing. The given-name tier is the only handle
+ *     left, and the lowercase route runs without corroboration. 1 of the 27.
+ * `silent`
+ *     Says nothing either way: no proper nouns to capitalise, and no dropped
+ *     openings. **Silence is not consent.** Reading it as consent is what put
+ *     "line circles" and "tone toward" in front of a student, because a 108-290
+ *     character feedback field is ordinary prose with nothing in it to capitalise.
+ *     Treated like `inconsistent`: per-token evidence, never the permissive path.
+ *     7 of the 27.
+ *
+ * **No metric moves.** Held-out recall, KEEP precision, round-trip, over-firing
+ * and Census exposure are identical to the two booleans on every arm, and that is
+ * the intended result rather than a disappointment: this replaces two predicates
+ * that disagreed with one that cannot, and the states they *both* got right are
+ * most of them. What changes is that `inconsistent` now has a name and a defined
+ * treatment, so the next rule to weigh case has somewhere to attach.
+ *
+ * A string union with two predicate functions rather than a class with two
+ * properties, matching how `gazetteer.ts` spells `Notability`. The reference's
+ * `CapitalisationHabit.CONSISTENT.value` is this string, so the two languages can
+ * be diffed on the wire without a mapping table in between.
+ */
+export const CONSISTENT = "consistent";
+export const INCONSISTENT = "inconsistent";
+export const LOWERCASE = "lowercase";
+export const SILENT = "silent";
+
+export type CapitalisationHabit =
+  | typeof CONSISTENT
+  | typeof INCONSISTENT
+  | typeof LOWERCASE
+  | typeof SILENT;
+
+/**
+ * Whether the writer puts capitals on proper nouns at all.
+ *
+ * True for both `consistent` and `inconsistent`: an inconsistent writer who
+ * capitalised "Vinny" and left "cousin" lower-case made a choice, and that choice
+ * is testimony. It is the *absence* of a capital that means nothing in a
+ * `lowercase` or `silent` document.
+ */
+export function marksProperNouns(habit: CapitalisationHabit): boolean {
+  return habit === CONSISTENT || habit === INCONSISTENT;
+}
+
+/** Whether the writer drops standard capitals as a habit. */
+export function dropsCapitals(habit: CapitalisationHabit): boolean {
+  return habit === INCONSISTENT || habit === LOWERCASE;
+}
+
+/**
+ * Classify how this document's writer uses capitals. See {@link CapitalisationHabit}.
+ *
+ * Two independent readings, each taken from evidence the writer supplied rather
+ * than inferred from what is missing.
+ *
+ * **Does it mark proper nouns?** Count mid-sentence capitals, excluding any that
+ * fall inside a heading. Sentence-initial capitals are not counted at all: a
+ * student who capitalises the start of each sentence but not the names inside them
+ * is exactly the case the lowercase route exists for, and counting those would
+ * suppress the route on them. The heading exclusion brings this counter into line
+ * with {@link midSentenceCapitals}, which the inconsistent band falls through to —
+ * the two channels were reading the same evidence through different rules, which is
+ * a defect whatever the threshold is. Its measured effect on the 27 documents is
+ * **none**: it lowers five counts (`horses` 52 to 27 is the largest) and none of
+ * them crosses the floor. It is a precision repair, not a fix, and is recorded as
+ * one.
+ *
+ * **Does it drop standard capitals?** A bare lower-case "i" anywhere, or a
+ * lower-case sentence opening. Both are the writer's own doing rather than an
+ * inference from what is missing.
+ *
+ * **The rate is consulted on only one side of the floor, and that asymmetry is the
+ * measurement, not an oversight.** Above the floor there is a presence signal to
+ * weigh the drop side against, so the rate can say "26 marks and 3 dropped openings
+ * is a writer who typed three typos" — which is `marching-to-his-own-beat`, an NWP
+ * anchor paper the boolean libelled. Below the floor there is nothing to weigh it
+ * against, and applying it there **costs a held-out name**: the `lowercase-writing`
+ * fixture frame rides in two carrier essays, and in 20739 (one mid-sentence
+ * capital, one lower-case opening in 59 sentences, no bare "i") a 1.7% drop rate
+ * demoted a genuine lower-case-writing document to `silent`, withdrew the
+ * permissive path, and leaked "terrence okonkwo". Held-out recall 28/28 to 27/28
+ * for one span of over-firing — the wrong direction for a tool whose whole bias is
+ * over-redact rather than leak.
+ *
+ * So below the floor the document has given us one bit and it is taken
+ * conservatively: any tell at all means `lowercase`. The cost of that is
+ * `my-first-tooth-gone` staying on the permissive path when it is really a
+ * capitaliser with nothing to capitalise — and that cost was measured at **zero**
+ * spans, because its only candidate is "Boy" from the capitalised route under
+ * either reading. A guard whose failing case costs nothing, against a rate whose
+ * correction costs a name, is not a guard worth having.
+ *
+ * @param headings - spans whose capitals are orthographic because title case put
+ *   them there. Passed in rather than computed so the arm that turns the heading
+ *   rule off stays coherent — with it off, this reads headings as prose, exactly
+ *   like every other consumer of that flag.
+ */
+export function capitalisationHabit(
+  text: string,
+  headings: readonly Span[] = [],
+): CapitalisationHabit {
+  let marks = 0;
+  for (const match of text.matchAll(MID_SENTENCE_CAP)) {
+    // The lookbehind consumes nothing, so group 1 starts where the match does —
+    // which is what the reference's `m.start(1)` resolves to as well.
+    if (!overlaps(headings, match.index, match.index + match[0].length)) {
+      marks += 1;
+    }
+  }
+  const openings = [...text.matchAll(LOWERCASE_SENTENCE_START)].length;
+  // The bare "i" stays a boolean on both sides. It is the higher-precision tell —
+  // 26 of the 27 un-scrubbed documents have none at all, and the one that does has
+  // nine — so there is no noise for a rate to remove.
+  const bareI = BARE_LOWERCASE_I.test(text);
+
+  if (marks >= MARKS_PROPER_NOUNS_MIN) {
+    let sentences = 0;
+    for (const match of text.matchAll(SENTENCE_UNIT)) {
+      if (match[0].trim() !== "") sentences += 1;
+    }
+    const habitual = openings / Math.max(1, sentences) >= DROPS_CAPITALS_MIN_RATE;
+    return bareI || habitual ? INCONSISTENT : CONSISTENT;
+  }
+  return bareI || openings > 0 ? LOWERCASE : SILENT;
+}
+
+/**
+ * Lower-cased forms of every word this document capitalises mid-sentence.
+ *
+ * The document's own testimony about a particular word, which is the graded
+ * version of {@link capitalisationHabit}, and what its `inconsistent` state falls
+ * through to. A writer who put a capital on "Cade" somewhere other than a sentence
+ * start has told us "Cade" is a name in this document; one who only ever writes
+ * "Eventually" after a full stop has told us nothing, because orthography would
+ * have put that capital there anyway.
+ *
+ * An entirely upper-case token is excluded, and that exclusion is load-bearing
+ * rather than tidy. Without it "SLAM" corroborates itself — the token is its own
+ * mid-sentence capital — so every emphasis shout would clear the bar the emphasis
+ * rule had just raised. A capital is testimony only where the writer had a
+ * lower-case alternative and declined it.
+ *
+ * A heading is excluded for the same reason: it is title-cased, so its non-initial
+ * capitals are orthographic too. Counting them let "The First Horses" vouch for
+ * "Horses" as a name — the heading corroborating itself, one line removed.
+ */
+export function midSentenceCapitals(
+  text: string,
+  starts: ReadonlySet<number>,
+  headings: readonly Span[] = [],
+): Set<string> {
+  const out = new Set<string>();
+  for (const match of text.matchAll(WORD_TOKEN)) {
+    const token = match[0];
+    if (starts.has(match.index) || !/[A-Z]/.test(token[0]!)) continue;
+    if (token.length > 1 && isUpper(token)) continue;
+    if (overlaps(headings, match.index, match.index + token.length)) continue;
+    out.add(strip(token.toLowerCase(), "'’"));
+  }
+  return out;
+}
+
+/**
+ * Whether this span rests on a capital that had to be there anyway.
+ *
+ * Three shapes are excluded, because each carries evidence beyond the capital: a
+ * multi-token span ("Sadie Johnson") is a *shape*; an honorific in front of the
+ * name is a relationship; and a capital in the middle of a sentence is a choice
+ * the writer made rather than one orthography made for them.
+ *
+ * A heading is the exception to the first of those. Title case capitalises every
+ * word, so "Horse Families" is not a shape there — the second capital is as
+ * orthographic as the first, and a multi-token span inside a heading has no more
+ * evidence than a single-token one. So the multi-token exemption does not apply
+ * inside a heading, and "My Brother Terrence Okonkwo" as a heading is still
+ * caught: it needs the given-name tier rather than its own capitals, which is
+ * exactly the bar every other unevidenced capital has to clear.
+ */
+export function capitalIsTheOnlyEvidence(
+  tokens: readonly string[],
+  start: number,
+  starts: ReadonlySet<number>,
+  emphasis: readonly Span[],
+  headings: readonly Span[] = [],
+): boolean {
+  const end = start + tokens.join(" ").length;
+  const inHeading = overlaps(headings, start, end);
+  if (tokens.length > 1 && !inHeading) return false;
+  if (inHeading) return true;
+  if (overlaps(emphasis, start, end)) return true;
+  return starts.has(start);
 }

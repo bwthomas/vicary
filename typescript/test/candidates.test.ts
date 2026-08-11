@@ -24,24 +24,37 @@ import {
   ALLCAPS_RUN,
   ANY_TOKEN,
   CANDIDATE_RE,
+  CONSISTENT,
   DETERMINERS,
+  DROPS_CAPITALS_MIN_RATE,
   HEADING_MAX_CHARS,
+  INCONSISTENT,
+  LOWERCASE,
   LOWERCASE_MIN_TOKENS,
   LOWER_TOKEN,
+  MARKS_PROPER_NOUNS_MIN,
+  MID_SENTENCE_CAP,
   ORG_SUFFIXES,
   PROTECTED,
+  SILENT,
   STOP_WORDS,
   TITLE_MAX_TOKENS,
   WORD_TOKEN,
+  capitalIsTheOnlyEvidence,
+  capitalisationHabit,
   classify,
+  dropsCapitals,
   emphasisSpans,
   findTitleSpans,
   headingSpans,
   isStop,
+  marksProperNouns,
+  midSentenceCapitals,
   overlaps,
   placeholderFor,
   sentenceStarts,
   trim,
+  type CapitalisationHabit,
   type Span,
 } from "../src/candidates.js";
 
@@ -506,4 +519,232 @@ test("the determiner list is the structural signal it claims to be", () => {
 test("the lowercase route's floor is two tokens", () => {
   // The single decision that makes that route affordable.
   assert.equal(LOWERCASE_MIN_TOKENS, 2);
+});
+
+// ---------------------------------------------------------------------------
+// How this writer uses capital letters
+//
+// Same provenance as everything above: 16 documents through both
+// implementations' `capitalisation_habit`, `_mid_sentence_capitals` and
+// `_capital_is_the_only_evidence`, diffed as JSON, 0 differences. What follows
+// pins the four states, the heading exclusion, and the rate asymmetry.
+// ---------------------------------------------------------------------------
+
+test("a writer who marks proper nouns and keeps sentence capitals is consistent", () => {
+  assert.equal(
+    capitalisationHabit(
+      "We drove to Akron in July. My cousin Terrence met us there. " +
+        "Later Marisol showed up with Deshawn and we all went to Ohio.",
+    ),
+    CONSISTENT,
+  );
+});
+
+test("a writer who marks nothing and drops openings is lowercase", () => {
+  assert.equal(
+    capitalisationHabit("then terrence okonkwo showed up. i was so happy. we went home."),
+    LOWERCASE,
+  );
+});
+
+test("a writer who does both is inconsistent, which is the cell the booleans had none for", () => {
+  // Suppressing the lowercase route loses the names they wrote lower-case;
+  // opening it wide fires on ordinary words. So there is no document-level answer
+  // here — the band falls through to per-token evidence.
+  assert.equal(
+    capitalisationHabit(
+      "My cousin Terrence came over. my aunt Marisol drove. " +
+        "we went to Akron. then Deshawn showed up. i was tired.",
+    ),
+    INCONSISTENT,
+  );
+});
+
+test("a document that says nothing either way is silent, and silence is not consent", () => {
+  // Reading it as consent is what put "line circles" and "tone toward" in front
+  // of a student: a 108-290 character feedback field is ordinary prose with
+  // nothing in it to capitalise.
+  assert.equal(
+    capitalisationHabit("Nothing here is capitalised mid sentence at all. It is only prose."),
+    SILENT,
+  );
+  assert.equal(capitalisationHabit(""), SILENT);
+});
+
+test("a bare lower-case i alone is enough to read the writer as dropping capitals", () => {
+  // The higher-precision tell: 26 of the 27 un-scrubbed documents have none at
+  // all, and the one that does has nine. So it stays a boolean on both sides of
+  // the floor, with no rate to soften it.
+  assert.equal(
+    capitalisationHabit("The Dog barked at Marisol. i ran. Then Terrence came over."),
+    INCONSISTENT,
+  );
+});
+
+test("one mid-sentence capital is under the floor", () => {
+  // 2 rather than 1 only to tolerate a single stray capital. Lower-cased, every
+  // one of the 36 measured documents scores 0, so the separation is not delicate.
+  assert.equal(MARKS_PROPER_NOUNS_MIN, 2);
+  assert.equal(capitalisationHabit("I met Marisol today. She was nice."), SILENT);
+  assert.equal(
+    capitalisationHabit("I met Marisol today. I also saw Deshawn there."),
+    CONSISTENT,
+  );
+});
+
+test("the rate is consulted above the floor and not below it, and the same rate decides opposite ways", () => {
+  // The asymmetry is the measurement, not an oversight, and this pair is it: two
+  // documents one percentage point apart in drop rate, treated differently
+  // because only one of them has a presence signal to weigh the drop against.
+  //
+  // Above — 3 marks, 1 stylistic lower-case opening in 12 sentences (8.3%). The
+  // rate says "a writer who typed one typo", which is `marching-to-his-own-beat`,
+  // an NWP anchor paper marking 26 proper nouns correctly that the boolean
+  // libelled.
+  const typoCapitaliser =
+    "Marisol went to Akron. She met Deshawn. They saw Terrence. We drove home. " +
+    "She waved. He smiled. They left. It rained. We slept. boy did we laugh. " +
+    "She called again. He answered.";
+  assert.equal(capitalisationHabit(typoCapitaliser), CONSISTENT);
+
+  // Below — 0 marks, 1 lower-case opening in 11 sentences (9.1%). Nothing to weigh
+  // it against, so the one bit is taken conservatively. Applying the rate here
+  // cost a held-out name: in carrier essay 20739 it demoted a genuine
+  // lower-case-writing document to `silent`, withdrew the permissive path, and
+  // leaked "terrence okonkwo". Held-out recall 28/28 to 27/28.
+  const belowFloor =
+    "The dog barked. The cat ran. The bird flew. The fish swam. The cow mooed. " +
+    "The pig oinked. The hen clucked. The duck quacked. The goat bleated. " +
+    "The horse neighed. the sheep baaed.";
+  assert.equal(capitalisationHabit(belowFloor), LOWERCASE);
+  assert.equal(DROPS_CAPITALS_MIN_RATE, 0.1);
+});
+
+test("the heading exclusion can move a document across the floor", () => {
+  // A heading is title-cased, so every capital in it is orthographic. Counting
+  // them let a heading vouch for its own words. Here it is the whole difference
+  // between a document that marks proper nouns and one that says nothing.
+  const text =
+    "Horse Families\n\nThe first horses were small. They lived in herds.\n\n" +
+    "Breeds I Like\n\nMy favourite is the Arabian.";
+  assert.equal(capitalisationHabit(text, headingSpans(text)), SILENT);
+  assert.equal(capitalisationHabit(text), CONSISTENT);
+});
+
+test("the two predicates cannot contradict each other, which is the point of the four states", () => {
+  // `141-433` has two mid-sentence capitals and six lower-case sentence openings,
+  // so under the old booleans it was simultaneously a writer who capitalises and
+  // a writer who does not, and whichever predicate a call site read decided the
+  // treatment.
+  const table: [CapitalisationHabit, boolean, boolean][] = [
+    [CONSISTENT, true, false],
+    [INCONSISTENT, true, true],
+    [LOWERCASE, false, true],
+    [SILENT, false, false],
+  ];
+  for (const [habit, marks, drops] of table) {
+    assert.equal(marksProperNouns(habit), marks, habit);
+    assert.equal(dropsCapitals(habit), drops, habit);
+  }
+});
+
+test("the habit state is the string the reference's enum carries", () => {
+  // So the two languages can be diffed on the wire without a mapping table in
+  // between, which is where a fifth state would otherwise appear.
+  assert.deepEqual([CONSISTENT, INCONSISTENT, LOWERCASE, SILENT], [
+    "consistent",
+    "inconsistent",
+    "lowercase",
+    "silent",
+  ]);
+});
+
+// ---------------------------------------------------------------------------
+// Per-token testimony
+// ---------------------------------------------------------------------------
+
+test("a capital the writer chose is testimony; one orthography forced is not", () => {
+  // A writer who put a capital on "Cade" somewhere other than a sentence start has
+  // told us "Cade" is a name in this document; one who only ever writes
+  // "Eventually" after a full stop has told us nothing, because orthography would
+  // have put that capital there anyway.
+  //
+  // "i" is in the answer, and that is not a slip in the port. The two channels
+  // that read capitals disagree about the first person on purpose: the
+  // document-level counter matches `[A-Z][a-z]{2,}`, so a bare "I" cannot vote on
+  // whether the writer marks proper nouns — every writer capitalises it. This
+  // per-token channel has no such filter, because it answers a different question
+  // ("did this document ever capitalise this word mid-sentence?") and the answer
+  // for "I" is a true yes that no downstream rule asks about. Pinned rather than
+  // tidied: the reference does this, and a port that "fixes" it diverges.
+  const text = "I met Marisol today. Eventually I also saw Deshawn there.";
+  assert.deepEqual(
+    [...midSentenceCapitals(text, sentenceStarts(text))].sort(),
+    ["deshawn", "i", "marisol"],
+  );
+  // The document-level counter sees the same two names and not the "I".
+  assert.deepEqual(
+    [...text.matchAll(MID_SENTENCE_CAP)].map((match) => match[1]),
+    ["Marisol", "Deshawn"],
+  );
+});
+
+test("an all-caps token cannot corroborate itself", () => {
+  // Load-bearing rather than tidy: without the exclusion "SLAM" is its own
+  // mid-sentence capital, so every emphasis shout would clear the bar the
+  // emphasis rule had just raised.
+  const text = "Then SLAM! the door closed and Marisol laughed at Deshawn.";
+  assert.deepEqual(
+    [...midSentenceCapitals(text, sentenceStarts(text))].sort(),
+    ["deshawn", "marisol"],
+  );
+});
+
+test("a heading's capitals are not testimony about its own words", () => {
+  // Counting them let "The First Horses" vouch for "Horses" as a name — the
+  // heading corroborating itself, one line removed.
+  const text =
+    "Horse Families\n\nThe first horses were small. They lived in herds.\n\n" +
+    "Breeds I Like\n\nMy favourite is the Arabian.";
+  assert.deepEqual(
+    [...midSentenceCapitals(text, sentenceStarts(text), headingSpans(text))].sort(),
+    ["arabian"],
+  );
+  assert.deepEqual(
+    [...midSentenceCapitals(text, sentenceStarts(text))].sort(),
+    ["arabian", "families", "i", "like"],
+  );
+});
+
+test("a multi-token span carries evidence beyond its capitals", () => {
+  // "Sadie Johnson" is a *shape*, which a single capitalised word is not.
+  const text = "Terrence Okonkwo came over that summer.";
+  const starts = sentenceStarts(text);
+  assert.equal(capitalIsTheOnlyEvidence(["Terrence"], 0, starts, []), true);
+  assert.equal(capitalIsTheOnlyEvidence(["Terrence", "Okonkwo"], 0, starts, []), false);
+});
+
+test("inside a heading, a multi-token span is not a shape", () => {
+  // Title case capitalises every word, so the second capital is as orthographic as
+  // the first. "My Brother Terrence Okonkwo" as a heading needs the given-name
+  // tier rather than its own capitals — the bar every unevidenced capital clears.
+  const text = "The INternet as we know it today first\nappeared in a lab in Ohio.";
+  const starts = sentenceStarts(text);
+  const headings = headingSpans(text);
+  assert.deepEqual(headings.map(([s, e]) => [s, e]), [[0, 38]]);
+  assert.equal(
+    capitalIsTheOnlyEvidence(["Terrence", "Okonkwo"], 0, starts, [], headings),
+    true,
+  );
+  assert.equal(capitalIsTheOnlyEvidence(["Terrence", "Okonkwo"], 0, starts, []), false);
+});
+
+test("a capital inside an emphasis shout is not the writer's choice either", () => {
+  const text = "Then SLAM! the door closed and Marisol laughed.";
+  const starts = sentenceStarts(text);
+  const emphasis = emphasisSpans(text);
+  assert.deepEqual(plain(emphasis), [[5, 9]]);
+  assert.equal(capitalIsTheOnlyEvidence(["SLAM"], 5, starts, emphasis), true);
+  // Mid-sentence, outside the shout: a choice the writer made.
+  assert.equal(capitalIsTheOnlyEvidence(["Marisol"], 31, starts, emphasis), false);
 });
