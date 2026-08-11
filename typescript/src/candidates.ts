@@ -1402,3 +1402,461 @@ export function namesSomeoneTheWriterKnows(
   }
   return false;
 }
+
+/**
+ * Answers "is this a public figure, or otherwise topical?" — `true` means keep.
+ *
+ * Injected rather than hardcoded so the inbound pass (recall-biased) and the
+ * outbound pass (precision-biased) can supply different oracles, and so the
+ * offline gazetteer stays a dependency rather than a hard import.
+ */
+export type NotabilityOracle = (name: string) => boolean;
+
+/**
+ * Answers "*which kind* of public thing is this?", returning the gazetteer's tier
+ * name. Strictly richer than {@link NotabilityOracle}, and needed only where
+ * "keep" is too coarse an answer: surname corroboration must fire on a human's
+ * full name and on nothing else. The boolean oracle cannot express that, and the
+ * consequence was measured rather than imagined — "Pintos are from America" let a
+ * kept *place* establish "america" as a surname, and the same mechanism would
+ * have let "Lake Powell" license a classmate's bare "Powell".
+ */
+export type NotabilityTierOracle = (name: string) => string;
+
+/**
+ * The tier a candidate must resolve to before it may establish a surname.
+ *
+ * A place, a landmark, a work title and an already-bare iconic surname are all
+ * excluded: none of them is a person written first-name-then-surname, so none
+ * carries evidence about what a bare surname in the same document means.
+ *
+ * Pinned against `corroboration.tier` in `conformance/primitives.json`, because a
+ * port that compared against some other string would corroborate nothing and
+ * still pass every other case — a corroboration that never fires is invisible in
+ * output the span was going to be masked in anyway.
+ */
+export const CORROBORATING_TIER = "full_name";
+
+/** `PARTICLES` as a set, for the membership tests the surname folding does. */
+const PARTICLE_SET: ReadonlySet<string> = new Set(PARTICLES);
+
+/**
+ * Lower-cased tokens of `name` with the possessive tail removed.
+ *
+ * "Wright’s" and "Wright" must fold together or corroboration reaches the citation
+ * form of the name and not the one literary analysis actually writes — on the
+ * un-scrubbed corpus the possessive was 10 of the 27 masked "Wright" spans, so
+ * this is most of the effect rather than an edge case.
+ */
+export function surnameTokens(name: string): string[] {
+  const folded = name.replace(CURLY_APOSTROPHE, "'").toLowerCase();
+  const out: string[] = [];
+  for (const raw of folded.trim().split(/\s+/)) {
+    let token = strip(raw, ".,;:!?'\"");
+    if (token.endsWith("'s") && token.length > 3) token = token.slice(0, -2);
+    if (token) out.push(token);
+  }
+  return out;
+}
+
+/**
+ * `name` as a corroboration key, or `null` if it is not a bare form.
+ *
+ * A bare surname is one token, or a particle-led run ("van Gogh", "de Beauvoir")
+ * where every token but the last is a particle. Anything else — "Coach Wright",
+ * "Priya Wright" — is a *different* candidate that happens to share a surname, and
+ * must not be reached by another name's corroboration.
+ */
+export function bareSurnameKey(name: string): string | null {
+  const tokens = surnameTokens(name);
+  if (tokens.length === 0) return null;
+  if (tokens.length === 1) return tokens[0]!;
+  if (tokens.length <= 3 && tokens.slice(0, -1).every((t) => PARTICLE_SET.has(t))) {
+    return tokens.join(" ");
+  }
+  return null;
+}
+
+/**
+ * The bare surface forms a writer may substitute for `name` later on.
+ *
+ * `"Richard Wright"` yields `["wright"]`; `"Vincent van Gogh"` yields
+ * `["gogh", "van gogh"]`. The bare *first* name is never a form, for the same
+ * reason the builder refuses to emit one: a first name is the commonest private
+ * surface form in student prose, and corroborating it would make one notable full
+ * name keep every "Terrence" in the document.
+ *
+ * Returns `[]` for a single-token name — a mononym corroborates nothing, because
+ * it is already the bare form.
+ */
+export function surnameForms(name: string): string[] {
+  const tokens = surnameTokens(name);
+  if (tokens.length < 2) return [];
+  const forms = [tokens[tokens.length - 1]!];
+  if (PARTICLE_SET.has(tokens[tokens.length - 2]!)) {
+    forms.push(tokens.slice(-2).join(" "));
+    if (tokens.length >= 3 && PARTICLE_SET.has(tokens[tokens.length - 3]!)) {
+      forms.push(tokens.slice(-3).join(" "));
+    }
+  }
+  return forms;
+}
+
+/**
+ * Whether `name` may establish a surname, given the two oracle shapes a caller
+ * might have. Factored out because {@link corroboratedSurnames} and
+ * {@link establishedNameTokens} apply the identical three-way test and the two
+ * drifting apart is a silent asymmetry between the inbound and outbound paths.
+ */
+function establishes(
+  name: string,
+  notable: NotabilityOracle,
+  loweredKeep: ReadonlySet<string>,
+  tier?: NotabilityTierOracle,
+): boolean {
+  // A name the assignment prompt supplied. Topical by construction, and the
+  // prompt naming "Richard Wright" is the same evidence as the essay naming him —
+  // arguably better, since it is not the student's writing.
+  if (loweredKeep.has(name.toLowerCase())) return true;
+  if (tier !== undefined) return tier(name) === CORROBORATING_TIER;
+  return notable(name) && !isPublicLandmark(name);
+}
+
+/**
+ * Surnames this document has already established belong to a public figure.
+ *
+ * The observation is narrow and it is free: if a document writes "Richard Wright"
+ * somewhere, and the gazetteer keeps "Richard Wright", then a bare "Wright"
+ * elsewhere in *that document* is that person. Literary-analysis convention makes
+ * this the dominant shape of the problem — a student names the author once and
+ * writes the surname for the rest of the essay. On the 27 un-scrubbed student
+ * essays the shipped arm masked "Wright" or "Wright's" 27 times in a single
+ * document that also contained "Richard Wright's".
+ *
+ * What it deliberately cannot do: corroborate from a name the gazetteer does
+ * *not* keep. A student's own "Terrence Okonkwo" establishes nothing, so bare
+ * "Okonkwo" still redacts.
+ *
+ * @param tier - Restricts corroboration to human full names, see
+ *   {@link CORROBORATING_TIER}. Strongly recommended: without it a kept *place*
+ *   can license a surname, which is a measured defect and not a hypothetical one.
+ *   Absent, landmark-shaped names are excluded as a partial substitute and the
+ *   rest of the place tier is not.
+ */
+export function corroboratedSurnames(
+  candidates: readonly Candidate[],
+  notable: NotabilityOracle,
+  keep: ReadonlySet<string> = new Set(),
+  tier?: NotabilityTierOracle,
+): Set<string> {
+  const loweredKeep = new Set([...keep].map((k) => k.toLowerCase()));
+  const out = new Set<string>();
+  for (const candidate of candidates) {
+    const name = candidate.text;
+    if (name.split(/\s+/).filter(Boolean).length < 2) continue;
+    if (!establishes(name, notable, loweredKeep, tier)) continue;
+    for (const form of surnameForms(name)) out.add(form);
+  }
+  return out;
+}
+
+/**
+ * Every bare token of every notable full name `text` establishes.
+ *
+ * `"Narciso Rodriguez's memoir"` yields `{"narciso", "rodriguez"}`. The **first**
+ * name is included, which is exactly what {@link surnameForms} refuses to do, so
+ * the difference has to be justified rather than assumed.
+ *
+ * {@link surnameForms} is for the INBOUND pass, over prose a student wrote, where
+ * a bare first name is the commonest private surface form there is. That argument
+ * does not survive the trip to the outbound pass, and the reason is structural
+ * rather than a judgement call: **outbound text was generated from
+ * already-redacted input.** A classmate named Narciso was masked on the way in, so
+ * the model never saw the token and cannot have written it back. The only
+ * "Narciso" that can appear in feedback about this essay is the one the essay kept.
+ *
+ * That is conditional on the pipeline shape — inbound first, outbound over text
+ * derived only from the inbound result. A host that redacts outbound text from
+ * some *other* source must not feed it this set.
+ *
+ * Only multi-token names contribute. A mononym is already the bare form and
+ * establishes nothing new.
+ */
+export function establishedNameTokens(
+  text: string,
+  notable: NotabilityOracle,
+  keep: ReadonlySet<string> = new Set(),
+  tier?: NotabilityTierOracle,
+): Set<string> {
+  const loweredKeep = new Set([...keep].map((k) => k.toLowerCase()));
+  const out = new Set<string>();
+  for (const candidate of findCandidates(text)) {
+    const name = candidate.text;
+    if (name.split(/\s+/).filter(Boolean).length < 2) continue;
+    if (!establishes(name, notable, loweredKeep, tier)) continue;
+    for (const token of surnameTokens(name)) {
+      if (token.length > 1 && !PARTICLE_SET.has(token)) out.add(token);
+    }
+  }
+  return out;
+}
+
+/**
+ * Names written in lowercase, seeded on the gazetteer's given-name tier.
+ *
+ * A given-name hit says "a person is being named", which inbound means redact. But
+ * a hit on its own is not enough to fire on, and this is the whole design problem:
+ * plenty of common given names are also ordinary English words — hope, grace,
+ * mark, rose, art, may — so a single lowercase hit in prose is indistinguishable
+ * from prose. Firing on one token would put the given-name tier's 10,469 entries
+ * directly into the over-firing number.
+ *
+ * So a span has to reach a second adjacent token that is not stoplisted, which is
+ * the given-name-plus-surname shape ("terrence okonkwo"). The cost is a bare
+ * lowercase first name ("terrence and i stayed up late") which this route does not
+ * reach; the benefit is that "i had hope that day" stops at the stopword and emits
+ * nothing.
+ *
+ * Adjacency is strict: only whitespace may sit between two tokens of one span.
+ * "terrence, my cousin" therefore stops at the comma and drops to one token. The
+ * span reaches exactly one token past the seed — a surname — and a third only
+ * across a name particle ("maria de cruz"). Reaching two ordinary tokens masks
+ * "terrence okonkwo showed" out of "then terrence okonkwo showed up", because the
+ * stoplist is a few hundred words and English is not.
+ *
+ * A seed sitting directly after a determiner is dropped: see {@link DETERMINERS}.
+ * That is where most of the remaining over-firing lives, and it is structural
+ * rather than a word list.
+ *
+ * @param corroborate - How {@link capitalisationHabit} participates without being
+ *   a kill switch. In a document that marks its proper nouns with capitals a
+ *   lowercase token is weak evidence, so the seed must additionally appear
+ *   *capitalised mid-sentence somewhere in the same document* — the writer's own
+ *   testimony that this particular word is a name they sometimes slip on. Passing
+ *   `undefined` means the document supplies no capitalisation signal, and the seed
+ *   stands on the given-name tier alone.
+ */
+export function findLowercaseCandidates(
+  text: string,
+  isGiven: GivenNameOracle,
+  protectedSpan: (start: number, end: number) => boolean,
+  corroborate?: ReadonlySet<string>,
+  settlement?: SettlementOracle,
+): Candidate[] {
+  const tokens = [...text.matchAll(LOWER_TOKEN)].map(
+    (match) => [match[0], match.index, match.index + match[0].length] as const,
+  );
+  const out: Candidate[] = [];
+  let index = 0;
+  while (index < tokens.length) {
+    const [word, start] = tokens[index]!;
+    if (isStop(word) || !isGiven(word)) {
+      index += 1;
+      continue;
+    }
+    if (corroborate !== undefined && !corroborate.has(strip(word, "'’"))) {
+      index += 1;
+      continue;
+    }
+    if (index > 0 && DETERMINERS.has(tokens[index - 1]![0])) {
+      // Only a directly-adjacent determiner counts. "the day terrence arrived"
+      // must stay reachable, and punctuation between the two means they are not
+      // one noun phrase.
+      const preceding = text.slice(tokens[index - 1]![2], start);
+      if (preceding !== "" && preceding.trim() === "") {
+        index += 1;
+        continue;
+      }
+    }
+    let reach = index;
+    while (reach + 1 < tokens.length) {
+      if (reach > index && !PARTICLE_SET.has(tokens[reach]![0])) break;
+      const [nextWord, nextStart] = tokens[reach + 1]!;
+      const gap = text.slice(tokens[reach]![2], nextStart);
+      if (gap === "" || gap.trim() !== "" || nextWord.length < 2 || isStop(nextWord)) {
+        break;
+      }
+      reach += 1;
+    }
+    // A span may not end on a particle: "maria de," is the name plus a fragment of
+    // the next clause, and masking the fragment is a visible defect on the
+    // outbound path.
+    while (reach > index && PARTICLE_SET.has(tokens[reach]![0])) reach -= 1;
+    const spanEnd = tokens[reach]![2];
+    if (reach - index + 1 < LOWERCASE_MIN_TOKENS || protectedSpan(start, spanEnd)) {
+      index += 1;
+      continue;
+    }
+    const joined = text.slice(start, spanEnd);
+    out.push({
+      text: joined,
+      start,
+      end: spanEnd,
+      kind: classify(joined.split(/\s+/).filter(Boolean), settlement),
+    });
+    index = reach + 1;
+  }
+  return out;
+}
+
+/** The oracles and arms {@link findCandidates} takes, all of them optional. */
+export interface CandidateOptions {
+  /** Turns on the lowercase route. Absent, this keys on capitalisation alone and
+   * misses lowercase writing by construction. */
+  readonly givenName?: GivenNameOracle;
+  /** Protects work titles and fictional-character names from generation entirely.
+   * Absent, a student writing about a book has the book redacted. */
+  readonly title?: TitleOracle;
+  readonly titlePrefix?: TitleOracle;
+  /** Types a masked span `{LOCATION}` instead of `{NAME}`. Changes no verdict —
+   * it cannot make a span keep or stop a span masking, only relabel one that was
+   * already going to be masked. Absent, every town types `{NAME}`. */
+  readonly settlement?: SettlementOracle;
+  /** Treat a section heading's capitals as required by title case rather than
+   * chosen by the writer. On by default; the flag exists so the arm stays
+   * measurable against its control. */
+  readonly headingsAreOrthographic?: boolean;
+  /** Withdraw title protection from a span with a first-person relation attached
+   * to it — "My neighbor Alice Adams". The protection is applied *here*, before
+   * generation, so the refusal has to be applied here too; the notability gate on
+   * the masking side is the second half of the same rule and neither half works
+   * alone. */
+  readonly titleRelationRefusal?: boolean;
+}
+
+/**
+ * Every name-shaped span, before any notability decision.
+ *
+ * High recall and deliberately poor precision — precision is what the notability
+ * filter buys. Offsets are into `text`.
+ */
+export function findCandidates(
+  text: string,
+  options: CandidateOptions = {},
+): Candidate[] {
+  const {
+    givenName,
+    title,
+    titlePrefix,
+    settlement,
+    headingsAreOrthographic = true,
+    titleRelationRefusal = true,
+  } = options;
+
+  const blocked: Span[] = [...text.matchAll(PROTECTED)].map(
+    (match) => [match.index, match.index + match[0].length] as const,
+  );
+  const starts = sentenceStarts(text);
+  const emphasis = emphasisSpans(text);
+  const headings = headingsAreOrthographic ? headingSpans(text) : [];
+  // Read before the title pass, because the title pass needs it. The habit is a
+  // property of the whole document, so it is computed once and every consumer
+  // reads the same verdict — which two separate booleans could not guarantee.
+  const habit = capitalisationHabit(text, headings);
+  if (title !== undefined) {
+    let titleSpans = findTitleSpans(
+      text, title, titlePrefix, marksProperNouns(habit),
+    );
+    if (titleRelationRefusal) {
+      titleSpans = titleSpans.filter(
+        ([s, e]) =>
+          !namesSomeoneTheWriterKnows(text, s, e) &&
+          // ...and the title is not itself a relation phrase the writer is using
+          // literally. The document's capitalisation signal answers this, EXCEPT
+          // on a document too short to have one — where the span's own mixed case
+          // answers it instead, and the missing answer used to ship a cousin's
+          // name. See {@link relationLedTitleIsInternallyMixed}.
+          !(
+            (marksProperNouns(habit) ||
+              relationLedTitleIsInternallyMixed(text, s, e)) &&
+            titleIsTheWritersOwnRelation(text, s, e)
+          ),
+      );
+    }
+    blocked.push(...titleSpans);
+  }
+
+  const isProtected = (start: number, end: number): boolean =>
+    blocked.some(([blockStart, blockEnd]) => start < blockEnd && end > blockStart);
+
+  const writtenAsACapital = midSentenceCapitals(text, starts, headings);
+
+  const out: Candidate[] = [];
+  for (const match of text.matchAll(CANDIDATE_RE)) {
+    const span = match[0];
+    if (isProtected(match.index, match.index + span.length)) continue;
+    const tokens = span.split(/\s+/).filter(Boolean);
+    // A long all-caps run means the capitalisation told us nothing, so the
+    // stoplist is carrying the whole decision. Recorded here rather than
+    // silently: this is where the allcaps frame's misses come from.
+    for (const run of trim(tokens)) {
+      if (run.length === 0) continue;
+      const joined = run.join(" ");
+      // Locate the run inside the original span so offsets stay exact.
+      const offset = span.indexOf(joined);
+      if (offset < 0) continue;
+      const start = match.index + offset;
+      if (isProtected(start, start + joined.length)) continue;
+      // Requiring a second signal is only sound when there is a second signal to
+      // require, which is why this is reached only where an oracle exists — see
+      // {@link suppressedAsAnUnevidencedCapital}.
+      if (
+        givenName !== undefined &&
+        suppressedAsAnUnevidencedCapital(
+          run, start, starts, emphasis, headings, writtenAsACapital, givenName,
+        )
+      ) {
+        continue;
+      }
+      // A *trailing* apostrophe is the closing quote, not part of the name. The
+      // candidate pattern treats `'` as a name character so O'Brien survives,
+      // which also means "words like 'Terrence'" arrives as `Terrence'` — and
+      // masking that ate the quote. Possessives are untouched because they end in
+      // `s`. The one case this trims wrongly is a plural possessive ("the
+      // Smiths'"), which reads `the {NAME_1}'` — cosmetically odd, against a
+      // defect that unbalances a quotation in text a student reads.
+      let end = joined.length;
+      while (end > 0 && (joined[end - 1] === "'" || joined[end - 1] === "’")) {
+        end -= 1;
+      }
+      const maskedText = joined.slice(0, end);
+      if (maskedText === "") continue;
+      out.push({
+        text: maskedText,
+        start,
+        end: start + maskedText.length,
+        kind: classify(run, settlement),
+      });
+    }
+  }
+
+  if (givenName !== undefined) {
+    // The capitalised route claimed first, so a lowercase span overlapping one it
+    // already found is dropped rather than merged: two candidates over the same
+    // characters would mask the outer one and leave the inner placeholder's
+    // braces as debris.
+    const claimed = out.map((candidate) => [candidate.start, candidate.end]);
+    // `undefined` here is the permissive path: "no capitalisation signal, so the
+    // given-name tier stands alone". Exactly one of the four habits reaches it. It
+    // is NOT reached on the mere absence of capitals — absence is what a text with
+    // no names in it looks like, and reading its silence as consent is what put
+    // "line circles" in front of a student — and it is not reached by the
+    // INCONSISTENT writer either, who has per-token evidence to offer and is
+    // better served by it. See {@link CapitalisationHabit}.
+    for (const candidate of findLowercaseCandidates(
+      text,
+      givenName,
+      isProtected,
+      habit === LOWERCASE ? undefined : writtenAsACapital,
+      settlement,
+    )) {
+      if (
+        claimed.some(([start, end]) => candidate.start < end! && candidate.end > start!)
+      ) {
+        continue;
+      }
+      out.push(candidate);
+    }
+  }
+  return out;
+}

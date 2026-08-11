@@ -314,6 +314,73 @@
           "baaed"
         ]
       ],
+      "determiner_seed": [
+        [
+          0,
+          8,
+          "terrence"
+        ],
+        [
+          9,
+          12,
+          "and"
+        ],
+        [
+          13,
+          14,
+          "i"
+        ],
+        [
+          15,
+          21,
+          "stayed"
+        ],
+        [
+          22,
+          24,
+          "up"
+        ],
+        [
+          25,
+          29,
+          "late"
+        ],
+        [
+          31,
+          34,
+          "the"
+        ],
+        [
+          35,
+          43,
+          "terrence"
+        ],
+        [
+          44,
+          51,
+          "okonkwo"
+        ],
+        [
+          52,
+          53,
+          "i"
+        ],
+        [
+          54,
+          58,
+          "knew"
+        ],
+        [
+          59,
+          64,
+          "moved"
+        ],
+        [
+          65,
+          69,
+          "away"
+        ]
+      ],
       "empty": [],
       "headings": [
         [
@@ -486,6 +553,53 @@
           "there"
         ]
       ],
+      "hyphen_lowercase_tail": [
+        [
+          0,
+          10,
+          "Marguerite"
+        ],
+        [
+          11,
+          28,
+          "Delacroix-marisol"
+        ],
+        [
+          29,
+          36,
+          "okonkwo"
+        ],
+        [
+          37,
+          42,
+          "waved"
+        ],
+        [
+          43,
+          45,
+          "at"
+        ],
+        [
+          46,
+          48,
+          "us"
+        ],
+        [
+          50,
+          51,
+          "i"
+        ],
+        [
+          52,
+          57,
+          "waved"
+        ],
+        [
+          58,
+          62,
+          "back"
+        ]
+      ],
       "inconsistent": [
         [
           0,
@@ -648,6 +762,53 @@
           43,
           48,
           "Eliot"
+        ]
+      ],
+      "lowercase_particle_tail": [
+        [
+          0,
+          7,
+          "marisol"
+        ],
+        [
+          8,
+          10,
+          "de"
+        ],
+        [
+          11,
+          14,
+          "and"
+        ],
+        [
+          15,
+          16,
+          "i"
+        ],
+        [
+          17,
+          21,
+          "went"
+        ],
+        [
+          22,
+          26,
+          "home"
+        ],
+        [
+          28,
+          30,
+          "we"
+        ],
+        [
+          31,
+          37,
+          "stayed"
+        ],
+        [
+          38,
+          42,
+          "late"
         ]
       ],
       "lowercase_writer": [
@@ -875,6 +1036,48 @@
           "hat"
         ]
       ],
+      "possessive_lowercase_habit": [
+        [
+          0,
+          1,
+          "i"
+        ],
+        [
+          2,
+          5,
+          "saw"
+        ],
+        [
+          6,
+          15,
+          "Marisol's"
+        ],
+        [
+          16,
+          21,
+          "older"
+        ],
+        [
+          22,
+          29,
+          "brother"
+        ],
+        [
+          31,
+          32,
+          "i"
+        ],
+        [
+          33,
+          38,
+          "waved"
+        ],
+        [
+          39,
+          43,
+          "back"
+        ]
+      ],
       "protected": [
         [
           1,
@@ -1063,6 +1266,58 @@
           "prose"
         ]
       ],
+      "single_quoted": [
+        [
+          0,
+          2,
+          "He"
+        ],
+        [
+          3,
+          7,
+          "used"
+        ],
+        [
+          8,
+          13,
+          "words"
+        ],
+        [
+          14,
+          18,
+          "like"
+        ],
+        [
+          20,
+          29,
+          "Terrence'"
+        ],
+        [
+          30,
+          33,
+          "and"
+        ],
+        [
+          35,
+          43,
+          "Marisol'"
+        ],
+        [
+          44,
+          46,
+          "in"
+        ],
+        [
+          47,
+          50,
+          "the"
+        ],
+        [
+          51,
+          56,
+          "story"
+        ]
+      ],
       "title_book": [
         [
           0,
@@ -1135,6 +1390,58 @@
           27,
           32,
           "class"
+        ]
+      ],
+      "title_is_relation": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          9,
+          "cousin"
+        ],
+        [
+          10,
+          15,
+          "Vinny"
+        ],
+        [
+          16,
+          20,
+          "came"
+        ],
+        [
+          21,
+          25,
+          "over"
+        ],
+        [
+          26,
+          30,
+          "that"
+        ],
+        [
+          31,
+          37,
+          "summer"
+        ],
+        [
+          38,
+          41,
+          "and"
+        ],
+        [
+          42,
+          47,
+          "never"
+        ],
+        [
+          48,
+          52,
+          "left"
         ]
       ],
       "title_lower": [
@@ -1251,6 +1558,58 @@
           34,
           37,
           "all"
+        ]
+      ],
+      "title_relation": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          11,
+          "neighbor"
+        ],
+        [
+          12,
+          17,
+          "Alice"
+        ],
+        [
+          18,
+          23,
+          "Adams"
+        ],
+        [
+          24,
+          30,
+          "walked"
+        ],
+        [
+          31,
+          33,
+          "me"
+        ],
+        [
+          34,
+          36,
+          "to"
+        ],
+        [
+          37,
+          40,
+          "the"
+        ],
+        [
+          41,
+          44,
+          "bus"
+        ],
+        [
+          45,
+          49,
+          "stop"
         ]
       ],
       "two_marks": [
@@ -1535,6 +1894,20 @@
         ]
       ]
     },
+    "bare_surname_key": {
+      "": null,
+      "Coach Wright": null,
+      "Mrs. Okonkwo": null,
+      "Priya Wright": null,
+      "Richard Wright": null,
+      "T.S. Eliot": null,
+      "Vincent van Gogh": null,
+      "Wright": "wright",
+      "Wright's": "wright",
+      "Wright’s": "wright",
+      "de la Cruz": "de la cruz",
+      "van Gogh": "van gogh"
+    },
     "candidate_re": {
       "accented": [
         [
@@ -1619,6 +1992,7 @@
           "The"
         ]
       ],
+      "determiner_seed": [],
       "empty": [],
       "headings": [
         [
@@ -1666,6 +2040,13 @@
           "O'Brien"
         ]
       ],
+      "hyphen_lowercase_tail": [
+        [
+          0,
+          20,
+          "Marguerite Delacroix"
+        ]
+      ],
       "inconsistent": [
         [
           0,
@@ -1705,6 +2086,7 @@
           "T.S. Eliot"
         ]
       ],
+      "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [
         [
@@ -1764,6 +2146,13 @@
           "Lincoln’s"
         ]
       ],
+      "possessive_lowercase_habit": [
+        [
+          6,
+          15,
+          "Marisol's"
+        ]
+      ],
       "protected": [
         [
           1,
@@ -1817,6 +2206,23 @@
           "It"
         ]
       ],
+      "single_quoted": [
+        [
+          0,
+          2,
+          "He"
+        ],
+        [
+          20,
+          29,
+          "Terrence'"
+        ],
+        [
+          35,
+          43,
+          "Marisol'"
+        ]
+      ],
       "title_book": [
         [
           0,
@@ -1846,6 +2252,18 @@
           "Charlotte’s Web"
         ]
       ],
+      "title_is_relation": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          10,
+          15,
+          "Vinny"
+        ]
+      ],
       "title_lower": [],
       "title_nested": [
         [
@@ -1859,6 +2277,18 @@
           0,
           7,
           "Nothing"
+        ]
+      ],
+      "title_relation": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          12,
+          23,
+          "Alice Adams"
         ]
       ],
       "two_marks": [
@@ -1973,26 +2403,33 @@
       "allcaps": "silent",
       "bare_i": "inconsistent",
       "below_floor": "lowercase",
+      "determiner_seed": "lowercase",
       "empty": "silent",
       "headings": "consistent",
       "honorific": "silent",
       "hyphen": "silent",
+      "hyphen_lowercase_tail": "lowercase",
       "inconsistent": "inconsistent",
       "initials": "silent",
+      "lowercase_particle_tail": "lowercase",
       "lowercase_writer": "lowercase",
       "one_mark": "silent",
       "particle": "consistent",
       "plain": "consistent",
       "possessive": "consistent",
+      "possessive_lowercase_habit": "lowercase",
       "protected": "silent",
       "quoted": "lowercase",
       "shout": "lowercase",
       "silent_prose": "silent",
+      "single_quoted": "silent",
       "title_book": "consistent",
       "title_curly": "consistent",
+      "title_is_relation": "silent",
       "title_lower": "lowercase",
       "title_nested": "consistent",
       "title_none": "silent",
+      "title_relation": "consistent",
       "two_marks": "consistent",
       "typo_capitaliser": "consistent",
       "wrapped": "silent"
@@ -2002,26 +2439,33 @@
       "allcaps": "silent",
       "bare_i": "inconsistent",
       "below_floor": "lowercase",
+      "determiner_seed": "lowercase",
       "empty": "silent",
       "headings": "silent",
       "honorific": "silent",
       "hyphen": "silent",
+      "hyphen_lowercase_tail": "lowercase",
       "inconsistent": "inconsistent",
       "initials": "silent",
+      "lowercase_particle_tail": "lowercase",
       "lowercase_writer": "lowercase",
       "one_mark": "silent",
       "particle": "consistent",
       "plain": "consistent",
       "possessive": "consistent",
+      "possessive_lowercase_habit": "lowercase",
       "protected": "silent",
       "quoted": "lowercase",
       "shout": "lowercase",
       "silent_prose": "silent",
+      "single_quoted": "silent",
       "title_book": "consistent",
       "title_curly": "consistent",
+      "title_is_relation": "silent",
       "title_lower": "lowercase",
       "title_nested": "consistent",
       "title_none": "silent",
+      "title_relation": "consistent",
       "two_marks": "consistent",
       "typo_capitaliser": "consistent",
       "wrapped": "silent"
@@ -2165,22 +2609,68 @@
       "township": "LOCATION",
       "two_names": "NAME"
     },
+    "corroborated_surnames": {
+      "accented": [],
+      "allcaps": [],
+      "bare_i": [],
+      "below_floor": [],
+      "determiner_seed": [],
+      "empty": [],
+      "headings": [],
+      "honorific": [],
+      "hyphen": [],
+      "hyphen_lowercase_tail": [],
+      "inconsistent": [],
+      "initials": [
+        "eliot",
+        "tolkien"
+      ],
+      "lowercase_particle_tail": [],
+      "lowercase_writer": [],
+      "one_mark": [],
+      "particle": [
+        "gogh",
+        "van gogh"
+      ],
+      "plain": [],
+      "possessive": [],
+      "possessive_lowercase_habit": [],
+      "protected": [],
+      "quoted": [],
+      "shout": [],
+      "silent_prose": [],
+      "single_quoted": [],
+      "title_book": [],
+      "title_curly": [],
+      "title_is_relation": [],
+      "title_lower": [],
+      "title_nested": [],
+      "title_none": [],
+      "title_relation": [],
+      "two_marks": [],
+      "typo_capitaliser": [],
+      "wrapped": []
+    },
     "emphasis_spans": {
       "accented": [],
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "determiner_seed": [],
       "empty": [],
       "headings": [],
       "honorific": [],
       "hyphen": [],
+      "hyphen_lowercase_tail": [],
       "inconsistent": [],
       "initials": [],
+      "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
       "particle": [],
       "plain": [],
       "possessive": [],
+      "possessive_lowercase_habit": [],
       "protected": [
         [
           1,
@@ -2203,20 +2693,1114 @@
         ]
       ],
       "silent_prose": [],
+      "single_quoted": [],
       "title_book": [],
       "title_curly": [],
+      "title_is_relation": [],
       "title_lower": [],
       "title_nested": [],
       "title_none": [],
+      "title_relation": [],
       "two_marks": [],
       "typo_capitaliser": [],
       "wrapped": []
+    },
+    "established_name_tokens": {
+      "accented": [],
+      "allcaps": [],
+      "bare_i": [],
+      "below_floor": [],
+      "determiner_seed": [],
+      "empty": [],
+      "headings": [],
+      "honorific": [],
+      "hyphen": [],
+      "hyphen_lowercase_tail": [],
+      "inconsistent": [],
+      "initials": [
+        "eliot",
+        "t.s",
+        "tolkien"
+      ],
+      "lowercase_particle_tail": [],
+      "lowercase_writer": [],
+      "one_mark": [],
+      "particle": [
+        "gogh",
+        "vincent"
+      ],
+      "plain": [],
+      "possessive": [],
+      "possessive_lowercase_habit": [],
+      "protected": [],
+      "quoted": [],
+      "shout": [],
+      "silent_prose": [],
+      "single_quoted": [],
+      "title_book": [],
+      "title_curly": [],
+      "title_is_relation": [],
+      "title_lower": [],
+      "title_nested": [],
+      "title_none": [],
+      "title_relation": [],
+      "two_marks": [],
+      "typo_capitaliser": [],
+      "wrapped": []
+    },
+    "find_candidates": {
+      "accented": [
+        [
+          11,
+          14,
+          "Ren",
+          "NAME"
+        ]
+      ],
+      "allcaps": [
+        [
+          15,
+          32,
+          "DESHAWN PRITCHARD",
+          "NAME"
+        ]
+      ],
+      "bare_i": [
+        [
+          4,
+          7,
+          "Dog",
+          "NAME"
+        ],
+        [
+          18,
+          25,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          39,
+          47,
+          "Terrence",
+          "NAME"
+        ]
+      ],
+      "below_floor": [],
+      "determiner_seed": [],
+      "empty": [],
+      "headings": [
+        [
+          102,
+          109,
+          "Arabian",
+          "NAME"
+        ]
+      ],
+      "honorific": [
+        [
+          0,
+          12,
+          "Mrs. Okonkwo",
+          "NAME"
+        ],
+        [
+          24,
+          31,
+          "Dr Ruiz",
+          "NAME"
+        ]
+      ],
+      "hyphen": [
+        [
+          0,
+          30,
+          "Marguerite Delacroix-Whitfield",
+          "NAME"
+        ],
+        [
+          35,
+          42,
+          "O'Brien",
+          "NAME"
+        ]
+      ],
+      "hyphen_lowercase_tail": [
+        [
+          0,
+          20,
+          "Marguerite Delacroix",
+          "NAME"
+        ],
+        [
+          21,
+          36,
+          "marisol okonkwo",
+          "NAME"
+        ]
+      ],
+      "inconsistent": [
+        [
+          10,
+          18,
+          "Terrence",
+          "NAME"
+        ],
+        [
+          38,
+          45,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          64,
+          69,
+          "Akron",
+          "LOCATION"
+        ],
+        [
+          76,
+          83,
+          "Deshawn",
+          "NAME"
+        ]
+      ],
+      "initials": [
+        [
+          0,
+          16,
+          "J. R. R. Tolkien",
+          "NAME"
+        ],
+        [
+          38,
+          48,
+          "T.S. Eliot",
+          "NAME"
+        ]
+      ],
+      "lowercase_particle_tail": [],
+      "lowercase_writer": [
+        [
+          5,
+          21,
+          "terrence okonkwo",
+          "NAME"
+        ]
+      ],
+      "one_mark": [
+        [
+          6,
+          13,
+          "Marisol",
+          "NAME"
+        ]
+      ],
+      "particle": [
+        [
+          16,
+          32,
+          "Vincent van Gogh",
+          "NAME"
+        ]
+      ],
+      "plain": [
+        [
+          10,
+          26,
+          "Terrence Okonkwo",
+          "NAME"
+        ]
+      ],
+      "possessive": [
+        [
+          0,
+          10,
+          "Terrence's",
+          "NAME"
+        ],
+        [
+          26,
+          35,
+          "Narciso's",
+          "NAME"
+        ],
+        [
+          48,
+          57,
+          "Lincoln’s",
+          "NAME"
+        ]
+      ],
+      "possessive_lowercase_habit": [
+        [
+          6,
+          15,
+          "Marisol's",
+          "NAME"
+        ]
+      ],
+      "protected": [],
+      "quoted": [],
+      "shout": [
+        [
+          31,
+          38,
+          "Marisol",
+          "NAME"
+        ]
+      ],
+      "silent_prose": [],
+      "single_quoted": [
+        [
+          20,
+          28,
+          "Terrence",
+          "NAME"
+        ],
+        [
+          35,
+          42,
+          "Marisol",
+          "NAME"
+        ]
+      ],
+      "title_book": [],
+      "title_curly": [],
+      "title_is_relation": [
+        [
+          10,
+          15,
+          "Vinny",
+          "NAME"
+        ]
+      ],
+      "title_lower": [],
+      "title_nested": [],
+      "title_none": [],
+      "title_relation": [
+        [
+          12,
+          23,
+          "Alice Adams",
+          "NAME"
+        ]
+      ],
+      "two_marks": [
+        [
+          6,
+          13,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          32,
+          39,
+          "Deshawn",
+          "NAME"
+        ]
+      ],
+      "typo_capitaliser": [
+        [
+          0,
+          7,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          16,
+          21,
+          "Akron",
+          "LOCATION"
+        ],
+        [
+          31,
+          38,
+          "Deshawn",
+          "NAME"
+        ],
+        [
+          49,
+          57,
+          "Terrence",
+          "NAME"
+        ]
+      ],
+      "wrapped": [
+        [
+          60,
+          64,
+          "Ohio",
+          "NAME"
+        ]
+      ]
+    },
+    "find_candidates_permissive_given": {
+      "accented": [
+        [
+          11,
+          14,
+          "Ren",
+          "NAME"
+        ]
+      ],
+      "allcaps": [
+        [
+          15,
+          32,
+          "DESHAWN PRITCHARD",
+          "NAME"
+        ]
+      ],
+      "bare_i": [
+        [
+          4,
+          7,
+          "Dog",
+          "NAME"
+        ],
+        [
+          18,
+          25,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          39,
+          47,
+          "Terrence",
+          "NAME"
+        ]
+      ],
+      "below_floor": [
+        [
+          4,
+          14,
+          "dog barked",
+          "NAME"
+        ],
+        [
+          20,
+          27,
+          "cat ran",
+          "NAME"
+        ],
+        [
+          33,
+          42,
+          "bird flew",
+          "NAME"
+        ],
+        [
+          48,
+          57,
+          "fish swam",
+          "NAME"
+        ],
+        [
+          63,
+          72,
+          "cow mooed",
+          "NAME"
+        ],
+        [
+          78,
+          88,
+          "pig oinked",
+          "NAME"
+        ],
+        [
+          94,
+          105,
+          "hen clucked",
+          "NAME"
+        ],
+        [
+          111,
+          123,
+          "duck quacked",
+          "NAME"
+        ],
+        [
+          129,
+          141,
+          "goat bleated",
+          "NAME"
+        ],
+        [
+          147,
+          160,
+          "horse neighed",
+          "NAME"
+        ]
+      ],
+      "determiner_seed": [],
+      "empty": [],
+      "headings": [
+        [
+          0,
+          5,
+          "Horse",
+          "NAME"
+        ],
+        [
+          67,
+          73,
+          "Breeds",
+          "NAME"
+        ],
+        [
+          76,
+          80,
+          "Like",
+          "NAME"
+        ],
+        [
+          102,
+          109,
+          "Arabian",
+          "NAME"
+        ]
+      ],
+      "honorific": [
+        [
+          0,
+          12,
+          "Mrs. Okonkwo",
+          "NAME"
+        ],
+        [
+          24,
+          31,
+          "Dr Ruiz",
+          "NAME"
+        ]
+      ],
+      "hyphen": [
+        [
+          0,
+          30,
+          "Marguerite Delacroix-Whitfield",
+          "NAME"
+        ],
+        [
+          35,
+          42,
+          "O'Brien",
+          "NAME"
+        ]
+      ],
+      "hyphen_lowercase_tail": [
+        [
+          0,
+          20,
+          "Marguerite Delacroix",
+          "NAME"
+        ],
+        [
+          21,
+          36,
+          "marisol okonkwo",
+          "NAME"
+        ]
+      ],
+      "inconsistent": [
+        [
+          10,
+          18,
+          "Terrence",
+          "NAME"
+        ],
+        [
+          38,
+          45,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          64,
+          69,
+          "Akron",
+          "NAME"
+        ],
+        [
+          76,
+          83,
+          "Deshawn",
+          "NAME"
+        ]
+      ],
+      "initials": [
+        [
+          0,
+          16,
+          "J. R. R. Tolkien",
+          "NAME"
+        ],
+        [
+          38,
+          48,
+          "T.S. Eliot",
+          "NAME"
+        ]
+      ],
+      "lowercase_particle_tail": [
+        [
+          31,
+          42,
+          "stayed late",
+          "NAME"
+        ]
+      ],
+      "lowercase_writer": [
+        [
+          5,
+          21,
+          "terrence okonkwo",
+          "NAME"
+        ]
+      ],
+      "one_mark": [
+        [
+          6,
+          13,
+          "Marisol",
+          "NAME"
+        ]
+      ],
+      "particle": [
+        [
+          16,
+          32,
+          "Vincent van Gogh",
+          "NAME"
+        ]
+      ],
+      "plain": [
+        [
+          10,
+          26,
+          "Terrence Okonkwo",
+          "NAME"
+        ]
+      ],
+      "possessive": [
+        [
+          0,
+          10,
+          "Terrence's",
+          "NAME"
+        ],
+        [
+          26,
+          35,
+          "Narciso's",
+          "NAME"
+        ],
+        [
+          48,
+          57,
+          "Lincoln’s",
+          "NAME"
+        ]
+      ],
+      "possessive_lowercase_habit": [
+        [
+          6,
+          15,
+          "Marisol's",
+          "NAME"
+        ]
+      ],
+      "protected": [],
+      "quoted": [
+        [
+          18,
+          25,
+          "Giggles",
+          "NAME"
+        ],
+        [
+          0,
+          11,
+          "vivid words",
+          "NAME"
+        ]
+      ],
+      "shout": [
+        [
+          5,
+          9,
+          "SLAM",
+          "NAME"
+        ],
+        [
+          31,
+          38,
+          "Marisol",
+          "NAME"
+        ]
+      ],
+      "silent_prose": [],
+      "single_quoted": [
+        [
+          20,
+          28,
+          "Terrence",
+          "NAME"
+        ],
+        [
+          35,
+          42,
+          "Marisol",
+          "NAME"
+        ]
+      ],
+      "title_book": [
+        [
+          10,
+          14,
+          "Kill",
+          "NAME"
+        ],
+        [
+          17,
+          28,
+          "Mockingbird",
+          "NAME"
+        ]
+      ],
+      "title_curly": [
+        [
+          8,
+          23,
+          "Charlotte’s Web",
+          "NAME"
+        ]
+      ],
+      "title_is_relation": [
+        [
+          10,
+          15,
+          "Vinny",
+          "NAME"
+        ]
+      ],
+      "title_lower": [],
+      "title_nested": [
+        [
+          4,
+          13,
+          "Lion King",
+          "NAME"
+        ]
+      ],
+      "title_none": [],
+      "title_relation": [
+        [
+          12,
+          23,
+          "Alice Adams",
+          "NAME"
+        ]
+      ],
+      "two_marks": [
+        [
+          6,
+          13,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          32,
+          39,
+          "Deshawn",
+          "NAME"
+        ]
+      ],
+      "typo_capitaliser": [
+        [
+          0,
+          7,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          16,
+          21,
+          "Akron",
+          "NAME"
+        ],
+        [
+          31,
+          38,
+          "Deshawn",
+          "NAME"
+        ],
+        [
+          49,
+          57,
+          "Terrence",
+          "NAME"
+        ]
+      ],
+      "wrapped": [
+        [
+          4,
+          12,
+          "INternet",
+          "NAME"
+        ],
+        [
+          60,
+          64,
+          "Ohio",
+          "NAME"
+        ]
+      ]
+    },
+    "find_candidates_without_oracles": {
+      "accented": [
+        [
+          11,
+          14,
+          "Ren",
+          "NAME"
+        ]
+      ],
+      "allcaps": [
+        [
+          15,
+          32,
+          "DESHAWN PRITCHARD",
+          "NAME"
+        ]
+      ],
+      "bare_i": [
+        [
+          4,
+          7,
+          "Dog",
+          "NAME"
+        ],
+        [
+          18,
+          25,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          39,
+          47,
+          "Terrence",
+          "NAME"
+        ]
+      ],
+      "below_floor": [],
+      "determiner_seed": [],
+      "empty": [],
+      "headings": [
+        [
+          0,
+          5,
+          "Horse",
+          "NAME"
+        ],
+        [
+          67,
+          73,
+          "Breeds",
+          "NAME"
+        ],
+        [
+          76,
+          80,
+          "Like",
+          "NAME"
+        ],
+        [
+          102,
+          109,
+          "Arabian",
+          "NAME"
+        ]
+      ],
+      "honorific": [
+        [
+          0,
+          12,
+          "Mrs. Okonkwo",
+          "NAME"
+        ],
+        [
+          24,
+          31,
+          "Dr Ruiz",
+          "NAME"
+        ]
+      ],
+      "hyphen": [
+        [
+          0,
+          30,
+          "Marguerite Delacroix-Whitfield",
+          "NAME"
+        ],
+        [
+          35,
+          42,
+          "O'Brien",
+          "NAME"
+        ]
+      ],
+      "hyphen_lowercase_tail": [
+        [
+          0,
+          20,
+          "Marguerite Delacroix",
+          "NAME"
+        ]
+      ],
+      "inconsistent": [
+        [
+          10,
+          18,
+          "Terrence",
+          "NAME"
+        ],
+        [
+          38,
+          45,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          64,
+          69,
+          "Akron",
+          "NAME"
+        ],
+        [
+          76,
+          83,
+          "Deshawn",
+          "NAME"
+        ]
+      ],
+      "initials": [
+        [
+          0,
+          16,
+          "J. R. R. Tolkien",
+          "NAME"
+        ],
+        [
+          38,
+          48,
+          "T.S. Eliot",
+          "NAME"
+        ]
+      ],
+      "lowercase_particle_tail": [],
+      "lowercase_writer": [],
+      "one_mark": [
+        [
+          6,
+          13,
+          "Marisol",
+          "NAME"
+        ]
+      ],
+      "particle": [
+        [
+          16,
+          32,
+          "Vincent van Gogh",
+          "NAME"
+        ]
+      ],
+      "plain": [
+        [
+          10,
+          26,
+          "Terrence Okonkwo",
+          "NAME"
+        ]
+      ],
+      "possessive": [
+        [
+          0,
+          10,
+          "Terrence's",
+          "NAME"
+        ],
+        [
+          26,
+          35,
+          "Narciso's",
+          "NAME"
+        ],
+        [
+          48,
+          57,
+          "Lincoln’s",
+          "NAME"
+        ]
+      ],
+      "possessive_lowercase_habit": [
+        [
+          6,
+          15,
+          "Marisol's",
+          "NAME"
+        ]
+      ],
+      "protected": [],
+      "quoted": [
+        [
+          18,
+          25,
+          "Giggles",
+          "NAME"
+        ]
+      ],
+      "shout": [
+        [
+          5,
+          9,
+          "SLAM",
+          "NAME"
+        ],
+        [
+          31,
+          38,
+          "Marisol",
+          "NAME"
+        ]
+      ],
+      "silent_prose": [],
+      "single_quoted": [
+        [
+          20,
+          28,
+          "Terrence",
+          "NAME"
+        ],
+        [
+          35,
+          42,
+          "Marisol",
+          "NAME"
+        ]
+      ],
+      "title_book": [
+        [
+          10,
+          14,
+          "Kill",
+          "NAME"
+        ],
+        [
+          17,
+          28,
+          "Mockingbird",
+          "NAME"
+        ]
+      ],
+      "title_curly": [
+        [
+          8,
+          23,
+          "Charlotte’s Web",
+          "NAME"
+        ]
+      ],
+      "title_is_relation": [
+        [
+          10,
+          15,
+          "Vinny",
+          "NAME"
+        ]
+      ],
+      "title_lower": [],
+      "title_nested": [
+        [
+          4,
+          13,
+          "Lion King",
+          "NAME"
+        ]
+      ],
+      "title_none": [],
+      "title_relation": [
+        [
+          12,
+          23,
+          "Alice Adams",
+          "NAME"
+        ]
+      ],
+      "two_marks": [
+        [
+          6,
+          13,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          32,
+          39,
+          "Deshawn",
+          "NAME"
+        ]
+      ],
+      "typo_capitaliser": [
+        [
+          0,
+          7,
+          "Marisol",
+          "NAME"
+        ],
+        [
+          16,
+          21,
+          "Akron",
+          "NAME"
+        ],
+        [
+          31,
+          38,
+          "Deshawn",
+          "NAME"
+        ],
+        [
+          49,
+          57,
+          "Terrence",
+          "NAME"
+        ]
+      ],
+      "wrapped": [
+        [
+          4,
+          12,
+          "INternet",
+          "NAME"
+        ],
+        [
+          60,
+          64,
+          "Ohio",
+          "NAME"
+        ]
+      ]
     },
     "heading_spans": {
       "accented": [],
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "determiner_seed": [],
       "empty": [],
       "headings": [
         [
@@ -2230,13 +3814,16 @@
       ],
       "honorific": [],
       "hyphen": [],
+      "hyphen_lowercase_tail": [],
       "inconsistent": [],
       "initials": [],
+      "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
       "particle": [],
       "plain": [],
       "possessive": [],
+      "possessive_lowercase_habit": [],
       "protected": [],
       "quoted": [
         [
@@ -2246,11 +3833,14 @@
       ],
       "shout": [],
       "silent_prose": [],
+      "single_quoted": [],
       "title_book": [],
       "title_curly": [],
+      "title_is_relation": [],
       "title_lower": [],
       "title_nested": [],
       "title_none": [],
+      "title_relation": [],
       "two_marks": [],
       "typo_capitaliser": [],
       "wrapped": [
@@ -2477,6 +4067,73 @@
           "baaed"
         ]
       ],
+      "determiner_seed": [
+        [
+          0,
+          8,
+          "terrence"
+        ],
+        [
+          9,
+          12,
+          "and"
+        ],
+        [
+          13,
+          14,
+          "i"
+        ],
+        [
+          15,
+          21,
+          "stayed"
+        ],
+        [
+          22,
+          24,
+          "up"
+        ],
+        [
+          25,
+          29,
+          "late"
+        ],
+        [
+          31,
+          34,
+          "the"
+        ],
+        [
+          35,
+          43,
+          "terrence"
+        ],
+        [
+          44,
+          51,
+          "okonkwo"
+        ],
+        [
+          52,
+          53,
+          "i"
+        ],
+        [
+          54,
+          58,
+          "knew"
+        ],
+        [
+          59,
+          64,
+          "moved"
+        ],
+        [
+          65,
+          69,
+          "away"
+        ]
+      ],
       "empty": [],
       "headings": [
         [
@@ -2567,6 +4224,48 @@
           48,
           53,
           "there"
+        ]
+      ],
+      "hyphen_lowercase_tail": [
+        [
+          21,
+          28,
+          "marisol"
+        ],
+        [
+          29,
+          36,
+          "okonkwo"
+        ],
+        [
+          37,
+          42,
+          "waved"
+        ],
+        [
+          43,
+          45,
+          "at"
+        ],
+        [
+          46,
+          48,
+          "us"
+        ],
+        [
+          50,
+          51,
+          "i"
+        ],
+        [
+          52,
+          57,
+          "waved"
+        ],
+        [
+          58,
+          62,
+          "back"
         ]
       ],
       "inconsistent": [
@@ -2671,6 +4370,53 @@
           34,
           37,
           "did"
+        ]
+      ],
+      "lowercase_particle_tail": [
+        [
+          0,
+          7,
+          "marisol"
+        ],
+        [
+          8,
+          10,
+          "de"
+        ],
+        [
+          11,
+          14,
+          "and"
+        ],
+        [
+          15,
+          16,
+          "i"
+        ],
+        [
+          17,
+          21,
+          "went"
+        ],
+        [
+          22,
+          26,
+          "home"
+        ],
+        [
+          28,
+          30,
+          "we"
+        ],
+        [
+          31,
+          37,
+          "stayed"
+        ],
+        [
+          38,
+          42,
+          "late"
         ]
       ],
       "lowercase_writer": [
@@ -2853,6 +4599,48 @@
           "hat"
         ]
       ],
+      "possessive_lowercase_habit": [
+        [
+          0,
+          1,
+          "i"
+        ],
+        [
+          2,
+          5,
+          "saw"
+        ],
+        [
+          14,
+          15,
+          "s"
+        ],
+        [
+          16,
+          21,
+          "older"
+        ],
+        [
+          22,
+          29,
+          "brother"
+        ],
+        [
+          31,
+          32,
+          "i"
+        ],
+        [
+          33,
+          38,
+          "waved"
+        ],
+        [
+          39,
+          43,
+          "back"
+        ]
+      ],
       "protected": [
         [
           9,
@@ -2991,6 +4779,43 @@
           "prose"
         ]
       ],
+      "single_quoted": [
+        [
+          3,
+          7,
+          "used"
+        ],
+        [
+          8,
+          13,
+          "words"
+        ],
+        [
+          14,
+          18,
+          "like"
+        ],
+        [
+          30,
+          33,
+          "and"
+        ],
+        [
+          44,
+          46,
+          "in"
+        ],
+        [
+          47,
+          50,
+          "the"
+        ],
+        [
+          51,
+          56,
+          "story"
+        ]
+      ],
       "title_book": [
         [
           2,
@@ -3033,6 +4858,48 @@
           27,
           32,
           "class"
+        ]
+      ],
+      "title_is_relation": [
+        [
+          3,
+          9,
+          "cousin"
+        ],
+        [
+          16,
+          20,
+          "came"
+        ],
+        [
+          21,
+          25,
+          "over"
+        ],
+        [
+          26,
+          30,
+          "that"
+        ],
+        [
+          31,
+          37,
+          "summer"
+        ],
+        [
+          38,
+          41,
+          "and"
+        ],
+        [
+          42,
+          47,
+          "never"
+        ],
+        [
+          48,
+          52,
+          "left"
         ]
       ],
       "title_lower": [
@@ -3129,6 +4996,43 @@
           34,
           37,
           "all"
+        ]
+      ],
+      "title_relation": [
+        [
+          3,
+          11,
+          "neighbor"
+        ],
+        [
+          24,
+          30,
+          "walked"
+        ],
+        [
+          31,
+          33,
+          "me"
+        ],
+        [
+          34,
+          36,
+          "to"
+        ],
+        [
+          37,
+          40,
+          "the"
+        ],
+        [
+          41,
+          44,
+          "bus"
+        ],
+        [
+          45,
+          49,
+          "stop"
         ]
       ],
       "two_marks": [
@@ -3335,6 +5239,7 @@
         "terrence"
       ],
       "below_floor": [],
+      "determiner_seed": [],
       "empty": [],
       "headings": [
         "arabian",
@@ -3349,6 +5254,9 @@
         "delacroix-whitfield",
         "o'brien"
       ],
+      "hyphen_lowercase_tail": [
+        "delacroix-marisol"
+      ],
       "inconsistent": [
         "akron",
         "deshawn",
@@ -3359,6 +5267,7 @@
         "s",
         "t"
       ],
+      "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [
         "marisol"
@@ -3375,6 +5284,9 @@
         "lincoln’s",
         "narciso's"
       ],
+      "possessive_lowercase_habit": [
+        "marisol's"
+      ],
       "protected": [
         "june"
       ],
@@ -3383,6 +5295,7 @@
         "marisol"
       ],
       "silent_prose": [],
+      "single_quoted": [],
       "title_book": [
         "kill",
         "mockingbird",
@@ -3392,12 +5305,19 @@
         "charlotte’s",
         "web"
       ],
+      "title_is_relation": [
+        "vinny"
+      ],
       "title_lower": [],
       "title_nested": [
         "king",
         "lion"
       ],
       "title_none": [],
+      "title_relation": [
+        "adams",
+        "alice"
+      ],
       "two_marks": [
         "deshawn",
         "marisol"
@@ -3423,6 +5343,7 @@
         "terrence"
       ],
       "below_floor": [],
+      "determiner_seed": [],
       "empty": [],
       "headings": [
         "arabian"
@@ -3434,6 +5355,9 @@
         "delacroix-whitfield",
         "o'brien"
       ],
+      "hyphen_lowercase_tail": [
+        "delacroix-marisol"
+      ],
       "inconsistent": [
         "akron",
         "deshawn",
@@ -3444,6 +5368,7 @@
         "s",
         "t"
       ],
+      "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [
         "marisol"
@@ -3460,6 +5385,9 @@
         "lincoln’s",
         "narciso's"
       ],
+      "possessive_lowercase_habit": [
+        "marisol's"
+      ],
       "protected": [
         "june"
       ],
@@ -3468,6 +5396,7 @@
         "marisol"
       ],
       "silent_prose": [],
+      "single_quoted": [],
       "title_book": [
         "kill",
         "mockingbird",
@@ -3477,12 +5406,19 @@
         "charlotte’s",
         "web"
       ],
+      "title_is_relation": [
+        "vinny"
+      ],
       "title_lower": [],
       "title_nested": [
         "king",
         "lion"
       ],
       "title_none": [],
+      "title_relation": [
+        "adams",
+        "alice"
+      ],
       "two_marks": [
         "deshawn",
         "marisol"
@@ -3595,17 +5531,21 @@
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "determiner_seed": [],
       "empty": [],
       "headings": [],
       "honorific": [],
       "hyphen": [],
+      "hyphen_lowercase_tail": [],
       "inconsistent": [],
       "initials": [],
+      "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
       "particle": [],
       "plain": [],
       "possessive": [],
+      "possessive_lowercase_habit": [],
       "protected": [
         [
           0,
@@ -3626,11 +5566,14 @@
       "quoted": [],
       "shout": [],
       "silent_prose": [],
+      "single_quoted": [],
       "title_book": [],
       "title_curly": [],
+      "title_is_relation": [],
       "title_lower": [],
       "title_nested": [],
       "title_none": [],
+      "title_relation": [],
       "two_marks": [],
       "typo_capitaliser": [],
       "wrapped": []
@@ -3708,6 +5651,10 @@
         143,
         162
       ],
+      "determiner_seed": [
+        0,
+        31
+      ],
       "empty": [
         0
       ],
@@ -3726,6 +5673,10 @@
       "hyphen": [
         0
       ],
+      "hyphen_lowercase_tail": [
+        0,
+        50
+      ],
       "inconsistent": [
         0,
         30,
@@ -3739,6 +5690,10 @@
         6,
         9,
         43
+      ],
+      "lowercase_particle_tail": [
+        0,
+        28
       ],
       "lowercase_writer": [
         0,
@@ -3758,6 +5713,10 @@
       "possessive": [
         0
       ],
+      "possessive_lowercase_habit": [
+        0,
+        31
+      ],
       "protected": [
         0
       ],
@@ -3773,10 +5732,18 @@
         0,
         49
       ],
+      "single_quoted": [
+        0,
+        20,
+        35
+      ],
       "title_book": [
         0
       ],
       "title_curly": [
+        0
+      ],
+      "title_is_relation": [
         0
       ],
       "title_lower": [
@@ -3786,6 +5753,9 @@
         0
       ],
       "title_none": [
+        0
+      ],
+      "title_relation": [
         0
       ],
       "two_marks": [
@@ -3809,6 +5779,86 @@
       "wrapped": [
         0,
         39
+      ]
+    },
+    "surname_forms": {
+      "": [],
+      "Coach Wright": [
+        "wright"
+      ],
+      "Mrs. Okonkwo": [
+        "okonkwo"
+      ],
+      "Priya Wright": [
+        "wright"
+      ],
+      "Richard Wright": [
+        "wright"
+      ],
+      "T.S. Eliot": [
+        "eliot"
+      ],
+      "Vincent van Gogh": [
+        "gogh",
+        "van gogh"
+      ],
+      "Wright": [],
+      "Wright's": [],
+      "Wright’s": [],
+      "de la Cruz": [
+        "cruz",
+        "la cruz",
+        "de la cruz"
+      ],
+      "van Gogh": [
+        "gogh",
+        "van gogh"
+      ]
+    },
+    "surname_tokens": {
+      "": [],
+      "Coach Wright": [
+        "coach",
+        "wright"
+      ],
+      "Mrs. Okonkwo": [
+        "mrs",
+        "okonkwo"
+      ],
+      "Priya Wright": [
+        "priya",
+        "wright"
+      ],
+      "Richard Wright": [
+        "richard",
+        "wright"
+      ],
+      "T.S. Eliot": [
+        "t.s",
+        "eliot"
+      ],
+      "Vincent van Gogh": [
+        "vincent",
+        "van",
+        "gogh"
+      ],
+      "Wright": [
+        "wright"
+      ],
+      "Wright's": [
+        "wright"
+      ],
+      "Wright’s": [
+        "wright"
+      ],
+      "de la Cruz": [
+        "de",
+        "la",
+        "cruz"
+      ],
+      "van Gogh": [
+        "van",
+        "gogh"
       ]
     },
     "title_is_the_writers_own_relation": {
@@ -3863,21 +5913,26 @@
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "determiner_seed": [],
       "empty": [],
       "headings": [],
       "honorific": [],
       "hyphen": [],
+      "hyphen_lowercase_tail": [],
       "inconsistent": [],
       "initials": [],
+      "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
       "particle": [],
       "plain": [],
       "possessive": [],
+      "possessive_lowercase_habit": [],
       "protected": [],
       "quoted": [],
       "shout": [],
       "silent_prose": [],
+      "single_quoted": [],
       "title_book": [
         [
           7,
@@ -3888,6 +5943,12 @@
         [
           8,
           23
+        ]
+      ],
+      "title_is_relation": [
+        [
+          0,
+          15
         ]
       ],
       "title_lower": [
@@ -3903,6 +5964,12 @@
         ]
       ],
       "title_none": [],
+      "title_relation": [
+        [
+          12,
+          23
+        ]
+      ],
       "two_marks": [],
       "typo_capitaliser": [],
       "wrapped": []
@@ -3912,21 +5979,26 @@
       "allcaps": [],
       "bare_i": [],
       "below_floor": [],
+      "determiner_seed": [],
       "empty": [],
       "headings": [],
       "honorific": [],
       "hyphen": [],
+      "hyphen_lowercase_tail": [],
       "inconsistent": [],
       "initials": [],
+      "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
       "particle": [],
       "plain": [],
       "possessive": [],
+      "possessive_lowercase_habit": [],
       "protected": [],
       "quoted": [],
       "shout": [],
       "silent_prose": [],
+      "single_quoted": [],
       "title_book": [
         [
           7,
@@ -3939,6 +6011,12 @@
           23
         ]
       ],
+      "title_is_relation": [
+        [
+          0,
+          15
+        ]
+      ],
       "title_lower": [],
       "title_nested": [
         [
@@ -3947,6 +6025,12 @@
         ]
       ],
       "title_none": [],
+      "title_relation": [
+        [
+          12,
+          23
+        ]
+      ],
       "two_marks": [],
       "typo_capitaliser": [],
       "wrapped": []
@@ -4343,6 +6427,73 @@
           "baaed"
         ]
       ],
+      "determiner_seed": [
+        [
+          0,
+          8,
+          "terrence"
+        ],
+        [
+          9,
+          12,
+          "and"
+        ],
+        [
+          13,
+          14,
+          "i"
+        ],
+        [
+          15,
+          21,
+          "stayed"
+        ],
+        [
+          22,
+          24,
+          "up"
+        ],
+        [
+          25,
+          29,
+          "late"
+        ],
+        [
+          31,
+          34,
+          "the"
+        ],
+        [
+          35,
+          43,
+          "terrence"
+        ],
+        [
+          44,
+          51,
+          "okonkwo"
+        ],
+        [
+          52,
+          53,
+          "i"
+        ],
+        [
+          54,
+          58,
+          "knew"
+        ],
+        [
+          59,
+          64,
+          "moved"
+        ],
+        [
+          65,
+          69,
+          "away"
+        ]
+      ],
       "empty": [],
       "headings": [
         [
@@ -4515,6 +6666,53 @@
           "there"
         ]
       ],
+      "hyphen_lowercase_tail": [
+        [
+          0,
+          10,
+          "Marguerite"
+        ],
+        [
+          11,
+          28,
+          "Delacroix-marisol"
+        ],
+        [
+          29,
+          36,
+          "okonkwo"
+        ],
+        [
+          37,
+          42,
+          "waved"
+        ],
+        [
+          43,
+          45,
+          "at"
+        ],
+        [
+          46,
+          48,
+          "us"
+        ],
+        [
+          50,
+          51,
+          "i"
+        ],
+        [
+          52,
+          57,
+          "waved"
+        ],
+        [
+          58,
+          62,
+          "back"
+        ]
+      ],
       "inconsistent": [
         [
           0,
@@ -4677,6 +6875,53 @@
           43,
           48,
           "Eliot"
+        ]
+      ],
+      "lowercase_particle_tail": [
+        [
+          0,
+          7,
+          "marisol"
+        ],
+        [
+          8,
+          10,
+          "de"
+        ],
+        [
+          11,
+          14,
+          "and"
+        ],
+        [
+          15,
+          16,
+          "i"
+        ],
+        [
+          17,
+          21,
+          "went"
+        ],
+        [
+          22,
+          26,
+          "home"
+        ],
+        [
+          28,
+          30,
+          "we"
+        ],
+        [
+          31,
+          37,
+          "stayed"
+        ],
+        [
+          38,
+          42,
+          "late"
         ]
       ],
       "lowercase_writer": [
@@ -4904,6 +7149,48 @@
           "hat"
         ]
       ],
+      "possessive_lowercase_habit": [
+        [
+          0,
+          1,
+          "i"
+        ],
+        [
+          2,
+          5,
+          "saw"
+        ],
+        [
+          6,
+          15,
+          "Marisol's"
+        ],
+        [
+          16,
+          21,
+          "older"
+        ],
+        [
+          22,
+          29,
+          "brother"
+        ],
+        [
+          31,
+          32,
+          "i"
+        ],
+        [
+          33,
+          38,
+          "waved"
+        ],
+        [
+          39,
+          43,
+          "back"
+        ]
+      ],
       "protected": [
         [
           1,
@@ -5092,6 +7379,58 @@
           "prose"
         ]
       ],
+      "single_quoted": [
+        [
+          0,
+          2,
+          "He"
+        ],
+        [
+          3,
+          7,
+          "used"
+        ],
+        [
+          8,
+          13,
+          "words"
+        ],
+        [
+          14,
+          18,
+          "like"
+        ],
+        [
+          20,
+          29,
+          "Terrence'"
+        ],
+        [
+          30,
+          33,
+          "and"
+        ],
+        [
+          35,
+          43,
+          "Marisol'"
+        ],
+        [
+          44,
+          46,
+          "in"
+        ],
+        [
+          47,
+          50,
+          "the"
+        ],
+        [
+          51,
+          56,
+          "story"
+        ]
+      ],
       "title_book": [
         [
           0,
@@ -5164,6 +7503,58 @@
           27,
           32,
           "class"
+        ]
+      ],
+      "title_is_relation": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          9,
+          "cousin"
+        ],
+        [
+          10,
+          15,
+          "Vinny"
+        ],
+        [
+          16,
+          20,
+          "came"
+        ],
+        [
+          21,
+          25,
+          "over"
+        ],
+        [
+          26,
+          30,
+          "that"
+        ],
+        [
+          31,
+          37,
+          "summer"
+        ],
+        [
+          38,
+          41,
+          "and"
+        ],
+        [
+          42,
+          47,
+          "never"
+        ],
+        [
+          48,
+          52,
+          "left"
         ]
       ],
       "title_lower": [
@@ -5280,6 +7671,58 @@
           34,
           37,
           "all"
+        ]
+      ],
+      "title_relation": [
+        [
+          0,
+          2,
+          "My"
+        ],
+        [
+          3,
+          11,
+          "neighbor"
+        ],
+        [
+          12,
+          17,
+          "Alice"
+        ],
+        [
+          18,
+          23,
+          "Adams"
+        ],
+        [
+          24,
+          30,
+          "walked"
+        ],
+        [
+          31,
+          33,
+          "me"
+        ],
+        [
+          34,
+          36,
+          "to"
+        ],
+        [
+          37,
+          40,
+          "the"
+        ],
+        [
+          41,
+          44,
+          "bus"
+        ],
+        [
+          45,
+          49,
+          "stop"
         ]
       ],
       "two_marks": [
@@ -5580,32 +8023,72 @@
     "allcaps": "MY BEST FRIEND DESHAWN PRITCHARD WOULD NEVER.",
     "bare_i": "The Dog barked at Marisol. i ran. Then Terrence came over.",
     "below_floor": "The dog barked. The cat ran. The bird flew. The fish swam. The cow mooed. The pig oinked. The hen clucked. The duck quacked. The goat bleated. The horse neighed. the sheep baaed.",
+    "determiner_seed": "terrence and i stayed up late. the terrence okonkwo i knew moved away.",
     "empty": "",
     "headings": "Horse Families\n\nThe first horses were small. They lived in herds.\n\nBreeds I Like\n\nMy favourite is the Arabian.",
     "honorific": "Mrs. Okonkwo taught us. Dr Ruiz did not.",
     "hyphen": "Marguerite Delacroix-Whitfield and O'Brien were there.",
+    "hyphen_lowercase_tail": "Marguerite Delacroix-marisol okonkwo waved at us. i waved back.",
     "inconsistent": "My cousin Terrence came over. my aunt Marisol drove. we went to Akron. then Deshawn showed up. i was tired.",
     "initials": "J. R. R. Tolkien wrote it, and so did T.S. Eliot.",
+    "lowercase_particle_tail": "marisol de and i went home. we stayed late.",
     "lowercase_writer": "then terrence okonkwo showed up. i was so happy. we went home.",
     "one_mark": "I met Marisol today. She was nice.",
     "particle": "My inspiration, Vincent van Gogh, painted for years.",
     "plain": "My cousin Terrence Okonkwo came over that summer.",
     "possessive": "Terrence's older brother, Narciso's friend, and Lincoln’s hat.",
+    "possessive_lowercase_habit": "i saw Marisol's older brother. i waved back.",
     "protected": "{NAME_1} met @PERSON2 and {LOCATION} last June.",
     "quoted": "vivid words like \"Giggles filled the school\" stand out",
     "shout": "Then SLAM! the door closed and Marisol laughed.",
     "silent_prose": "Nothing here is capitalised mid sentence at all. It is only prose.",
+    "single_quoted": "He used words like 'Terrence' and 'Marisol' in the story.",
     "title_book": "I read To Kill a Mockingbird last year.",
     "title_curly": "We read Charlotte’s Web in class.",
+    "title_is_relation": "My cousin Vinny came over that summer and never left.",
     "title_lower": "i read to kill a mockingbird last year.",
     "title_nested": "The Lion King is my favourite film.",
     "title_none": "Nothing here matches any title at all.",
+    "title_relation": "My neighbor Alice Adams walked me to the bus stop.",
     "two_marks": "I met Marisol today. I also saw Deshawn there.",
     "typo_capitaliser": "Marisol went to Akron. She met Deshawn. They saw Terrence. We drove home. She waved. He smiled. They left. It rained. We slept. boy did we laugh. She called again. He answered.",
     "wrapped": "The INternet as we know it today first\nappeared in a lab in Ohio."
   },
+  "corroboration": {
+    "tier": "full_name"
+  },
   "document_version": 1,
+  "name_forms": [
+    "Richard Wright",
+    "Wright",
+    "Wright's",
+    "Wright’s",
+    "Vincent van Gogh",
+    "van Gogh",
+    "de la Cruz",
+    "Coach Wright",
+    "Priya Wright",
+    "Mrs. Okonkwo",
+    "T.S. Eliot",
+    ""
+  ],
   "oracles": {
+    "full_names": [
+      "j. r. r. tolkien",
+      "narciso rodriguez",
+      "richard wright",
+      "t.s. eliot",
+      "vincent van gogh"
+    ],
+    "given_names": [
+      "deshawn",
+      "marguerite",
+      "marisol",
+      "narciso",
+      "renée",
+      "terrence",
+      "vincent"
+    ],
     "settlements": [
       "acme inc.",
       "akron",
@@ -5616,7 +8099,9 @@
       "westfield high school"
     ],
     "titles": [
+      "alice adams",
       "charlotte's web",
+      "my cousin vinny",
       "the lion",
       "the lion king",
       "to kill a mockingbird"

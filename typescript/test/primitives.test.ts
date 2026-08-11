@@ -28,6 +28,7 @@ import {
   ANY_TOKEN,
   CANDIDATE_RE,
   CLITICS,
+  CORROBORATING_TIER,
   DROPS_CAPITALS_MIN_RATE,
   FIRST_PERSON,
   HEADING_MAX_CHARS,
@@ -47,10 +48,14 @@ import {
   STOP_WORDS,
   TITLE_MAX_TOKENS,
   WORD_TOKEN,
+  bareSurnameKey,
   capitalisationHabit,
   classify,
   classifyTags,
+  corroboratedSurnames,
   emphasisSpans,
+  establishedNameTokens,
+  findCandidates,
   findTitleSpans,
   headingSpans,
   isStop,
@@ -60,8 +65,11 @@ import {
   relationLedTitleIsInternallyMixed,
   resolve,
   sentenceStarts,
+  surnameForms,
+  surnameTokens,
   titleIsTheWritersOwnRelation,
   trim,
+  type Candidate,
   type Span,
 } from "../src/candidates.js";
 
@@ -82,6 +90,32 @@ const isTitle = (text: string) =>
   titles.includes(text.toLowerCase().replaceAll("’", "'"));
 const isTitlePrefix = (key: string) =>
   titles.some((title) => title === key || title.startsWith(`${key} `));
+const givenNames = new Set(spec.oracles.givenNames);
+const fullNames = new Set(spec.oracles.fullNames);
+const isGiven = (token: string) => givenNames.has(token.toLowerCase());
+/** The tier oracle's three answers, spelled exactly as the generator states them.
+ * `place` is here rather than folded into "not full_name" because it is the tier
+ * whose keeps must NOT license a surname, and a port that dropped it would be
+ * indistinguishable from one that never had it. */
+const tierOf = (name: string) =>
+  fullNames.has(name.toLowerCase())
+    ? "full_name"
+    : settlements.has(name.toLowerCase())
+      ? "place"
+      : "not_notable";
+const isNotable = (name: string) => tierOf(name) !== "not_notable";
+
+/** The oracle set the spec's `find_candidates` section is generated with. */
+const wired = {
+  givenName: isGiven,
+  title: isTitle,
+  titlePrefix: isTitlePrefix,
+  settlement: isSettlement,
+};
+
+/** `[start, end, text, kind]` per candidate — the shape the generator emits. */
+const asRows = (candidates: readonly Candidate[]) =>
+  candidates.map((c) => [c.start, c.end, c.text, c.kind]);
 
 /** `[start, end, matched]` per match — the shape the generator emits. */
 function matches(pattern: RegExp, text: string): [number, number, string][] {
@@ -133,6 +167,8 @@ const corpus = spec.corpus as Record<string, unknown>;
 const lists = spec.tokenLists as Record<string, unknown>;
 const stopTokens = Object.fromEntries(spec.stopTokens.map((t) => [t, t]));
 const spans = spec.spanCases as Record<string, unknown>;
+/** The surname functions are keyed by the name itself, so the input *is* the key. */
+const nameForms = Object.fromEntries(spec.nameForms.map((n) => [n, n]));
 
 /** A span case as the predicates take it. */
 type SpanCase = { text: string; start: number; end: number };
@@ -259,6 +295,43 @@ section("mid_sentence_capitals_with_headings", corpus, (text: string) =>
   [...midSentenceCapitals(text, sentenceStarts(text), headingSpans(text))].sort(),
 );
 
+section("surname_tokens", nameForms, (name: string) => surnameTokens(name));
+section("bare_surname_key", nameForms, (name: string) => bareSurnameKey(name));
+section("surname_forms", nameForms, (name: string) => surnameForms(name));
+
+// Candidate generation, end to end. Both arms, because they are different
+// detectors: without oracles the capitalised route runs alone and the
+// corroboration guard is unreachable by construction, and a port that wired the
+// oracles into only one of the two would pass the other.
+section("find_candidates_without_oracles", corpus, (text: string) =>
+  asRows(findCandidates(text)),
+);
+// The lowercase route at its limit. The only arm that reaches the overlap guard —
+// see the generator for why no realistic oracle does.
+section("find_candidates_permissive_given", corpus, (text: string) =>
+  asRows(findCandidates(text, { givenName: () => true })),
+);
+section("find_candidates", corpus, (text: string) =>
+  asRows(findCandidates(text, wired)),
+);
+
+section("corroborated_surnames", corpus, (text: string) =>
+  [...corroboratedSurnames(
+    findCandidates(text, wired), isNotable, new Set(), tierOf,
+  )].sort(),
+);
+section("established_name_tokens", corpus, (text: string) =>
+  [...establishedNameTokens(text, isNotable, new Set(), tierOf)].sort(),
+);
+
+test("the spec's corroborating tier is this build's", () => {
+  // The policy string, checked separately for the reason `constants` is: a port
+  // that compared against "person" or "notable" corroborates nothing, and every
+  // corpus entry still passes because the spans involved were being masked
+  // either way. The failure is silent in output and visible only here.
+  assert.equal(CORROBORATING_TIER, spec.corroboration.tier);
+});
+
 test("every section the spec carries is checked by this file", () => {
   // The one assertion that cannot be written as a section, and the one that keeps
   // this file honest: a primitive added to the generator and not wired up here
@@ -275,6 +348,10 @@ test("every section the spec carries is checked by this file", () => {
     "title_spans", "title_spans_requires_capital",
     "capitalisation_habit", "capitalisation_habit_with_headings",
     "mid_sentence_capitals", "mid_sentence_capitals_with_headings",
+    "surname_tokens", "bare_surname_key", "surname_forms",
+    "find_candidates", "find_candidates_without_oracles",
+    "find_candidates_permissive_given",
+    "corroborated_surnames", "established_name_tokens",
   ]);
   assert.deepEqual(
     Object.keys(spec.cases).filter((name) => !checked.has(name)),

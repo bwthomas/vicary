@@ -112,10 +112,14 @@ def test_every_primitive_case_covers_the_whole_corpus() -> None:
     corpus = set(document["corpus"])
     lists = set(document["token_lists"])
     spans = set(document["span_cases"])
+    names = set(document["name_forms"])
     over_lists = {
         "trim", "classify", "classify_with_settlement",
         "classify_tags", "classify_tags_with_settlement", "masks_with_settlement",
     }
+    # The surname functions take a name, not a text, a token list or a span — a
+    # fourth input group, listed for the same reason `over_spans` is.
+    over_names = {"surname_tokens", "bare_surname_key", "surname_forms"}
     # The relation predicates take ``(text, start, end)``, so they are keyed by
     # `span_cases` rather than by the corpus. Listed explicitly rather than
     # inferred from the keys, because inferring which input group a section
@@ -135,6 +139,8 @@ def test_every_primitive_case_covers_the_whole_corpus() -> None:
             assert set(cases) == lists, section
         elif section in over_spans:
             assert set(cases) == spans, section
+        elif section in over_names:
+            assert set(cases) == names, section
         else:
             assert set(cases) == corpus, section
 

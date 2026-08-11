@@ -178,7 +178,17 @@ export interface Primitives {
   corpus: Record<string, string>;
   tokenLists: Record<string, string[]>;
   stopTokens: string[];
-  oracles: { settlements: string[]; titles: string[] };
+  /**
+   * Inputs for the surname-folding functions, which take a name rather than a
+   * text, a token list or a span — the fourth input group.
+   */
+  nameForms: string[];
+  oracles: {
+    settlements: string[];
+    titles: string[];
+    givenNames: string[];
+    fullNames: string[];
+  };
   /** The classification policy, in order. See `PRECEDENCE` in `candidates.ts`. */
   precedence: PrecedenceRow[];
   /**
@@ -209,6 +219,10 @@ export interface Primitives {
     firstPerson: string[];
     overridableTiers: string[];
   };
+  /** The one tier a candidate may establish a surname from. Policy, not a count:
+   * a port comparing against another string corroborates nothing and every case
+   * still passes, because the spans involved were being masked either way. */
+  corroboration: { tier: string };
   constants: Record<string, number>;
   cases: Record<string, Record<string, unknown>>;
 }
@@ -222,7 +236,13 @@ export function loadPrimitives(directory?: string): Primitives {
     corpus: raw.corpus as Record<string, string>,
     tokenLists: raw.token_lists as Record<string, string[]>,
     stopTokens: raw.stop_tokens as string[],
-    oracles: raw.oracles as { settlements: string[]; titles: string[] },
+    nameForms: raw.name_forms as string[],
+    oracles: {
+      settlements: raw.oracles.settlements as string[],
+      titles: raw.oracles.titles as string[],
+      givenNames: raw.oracles.given_names as string[],
+      fullNames: raw.oracles.full_names as string[],
+    },
     precedence: raw.precedence as PrecedenceRow[],
     suffixes: raw.suffixes as { organization: string[]; landmark: string[] },
     spanCases: raw.span_cases as Record<
@@ -240,6 +260,7 @@ export function loadPrimitives(directory?: string): Primitives {
       firstPerson: raw.relation.first_person as string[],
       overridableTiers: raw.relation.overridable_tiers as string[],
     },
+    corroboration: { tier: raw.corroboration.tier as string },
     constants: raw.constants as Record<string, number>,
     cases: raw.cases as Record<string, Record<string, unknown>>,
   };

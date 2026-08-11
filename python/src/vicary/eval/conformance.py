@@ -238,6 +238,44 @@ PRIMITIVE_CORPUS: dict[str, str] = {
         "The pig oinked. The hen clucked. The duck quacked. The goat bleated. "
         "The horse neighed. the sheep baaed."
     ),
+    # The six entries below were added because a negative control survived
+    # without them: each removes a rule from `find_candidates` that no corpus
+    # text separated from its absence, so a port could drop the rule and pass.
+    # The rule each one pins is named, because that is the only thing that says
+    # why the text is worded the way it is.
+    #
+    # A bare seed that reaches no second token, and the same seed behind a
+    # determiner. `_LOWERCASE_MIN_TOKENS` and the determiner guard.
+    "determiner_seed": (
+        "terrence and i stayed up late. the terrence okonkwo i knew moved away."
+    ),
+    # A lowercase span that would otherwise end on a particle.
+    "lowercase_particle_tail": "marisol de and i went home. we stayed late.",
+    # A single-quoted name: the trailing apostrophe is the closing quote, and
+    # keeping it in the span eats the quotation mark out of the student's prose.
+    "single_quoted": "He used words like 'Terrence' and 'Marisol' in the story.",
+    # A hyphenated surname whose second half the writer left lowercase, followed
+    # by another lowercase name. The lowercase route reaches *into* the
+    # capitalised span here — the one shape where the two routes collide — and
+    # emitting both would leave the inner placeholder's braces as debris.
+    "hyphen_lowercase_tail": (
+        "Marguerite Delacroix-marisol okonkwo waved at us. i waved back."
+    ),
+    # A capitalised possessive in a document whose habit is `lowercase`. The one
+    # input that reaches the overlap guard, and it needs both halves: the `s` of
+    # a possessive is a lowercase token sitting INSIDE a capitalised span (the
+    # apostrophe is not a word character, so the lowercase scanner sees it), and
+    # only a `lowercase` habit drops the corroboration requirement that would
+    # otherwise reject the seed before the routes could collide. `possessive`
+    # above has the first half and not the second.
+    "possessive_lowercase_habit": "i saw Marisol's older brother. i waved back.",
+    # A work title with a first-person relation attached in front of it, which
+    # withdraws the title protection. Without this the refusal could be deleted
+    # and every case still passed.
+    "title_relation": "My neighbor Alice Adams walked me to the bus stop.",
+    # ...and a title that IS the relation phrase, which is the other half of the
+    # same rule and reads the writer's own capitals rather than the attachment.
+    "title_is_relation": "My cousin Vinny came over that summer and never left.",
     "title_book": "I read To Kill a Mockingbird last year.",
     "title_nested": "The Lion King is my favourite film.",
     "title_curly": "We read Charlotte’s Web in class.",
@@ -492,8 +530,53 @@ PRIMITIVE_SETTLEMENTS: tuple[str, ...] = (
     "acme inc.", "akron", "akron public library", "allen park", "falls church",
     "springfield township", "westfield high school",
 )
+#: ``alice adams`` and ``my cousin vinny`` are the two that carry the relation
+#: refusal: a novel whose title is an ordinary person's name, and a film whose
+#: title is a kinship phrase. Both are real entries in the shipped title tier and
+#: both are the shape the refusal exists for — without them in this list the
+#: refusal can be deleted and every case here still passes.
 PRIMITIVE_TITLES: tuple[str, ...] = (
-    "charlotte's web", "the lion", "the lion king", "to kill a mockingbird",
+    "alice adams", "charlotte's web", "my cousin vinny", "the lion",
+    "the lion king", "to kill a mockingbird",
+)
+
+#: The given-name tier, as a stand-in. Supplying this is what turns the lowercase
+#: route on, so a port handed the same seven tokens either reaches
+#: "terrence okonkwo" in ``lowercase_writer`` or does not — and the difference is
+#: a candidate rather than a count. It also feeds the corroboration guard, which
+#: is the arm that *removes* capitalised candidates, so the same list is exercised
+#: in both directions.
+#:
+#: * ``is_given(token)`` -> ``token.lower()`` is in ``given_names``
+PRIMITIVE_GIVEN_NAMES: tuple[str, ...] = (
+    "deshawn", "marguerite", "marisol", "narciso", "renée", "terrence", "vincent",
+)
+
+#: The notability *tier* oracle, as a stand-in — see
+#: :data:`~vicary.name_candidates.CORROBORATING_TIER`. Only ``full_name`` may
+#: establish a surname, so the settlements are carried here too, spelling the tier
+#: that must NOT: a port that folded these two into one boolean would let "Akron"
+#: license a classmate's bare surname, which is the defect the tier oracle exists
+#: to prevent and which no boolean case above can show.
+#:
+#: * ``tier(name)`` -> ``"full_name"`` if ``name.lower()`` is in ``full_names``,
+#:   ``"place"`` if it is in ``settlements``, otherwise ``"not_notable"``
+#: * ``is_notable(name)`` -> ``tier(name) != "not_notable"``
+PRIMITIVE_FULL_NAMES: tuple[str, ...] = (
+    "j. r. r. tolkien", "narciso rodriguez", "richard wright", "t.s. eliot",
+    "vincent van gogh",
+)
+
+#: Names for the surname-folding functions, which take a name rather than a text
+#: or a token list. Each entry is here for a shape rather than for coverage: the
+#: possessive that folds to the citation form, the particle run that yields two
+#: forms, the three-particle run that yields three, the mononym that yields none,
+#: the honorific-led and first-name-led spans that must NOT reduce to a bare
+#: surname key, and the curly apostrophe a port reading only ``'`` gets wrong.
+PRIMITIVE_NAME_FORMS: tuple[str, ...] = (
+    "Richard Wright", "Wright", "Wright's", "Wright’s", "Vincent van Gogh",
+    "van Gogh", "de la Cruz", "Coach Wright", "Priya Wright", "Mrs. Okonkwo",
+    "T.S. Eliot", "",
 )
 
 
@@ -507,6 +590,22 @@ def _primitive_title(text: str) -> bool:
 
 def _primitive_title_prefix(key: str) -> bool:
     return any(t == key or t.startswith(key + " ") for t in PRIMITIVE_TITLES)
+
+
+def _primitive_given(token: str) -> bool:
+    return token.lower() in PRIMITIVE_GIVEN_NAMES
+
+
+def _primitive_tier(name: str) -> str:
+    if name.lower() in PRIMITIVE_FULL_NAMES:
+        return "full_name"
+    if name.lower() in PRIMITIVE_SETTLEMENTS:
+        return "place"
+    return "not_notable"
+
+
+def _primitive_notable(name: str) -> bool:
+    return _primitive_tier(name) != "not_notable"
 
 
 def _finds(pattern: Any, text: str) -> list[list[Any]]:
@@ -531,6 +630,15 @@ def build_primitives_document() -> dict[str, Any]:
     def over_lists(fn: Any) -> dict[str, Any]:
         return {name: fn(tokens) for name, tokens in lists.items()}
 
+    def over_names(fn: Any) -> dict[str, Any]:
+        return {name: fn(name) for name in PRIMITIVE_NAME_FORMS}
+
+    def candidates(**kwargs: Any) -> Any:
+        return lambda text: [
+            [c.start, c.end, c.text, c.kind]
+            for c in nc.find_candidates(text, **kwargs)
+        ]
+
     def over_spans(fn: Any) -> dict[str, Any]:
         return {
             name: fn(text, text.index(needle), text.index(needle) + len(needle))
@@ -545,9 +653,12 @@ def build_primitives_document() -> dict[str, Any]:
         "corpus": corpus,
         "token_lists": lists,
         "stop_tokens": list(PRIMITIVE_STOP_TOKENS),
+        "name_forms": list(PRIMITIVE_NAME_FORMS),
         "oracles": {
             "settlements": list(PRIMITIVE_SETTLEMENTS),
             "titles": list(PRIMITIVE_TITLES),
+            "given_names": list(PRIMITIVE_GIVEN_NAMES),
+            "full_names": list(PRIMITIVE_FULL_NAMES),
         },
         # The classification policy itself, as data. Emitted because it is the
         # one part of the detector a port can get wrong while passing every
@@ -613,6 +724,12 @@ def build_primitives_document() -> dict[str, Any]:
             "first_person": sorted(nc._FIRST_PERSON),
             "overridable_tiers": sorted(nc.OVERRIDABLE_TIERS),
         },
+        # The one tier a candidate may establish a surname from, as data for the
+        # same reason `overridable_tiers` is: it is a policy string, and a port
+        # that compared against `"person"` or `"notable"` would corroborate
+        # nothing and pass every case above, because a corroboration that never
+        # fires is invisible in output that was already going to be masked.
+        "corroboration": {"tier": nc.CORROBORATING_TIER},
         "constants": {
             "allcaps_run": nc._ALLCAPS_RUN,
             "drops_capitals_min_rate": nc._DROPS_CAPITALS_MIN_RATE,
@@ -696,6 +813,84 @@ def build_primitives_document() -> dict[str, Any]:
                 lambda x: sorted(
                     nc._mid_sentence_capitals(
                         x, nc._sentence_starts(x), nc._heading_spans(x)
+                    )
+                )
+            ),
+            # Surname folding. Three functions over the same names, because the
+            # difference between them is the whole rule and each one alone reads
+            # as the other two: `surname_tokens` folds the possessive,
+            # `bare_surname_key` says which spans a corroborated surname may
+            # reach, and `surname_forms` says which forms a full name licenses —
+            # and it deliberately does NOT license the bare first name, which is
+            # the leg that would keep every "Terrence" in a document.
+            "surname_tokens": over_names(nc._surname_tokens),
+            "bare_surname_key": over_names(nc._bare_surname_key),
+            "surname_forms": over_names(lambda n: list(nc.surname_forms(n))),
+            # Candidate generation, end to end, as `[start, end, text, kind]` per
+            # span. This is the function every primitive above feeds, so it is the
+            # first case here that can fail for a reason no other case names — and
+            # the last one a port can pass by reproducing a regex.
+            #
+            # Both arms are emitted because they are different detectors. Without
+            # oracles the capitalised route runs alone, recall-maximal, and the
+            # corroboration guard is unreachable by construction; with them the
+            # lowercase route turns on, titles are protected before generation,
+            # and the guard starts *removing* capitalised spans. A port that wired
+            # the oracles into only one of those two would pass the other.
+            "find_candidates_without_oracles": over_corpus(candidates()),
+            # The lowercase route at its limit, with an oracle that calls every
+            # lowercase token a given name. Not a system anyone runs — it is the
+            # arm that reaches the overlap guard, and nothing else does.
+            #
+            # A capitalised span contains a lowercase token in exactly two
+            # places: a name particle, and the `s` left dangling by a possessive
+            # ("Terrence's" -> the `s` is preceded by an apostrophe, which is not
+            # a word character, so the lowercase scanner sees a token). The
+            # particle case cannot reach two tokens — the span may not end on a
+            # particle, so it trims back to one and falls under the minimum. That
+            # leaves the possessive, which the shipped given-name tier does not
+            # seed on, so the guard is unreachable under any realistic oracle and
+            # a port could delete it and pass everything. It stays because the
+            # tier is data and the next one may well contain the token; this arm
+            # is what makes deleting it fail.
+            "find_candidates_permissive_given": over_corpus(
+                candidates(given_name=lambda _token: True)
+            ),
+            "find_candidates": over_corpus(
+                candidates(
+                    given_name=_primitive_given,
+                    title=_primitive_title,
+                    title_prefix=_primitive_title_prefix,
+                    settlement=_primitive_settlement,
+                )
+            ),
+            # What each document establishes about a bare surname written later in
+            # it, sorted so the comparison is over a set. Emitted over the corpus
+            # rather than over hand-written candidate lists so the tier oracle is
+            # exercised through the generator that actually feeds it.
+            "corroborated_surnames": over_corpus(
+                lambda x: sorted(
+                    nc.corroborated_surnames(
+                        nc.find_candidates(
+                            x,
+                            given_name=_primitive_given,
+                            title=_primitive_title,
+                            title_prefix=_primitive_title_prefix,
+                            settlement=_primitive_settlement,
+                        ),
+                        _primitive_notable,
+                        tier=_primitive_tier,
+                    )
+                )
+            ),
+            # The outbound counterpart, which includes the first name that
+            # `surname_forms` refuses to carry inbound. Kept adjacent to it on
+            # purpose: the two differ by exactly that token, and a port that made
+            # them agree has broken one of them.
+            "established_name_tokens": over_corpus(
+                lambda x: sorted(
+                    nc.established_name_tokens(
+                        x, _primitive_notable, tier=_primitive_tier
                     )
                 )
             ),

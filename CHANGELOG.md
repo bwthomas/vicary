@@ -79,6 +79,44 @@ frame's masked output moved for any of the three.
   and `withoutClitic` strips the first clitic that matches. Swapping `"Mr"` and
   `"Mrs"` fails this assertion and nothing else, which is how that was confirmed.
 
+### Candidate generation ports, and six rules that nothing was checking
+
+* **`findCandidates` and the surname machinery are in TypeScript** — both routes
+  (the capitalised scan and the lowercase given-name seed), the title protection
+  and its relation refusal, and `surnameTokens` / `bareSurnameKey` /
+  `surnameForms` / `corroboratedSurnames` / `establishedNameTokens`. No Python
+  behaviour changed; `frames.json` and `gates.json` are byte-identical, and every
+  primitive case that existed before this change still holds its old value.
+* **`primitives.json` gained a `name_forms` input group and eight sections**, the
+  largest of which are three `find_candidates` arms: without oracles, with them,
+  and with a given-name oracle that accepts everything. Three arms because they
+  are three different detectors — without oracles the corroboration guard is
+  unreachable by construction, and a port that wired the oracles into one arm
+  only would pass the other.
+* **`corroboration.tier` ships as data.** A port comparing against `"person"`
+  instead of `"full_name"` corroborates nothing and passes every behavioural
+  case, because the spans involved were being masked either way — the failure is
+  invisible in output and visible only against the declared string.
+* **Six rules had no input in the corpus that separated them from their absence.**
+  Found by mutating each one in the TypeScript source and confirming the suite
+  still went green: the determiner guard, the two-token minimum, the particle
+  trim, the trailing-apostrophe trim, the two-route overlap guard, and the
+  title-relation refusal. Seven corpus entries close them, each named for the
+  rule it pins. The controls now catch 15 of 15; `typescript/scripts/negative-control.mjs`
+  is the harness, and it asserts each mutation actually landed before it reads a
+  verdict — a control whose edit matched nothing is reported as a broken control,
+  not as a pass.
+* **The overlap guard is unreachable under any realistic oracle, and stays.** It
+  drops a lowercase span that collides with one the capitalised route already
+  claimed. A capitalised span contains a lowercase token in exactly two places: a
+  name particle, which cannot reach the two-token minimum because a span may not
+  end on one, and the `s` a possessive leaves dangling after an apostrophe. So it
+  fires only where the given-name tier seeds on `s`, which the shipped tier does
+  not — the tier is data, the next one may, and `possessive_lowercase_habit` is
+  the case that makes deleting the guard fail. It needs both halves: the
+  possessive, and a `lowercase` habit to drop the corroboration requirement that
+  would otherwise reject the seed first.
+
 ### The relation override ports, with its word lists as spec data
 
 * **The four relation predicates are in TypeScript**: the window scan for a bare
