@@ -18,6 +18,7 @@ import {
   parseAsset,
   resetGazetteerCache,
 } from "../src/asset.js";
+import { VERSION } from "../src/version.js";
 
 interface Manifest {
   assets: Record<
@@ -112,4 +113,26 @@ test("the cache can be reset, so a test can load a different directory", () => {
   resetGazetteerCache();
   const second = loadGazetteer();
   assert.equal(first.sha256, second.sha256);
+});
+
+// ---------------------------------------------------------------------------
+// The version, which is a cross-package claim rather than a package detail
+// ---------------------------------------------------------------------------
+
+test("the exported version matches package.json and the shared VERSION file", () => {
+  // Nothing checked this, and it drifted: `version.ts` said 0.1.1 while
+  // package.json, the root VERSION, the gem and the wheel all said 0.2.0 — so a
+  // host reading `VERSION` from the module got a different answer than npm gave
+  // it, in the same package. The parity claim is between *versions* ("one
+  // detector, one number"), which makes a silent disagreement here a claim about
+  // three implementations agreeing at a version that never existed.
+  const pkg = JSON.parse(
+    readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
+  );
+  assert.equal(VERSION, pkg.version);
+  const shared = readFileSync(
+    new URL("../../../VERSION", import.meta.url),
+    "utf8",
+  ).trim();
+  assert.equal(VERSION, shared);
 });
