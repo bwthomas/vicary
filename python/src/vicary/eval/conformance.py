@@ -350,6 +350,23 @@ def build_primitives_document() -> dict[str, Any]:
             {"tag": row.tag, "mask": row.mask, "kind": row.kind}
             for row in nc._PRECEDENCE
         ],
+        # The two word lists the classification arms read, emitted in full for
+        # the reason the precedence rows are: they are the last data in the
+        # classification path a port types by hand. Measured on this spec at the
+        # time they were added, the token lists exercise 3 of 46 organisation
+        # suffixes and 3 of 36 landmark suffixes — so a port could omit
+        # `hospital`, `university` or `valley` and pass every case above, every
+        # frame, and every gate. Counts alone would not do either: a port with
+        # 46 suffixes, one of them misspelled, is a port that keeps a town.
+        #
+        # Sorted so the comparison is over a set rather than an iteration order.
+        # `_STOP_WORDS` is deliberately NOT here — it is a lexicon asset with its
+        # own sha256 and its own declared count, so `constants["stop_words"]`
+        # pins it without restating 421 words in a second place.
+        "suffixes": {
+            "organization": sorted(nc._ORG_SUFFIXES),
+            "landmark": sorted(nc._LANDMARK_SUFFIXES),
+        },
         "constants": {
             "allcaps_run": nc._ALLCAPS_RUN,
             "drops_capitals_min_rate": nc._DROPS_CAPITALS_MIN_RATE,

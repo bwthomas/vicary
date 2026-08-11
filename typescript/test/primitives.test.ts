@@ -29,9 +29,11 @@ import {
   CANDIDATE_RE,
   DROPS_CAPITALS_MIN_RATE,
   HEADING_MAX_CHARS,
+  LANDMARK_SUFFIXES,
   LOWERCASE_MIN_TOKENS,
   LOWER_TOKEN,
   MARKS_PROPER_NOUNS_MIN,
+  ORG_SUFFIXES,
   PRECEDENCE,
   PROTECTED,
   STOP_WORDS,
@@ -159,6 +161,18 @@ test("the spec's precedence table is this build's precedence table", () => {
   // cannot catch that on its own — a kept span and a span typed NAME are the
   // same string there — which is what `masks_with_settlement` is for.
   assert.deepEqual(spec.precedence, PRECEDENCE);
+});
+
+test("the spec's suffix lists are this build's suffix lists", () => {
+  // The two arms above are only as ported as the words they read, and the token
+  // lists reach 3 of 46 organisation suffixes and 3 of 36 landmark suffixes —
+  // `inc`, `school`, `church` and `library`, `memorial`, `park`. Every other
+  // entry was hand-transliterated and, until this assertion, checked by nothing:
+  // a port missing `hospital` or `valley` stayed green here, in the frames, and
+  // in the gates, and would quietly keep a town or mask a landmark in prose the
+  // fixture happens not to contain.
+  assert.deepEqual([...ORG_SUFFIXES].sort(), spec.suffixes.organization);
+  assert.deepEqual([...LANDMARK_SUFFIXES].sort(), spec.suffixes.landmark);
 });
 
 section("word_token", corpus, (text: string) => matches(WORD_TOKEN, text));

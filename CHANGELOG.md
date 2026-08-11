@@ -54,6 +54,17 @@ frame's masked output moved for any of the three.
   rows changes which spans survive, and only a colliding span can tell. The frame
   set had no colliding span for the detector's whole life, which is exactly how
   this survived; `intersect-hometown-that-ends-in-a-landmark-suffix` is now one.
+* **The two suffix lists the table reads ship as spec data too**, for the same
+  reason and a measured one. `primitives.json` now carries `suffixes.organization`
+  (46 entries) and `suffixes.landmark` (36) in full, and each port asserts its own
+  set against them. The token lists reach only 3 of 46 organisation suffixes and 3
+  of 36 landmark suffixes — `inc`, `school`, `church` and `library`, `memorial`,
+  `park` — so every other entry was hand-transliterated and checked by nothing:
+  deleting `hospital` or `valley` from the TypeScript set left all 179 other tests
+  green, which is how it was confirmed. A port short one suffix keeps a town or
+  masks a landmark in prose the fixture happens not to contain. Counts alone would
+  not close it either — 46 entries with one misspelled is still a kept town. No
+  detector output changed; this pins data that was already identical.
 
 ### The lookups are the build mechanism's, not the Python package's
 

@@ -181,6 +181,13 @@ export interface Primitives {
   oracles: { settlements: string[]; titles: string[] };
   /** The classification policy, in order. See `PRECEDENCE` in `candidates.ts`. */
   precedence: PrecedenceRow[];
+  /**
+   * The word lists the classification arms read, sorted and in full.
+   *
+   * Carried because the token lists exercise only a handful of each, so a port
+   * that transliterated one of them short passes every case in `cases` anyway.
+   */
+  suffixes: { organization: string[]; landmark: string[] };
   constants: Record<string, number>;
   cases: Record<string, Record<string, unknown>>;
 }
@@ -196,6 +203,7 @@ export function loadPrimitives(directory?: string): Primitives {
     stopTokens: raw.stop_tokens as string[],
     oracles: raw.oracles as { settlements: string[]; titles: string[] },
     precedence: raw.precedence as PrecedenceRow[],
+    suffixes: raw.suffixes as { organization: string[]; landmark: string[] },
     constants: raw.constants as Record<string, number>,
     cases: raw.cases as Record<string, Record<string, unknown>>,
   };
