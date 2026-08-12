@@ -282,7 +282,7 @@ jobs:
           esac
 
           # Never print the token. Assert its presence and report only that.
-          printf '%s' "$body" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{let j;try{j=JSON.parse(s)}catch{console.error("exchange returned 200 with a body that is not JSON");process.exit(1)}if(!j.token){console.error("exchange returned 200 with no token in the body");process.exit(1)}console.log(`the registry issued a publish credential (${j.token.length} chars, not printed)`)})'
+          printf '%s' "$body" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{let j;try{j=JSON.parse(s)}catch{console.error("exchange succeeded with a body that is not JSON");process.exit(1)}if(!j.token){console.error("exchange succeeded with no token in the body");process.exit(1)}console.log(`the registry issued a publish credential (${j.token.length} chars, not printed)`)})'
 
           echo "PROBE PASSED — trusted publishing is correctly configured for $name."
           echo "Nothing was uploaded. A real release would have published from here."
