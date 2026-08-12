@@ -134,6 +134,34 @@ def _operator_tsv_configured() -> bool:
         return True
 
 
+def unreadable_reason(corpus_id: str | None = None,
+                      directory: Path | None = None) -> str | None:
+    """Why the resolved corpus cannot be read here, or ``None`` if it can.
+
+    There is exactly one legitimate reason: the corpus that resolves here is
+    operator-supplied and no TSV is configured. A *shipped* corpus needs no
+    operator setup at all, which is the whole point of shipping one.
+
+    This exists because the caller that needs the distinction is a test, and the
+    guard it used to carry — "is ``VICARY_EVAL_CORPUS_TSV`` set" — asks about the
+    operator rather than about the corpus. Once ``persuade-20`` became the
+    default, that guard reported NEEDS corpus against twenty essays sitting in
+    the repository, and it did so in the reference port while TypeScript and Ruby
+    measured them. See :func:`vicary.eval.corpus.load_essays`, which is what the
+    other two ports' ``measure_from_config`` consults for the same question.
+    """
+    if corpus_id is None:
+        corpus_id = resolve_corpus_id(directory)
+    profile = load_profile(corpus_id, directory)
+    if profile["source"]["kind"] == KIND_OPERATOR_TSV and not _operator_tsv_configured():
+        return (
+            f"the resolved corpus {corpus_id!r} is operator-supplied and no "
+            f"{config.EVAL_CORPUS_TSV_ENV_VAR} is set; see "
+            f"vicary/eval/corpus.py"
+        )
+    return None
+
+
 def resolve_corpus_id(directory: Path | None = None) -> str:
     """Which corpus applies here. See the module docstring for the order."""
     index = load_index(directory)

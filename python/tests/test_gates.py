@@ -11,10 +11,12 @@ Run them:
     pytest -m gates -s          # the numbers, and the report table at the end
     pytest -m "not gates"       # everything else, fast
 
-**Four of these gates need data that is not packaged.** Three need the licensed
-third-party essay corpus — over-firing, latency, and held-out recall in a carrier
-essay — and one needs the Census surname file. They skip when it is absent, and the
-skip is loud: a run with `VICARY_EVAL_CORPUS_TSV` unset reports fewer gates, and
+**One of these gates needs data that is not packaged**: bare-surname exposure
+needs the Census surname file. The three corpus gates — over-firing, latency, and
+held-out recall in a carrier essay — are measured against the shipped corpus on a
+bare checkout, and fall back to skipping only when the *resolved* corpus is
+operator-supplied and no TSV is configured. Every skip is loud: a run that could
+not measure a gate reports fewer of them, and
 :func:`test_the_gate_report_says_what_it_could_not_measure` refuses to let a
 partial run read as a complete one.
 
@@ -224,20 +226,23 @@ def frame_violations() -> set[tuple[str, str]]:
 def corpus_metrics(record_gate, tmp_path_factory) -> dict:
     """Frames injected into real essays. Measures over-firing on genuine prose.
 
-    Skips without a corpus. That skip is the honest outcome: over-firing cannot
-    be measured on synthetic sentences, because the whole point is what the
-    redactor does to text nobody planted anything in.
+    Skips only when the resolved corpus is operator-supplied and unconfigured.
+    That skip is the honest outcome: over-firing cannot be measured on synthetic
+    sentences, because the whole point is what the redactor does to text nobody
+    planted anything in.
+
+    It deliberately does *not* guard on ``VICARY_EVAL_CORPUS_TSV``. That guard
+    asks whether the operator supplied a corpus, and since ``persuade-20`` became
+    the default the answer no longer decides whether one is available — this port
+    reported NEEDS corpus against twenty essays in the repository while
+    TypeScript and Ruby measured them, which is the reference port failing to
+    measure what it is the reference for.
     """
-    tsv = config.eval_corpus_tsv()
-    if not tsv:
-        pytest.skip(
-            f"no corpus: set {config.EVAL_CORPUS_TSV_ENV_VAR} or "
-            f"{config.EVAL_CORPUS_DIR_ENV_VAR}"
-        )
+    unreadable = corpus_mod.unreadable_reason()
+    if unreadable:
+        pytest.skip(unreadable)
     corpus_id, essays = corpus_mod.load_essays()
     plan = carrier.load_plan(corpus_id)
-    if not essays:
-        pytest.skip(f"corpus at {tsv} yielded no essays")
     # From the recorded plan, not from the RNG — the same path TypeScript and
     # Ruby take, so a divergence between the ports is a divergence in the
     # redactor rather than in where three languages happened to inject.
@@ -589,12 +594,19 @@ def test_the_gate_report_says_what_it_could_not_measure(gate_results) -> None:
     quietly measured four things out of seven is the failure mode the skip
     mechanism creates, so the report states the coverage rather than implying it.
     """
-    lines = ["", f"gate report — fixture {FIXTURE_VERSION}", "-" * 58]
+    measured = {name for name, *_ in gate_results}
+    missing = sorted(_ALL_GATES - measured)
+    # The corpus is named, not implied. Two of these gates carry a per-corpus bar
+    # — over-firing is 8.15 spans/essay on persuade-20 against 0.61 on ASAP-AES —
+    # so a board that prints `8.15 <= 8.15 PASS` without saying which corpus
+    # produced it is a number filed under no corpus at all.
+    corpus_id = (corpus_mod.resolve_corpus_id()
+                 if "over-fire on prose" in measured else "(none measured)")
+    lines = ["", f"gate report — fixture {FIXTURE_VERSION}, corpus {corpus_id}",
+             "-" * 58]
     for name, value, op, bar, unit in gate_results:
         verdict = "PASS" if _passes(value, op, bar) else "FAIL"
         lines.append(f"  {name:<26} {value:>8.2f}{unit:<14} {op} {bar:g}  {verdict}")
-    measured = {name for name, *_ in gate_results}
-    missing = sorted(_ALL_GATES - measured)
     lines.append("-" * 58)
     if missing:
         lines.append(f"  NOT MEASURED ({len(missing)}): {', '.join(missing)}")
@@ -642,12 +654,9 @@ def test_the_published_measurements_are_what_this_run_measures() -> None:
     the detector changed and every port's numbers move together, or it did not
     and something is wrong with the measurement.
     """
-    tsv = config.eval_corpus_tsv()
-    if not tsv:
-        pytest.skip(
-            f"no corpus: set {config.EVAL_CORPUS_TSV_ENV_VAR} or "
-            f"{config.EVAL_CORPUS_DIR_ENV_VAR}"
-        )
+    unreadable = corpus_mod.unreadable_reason()
+    if unreadable:
+        pytest.skip(unreadable)
     corpus_id, digest, gates, envelope = measured.measure()
     published = measured.load_measurements(corpus_id)
 
