@@ -1,4 +1,4 @@
-# The mechanism suite
+# The tools suite
 
 Everything in this repository that is **not one of the three redactors**.
 
@@ -22,8 +22,8 @@ its 773 collected tests were these files.
 
 `asset/tests/` (27 tests) is the fourth member of this suite and stays where it
 is: `vicary_build` is an installable package, and Python's convention is for a
-package's tests to sit beside it. `just mechanism` runs both directories; so does
-the `mechanism` CI job.
+package's tests to sit beside it. `just tools` runs both directories; so does
+the `tools` CI job.
 
 ## Why the split matters beyond bookkeeping
 
@@ -43,8 +43,8 @@ anything. Filing that under the Python front door named the wrong culprit.
 ## Running it
 
 ```sh
-just mechanism                       # both directories, from the repository root
-pytest mechanism/tests asset/tests   # the same thing by hand
+just tools                       # both directories, from the repository root
+pytest tools/tests asset/tests   # the same thing by hand
 ```
 
 Both packages must be installed first — `pip install -e ./python -e ./asset`, or
@@ -57,4 +57,4 @@ Anything that answers "does this port redact correctly". `test_gates.py` stays i
 question it asks is about the Python redactor's measured behaviour, and the other
 two ports ask it too — `typescript/test/gates.test.ts` and
 `ruby/test/gates_test.rb` are its counterparts. A gate is a front-door claim
-measured with mechanism tooling, not a mechanism claim.
+measured with this suite's tooling, not a claim about the tooling.

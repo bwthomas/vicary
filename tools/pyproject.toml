@@ -3,7 +3,7 @@
 # inside two packages that already exist: `vicary.eval` (in `python/`) and
 # `vicary_build` (in `asset/`). Both must be installed before this suite runs.
 #
-# The file exists so `pytest mechanism/tests` and `ruff check mechanism/tests`
+# The file exists so `pytest tools/tests` and `ruff check tools/tests`
 # find a rootdir with settings on it instead of walking up to the repository root
 # and inheriting whatever `python/pyproject.toml` happens to say.
 

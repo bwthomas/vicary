@@ -16,13 +16,13 @@
 #
 # FOUR suites, not three. `python`, `typescript` and `ruby` are the front doors —
 # three implementations of one detector, held to the same coverage and compared
-# against each other. `mechanism` is everything underneath them: the eval fixture
-# all three are scored against, the gazetteer builder, and the generator behind
+# against each other. `tools` is everything underneath them: the eval fixture all
+# three are scored against, the gazetteer builder, and the generator behind
 # `conformance/*.json`. It used to run as two steps inside the `python` job purely
 # because it is written in Python, which made the Python front door look like it
 # had twice the coverage of the other two — 435 of its 773 collected tests were
-# mechanism — and named Python as the culprit for breakages that were nothing to
-# do with it.
+# tooling — and named Python as the culprit for breakages that were nothing to do
+# with it.
 name: ci
 
 on:
@@ -95,12 +95,12 @@ jobs:
   #
   # Its own job rather than a step in `python`, because a failure here means
   # something different. A red `python` job means the Python redactor broke and
-  # the other two are probably fine. A red `mechanism` job means either the next
+  # the other two are probably fine. A red `tools` job means either the next
   # asset build would be wrong, or the spec the OTHER TWO check themselves
   # against no longer describes anything — which fails all three ports at once,
   # or passes all three against nothing. Reading that off a step buried in the
   # Python job named the wrong culprit every time.
-  mechanism:
+  tools:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -118,17 +118,17 @@ jobs:
       - name: Vendor the asset
         run: python -m vicary_build vendor python/src/vicary/data
       - name: Lint
-        run: ruff check mechanism/tests asset/vicary_build asset/tests
+        run: ruff check tools/tests asset/vicary_build asset/tests
       # Two directories, one suite — `asset/tests` sits beside the installable
       # package it tests, the rest has no package to sit beside.
-      - name: Mechanism tests
-        run: pytest mechanism/tests asset/tests -q
+      - name: Tools tests
+        run: pytest tools/tests asset/tests -q
       # Its own step because a stale spec is a different failure from a broken
       # generator: it means the file the other two front doors check themselves
       # against no longer describes this one, and both of them would go green
       # while diverging. `just sync-conformance` is the fix.
       - name: Conformance spec is current
-        run: pytest mechanism/tests/test_conformance.py -q
+        run: pytest tools/tests/test_conformance.py -q
 
   python-build:
     # A packaging break is invisible to the test suite and only shows up for

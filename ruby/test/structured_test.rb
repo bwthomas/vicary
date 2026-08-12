@@ -14,7 +14,7 @@
 # that broke. Every test here names one behaviour, so the failure says which.
 #
 # The declared gap this closes is recorded in `conformance/coverage.json`, and
-# `mechanism/tests/test_coverage_parity.py` fails if its entry outlives it.
+# `tools/tests/test_coverage_parity.py` fails if its entry outlives it.
 
 require "minitest/autorun"
 require "set"

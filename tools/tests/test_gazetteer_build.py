@@ -51,9 +51,9 @@ from vicary.gazetteer import (
 )
 from vicary.name_candidates import find_title_spans
 
-#: The repository root, two levels up from `mechanism/tests/`. This suite sits
+#: The repository root, two levels up from `tools/tests/`. This suite sits
 #: outside every package on purpose, so a path to one has to name it — before the
-#: mechanism split this file lived in `python/tests/` and `parents[1]` *was* the
+#: tools split this file lived in `python/tests/` and `parents[1]` *was* the
 #: Python package, which is why the one test below that reads a `pyproject.toml`
 #: now says which one it means.
 REPO_ROOT = Path(__file__).resolve().parents[2]

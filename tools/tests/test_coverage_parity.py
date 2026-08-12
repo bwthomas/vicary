@@ -4,7 +4,7 @@ Three implementations of one detector should be tested alike. They were not, and
 nothing said so: the gap was found by counting test functions per file by hand,
 which is not a thing anybody does twice. The Python front door appeared to have
 twice the coverage of the other two, most of that difference turned out to be the
-mechanism suite filed under it, and underneath that was a real hole — Ruby
+tools suite filed under it, and underneath that was a real hole — Ruby
 carries the largest detector file in the repository and unit-tests none of it.
 
 So the expected shape is declared in ``conformance/coverage.json`` and checked

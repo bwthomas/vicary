@@ -333,8 +333,8 @@ vicary-assets show      # tier counts, cut date, provenance, which file is loade
 vicary-assets verify    # checksum the installed asset against the manifest
 ```
 
-There is deliberately no `fetch`. Rebuilding the gazetteer is the repository's build
-mechanism, not this package: installing a redaction library should not install a
+There is deliberately no `fetch`. Rebuilding the gazetteer is the repository's tooling,
+not this package: installing a redaction library should not install a
 SPARQL client, and three front doors that each rebuild their own gazetteer are three
 detectors sharing a name. From a checkout it is `just asset-fetch`; it reaches the
 network and takes a while, and both endpoints are donated infrastructure, so a
@@ -608,11 +608,23 @@ redaction API, so it is the property that gets gated.
 python/        the Python package  (src/, tests/, pyproject.toml)
 typescript/    the npm package
 ruby/          the gem
-asset/         the shared gazetteer, and the mechanism that builds it
-conformance/   the spec, as language-neutral data: fixture frames and the gates
+asset/         the shared gazetteer, and the builder that produces it
+tools/         the fourth suite: everything that is not one of the three redactors
+conformance/   the spec, as language-neutral data: fixture frames, gates,
+               the reference's own measurements, and the parity probes
 VERSION        the one number all three front doors declare
-.github/       one CI workflow across all three; one release workflow per registry
+.github/       one CI workflow across all four; one release workflow per registry
 ```
+
+`tools/` is the odd one out and deliberately so. `python/`, `typescript/` and
+`ruby/` are *front doors* — three implementations of one detector, held to the same
+coverage and diffed against each other. Everything they stand on is tooling: the
+eval fixture all three are scored against, the gazetteer builder, the over-fire
+harness, and the generator behind `conformance/*.json`. That used to live in
+`python/tests/` purely because it is written in Python, which made the Python front
+door look like it had twice the coverage of the other two — 435 of its 773
+collected tests were tooling — and named Python as the culprit for breakages that
+had nothing to do with it. See `tools/README.md`.
 
 Each language directory is a self-contained package: its own manifest, its own
 `LICENSE`, its own README for its registry page, and its own build output (all
