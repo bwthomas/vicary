@@ -33,10 +33,18 @@ import pytest
 
 from vicary.eval import conformance
 
-#: Tracked paths allowed to contain bytes no text tool can read. The gazetteer is
-#: gzip and there is nothing else — listed by exact path rather than by extension
-#: so a new binary has to be added here on purpose.
-BINARY_BY_DESIGN = frozenset({"asset/data/notability.txt.gz"})
+#: Tracked paths allowed to contain bytes no text tool can read. Both are gzip
+#: data the repository ships, and there is nothing else — listed by exact path
+#: rather than by extension so a new binary has to be added here on purpose.
+#:
+#: Each is gzip rather than plain text because of its size: the gazetteer is
+#: 2.2 MB compressed and the surname table 787 KB, against 9.4 MB for the Census
+#: release it is derived from. `test_the_binary_allowlist_is_not_stale` below is
+#: what keeps this list from outliving its entries.
+BINARY_BY_DESIGN = frozenset({
+    "asset/data/notability.txt.gz",
+    "conformance/census/surnames.txt.gz",
+})
 
 #: Control characters that have no business in source. Tab is absent on purpose:
 #: it is a formatting argument, the per-language linters already have opinions

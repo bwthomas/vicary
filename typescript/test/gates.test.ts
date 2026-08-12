@@ -1,15 +1,19 @@
 /**
  * The gates this port measures, and the machinery that measures them.
  *
- * Five of the nine need no operator-supplied data. Their values are checked
- * against the Python gate report rather than against a hand-written
+ * All nine are measured on a bare checkout — the corpus and the surname table
+ * both ship, in `conformance/corpora/` and `conformance/census/`. Their values
+ * are checked against the Python gate report rather than against a hand-written
  * expectation — held-out recall 16/16, KEEP precision 21/21, round-trip 54/54,
  * unaccounted violations 0, asset entries 360,793. A port that agrees only with
  * itself proves nothing about the claim the repository makes.
  *
- * The remaining four stay NOT MEASURED and are asserted to stay that way: a gate
- * silently reduced out of the denominator is how "five of nine" becomes "all
- * green" without anybody deciding it should.
+ * The four gates that declare a `requires` are ALSO measured with their inputs
+ * deliberately withheld, and asserted to report NOT MEASURED: a gate silently
+ * reduced out of the denominator is how "eight of nine" becomes "all green"
+ * without anybody deciding it should. That case is now constructed rather than
+ * stumbled into, which is the stronger test — it no longer depends on the
+ * machine running it happening to lack a file.
  */
 
 import assert from "node:assert/strict";
@@ -17,7 +21,6 @@ import { createHash } from "node:crypto";
 import { test } from "node:test";
 
 import {
-  censusSource,
   loadCensus,
   measureExposure,
   parseCensusSurnames,
@@ -63,26 +66,27 @@ const measurement = (id: string) =>
   report.measurements.find((m) => m.gate.id === id)!;
 
 /**
- * The same gates again, with the census requirement satisfied — or null when no
- * operator has pointed `VICARY_EVAL_CENSUS_CSV` at a copy of the file.
+ * The same gates again, with the census requirement satisfied.
+ *
+ * No longer conditional. The surname table ships in `conformance/census/`, so
+ * this resolves on any checkout and in CI; it used to be null everywhere but on
+ * the one machine holding a hand-downloaded copy of a file census.gov stopped
+ * serving. `VICARY_EVAL_CENSUS_CSV` still overrides.
  *
  * Measured separately rather than folded into `report` so the assertions above
  * keep testing what they were written to test: that an *absent* requirement
- * yields NOT MEASURED. Both paths then have a test, which is the point — the
- * failure being guarded against is a gate that quietly acquires a value.
+ * yields NOT MEASURED. That case is now constructed deliberately — `report`
+ * passes no optional input at all — rather than arrived at by an operator
+ * happening not to have a file. Both paths then have a test, which is the point:
+ * the failure being guarded against is a gate that quietly acquires a value.
  */
-const exposure =
-  censusSource() === "" ? null : measureExposure(loadCensus(), load());
-const censusReport =
-  exposure === null
-    ? null
-    : measureGates(
-        spec,
-        gates,
-        (sentence: string, identity: Identity) => redact(sentence, identity),
-        { assetEntries: load().entryCount, bareSurnameExposure: rate(exposure) },
-      );
-const noCensus = "no VICARY_EVAL_CENSUS_CSV; see typescript/src/census.ts";
+const exposure = measureExposure(loadCensus(), load());
+const censusReport = measureGates(
+  spec,
+  gates,
+  (sentence: string, identity: Identity) => redact(sentence, identity),
+  { assetEntries: load().entryCount, bareSurnameExposure: rate(exposure) },
+);
 
 // ---------------------------------------------------------------------------
 // The gates
@@ -137,36 +141,35 @@ test("a gate whose data is absent is never given a value", () => {
 });
 
 // ---------------------------------------------------------------------------
-// The census gate, when the operator supplies the file
+// The census gate
 // ---------------------------------------------------------------------------
 
 test(
-  "bare-surname exposure is measured and holds when the census file is supplied",
-  { skip: censusReport === null ? noCensus : false },
+  "bare-surname exposure is measured and holds",
   () => {
-    const m = censusReport!.measurements.find(
+    const m = censusReport.measurements.find(
       (x) => x.gate.id === "bare_surname_exposure",
     )!;
     assert.notEqual(m.value, null);
-    // Reconciled against `python -m vicary.eval.census` on the same file, to
+    // Reconciled against `python -m vicary.eval.census` on the same table, to
     // three decimals rather than the two the report rounds to — the gate bar is
     // 1.25 and 1.2 would sit under it whatever the third digit did.
     assert.equal(m.value!.toFixed(4), "1.1992");
-    assert.equal(exposure!.surnamesScored, 162253);
-    assert.equal(exposure!.surnamesMatched, 792);
-    assert.equal(exposure!.bearersTotal, 265667228);
-    assert.equal(exposure!.bearersExposed, 3185816);
+    assert.equal(exposure.surnamesScored, 162253);
+    assert.equal(exposure.surnamesMatched, 792);
+    assert.equal(exposure.bearersTotal, 265667228);
+    assert.equal(exposure.bearersExposed, 3185816);
     assert.equal(m.passed, true);
   },
 );
 
 test(
-  "supplying the census file measures that gate and no other",
-  { skip: censusReport === null ? noCensus : false },
+  "satisfying the census requirement measures that gate and no other",
   () => {
-    // A requirement satisfied is not a licence for the other three: the corpus
-    // gates must stay NOT MEASURED, or "six of nine" silently becomes "nine".
-    const stillUnmeasured = censusReport!.measurements
+    // A requirement satisfied is not a licence for the other three: with no
+    // corpus passed they must stay NOT MEASURED, or one gate acquiring a value
+    // silently hands values to the rest.
+    const stillUnmeasured = censusReport.measurements
       .filter((m) => m.passed === null)
       .map((m) => m.gate.id)
       .sort();
@@ -697,7 +700,7 @@ process.on("exit", () => {
     (sentence: string, identity: Identity) => redact(sentence, identity),
     {
       assetEntries: load().entryCount,
-      ...(exposure === null ? {} : { bareSurnameExposure: rate(exposure) }),
+      bareSurnameExposure: rate(exposure),
       ...(corpus === null
         ? {}
         : {

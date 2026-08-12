@@ -30,7 +30,6 @@ import {
   type Identity,
 } from "../src/conformance.js";
 import {
-  censusSource,
   loadCensus,
   measureExposure,
   rate,
@@ -61,15 +60,17 @@ const board = score(spec, (sentence: string, identity: Identity) =>
 );
 
 /**
- * Measured when the operator has supplied the census file, absent otherwise.
+ * The bare-surname exposure, measured from the shipped surname table.
  *
  * Read here rather than in `gates.ts` so that module stays free of the
  * filesystem, and swallowed on failure so a malformed or unreadable copy costs
  * this run one NOT MEASURED gate instead of the whole scoreboard — the reader
- * itself is tested in `gates.test.ts`, where a bad file is supposed to throw.
+ * itself is tested in `gates.test.ts`, where a bad table is supposed to throw.
+ *
+ * No longer conditional on an operator file: the surname table ships in
+ * `conformance/census/`, so this resolves on any checkout.
  */
 const bareSurnameExposure = ((): number | undefined => {
-  if (censusSource() === "") return undefined;
   try {
     return rate(measureExposure(loadCensus(), load()));
   } catch (error) {
@@ -140,7 +141,10 @@ test("the spec carries the identity the detector is told about", () => {
   assert.equal(spec.identity.schoolName, "Westfield High School");
 });
 
-test("the nine gates load, with four declaring data no package ships", () => {
+// `requires` says what a gate depends on, not whether it is reachable — both
+// requirements are satisfied from the repository now, and the declaration is
+// what lets a port report NOT MEASURED by name if that stops being true.
+test("the nine gates load, with four declaring a data requirement", () => {
   assert.equal(gates.gates.length, 9);
   const needsData = gates.gates.filter((g) => g.requires.length > 0);
   assert.equal(needsData.length, 4);

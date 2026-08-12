@@ -36,17 +36,20 @@ frames restoring exactly, one violation and it the accounted-for one, 360,793
 asset entries. The counts are stated alongside the percentages because 100% of a
 wrong denominator is also 100%.
 
-**Given the two data files, all three ports now measure all nine.** Point
-`VICARY_EVAL_CENSUS_CSV` at the Census surname file and `VICARY_EVAL_CORPUS_TSV`
-at an essay corpus, and each port reports nine of nine — agreeing exactly on the
+**All three ports measure all nine on a bare checkout, with no setup at all.**
+The other four gates declare a data requirement, and the repository carries both
+kinds: `conformance/corpora/` ships an essay corpus, `conformance/census/` ships
+the US surname table. Each port reports nine of nine — agreeing exactly on the
 eight that are properties of the detector, and each reporting its own on the one
-that is a property of the language. Without those files the scoreboard prints
-`NOT MEASURED` beside each affected gate rather than letting a green suite imply
-a clear gate set. A gate whose data is absent is never given a value — not even
-0, which in a `<=` gate would read as the most comfortable pass on the board —
-and a requirement satisfied buys only its own gate: operator-supplied values are
-carried in a map separate from the fixture-derived ones, so nothing measured from
-the fixture can ever be printed under a gate that asked for a corpus.
+that is a property of the language. Neither file is in any published package;
+`conformance/` never has been.
+
+The `NOT MEASURED` machinery stays and is still tested, by withholding the inputs
+on purpose. A gate whose data is absent is never given a value — not even 0,
+which in a `<=` gate would read as the most comfortable pass on the board — and a
+requirement satisfied buys only its own gate: supplied values are carried in a map
+separate from the fixture-derived ones, so nothing measured from the fixture can
+ever be printed under a gate that asked for a corpus.
 
 Each port measures rather than reads: the spec carries `aligns` and `mapping` per
 frame, and a port that quoted those would only be restating Python's answer back.
@@ -553,7 +556,8 @@ than reading it as text:
 ```sh
 unzip names.zip Names_2010Census.csv
 export VICARY_EVAL_CENSUS_CSV=/path/to/Names_2010Census.csv
-just gates                    # all three ports, six of nine measured
+just gates                    # all three ports; an operator copy overrides
+                              #   the shipped table, and the rate is the same
 ```
 
 ## What it does not do
@@ -646,8 +650,7 @@ host that ran `pip install vicary`. See [`asset/README.md`](asset/README.md).
 ```sh
 just --list          # every task
 just test            # every language's suite
-just gates           # the nine gates (four need data you supply — see above);
-                     #   VICARY_EVAL_CENSUS_CSV takes that to six of nine
+just gates           # the nine gates, all nine measured on a bare checkout
 just conformance     # the shared suite, across every implementation present
 just asset-sync      # vendor the shared asset into every front door present
 just sync-conformance  # regenerate conformance/*.json from the Python reference
@@ -658,17 +661,23 @@ copies are gitignored in all three packages, so importing the library raises rat
 than answering from an empty one — which is the intended failure. `just py-setup`
 does the sync for you.
 
-One of the nine gates needs data that is not packaged: bare-surname exposure needs
-the US Census surname file. It **skips** when that is absent, and the gate report
-prints `NOT MEASURED` for it, so a green run on a bare checkout means "eight of
-nine hold" and never "the gate set is clear". Same discipline is required of every
-port; a green badge that means less than the Python one is worse than no badge.
+**All nine gates are measured on a bare checkout, in every port.** Nothing needs
+an operator any more: `persuade-20` ships in `conformance/corpora/` for the three
+corpus gates, and `conformance/census/` ships the surname table for bare-surname
+exposure. CI measures nine of nine, which it never did before — the census file
+came from census.gov, and census.gov now answers that URL with a rejection page
+under a 200 status.
 
-The three corpus gates need no setup — `persuade-20` ships in `conformance/` and
-is the default. Set `VICARY_EVAL_CORPUS_TSV` to measure the ASAP-AES corpus
-instead, or `VICARY_EVAL_CORPUS` to name a registered one per run. Two of those
-gates carry a **per-corpus bar**, so the report names the corpus it measured in
-its header rather than leaving you to infer it.
+The discipline that got us here stays. A gate a runner cannot reach prints
+`NOT MEASURED` **by name**, never reduced out of the denominator, and each port
+asserts that behaviour by withholding the inputs on purpose. A green badge that
+means less than it appears to is worse than no badge.
+
+Two overrides, both optional. `VICARY_EVAL_CORPUS_TSV` measures the ASAP-AES
+corpus instead, or `VICARY_EVAL_CORPUS` names a registered one per run; two corpus
+gates carry a **per-corpus bar**, so the report names the corpus it measured in its
+header rather than leaving you to infer it. `VICARY_EVAL_CENSUS_CSV` points at
+your own Census copy, which is how you would score against a newer release.
 
 ## Licence
 

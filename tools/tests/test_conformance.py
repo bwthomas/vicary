@@ -310,14 +310,19 @@ def committed_gates(conformance_directory: Path) -> dict:
 # door, which is the coupling the split exists to remove.
 
 
-def test_the_spec_says_which_gates_need_data_no_package_ships(
+def test_the_spec_says_which_gates_declare_a_data_requirement(
     committed_gates: dict,
 ) -> None:
-    """Four of nine declare a `requires`, though only the census one is out of
-    reach on a bare checkout now that `persuade-20` ships. A port that does not
-    carry the distinction publishes a green badge meaning "eight gates held"
-    while the Python one means nine, and nobody notices because both badges are
-    the same colour."""
+    """Four of nine declare a `requires`, and both requirements are now satisfied
+    from the repository — `persuade-20` for the corpus, `conformance/census/` for
+    the surname table — so a bare checkout reaches all nine.
+
+    The declaration still has to be carried, and named. A port that drops the
+    distinction cannot report NOT MEASURED for the next gate whose data goes out
+    of reach; it would publish a green badge meaning "eight gates held" while the
+    Python one means nine, and nobody notices because both badges are the same
+    colour. `requires` says what a gate depends on, not whether it is reachable
+    today."""
     needs_data = {
         g["label"] for g in committed_gates["gates"] if g["requires"]
     }

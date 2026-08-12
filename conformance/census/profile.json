@@ -1,0 +1,29 @@
+{
+  "description": "Every surname borne by 100 or more people at the 2010 US census, with bearer counts. The false-positive control the bare-surname exposure gate is scored against.",
+  "document_version": 1,
+  "id": "us-census-2010-surnames",
+  "license": {
+    "id": "public-domain-us-gov",
+    "statement": "A work of the US Census Bureau, and therefore a US Government work in the public domain. No grant is required to redistribute it; see NOTICE."
+  },
+  "name": "US Census 2010 surname frequencies",
+  "source": {
+    "kind": "derived",
+    "reproducer": "tools/census_build.py",
+    "transform": "Two columns kept \u2014 `name` lowercased and whitespace-normalised, and `count`. The `ALL OTHER NAMES` aggregate row is dropped, as it names nobody. Every other row is kept: this is the whole release's two load-bearing columns, not a sample, so the measured rate is identical to the number the upstream gives.",
+    "upstream_member": "Names_2010Census.csv",
+    "upstream_sha256": "6b4933178060b4e5ac8dd9a611ec15472d35eab98fe9027474bc5ccc5b7a8708",
+    "upstream_url": "https://www2.census.gov/topics/genealogy/2010surnames/names.zip",
+    "why_not_fetched": "census.gov answers UPSTREAM_URL with HTTP 200 and a WAF rejection page in the body under any User-Agent, so there is no unattended fetch to write and the status code cannot be trusted. Supply a local copy via VICARY_EVAL_CENSUS_CSV."
+  },
+  "table": {
+    "bearers_total": 265667228,
+    "file": "surnames.txt.gz",
+    "format": "gzip of UTF-8 `name<TAB>bearers` lines, sorted by name ascending",
+    "gzip_bytes": 786693,
+    "minimum_rows": 100000,
+    "sha256": "bec9d3e91d5637b2e0c966a9afed3f5efdf4e902317cc99dbace289b39131920",
+    "surnames": 162253
+  },
+  "why_this_file": "The reader checks `table.sha256` on load. This table is used to SUBTRACT exposure from a permissive tier, so a truncated or edited copy would score the gazetteer against a smaller America and read as a better number \u2014 the one direction this must never fail in quietly."
+}

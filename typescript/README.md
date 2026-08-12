@@ -47,12 +47,15 @@ port measures the five that need no operator-supplied data, and all five hold:
 | unaccounted violations | == 0 | **0** |
 | asset entries | >= 1 | **360,793** |
 
-A sixth — bare-surname exposure — this port measures itself once you point
-`VICARY_EVAL_CENSUS_CSV` at the **extracted** `Names_2010Census.csv`, reporting
-1.20% of US surname bearers, the same figure Python and Ruby report from the same
-file. A `.zip` is refused by name rather than read as text: Node's standard
-library has no zip reader, and a binary read parsed as CSV yields zero rows —
-a *lower* exposure than the truth, and the wrong direction to fail in silently.
+A sixth — bare-surname exposure — this port measures from the surname table
+shipped in `conformance/census/`, reporting 1.20% of US surname bearers, the same
+figure Python and Ruby report from the same table. `VICARY_EVAL_CENSUS_CSV`
+overrides it with your own Census copy, and must be the **extracted**
+`Names_2010Census.csv`: a `.zip` is refused by name rather than read as text,
+because Node's standard library has no zip reader and a binary read parsed as CSV
+yields zero rows — a *lower* exposure than the truth, and the wrong direction to
+fail in silently. The shipped table is gzip, which `node:zlib` reads, so that
+hazard does not arise on the default path.
 
 The remaining three — held-out recall (carrier), over-fire on prose, latency p95
 — need an essay corpus no package here ships, and this port measures them too
@@ -60,7 +63,7 @@ once `VICARY_EVAL_CORPUS_TSV` points at one: 100% carrier recall (29/29 held-out
 REDACT spans), 0.60 over-fired spans per essay (15 across 25 essays) — both
 identical to Python and Ruby — and 2.1–2.6 ms latency p95, which is this port's
 own and the fastest of the three. Without a corpus they print `NOT MEASURED` per
-gate rather than being reduced out of the denominator: **six of nine held is a
+gate rather than being reduced out of the denominator: **eight of nine held is a
 different statement from nine of nine**, and a badge cannot tell them apart.
 
 The carrier essays are built from offsets recorded in `conformance/carrier.json`

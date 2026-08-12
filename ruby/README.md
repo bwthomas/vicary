@@ -32,18 +32,20 @@ Three layers, because each catches what the one above it cannot.
 | command | what it says |
 |---|---|
 | `rake conformance` | the scoreboard against the 54 frames — the final bar, and a coarse first one |
-| `rake gates` | the nine gates, five measured from the fixture alone |
+| `rake gates` | the nine gates, all nine measured from what the repository ships |
 | `rake test` | the unit suites, including `primitives_test.rb`: forty-odd primitives over the shared corpus, which says *which brick* is crooked |
 | `rake parity` | gazetteer verdicts, name by name, against the Python reference |
 | `rake redaction_parity` | masked bytes against the Python reference, on prose no fixture contains |
 
-A sixth gate — bare-surname exposure — this gem measures itself once
-`VICARY_EVAL_CENSUS_CSV` points at the **extracted** `Names_2010Census.csv` from
-the census.gov 2010 surnames release, reporting 1.20% of US surname bearers, the
-same figure Python and TypeScript report from the same file. A `.zip` is refused
-by name rather than read as text: Ruby's standard library has no zip reader, and
-a binary read parsed as CSV yields zero rows — a *lower* exposure than the truth,
-and the wrong direction to fail in silently.
+A sixth gate — bare-surname exposure — this gem measures from the surname table
+shipped in `conformance/census/`, reporting 1.20% of US surname bearers, the same
+figure Python and TypeScript report from the same table. `VICARY_EVAL_CENSUS_CSV`
+overrides it with your own Census copy, and must be the **extracted**
+`Names_2010Census.csv` from the census.gov 2010 surnames release: a `.zip` is
+refused by name rather than read as text, because Ruby's standard library has no
+zip reader and a binary read parsed as CSV yields zero rows — a *lower* exposure
+than the truth, and the wrong direction to fail in silently. The shipped table is
+gzip, which `zlib` reads, so that hazard does not arise on the default path.
 
 The last three need an essay corpus no package here ships, and this gem measures
 them once `VICARY_EVAL_CORPUS_TSV` points at one: 100% carrier recall (29/29

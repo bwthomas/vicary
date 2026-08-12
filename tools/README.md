@@ -25,6 +25,24 @@ is: `vicary_build` is an installable package, and Python's convention is for a
 package's tests to sit beside it. `just tools` runs both directories; so does
 the `tools` CI job.
 
+Alongside the tests, four scripts that are **run by hand, never by a test**. Each
+writes something the repository then commits, so the thing under review is the
+diff rather than the run:
+
+| script | what it writes | when to run it |
+|---|---|---|
+| `census_build.py` | `conformance/census/` — the US surname table the bare-surname gate scores against | when the Census release changes |
+| `persuade_build.py` | `conformance/corpora/persuade-20/` — the shipped essay corpus | when the selection rule or its upstream changes |
+| `version_sync.py` | the five files that must restate the version | every release; `just version 0.3.0` |
+| `coverage_board.py` | nothing — prints the coverage board | `just coverage` |
+
+The two data builders read a local upstream and reach no network, because both
+their upstreams have proven unreliable: census.gov now answers its own documented
+URL with a rejection page under a 200 status, and PERSUADE's owner distributes
+behind a login. Each pins the sha256 of the source it was built from, so a rebuild
+that silently got different bytes shows up as a changed `profile.json` rather than
+as a quietly different denominator.
+
 ## Why the split matters beyond bookkeeping
 
 A break in here is not a break in the detector, and the two want different

@@ -1048,8 +1048,15 @@ def build_gates_document() -> dict[str, Any]:
                       "persuade-20 ships its essays, so these gates are "
                       "measurable without operator setup once it becomes the "
                       "default.",
-            "census": "The US Census surname file (VICARY_EVAL_CENSUS_CSV). Not "
-                      "shipped: 3 MB the redaction path never reads.",
+            "census": "US surname frequencies. `conformance/census/` ships the "
+                      "two columns this scores against — all 162,253 rows of the "
+                      "2010 release, so the rate is identical to the upstream's "
+                      "to the last bearer — because census.gov stopped serving "
+                      "the file and this gate reported NOT MEASURED everywhere "
+                      "but on one machine. VICARY_EVAL_CENSUS_CSV overrides with "
+                      "an operator's own copy. Repository only: like the rest of "
+                      "conformance/, it ships in no package, and the redaction "
+                      "path never reads it.",
         },
         "gates": [
             {

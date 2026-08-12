@@ -3,10 +3,13 @@
  *
  * Five of the nine gates in `conformance/gates.json` need no data beyond the
  * fixture, so this port measures them unconditionally. The other four declare
- * `requires` — `corpus` or `census` — and no package here ships either. A
- * caller that supplies the data gets those measured too; one that does not gets
- * NOT MEASURED, spelled out per gate, because five of nine held is a different
- * statement from nine of nine and a badge cannot tell them apart.
+ * `requires` — `corpus` or `census` — and the repository now carries both, in
+ * `conformance/corpora/` and `conformance/census/`, so a bare checkout measures
+ * all nine. A caller that supplies nothing still gets NOT MEASURED for those
+ * four, spelled out per gate rather than reduced out of the denominator,
+ * because eight of nine held is a different statement from nine of nine and a
+ * badge cannot tell them apart. That machinery stays whether or not a shortfall
+ * is currently reachable: it is what makes the next unmeasurable gate visible.
  *
  * **Why this is measured and not asserted from the golden.** The spec already
  * carries `aligns` and `mapping` per frame, computed by the reference. Reading a
@@ -580,10 +583,16 @@ export function reportGates(report: GateReport): string {
   }
   const measured = report.measurements.filter((m) => m.passed !== null);
   const held = measured.filter((m) => m.passed).length;
+  const unmeasured = report.measurements.length - measured.length;
+  // The tally names the shortfall or says there is none, rather than trailing a
+  // clause about data an operator must supply — every requirement is satisfied
+  // from the repository now, so that clause would send a reader looking for a
+  // file to set. It has to keep working when that stops being true.
   lines.push(
     `  -> ${held} of ${measured.length} measured gates hold; ` +
-      `${report.measurements.length - measured.length} are NOT MEASURED and ` +
-      `need operator-supplied data.`,
+      (unmeasured === 0
+        ? `all ${report.measurements.length} were measured.`
+        : `${unmeasured} are NOT MEASURED for want of the data they declare.`),
   );
   return lines.join("\n");
 }

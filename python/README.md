@@ -79,15 +79,21 @@ vicary-assets show            # tier counts, cut date, provenance
 vicary-assets verify          # checksum the installed asset against the manifest
 ```
 
-Five of the nine gates need nothing an operator supplies and hold on every CI
-run — held-out recall, KEEP precision, round-trip restorability, unaccounted
-invariant violations and asset entries. A sixth — bare-surname exposure — is
-measured once `VICARY_EVAL_CENSUS_CSV` points at the US Census surname file,
-which this package reads as either the distributed `.zip` or the extracted
-`.csv`. The remaining three need an essay corpus you supply — point
-`VICARY_EVAL_CORPUS_DIR` at your own copy and all nine are measured. Without it
-they print `NOT MEASURED` rather than being reduced out of the denominator:
-**six of nine held is a different statement from nine of nine.** Numbers and bars:
+All nine gates are measured from a checkout, and on every CI run — held-out
+recall, KEEP precision, round-trip restorability, unaccounted invariant
+violations, asset entries, the three corpus gates and bare-surname exposure. The
+four that declare a data requirement read it out of the repository:
+`conformance/corpora/` ships an essay corpus and `conformance/census/` ships the
+US surname table.
+
+Two optional overrides, for measuring something other than what ships:
+`VICARY_EVAL_CORPUS_TSV` selects the ASAP-AES corpus, and
+`VICARY_EVAL_CENSUS_CSV` a Census copy of your own — this package reads either
+the distributed `.zip` or the extracted `.csv`.
+
+A gate whose data is genuinely absent prints `NOT MEASURED` rather than being
+reduced out of the denominator: **eight of nine held is a different statement from
+nine of nine.** Numbers and bars:
 [Measurement](https://github.com/bwthomas/vicary#measurement).
 
 **No essay corpus ships with this package, and none is redistributed by it.**

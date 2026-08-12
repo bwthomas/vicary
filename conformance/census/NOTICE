@@ -1,0 +1,36 @@
+US Census 2010 surname frequencies — redistributed in this repository
+=====================================================================
+
+`surnames.txt.gz` in this directory is derived from the US Census Bureau's 2010
+surname release. It is not vicary's work.
+
+    Frequently Occurring Surnames from the 2010 Census
+    US Census Bureau
+    https://www2.census.gov/topics/genealogy/2010surnames/names.zip
+
+It is a work of the United States Government and is therefore in the public
+domain. No licence grant is required to redistribute it, and none is claimed
+over it here; the rest of this repository is MIT-licensed.
+
+What it is for: the `bare-surname exposure` gate scores the gazetteer's
+single-token tiers against every American surname, population-weighted. That is
+the false-positive control the essay fixture cannot provide, and it is the number
+that moves when a single-token threshold moves.
+
+Why a derived copy rather than the original: census.gov stopped serving the file.
+As of 2026-08-11 the URL above answers with HTTP 200 and a WAF rejection page in
+the body under any User-Agent, so a build-time fetch cannot work and a status-code
+check would call the rejection a success. The gate reported NOT MEASURED
+everywhere but on a machine holding a hand-downloaded copy.
+
+What was changed: two columns were kept — the surname, lowercased and
+whitespace-normalised, and its bearer count — and the `ALL OTHER NAMES` aggregate
+row, which names nobody, was dropped. Nothing else. All 162,253 remaining
+rows are present, so this is the whole release's load-bearing content rather than
+a sample, and the rate measured from it equals the rate measured from the
+original to the last bearer. `profile.json` pins the digest of the source it came
+from and `tools/census_build.py` reproduces it.
+
+This directory ships in the repository and in none of the three packages. The
+wheel, the gem and the npm tarball all exclude `conformance/`, as they did before
+this file existed.

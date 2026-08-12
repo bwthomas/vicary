@@ -201,7 +201,7 @@ module Vicary
       #
       # Leads with the masking-required ratio, the one a null implementation
       # cannot inflate. Gates print NOT MEASURED per gate rather than being
-      # reduced out of the denominator — five of nine held is a different
+      # reduced out of the denominator — eight of nine held is a different
       # statement from nine of nine, and a badge cannot tell them apart.
       #
       # +gate_block+ is a rendered gate block from `gates.rb`. Passed in rather

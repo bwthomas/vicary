@@ -257,11 +257,21 @@ def corpus_metrics(record_gate, tmp_path_factory) -> dict:
 
 @pytest.fixture(scope="module")
 def census_exposure(record_gate) -> census_eval.Exposure:
-    """The bare-surname false-positive control. Skips without a local Census file."""
-    if not census_eval.census_source():
+    """The bare-surname false-positive control.
+
+    No longer skippable on a checkout. The surname table ships in
+    `conformance/census/`, so this is measured here and in CI; it used to skip
+    everywhere but on the one machine holding a hand-downloaded copy of a file
+    census.gov stopped serving. `VICARY_EVAL_CENSUS_CSV` still overrides.
+
+    It skips only outside a checkout, where there is no `conformance/` to read —
+    the same condition every other spec-dependent test here skips on, and not a
+    condition any CI run is in.
+    """
+    if not census_eval.census_source() and census_eval.shipped_dir() is None:
         pytest.skip(
-            f"no Census surname file: set {config.EVAL_CENSUS_CSV_ENV_VAR} to a "
-            "local copy (see vicary/eval/census.py)"
+            "no conformance/census/ in this tree and no "
+            f"{config.EVAL_CENSUS_CSV_ENV_VAR} set (see vicary/eval/census.py)"
         )
     return census_eval.measure()
 
@@ -610,9 +620,11 @@ def test_the_gate_report_says_what_it_could_not_measure(gate_results) -> None:
     lines.append("-" * 58)
     if missing:
         lines.append(f"  NOT MEASURED ({len(missing)}): {', '.join(missing)}")
-        lines.append("  -> this run does not clear the gate set. Configure the")
-        lines.append(f"     corpus ({config.EVAL_CORPUS_TSV_ENV_VAR}) and the")
-        lines.append(f"     Census file ({config.EVAL_CENSUS_CSV_ENV_VAR}).")
+        lines.append("  -> this run does not clear the gate set. Both requirements")
+        lines.append("     ship in conformance/ — corpora/ and census/ — so this")
+        lines.append("     usually means a partial checkout rather than a missing")
+        lines.append(f"     setting. To override: {config.EVAL_CORPUS_TSV_ENV_VAR}")
+        lines.append(f"     and {config.EVAL_CENSUS_CSV_ENV_VAR}.")
     else:
         lines.append(f"  all {len(_ALL_GATES)} gates measured")
     print("\n".join(lines))

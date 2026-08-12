@@ -34,7 +34,7 @@ py-lint:
 py-test:
     cd python && .venv/bin/python -m pytest -m "not gates" -q
 
-# The nine gates. Four need data this repo does not ship — see `gates` below.
+# The nine gates, all nine measured — see `gates` below.
 py-gates:
     cd python && .venv/bin/python -m pytest -m gates -s -q
 
@@ -118,29 +118,31 @@ lint:
     @just py-lint
     @just tools-lint
 
-# The nine gates, measured wherever they can be. ONE OF NINE needs data that is
-# not packaged: bare-surname exposure needs the US Census surname file. It skips
-# when that is absent and the report prints NOT MEASURED for it, so a green run
-# on a bare checkout means "eight of nine hold", never "the gate set is clear".
+# The nine gates. ALL NINE are measured on a bare checkout, in every port, with
+# no environment set. The four that declare a data requirement read it out of the
+# repository: `conformance/corpora/` ships an essay corpus and `conformance/census/`
+# ships the US surname table. Neither is in any published package.
 #
+# The NOT MEASURED machinery stays and is still tested — each port measures those
+# four with their inputs withheld on purpose and asserts they report NOT MEASURED
+# by name, never reduced out of the denominator. That is what will make the next
+# unreachable gate visible.
+#
+# Two optional overrides, for measuring something other than what ships:
+#
+#   export VICARY_EVAL_CORPUS_DIR=/path/to/corpus   # holds one .tsv; ASAP-AES
 #   export VICARY_EVAL_CENSUS_CSV=/path/to/names.zip
-#   export VICARY_EVAL_CORPUS_DIR=/path/to/corpus   # optional; holds one .tsv
 #
-# The census file takes every port from eight of nine to nine. Python reads the
-# .zip or the extracted .csv; TypeScript and Ruby read the .csv only and refuse a
-# .zip by name, so extract Names_2010Census.csv out of it to satisfy all three at
-# once.
+# The corpus variables select the ASAP-AES corpus this library was developed
+# against; `VICARY_EVAL_CORPUS` names a registered corpus per run. Which corpus
+# was measured is printed in the report header, because two of the three corpus
+# gates carry a per-corpus bar. For the census override, Python reads the .zip or
+# the extracted .csv; TypeScript and Ruby read the .csv only and refuse a .zip by
+# name, so extract Names_2010Census.csv out of it to satisfy all three at once.
 #
-# The corpus variables are no longer needed for coverage — `persuade-20` ships
-# and is the default. They select the ASAP-AES corpus this library was developed
-# against, which is what `VICARY_EVAL_CORPUS` overrides per run. The three corpus
-# gates are measured either way; which corpus they measured is printed in the
-# report header, because two of them carry a per-corpus bar.
-#
-# Every port that can measure, not just the reference — all three now measure all
-# nine when both files are configured, and each recovers its own numbers rather
-# than reading Python's out of the spec, which is the only version of this that is
-# evidence. The one thing they share is conformance/carrier.json, which records
+# Every port that can measure, not just the reference — all three measure all
+# nine, and each recovers its own numbers rather than reading Python's out of the
+# spec, which is the only version of this that is evidence. The one thing they share is conformance/carrier.json, which records
 # WHERE each frame is injected into each essay so three languages build the same
 # carrier text without three copies of Python's Mersenne Twister. That is an
 # input, like frames.json; the measurements stay each port's own. Absent

@@ -2,15 +2,19 @@
 
 # The gates this port measures, and the machinery that measures them.
 #
-# Five of the nine need no operator-supplied data. Their values are checked
-# against the Python gate report rather than against a hand-written expectation —
-# held-out recall 16/16, KEEP precision 21/21, round-trip 54/54, unaccounted
-# violations 0, asset entries 360,793. A port that agrees only with itself proves
-# nothing about the claim the repository makes.
+# All nine are measured on a bare checkout — the corpus and the surname table
+# both ship, in `conformance/corpora/` and `conformance/census/`. Their values are
+# checked against the Python gate report rather than against a hand-written
+# expectation — held-out recall 16/16, KEEP precision 21/21, round-trip 54/54,
+# unaccounted violations 0, asset entries 360,793. A port that agrees only with
+# itself proves nothing about the claim the repository makes.
 #
-# The remaining four stay NOT MEASURED and are asserted to stay that way: a gate
-# silently reduced out of the denominator is how "five of nine" becomes "all
-# green" without anybody deciding it should.
+# The four gates that declare a `requires` are ALSO measured with their inputs
+# deliberately withheld, and asserted to report NOT MEASURED: a gate silently
+# reduced out of the denominator is how "eight of nine" becomes "all green"
+# without anybody deciding it should. That case is now constructed rather than
+# stumbled into, which is the stronger test — it no longer depends on the machine
+# running it happening to lack a file.
 #
 # **Why the hand-built frames below carry their weight.** The fixture produces no
 # `wrong-type` violation and only one `leak`, so most invariants here are never
@@ -34,41 +38,31 @@ class GatesTest < Minitest::Test
     @spec ||= Vicary::Conformance.load_spec
   end
 
-  # The exposure measured from an operator-supplied census file, or nil when no
-  # one pointed `VICARY_EVAL_CENSUS_CSV` at a copy.
+  # The bare-surname exposure.
+  #
+  # No longer conditional. The surname table ships in `conformance/census/`, so
+  # this resolves on any checkout and in CI; it used to be nil everywhere but on
+  # the one machine holding a hand-downloaded copy of a file census.gov stopped
+  # serving. `VICARY_EVAL_CENSUS_CSV` still overrides.
   def self.exposure
-    return @exposure if defined?(@exposure)
-
-    @exposure = if Vicary::Census.census_source.empty?
-                  nil
-                else
-                  Vicary::Census.measure(Vicary::Census.load_census)
-                end
+    @exposure ||= Vicary::Census.measure(Vicary::Census.load_census)
   end
 
   # The same gates again with the census requirement satisfied.
   #
   # Measured separately rather than folded into `report` so the assertions above
   # keep testing what they were written to test: that an *absent* requirement
-  # yields NOT MEASURED. Both paths then have a test, which is the point — the
-  # failure being guarded against is a gate that quietly acquires a value.
+  # yields NOT MEASURED. That case is now constructed deliberately — `report`
+  # passes no optional input at all — rather than arrived at by an operator
+  # happening not to have a file. Both paths then have a test, which is the
+  # point: the failure being guarded against is a gate that quietly acquires a
+  # value.
   def self.census_report
-    return @census_report if defined?(@census_report)
-
-    @census_report = if exposure.nil?
-                       nil
-                     else
-                       Vicary::Gates.measure(
-                         spec, Vicary::Conformance.load_gates,
-                         asset_entries: Vicary::Gazetteer.load.entry_count,
-                         bare_surname_exposure: exposure.rate
-                       ) { |sentence, identity| Vicary.redact(sentence, identity) }
-                     end
-  end
-
-  # Minitest has no per-test skip predicate, so each census test opens with this.
-  def skip_without_census
-    skip "no VICARY_EVAL_CENSUS_CSV; see ruby/lib/vicary/census.rb" if self.class.exposure.nil?
+    @census_report ||= Vicary::Gates.measure(
+      spec, Vicary::Conformance.load_gates,
+      asset_entries: Vicary::Gazetteer.load.entry_count,
+      bare_surname_exposure: exposure.rate
+    ) { |sentence, identity| Vicary.redact(sentence, identity) }
   end
 
   def measurement(id)
@@ -137,14 +131,13 @@ class GatesTest < Minitest::Test
   end
 
   # -------------------------------------------------------------------------
-  # The census gate, when the operator supplies the file
+  # The census gate
   # -------------------------------------------------------------------------
 
-  def test_bare_surname_exposure_is_measured_and_holds_when_supplied
-    skip_without_census
+  def test_bare_surname_exposure_is_measured_and_holds
     m = self.class.census_report.measurements.find { |x| x.gate.id == "bare_surname_exposure" }
     refute_nil m.value
-    # Reconciled against `python -m vicary.eval.census` on the same file, to four
+    # Reconciled against `python -m vicary.eval.census` on the same table, to four
     # decimals rather than the two the report rounds to — the gate bar is 1.25
     # and 1.2 would sit under it whatever the later digits did.
     assert_equal "1.1992", format("%.4f", m.value)
@@ -156,10 +149,10 @@ class GatesTest < Minitest::Test
     assert_equal true, m.passed
   end
 
-  def test_supplying_the_census_file_measures_that_gate_and_no_other
-    skip_without_census
-    # A requirement satisfied is not a licence for the other three: the corpus
-    # gates must stay NOT MEASURED, or "six of nine" silently becomes "nine".
+  def test_satisfying_the_census_requirement_measures_that_gate_and_no_other
+    # A requirement satisfied is not a licence for the other three: with no
+    # corpus passed they must stay NOT MEASURED, or one gate acquiring a value
+    # silently hands values to the rest.
     still_unmeasured = self.class.census_report.measurements
                            .select { |m| m.passed.nil? }.map { |m| m.gate.id }.sort
     assert_equal %w[held_out_recall_carrier latency_p95 over_fire_prose], still_unmeasured
@@ -623,7 +616,7 @@ class GatesTest < Minitest::Test
     full = Vicary::Gates.measure(
       spec, Vicary::Conformance.load_gates,
       asset_entries: Vicary::Gazetteer.load.entry_count,
-      bare_surname_exposure: exposure&.rate,
+      bare_surname_exposure: exposure.rate,
       held_out_recall_carrier: corpus_metrics&.recall_held_out,
       over_fire_per_essay: corpus_metrics&.over_fire_spans_per_essay,
       latency_p95_ms: corpus_metrics&.latency_p95_ms,

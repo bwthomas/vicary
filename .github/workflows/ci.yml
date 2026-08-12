@@ -2,12 +2,22 @@
 # That rationale is written into python/tests/test_gates.py and was unfulfilled
 # until this file existed: nothing ran them but a human at a terminal.
 #
-# What CI can and cannot measure. Four of the nine gates need data that is not
-# packaged — three need an essay corpus the operator supplies, one needs the Census
-# surname file — so a public runner measures five. That is not papered over: `-s`
-# is passed so the gate report reaches the log, and it prints NOT MEASURED for
-# the four it could not reach. A green CI run therefore means "the corpus-free
-# gates hold", never "the gate set is clear".
+# What CI measures: all nine gates, in every port, on a plain checkout with no
+# secrets and no operator setup. The four that declare a data requirement read it
+# out of the repository — `conformance/corpora/` ships an essay corpus and
+# `conformance/census/` ships the US surname table — so there is one CI
+# configuration rather than a measured subset plus a note about the rest.
+#
+# It was not always so. A public runner used to measure five of nine, and the
+# gap was structural: the corpus was un-redistributable and the Census file came
+# from census.gov, which now answers its own documented URL with a rejection page
+# under a 200 status. Both are shipped now, and neither is in any published
+# package.
+#
+# `-s` is still passed so the gate report reaches the log, and the report still
+# prints NOT MEASURED by name for any gate it cannot reach. A green CI run now
+# means the gate set is clear — but it says which gates it measured, so that
+# remains a claim a reader can check rather than one the badge asserts.
 #
 # One workflow covers every language front door on purpose. The product claim is
 # that all three produce byte-identical output, and a claim split across three

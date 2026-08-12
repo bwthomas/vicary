@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
+require "digest"
+require "json"
+require "pathname"
 require "set"
+require "zlib"
 
 module Vicary
   # The false-positive control the fixture cannot provide.
@@ -17,16 +21,23 @@ module Vicary
   # is a minority of private-name mentions in real prose, so it is not an
   # essay-level leak rate.
   #
-  # The source is the US Census 2010 surname file. Set `VICARY_EVAL_CENSUS_CSV`
-  # to a locally-held copy and this runs offline and reproducibly; without it the
-  # gate stays NOT MEASURED rather than silently reporting nothing.
+  # The source is the US Census 2010 surname file, and this repository now ships
+  # the two columns of it this measurement uses — see `conformance/census/`,
+  # built by `tools/census_build.py`. So the gate is measured on a bare checkout
+  # and in CI, which it was not: census.gov stopped serving the upstream, and the
+  # gate reported NOT MEASURED everywhere but on a machine holding a
+  # hand-downloaded copy.
   #
-  # **This port reads the extracted `.csv` only.** Python additionally accepts
-  # the distributed `.zip` because its standard library has a zip reader and
-  # Ruby's does not. A `.zip` here is refused by name rather than parsed as text,
-  # since the alternative is a binary read that yields zero rows — which is a
-  # *lower* exposure rate than the truth, and the wrong direction to fail in
-  # silently.
+  # `VICARY_EVAL_CENSUS_CSV` still wins when set — an operator holding a newer
+  # release gets the number their file gives.
+  #
+  # **For that operator file, this port reads the extracted `.csv` only.** Python
+  # additionally accepts the distributed `.zip` because its standard library has
+  # a zip reader and Ruby's does not. A `.zip` here is refused by name rather
+  # than parsed as text, since the alternative is a binary read that yields zero
+  # rows — which is a *lower* exposure rate than the truth, and the wrong
+  # direction to fail in silently. The shipped table sidesteps this entirely: it
+  # is gzip, which `zlib` reads.
   module Census
     # Where a locally-held copy of the Census surname file is configured.
     EVAL_CENSUS_CSV_ENV_VAR = "VICARY_EVAL_CENSUS_CSV"
@@ -42,6 +53,11 @@ module Vicary
     # single-token tiers, so a short read shrinks the denominator and reports a
     # more comfortable exposure rate than the truth.
     MINIMUM_ROWS = 100_000
+
+    # Directory under `conformance/` holding the shipped table and its provenance.
+    SHIPPED_DIRNAME = "census"
+    SHIPPED_TABLE_FILENAME = "surnames.txt.gz"
+    SHIPPED_PROFILE_FILENAME = "profile.json"
 
     # How much of the US surname population the single-token tiers claim.
     Exposure = Struct.new(
@@ -126,18 +142,76 @@ module Vicary
         counts
       end
 
-      # Parse a locally-held copy of the Census surname file.
+      # `conformance/census/`, or nil outside a checkout.
+      def shipped_dir
+        candidate = Conformance.directory.join(SHIPPED_DIRNAME)
+        candidate.join(SHIPPED_TABLE_FILENAME).file? ? candidate : nil
+      rescue Conformance::SpecError
+        nil
+      end
+
+      # `{normalised surname => bearers}` from the table this repository ships.
       #
-      # Prefers a local copy, because a control that only runs with network
-      # access is a control that stops running. A missing copy raises rather than
-      # returning a partial hash that would read as a lower exposure rate than
-      # the truth.
+      # The digest in `profile.json` is checked, not trusted. This table is used
+      # to SUBTRACT exposure from a permissive tier, so a truncated or edited
+      # copy scores the gazetteer against a smaller America and reads as a
+      # *better* number — the one direction this measurement must never fail in
+      # quietly. A bad digest raises rather than degrading.
+      def load_shipped_census(directory = nil)
+        dir = directory ? Pathname.new(directory) : shipped_dir
+        if dir.nil?
+          raise Errno::ENOENT,
+                "no conformance/#{SHIPPED_DIRNAME}/ above this module. The shipped " \
+                "table lives in the repository, not in an installed gem."
+        end
+
+        payload = dir.join(SHIPPED_TABLE_FILENAME).binread
+        profile = JSON.parse(dir.join(SHIPPED_PROFILE_FILENAME).read)
+        expected = profile.dig("table", "sha256").to_s
+        actual = Digest::SHA256.hexdigest(payload)
+        if !expected.empty? && actual != expected
+          raise RuntimeError,
+                "#{SHIPPED_TABLE_FILENAME} has sha256 #{actual}, but " \
+                "#{SHIPPED_PROFILE_FILENAME} pins #{expected}. Refusing to score the " \
+                "gazetteer against a table that is not the one this repository " \
+                "measured, because a short read reads as a better number. Rebuild " \
+                "with `python tools/census_build.py --write`."
+        end
+
+        counts = {}
+        Zlib.gunzip(payload).force_encoding("UTF-8").each_line do |line|
+          name, _, bearers = line.chomp.partition("\t")
+          counts[name] = Integer(bearers) unless name.empty?
+        end
+        if counts.size < MINIMUM_ROWS
+          raise RuntimeError,
+                "#{SHIPPED_TABLE_FILENAME} parsed to only #{counts.size} rows; " \
+                "expected at least #{MINIMUM_ROWS}."
+        end
+        counts
+      end
+
+      # `{normalised surname => bearers}`, resolved in this order:
+      #
+      # 1. An explicit `source`, or `VICARY_EVAL_CENSUS_CSV`. An operator holding
+      #    a newer Census release still wins, and gets the number *their* file
+      #    gives.
+      # 2. The table shipped in `conformance/census/`, which is the same 162,253
+      #    rows the 2010 release carries and therefore the same rate to the last
+      #    bearer. This is why the gate no longer skips on a bare checkout.
+      #
+      # There is no third step. census.gov answers the documented URL with a WAF
+      # rejection page under a 200 status, which is why the shipped table exists.
       def load_census(source = nil)
         path = (source || census_source).strip
         if path.empty?
+          return load_shipped_census unless shipped_dir.nil?
+
           raise Errno::ENOENT,
-                "no local Census surname file. Set #{EVAL_CENSUS_CSV_ENV_VAR} to a copy " \
-                "of #{CENSUS_SURNAMES_MEMBER}, extracted from #{CENSUS_SURNAMES_URL}"
+                "no conformance/#{SHIPPED_DIRNAME}/ in this tree and no " \
+                "#{EVAL_CENSUS_CSV_ENV_VAR} set. Point that at a copy of " \
+                "#{CENSUS_SURNAMES_MEMBER}, extracted from #{CENSUS_SURNAMES_URL}, " \
+                "or run from a checkout"
         end
         if path.downcase.end_with?(".zip")
           raise ArgumentError,

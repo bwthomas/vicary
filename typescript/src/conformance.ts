@@ -376,9 +376,9 @@ export function score(
  *
  * Leads with the masking-required ratio, because that is the one a null
  * implementation cannot inflate. The gate list is printed with NOT MEASURED
- * spelled out per gate rather than reduced out of the denominator — five of nine
- * held is a different statement from nine of nine, and a badge cannot tell them
- * apart.
+ * spelled out per gate rather than reduced out of the denominator — eight of
+ * nine held is a different statement from nine of nine, and a badge cannot tell
+ * them apart.
  */
 export function report(
   board: Scoreboard,
