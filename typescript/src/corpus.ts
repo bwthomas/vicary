@@ -296,12 +296,21 @@ export interface CarrierCase {
   slots: number[];
 }
 
+/** An essay the plan deliberately carries nothing in, and why. */
+export interface CarrierUnusable {
+  essayId: string;
+  reason: string;
+}
+
 export interface CarrierPlan {
   corpusId: string;
   essaySet: string;
   limit: number;
   perEssay: number;
   cases: CarrierCase[];
+  /** Named rather than merely absent, so a short plan can be told from a lossy
+   * one. See the reconciliation at the end of {@link buildCases}. */
+  unusable: CarrierUnusable[];
 }
 
 export function loadCarrierPlan(
@@ -345,6 +354,12 @@ export function loadCarrierPlan(
       frames: c["frames"] as string[],
       slots: c["slots"] as number[],
     })),
+    unusable: ((plan["unusable"] ?? []) as Array<Record<string, unknown>>).map(
+      (u) => ({
+        essayId: u["essay_id"] as string,
+        reason: u["reason"] as string,
+      }),
+    ),
   };
 }
 
@@ -501,6 +516,28 @@ export function buildCases(
         `${missing.length > 5 ? " …" : ""}. Refusing to measure a subset, ` +
         "because over-firing and latency on an empty or partial set compute as " +
         "0 and read as a pass.",
+    );
+  }
+
+  // And every *corpus* essay is either carried or named unusable. The check
+  // above only proves the plan got what it asked for; it cannot see an essay the
+  // plan never asked about. That was safe while a plan always covered its whole
+  // corpus, and stopped being safe when `unusable` made a short plan legitimate
+  // — without this, a plan that quietly lost ten essays would measure the fifteen
+  // it kept and report them under the same gate.
+  const accounted = new Set(cases.map((c) => c.essayId));
+  for (const entry of plan.unusable) accounted.add(entry.essayId);
+  const unaccounted = essays
+    .filter(([essayId]) => !accounted.has(essayId))
+    .map(([essayId]) => essayId);
+  if (unaccounted.length > 0) {
+    throw new Error(
+      `the corpus supplies ${essays.length} essays and the carrier plan accounts ` +
+        `for ${accounted.size} of them — ${plan.cases.length} carried and ` +
+        `${plan.unusable.length} declared unusable. Unaccounted: ` +
+        `${unaccounted.slice(0, 5).join(", ")}${unaccounted.length > 5 ? " …" : ""}. ` +
+        "An essay the plan neither carries nor names is one it dropped silently, " +
+        "which is the same comfortable pass as a partial match.",
     );
   }
   return cases;

@@ -50,7 +50,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import statistics
+import string
 import sys
 import time
 from collections import Counter
@@ -76,6 +78,100 @@ from vicary.eval.fixture import (
 #: per-frame table full of holes, which is how the previous fixture's single
 #: name frame went unnoticed.
 DEFAULT_PER_ESSAY: int = 3
+
+#: Words whose trailing period abbreviates rather than ends a sentence.
+#:
+#: Wider than the detector's ``_TITLE_ABBREVIATIONS`` and deliberately so — the
+#: two sets answer different questions. That one asks "is the capital after this
+#: period orthographically forced?", which only titles make interesting. This one
+#: asks "may a whole sentence be inserted here?", and "etc." or "Inc." are just as
+#: fatal a place to insert one as "Mrs." is.
+_ABBREVIATIONS: frozenset[str] = frozenset({
+    "mr", "mrs", "ms", "mx", "dr", "prof", "rev", "fr", "sr", "jr", "st",
+    "sgt", "capt", "lt", "col", "gen", "gov", "sen", "rep", "hon",
+    "etc", "vs", "eg", "ie", "cf", "al", "approx", "est",
+    "inc", "ltd", "co", "corp", "dept", "univ", "no", "vol", "fig", "pp",
+    "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sept", "sep", "oct",
+    "nov", "dec", "mon", "tue", "wed", "thu", "fri", "sat", "sun",
+})
+
+#: The word a period sits directly behind, if the period follows a word at all.
+_TRAILING_WORD = re.compile(r"([A-Za-z]+)\.\Z")
+
+#: A single letter before a period is an initial — ``J. K. Rowling`` — with one
+#: exception, and it is the most common word to end a student's sentence.
+#: "in between @PERSON2 and I." is not an initial, and rejecting it cost real
+#: injection points in every ASAP essay written in the first person. Lowercase
+#: "i" is here too, because the corpora these run on are informal enough that the
+#: dropped capital is the norm rather than the slip.
+_INITIAL_LETTERS: frozenset[str] = frozenset(
+    letter for letter in string.ascii_letters if letter not in "Ii"
+)
+
+#: Punctuation that closes the sentence *after* its terminator, and which the
+#: injection point therefore belongs behind rather than in front of. Without this
+#: the period in ``the country." America`` reads as mid-word, because the very
+#: next character is not whitespace.
+_CLOSES_A_SENTENCE = "\"'’”)]"
+
+#: What may open the sentence after a break, beyond a capital letter: the quote or
+#: bracket around one, a digit, and ``@`` — ASAP's own anonymization tokens
+#: (``@PERSON1``, ``@LOCATION1``) start hundreds of perfectly good sentences in
+#: that corpus, and reading them as non-starts discarded a third of its points.
+_OPENS_A_SENTENCE = "\"'“‘(@0123456789"
+
+
+def injection_points(base: str) -> list[int]:
+    """Offsets in ``base`` at which inserting a sentence still reads as prose.
+
+    Every ``.`` is *not* a sentence end, and treating it as one silently produced
+    malformed carrier text: a frame landing inside "U.S." split an essay into
+    ``cars in the U.`` + frame + ``S. has gone down``. That is not a harder test
+    of the detector, it is a different text than the one the gate claims to
+    measure, and it was 14 of ASAP-AES's 75 injection points.
+
+    The offset first steps over any closing quote or bracket, because the frame
+    belongs behind ``the country."`` rather than inside it. Then four things
+    disqualify the period, and each rejects a case the others do not:
+
+    * **No whitespace after it** — the period is inside a word. This is the
+      "U.S." split above, and it is the one that produced visibly broken prose.
+      It also rejects a genuine sentence end the essay forgot to space
+      (``something.When``), and that is right rather than regrettable: the frame
+      would be inserted flush against the next word.
+    * **Nothing after it** — end of text, where there is no following sentence
+      for the frame to precede.
+    * **Lowercase after it** — ``the U.S. has gone down``. The abbreviation's
+      *final* period does have whitespace after it, so only the continuation
+      being lowercase tells us the sentence did not end.
+    * **A known abbreviation before it** — ``Mrs. Okonkwo``, ``J. K. Rowling``.
+      Here the following capital is real, so the rule above cannot see it; a
+      single letter counts as an abbreviation for exactly the initials case.
+
+    What this deliberately does not do is fix the essays. A corpus writes what it
+    writes; the harness's job is to choose where it may cut in.
+    """
+    out: list[int] = []
+    for index, char in enumerate(base):
+        if char not in ".!?":
+            continue
+        at = index + 1
+        while at < len(base) and base[at] in _CLOSES_A_SENTENCE:
+            at += 1
+        rest = base[at:]
+        following = rest.lstrip()
+        if not following or len(following) == len(rest):
+            continue
+        if not (following[0].isupper() or following[0] in _OPENS_A_SENTENCE):
+            continue
+        # Against the terminator, not against `at`: any closing quote consumed
+        # above sits between the abbreviation and the offset, and would hide it.
+        word = _TRAILING_WORD.search(base[:index + 1])
+        if word and (word.group(1) in _INITIAL_LETTERS
+                     or word.group(1).lower() in _ABBREVIATIONS):
+            continue
+        out.append(at)
+    return out
 
 
 @dataclass
@@ -112,6 +208,24 @@ class Case:
         )
 
 
+def unusable_for_injection(base: str,
+                           per_essay: int = DEFAULT_PER_ESSAY) -> str | None:
+    """Why ``base`` cannot carry ``per_essay`` frames, or ``None`` if it can.
+
+    Split out from :func:`build_cases` so a skip can be *declared* rather than
+    inferred from a short plan. An essay written without a space after its full
+    stops — "skateboarding.Laughed", "Interesting fly.It was" — offers almost no
+    place to cut in, and two of ASAP-AES's twenty-five are written that way.
+    """
+    points = injection_points(base)
+    # `+ 2` because the draw is from `points[1:-1]`.
+    if len(points) < per_essay + 2:
+        return (f"{len(points)} usable injection points; carrying {per_essay} "
+                f"frames needs {per_essay + 2}, since the draw excludes the "
+                "first and the last")
+    return None
+
+
 def build_cases(essays: list[tuple[str, str]], *, seed: int = 20260805,
                 per_essay: int = DEFAULT_PER_ESSAY,
                 pool: tuple[Frame, ...] | None = None) -> list[Case]:
@@ -124,9 +238,13 @@ def build_cases(essays: list[tuple[str, str]], *, seed: int = 20260805,
     cursor = 0
     for essay_id, base in essays:
         # Insert at sentence ends so the frame reads as prose, not as a suffix.
-        stops = [i + 1 for i, ch in enumerate(base) if ch in ".!?"]
-        if len(stops) < per_essay + 1:
+        # `injection_points` is what decides which periods qualify, and
+        # `unusable_for_injection` owns the arithmetic on how many are enough —
+        # the old guard asked for `per_essay + 1` while drawing from a population
+        # two shorter, so it was not merely loose, it guarded the wrong number.
+        if unusable_for_injection(base, per_essay) is not None:
             continue
+        stops = injection_points(base)
         picks = [pool[(cursor + k) % len(pool)] for k in range(per_essay)]
         cursor += per_essay
         slots = sorted(rng.sample(stops[1:-1], k=len(picks)), reverse=True)
@@ -202,6 +320,27 @@ def build_cases_from_plan(essays: list[tuple[str, str]],
             f"{', '.join(missing[:5])}{' …' if len(missing) > 5 else ''}. "
             "Refusing to measure a subset, because over-firing and latency on "
             "an empty or partial set compute as 0.0 and read as a pass."
+        )
+
+    # And every *corpus* essay is either carried or named unusable. The check
+    # above only proves the plan got what it asked for; it cannot see an essay
+    # the plan never asked about. That was safe while a plan always covered its
+    # whole corpus, and stopped being safe when `unusable` made a short plan
+    # legitimate — without this, a plan that quietly lost ten essays would
+    # measure the fifteen it kept and report them under the same gate.
+    unusable = {entry["essay_id"] for entry in plan.get("unusable", [])}
+    accounted = {case.essay_id for case in cases} | unusable
+    unaccounted = [essay_id for essay_id, _ in essays if essay_id not in accounted]
+    if unaccounted:
+        raise ValueError(
+            f"the corpus supplies {len(essays)} essays and the carrier plan "
+            f"accounts for {len(accounted)} of them — {len(plan['cases'])} "
+            f"carried and {len(unusable)} declared unusable. Unaccounted: "
+            f"{', '.join(unaccounted[:5])}"
+            f"{' …' if len(unaccounted) > 5 else ''}. An essay the plan neither "
+            "carries nor names is one it dropped silently, which is the same "
+            "comfortable pass as a partial match. Regenerate with "
+            "`python -m vicary.eval.carrier --write`."
         )
     return cases
 

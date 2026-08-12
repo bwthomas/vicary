@@ -81,13 +81,23 @@ def build_plan(corpus_id: str, essays: list[tuple[str, str]] | None = None,
     cases = recall.build_cases(
         essays, seed=GENERATED_WITH_SEED,
         pool=conf.frames_from_document(conf.load_frames_document()))
-    if len(cases) != len(essays):
+
+    # An essay that offers too few places to cut in is named here rather than
+    # quietly missing from `cases`. A plan short of its corpus measures fewer
+    # essays than the profile claims, which lowers the two `<=` gates and reads
+    # as a comfortable pass — so the count still has to reconcile exactly, and
+    # what makes that possible is writing down which essays went where.
+    unusable = [
+        {"essay_id": essay_id, "reason": reason}
+        for essay_id, base in essays
+        if (reason := recall.unusable_for_injection(base)) is not None
+    ]
+    if len(cases) + len(unusable) != len(essays):
         raise ValueError(
             f"corpus {corpus_id!r}: {len(essays)} essays yielded {len(cases)} "
-            f"cases. build_cases skips an essay with fewer than "
-            f"{recall.DEFAULT_PER_ESSAY + 1} sentence ends, and a plan short of "
-            "its corpus measures fewer essays than the profile claims — which "
-            "lowers the two `<=` gates and reads as a comfortable pass."
+            f"cases and {len(unusable)} declared as unusable, which do not add "
+            "up. Every essay is either carried or named, and an essay that is "
+            "neither is one the plan silently dropped."
         )
     return {
         "corpus": {
@@ -98,6 +108,7 @@ def build_plan(corpus_id: str, essays: list[tuple[str, str]] | None = None,
         },
         "per_essay": recall.DEFAULT_PER_ESSAY,
         "generated_with_seed": GENERATED_WITH_SEED,
+        "unusable": unusable,
         "cases": [
             {
                 "essay_id": case.essay_id,

@@ -14,9 +14,9 @@
             "dialogue-attribution"
           ],
           "slots": [
-            2940,
-            1176,
-            929
+            3133,
+            1251,
+            1087
           ]
         },
         {
@@ -44,7 +44,7 @@
             "private-surname-shadowed-by-a-notable-one"
           ],
           "slots": [
-            2039,
+            2137,
             1274,
             435
           ]
@@ -59,9 +59,9 @@
             "notable-surname-in-a-first-person-appositive"
           ],
           "slots": [
-            2939,
-            2055,
-            1530
+            1491,
+            1194,
+            1046
           ]
         },
         {
@@ -74,9 +74,9 @@
             "relation-led-film-title-with-no-capitalisation-tell"
           ],
           "slots": [
-            2845,
-            2475,
-            1270
+            1523,
+            228,
+            144
           ]
         },
         {
@@ -89,9 +89,9 @@
             "hyphenated-surname"
           ],
           "slots": [
-            3094,
-            490,
-            314
+            2837,
+            2707,
+            1186
           ]
         },
         {
@@ -104,9 +104,9 @@
             "nickname-and-full-name"
           ],
           "slots": [
-            4156,
-            3806,
-            2590
+            3561,
+            722,
+            335
           ]
         },
         {
@@ -119,9 +119,9 @@
             "notable-bare-surname"
           ],
           "slots": [
-            1312,
-            1051,
-            429
+            1159,
+            1122,
+            738
           ]
         },
         {
@@ -134,9 +134,9 @@
             "notable-in-kinship-shaped-frame"
           ],
           "slots": [
-            3052,
-            563,
-            333
+            3488,
+            3249,
+            2875
           ]
         },
         {
@@ -149,9 +149,9 @@
             "prompt-context-figure"
           ],
           "slots": [
-            2694,
-            2636,
-            1033
+            2136,
+            329,
+            86
           ]
         },
         {
@@ -164,9 +164,9 @@
             "fictional-character"
           ],
           "slots": [
-            1843,
             1728,
-            1176
+            1054,
+            980
           ]
         },
         {
@@ -179,9 +179,9 @@
             "relation-led-title-written-as-a-title"
           ],
           "slots": [
-            2967,
-            566,
-            243
+            3862,
+            1965,
+            446
           ]
         },
         {
@@ -194,9 +194,9 @@
             "intersect-person-org-location"
           ],
           "slots": [
-            2648,
-            2583,
-            2479
+            3365,
+            1100,
+            397
           ]
         },
         {
@@ -209,9 +209,9 @@
             "intersect-landmark-and-hometown"
           ],
           "slots": [
-            2728,
-            2408,
-            1516
+            1881,
+            1095,
+            656
           ]
         },
         {
@@ -224,24 +224,9 @@
             "structured-address"
           ],
           "slots": [
-            2770,
-            2327,
-            102
-          ]
-        },
-        {
-          "base_chars": 729,
-          "base_sha256": "5fe2db86a26fda95cc5b6a6301a3f9361bf3ff9e8093d570666d9ae89f8f0f7a",
-          "essay_id": "20735",
-          "frames": [
-            "structured-phone",
-            "structured-email",
-            "structured-email-is-the-writers-own-name"
-          ],
-          "slots": [
-            365,
-            274,
-            147
+            3259,
+            2697,
+            1409
           ]
         },
         {
@@ -249,14 +234,14 @@
           "base_sha256": "b8b2ecea13cc9af162e7e11502db4b16f93d882705756d303d6e957e81a84e71",
           "essay_id": "20736",
           "frames": [
-            "structured-url-ends-in-the-writers-own-name",
-            "structured-age",
-            "structured-ssn"
+            "structured-phone",
+            "structured-email",
+            "structured-email-is-the-writers-own-name"
           ],
           "slots": [
-            2618,
             2048,
-            258
+            1734,
+            536
           ]
         },
         {
@@ -264,14 +249,14 @@
           "base_sha256": "4e7b05a1dff4f77114bc97d542729496cec5087eedbbf78268ed996c7f759e2d",
           "essay_id": "20737",
           "frames": [
-            "structured-url",
-            "structured-username",
-            "structured-card"
+            "structured-url-ends-in-the-writers-own-name",
+            "structured-age",
+            "structured-ssn"
           ],
           "slots": [
-            2249,
-            806,
-            123
+            2194,
+            2016,
+            1013
           ]
         },
         {
@@ -279,14 +264,14 @@
           "base_sha256": "ad07e53f2c8b8dda0ace850a1789adab0b1e4a552e339818d503a07f92899a3d",
           "essay_id": "20739",
           "frames": [
-            "kinship-possessive",
-            "bare-first-name",
-            "dialogue-attribution"
+            "structured-url",
+            "structured-username",
+            "structured-card"
           ],
           "slots": [
-            2602,
-            1144,
-            939
+            2798,
+            271,
+            109
           ]
         },
         {
@@ -294,14 +279,14 @@
           "base_sha256": "d4e3ce2ffd00eaa22976af35093f702d4ee3bc3ba930f9d96b930a244beedaff",
           "essay_id": "20741",
           "frames": [
-            "title-surname",
-            "honorific-surname",
-            "lowercase-writing"
+            "kinship-possessive",
+            "bare-first-name",
+            "dialogue-attribution"
           ],
           "slots": [
-            1481,
-            1193,
-            921
+            1254,
+            498,
+            72
           ]
         },
         {
@@ -309,14 +294,14 @@
           "base_sha256": "94b3828489c81a85fe3c8f5a7da78979979e79b1b8216e07c01fc3145d0962ce",
           "essay_id": "20742",
           "frames": [
-            "allcaps-writing",
-            "appositive",
-            "private-surname-shadowed-by-a-notable-one"
+            "title-surname",
+            "honorific-surname",
+            "lowercase-writing"
           ],
           "slots": [
-            2788,
-            1742,
-            1021
+            2378,
+            738,
+            163
           ]
         },
         {
@@ -324,29 +309,14 @@
           "base_sha256": "72105d05655352ad3fed117249ee45a055abc088e74ccb4758cae3229d331c6e",
           "essay_id": "20743",
           "frames": [
-            "heading-capital-on-an-ordinary-word",
-            "heading-that-actually-names-somebody",
-            "notable-surname-in-a-first-person-appositive"
+            "allcaps-writing",
+            "appositive",
+            "private-surname-shadowed-by-a-notable-one"
           ],
           "slots": [
-            3863,
-            2996,
-            64
-          ]
-        },
-        {
-          "base_chars": 2720,
-          "base_sha256": "0267e0d6bba2e098dcbcbd4545b0a82b6d5726535b55e07e66b81ccb8048eb65",
-          "essay_id": "20745",
-          "frames": [
-            "private-person-shadowed-by-a-work-title",
-            "relative-whose-phrase-is-also-a-film-title",
-            "relation-led-film-title-with-no-capitalisation-tell"
-          ],
-          "slots": [
-            569,
-            214,
-            174
+            4286,
+            1321,
+            917
           ]
         },
         {
@@ -354,12 +324,12 @@
           "base_sha256": "cfc0a84efd7ba4306df967099332baf01cbdbe04691356ec0a03b6c88af9b311",
           "essay_id": "20746",
           "frames": [
-            "private-person-shadowed-by-a-real-public-figure",
-            "full-name-midsentence",
-            "hyphenated-surname"
+            "heading-capital-on-an-ordinary-word",
+            "heading-that-actually-names-somebody",
+            "notable-surname-in-a-first-person-appositive"
           ],
           "slots": [
-            3381,
+            3534,
             1522,
             233
           ]
@@ -369,14 +339,14 @@
           "base_sha256": "8383958a9e579bfac540dca2cce5b37e6c2b3c09c1287bdf267c816930bb378b",
           "essay_id": "20747",
           "frames": [
-            "possessive-third-party",
-            "initial-plus-surname",
-            "nickname-and-full-name"
+            "private-person-shadowed-by-a-work-title",
+            "relative-whose-phrase-is-also-a-film-title",
+            "relation-led-film-title-with-no-capitalisation-tell"
           ],
           "slots": [
-            871,
-            772,
-            528
+            1247,
+            1119,
+            772
           ]
         }
       ],
@@ -387,7 +357,17 @@
         "selection": "Rows whose essay_set column is 8, in file order, first N. Recorded so a port cannot quietly measure a different slice of the corpus and report it under the same gate."
       },
       "generated_with_seed": 20260805,
-      "per_essay": 3
+      "per_essay": 3,
+      "unusable": [
+        {
+          "essay_id": "20735",
+          "reason": "3 usable injection points; carrying 3 frames needs 5, since the draw excludes the first and the last"
+        },
+        {
+          "essay_id": "20745",
+          "reason": "3 usable injection points; carrying 3 frames needs 5, since the draw excludes the first and the last"
+        }
+      ]
     },
     "persuade-20": {
       "cases": [
@@ -416,9 +396,9 @@
             "lowercase-writing"
           ],
           "slots": [
-            4420,
             3987,
-            3448
+            3448,
+            963
           ]
         },
         {
@@ -431,9 +411,9 @@
             "private-surname-shadowed-by-a-notable-one"
           ],
           "slots": [
-            2252,
-            1907,
-            889
+            2519,
+            2082,
+            1352
           ]
         },
         {
@@ -446,7 +426,7 @@
             "notable-surname-in-a-first-person-appositive"
           ],
           "slots": [
-            1868,
+            2546,
             1330,
             805
           ]
@@ -462,8 +442,8 @@
           ],
           "slots": [
             2579,
-            2056,
-            1617
+            2321,
+            1284
           ]
         },
         {
@@ -476,9 +456,9 @@
             "hyphenated-surname"
           ],
           "slots": [
-            2578,
-            2184,
-            1331
+            1572,
+            297,
+            186
           ]
         },
         {
@@ -491,9 +471,9 @@
             "nickname-and-full-name"
           ],
           "slots": [
-            3015,
-            1797,
-            414
+            2710,
+            2575,
+            1491
           ]
         },
         {
@@ -506,8 +486,8 @@
             "notable-bare-surname"
           ],
           "slots": [
-            2651,
-            2582,
+            4031,
+            1439,
             318
           ]
         },
@@ -521,9 +501,9 @@
             "notable-in-kinship-shaped-frame"
           ],
           "slots": [
+            2760,
             2186,
-            1577,
-            448
+            298
           ]
         },
         {
@@ -536,9 +516,9 @@
             "prompt-context-figure"
           ],
           "slots": [
-            1554,
-            638,
-            224
+            3194,
+            2765,
+            1554
           ]
         },
         {
@@ -551,9 +531,9 @@
             "fictional-character"
           ],
           "slots": [
-            3573,
+            3676,
             2718,
-            692
+            571
           ]
         },
         {
@@ -566,8 +546,8 @@
             "relation-led-title-written-as-a-title"
           ],
           "slots": [
-            1907,
-            1731,
+            2079,
+            1603,
             208
           ]
         },
@@ -597,8 +577,8 @@
           ],
           "slots": [
             2992,
-            1313,
-            279
+            1996,
+            1641
           ]
         },
         {
@@ -611,7 +591,7 @@
             "structured-address"
           ],
           "slots": [
-            1888,
+            1269,
             932,
             362
           ]
@@ -626,9 +606,9 @@
             "structured-email-is-the-writers-own-name"
           ],
           "slots": [
-            3278,
-            2270,
-            1361
+            3613,
+            695,
+            268
           ]
         },
         {
@@ -641,9 +621,9 @@
             "structured-ssn"
           ],
           "slots": [
-            2251,
-            1947,
-            672
+            2498,
+            2084,
+            1162
           ]
         },
         {
@@ -656,8 +636,8 @@
             "structured-card"
           ],
           "slots": [
-            1346,
-            1009,
+            2733,
+            1174,
             471
           ]
         },
@@ -671,9 +651,9 @@
             "dialogue-attribution"
           ],
           "slots": [
-            2636,
-            2386,
-            2055
+            2443,
+            1106,
+            865
           ]
         },
         {
@@ -686,9 +666,9 @@
             "lowercase-writing"
           ],
           "slots": [
-            2512,
-            1736,
-            118
+            2611,
+            2188,
+            1708
           ]
         }
       ],
@@ -699,7 +679,8 @@
         "selection": "Essays whose character length falls within ASAP-AES set 8's own first-quartile-to-maximum band, ordered by id ascending, first N. The band holds essay length comparable to the ASAP-AES baseline so the latency bar keeps its meaning; the naive first-N rule yields a median of 1,607 characters against that baseline's 3,421 and would have weakened the one gate that constrains a port."
       },
       "generated_with_seed": 20260805,
-      "per_essay": 3
+      "per_essay": 3,
+      "unusable": []
     }
   }
 }

@@ -25,6 +25,7 @@ import {
 } from "../src/census.js";
 import { loadGates, loadSpec, type Identity } from "../src/conformance.js";
 import {
+  type CarrierPlan,
   buildCases,
   corpusSource,
   isAsapToken,
@@ -273,6 +274,47 @@ test("a corpus that supplies only some of the planned essays is refused", () => 
     () => buildCases([["not-a-planned-id", "some other essay"]], plan, spec),
     /Refusing to measure a subset/,
   );
+});
+
+test("a corpus essay the plan neither carries nor names is refused", () => {
+  // The subset check above compares cases built against cases planned, so a plan
+  // that quietly lost ten of its twenty-five essays matches itself perfectly and
+  // measures fifteen — under the same gate, at the same bar. Unreachable while a
+  // plan always covered its whole corpus, and reachable the moment `unusable`
+  // made a short plan legitimate. So the count reconciles against the *corpus*:
+  // carried plus named must equal supplied.
+  const base =
+    "The dog barked. The cat ran. The bird flew. The fish swam. " +
+    "The cow mooed. And then it was quiet.";
+  const plan: CarrierPlan = {
+    corpusId: "test",
+    essaySet: "test",
+    limit: 2,
+    perEssay: 1,
+    cases: [
+      {
+        essayId: "carried",
+        baseSha256: createHash("sha256").update(base, "utf8").digest("hex"),
+        baseChars: base.length,
+        frames: [spec.frames[0]!.frameId],
+        slots: [16],
+      },
+    ],
+    unusable: [],
+  };
+  const essays: Array<[string, string]> = [
+    ["carried", base],
+    ["neither-carried-nor-named", base],
+  ];
+
+  assert.throws(() => buildCases(essays, plan, spec), /dropped silently/);
+
+  // And naming it is what makes the same corpus measurable — otherwise the check
+  // would just be an assertion that plans are never short.
+  plan.unusable = [
+    { essayId: "neither-carried-nor-named", reason: "declared for this test" },
+  ];
+  assert.equal(buildCases(essays, plan, spec).length, 1);
 });
 
 test("a corpus essay that does not match the plan is refused", () => {

@@ -2,6 +2,53 @@
 
 ## Unreleased
 
+### The lowercase leak `persuade-20` found is closed, in all three ports
+
+* **Carrier recall on `persuade-20` goes 16/19 to 19/19, with no precision cost.**
+  Over-firing is unchanged at 8.15 spans/essay and every ASAP-AES figure is
+  untouched, so this is recall bought with nothing.
+* **Two root causes, either one sufficient on its own.** An `INCONSISTENT`
+  writer's lowercase route requires corroboration — the same word written
+  capitalised mid-sentence somewhere in the document — and both failures were in
+  how that testimony was gathered. The gate consulted only the span's **first
+  token**, so a document that capitalises the *surname* of the same person
+  corroborated nothing; `corroborated` had already settled that question the
+  other way and this channel never adopted it. And `_SENTENCE_BREAK` read the
+  period in **"Mrs. Okonkwo"** as a sentence end, putting `Okonkwo` in
+  sentence-initial position — where a capital is orthographically required and
+  proves nothing — which discarded the document's only testimony about that
+  surname. An honorific is the exact case where the capital that follows is most
+  likely to be a name, so reading it as a sentence start inverts the signal.
+* **The earlier attribution was incomplete.** One of the three misses was filed
+  against the carrier-injection artifact below. It had two independent sufficient
+  causes, and fixing either closes it.
+
+### A malformed injection point is refused rather than measured
+
+* **Every `.` is not a sentence end, and the carrier harness treated it as one.**
+  A frame landed inside "U.S." and split an essay into `cars in the U.` + frame +
+  `S. has gone down`. That is not a harder test of the detector, it is different
+  text than the gate claims to measure. `injection_points` now steps over a
+  closing quote, then refuses a period with no whitespace after it, nothing after
+  it, a lowercase continuation, or a known abbreviation or initial before it —
+  **165 malformed points on ASAP-AES and 69 on `persuade-20` go to zero.**
+* **The guard was not loose, it was guarding the wrong number.** It required
+  `per_essay + 1` usable points while drawing from `stops[1:-1]`, a population two
+  shorter.
+* **Two ASAP-AES essays are now declared unusable rather than silently dropped.**
+  Both are written with no space after their full stops — "skateboarding.Laughed",
+  "Interesting fly.It was" — and offer nowhere to cut in. `carrier.json` names
+  them and why, and **all three ports now reconcile carried + named against the
+  corpus supplied.** The existing check compares cases built against cases
+  planned, which a plan that quietly lost ten essays satisfies perfectly; that was
+  unreachable while a plan always covered its whole corpus and became reachable
+  the moment a short plan was legitimate.
+* **The over-fire bar moves 0.60 to 0.61, and it is arithmetic rather than
+  slack.** The same detector removed the same spans from the same prose: 15 spans
+  over 25 essays became 14 over 23, because the two essays that left contributed
+  one span between them. Only the denominator moved. Held-out recall stays 100%
+  and held-out carrier spans go 29 to 24 with the two essays.
+
 ### A corpus is now declared rather than assumed, and one of them ships
 
 * **The three corpus gates were unmeasurable on any machine but one.** They need

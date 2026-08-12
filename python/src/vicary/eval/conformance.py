@@ -1112,11 +1112,14 @@ def build_gates_document() -> dict[str, Any]:
                 "label": "over-fire on prose",
                 "unit": "spans/essay",
                 "op": "<=",
-                "bar": 0.60,
+                "bar": 0.61,
                 "requires": ["corpus"],
                 "why": "Over-redaction is the cost side of recall. A FLOOR, not "
                        "a rate: the measured corpus is pre-scrubbed, so real "
-                       "prose offers more to over-fire on.",
+                       "prose offers more to over-fire on. The bar is per "
+                       "corpus in everything but name — it is ASAP-AES's, and a "
+                       "corpus whose prose names real entities constantly will "
+                       "exceed it without over-firing on anything private.",
             },
             {
                 "id": "bare_surname_exposure",

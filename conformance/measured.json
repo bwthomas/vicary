@@ -1,15 +1,15 @@
 {
   "corpora": {
     "asap-aes-set8": {
-      "carrier_text_sha256": "78f6926fe5a358b118df7904ebd7dd3bd62cf7b22ddcec4dfaf43b311f0b72ef",
+      "carrier_text_sha256": "f4dc0e994eb882eb28ff7e19776257236ce031d86126d3e6575d28e133084763",
       "corpus_gates": {
         "asap_rewrites_per_essay": 0.0,
-        "essays": 25,
-        "over_fire_spans_per_essay": 0.6,
-        "over_fire_spans_total": 15,
-        "recall_held_out_passed": 29,
+        "essays": 23,
+        "over_fire_spans_per_essay": 0.6086956521739131,
+        "over_fire_spans_total": 14,
+        "recall_held_out_passed": 24,
         "recall_held_out_pct": 100.0,
-        "recall_held_out_total": 29
+        "recall_held_out_total": 24
       },
       "envelope": {
         "arm": "local-gazetteer-lowercase",
@@ -25,7 +25,7 @@
       }
     },
     "persuade-20": {
-      "carrier_text_sha256": "84641b34e236538bc544f32738510bb6d18d3aa85fffd26c9a446b33e0c11447",
+      "carrier_text_sha256": "90e6cbdad307863357ae85dd3570ee2b0d4781a7e4b4d36ecef8724bd8e3c1a7",
       "corpus_gates": {
         "asap_rewrites_per_essay": 0.0,
         "essays": 20,

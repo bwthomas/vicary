@@ -88,7 +88,17 @@ ROUND_TRIP_FLOOR = 100.0
 #: floor that produced it was picked against this number — 1,600 births measures
 #: 0.72 and would have passed with no headroom, 1,800 measures 0.60 — so banking
 #: the slack here would retire the very measurement that chose the floor.
-OVER_FIRE_SPANS_CEILING = 0.60
+#:
+#: Raised 0.60 -> 0.61 on 2026-08-12, and this one is the exception the rule
+#: above is worded against — it is arithmetic, not slack. Rejecting malformed
+#: carrier injection points (:func:`~vicary.eval.recall.injection_points`) found
+#: two ASAP essays written with no space after their full stops, which offer
+#: nowhere to cut in and are now declared unusable. The *same detector* removed
+#: the *same spans* from the *same prose*: 15 spans over 25 essays became 14 over
+#: 23, because the two essays that left contributed one span between them. Only
+#: the denominator moved. A bar that did not follow it would fail a run in which
+#: nothing over-fired that did not over-fire before.
+OVER_FIRE_SPANS_CEILING = 0.61
 
 #: Population-weighted share of US surname bearers whose BARE surname resolves
 #: notable. A ceiling on the *single-token* tiers' generosity — short, place and
@@ -370,6 +380,42 @@ def test_a_corpus_supplying_only_some_planned_essays_is_refused() -> None:
     with pytest.raises(ValueError, match="Refusing to measure a subset"):
         build_cases_from_plan([("not-a-planned-id", "some other essay")], plan,
                               pool=select_frames())
+
+
+def test_a_corpus_essay_the_plan_neither_carries_nor_names_is_refused() -> None:
+    """The subset check above cannot see an essay the plan never asked about.
+
+    It compares cases built against cases planned, so a plan that quietly lost
+    ten of its twenty-five essays matches itself perfectly and measures fifteen —
+    under the same gate, at the same bar. That was unreachable while a plan always
+    covered its whole corpus, and became reachable the moment ``unusable`` made a
+    short plan legitimate. So the count reconciles against the *corpus*: carried
+    plus named must equal supplied.
+    """
+    import hashlib
+
+    base = ("The dog barked. The cat ran. The bird flew. The fish swam. "
+            "The cow mooed. And then it was quiet.")
+    plan = {
+        "cases": [{
+            "essay_id": "carried",
+            "base_sha256": hashlib.sha256(base.encode("utf-8")).hexdigest(),
+            "base_chars": len(base),
+            "frames": [select_frames()[0].frame_id],
+            "slots": [16],
+        }],
+        "unusable": [],
+    }
+    essays = [("carried", base), ("neither-carried-nor-named", base)]
+
+    with pytest.raises(ValueError, match="dropped silently"):
+        build_cases_from_plan(essays, plan, pool=select_frames())
+
+    # And naming it is what makes the same corpus measurable — otherwise the
+    # check would just be an assertion that plans are never short.
+    plan["unusable"] = [{"essay_id": "neither-carried-nor-named",
+                         "reason": "declared for this test"}]
+    assert len(build_cases_from_plan(essays, plan, pool=select_frames())) == 1
 
 
 def test_a_corpus_essay_that_does_not_match_the_plan_is_refused() -> None:

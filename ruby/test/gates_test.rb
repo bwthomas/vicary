@@ -275,6 +275,36 @@ class GatesTest < Minitest::Test
     assert_match(/Refusing to measure a subset/, error.message)
   end
 
+  def test_a_corpus_essay_the_plan_neither_carries_nor_names_is_refused
+    # The subset check above compares cases built against cases planned, so a
+    # plan that quietly lost ten of its twenty-five essays matches itself
+    # perfectly and measures fifteen — under the same gate, at the same bar.
+    # Unreachable while a plan always covered its whole corpus, and reachable the
+    # moment `unusable` made a short plan legitimate. So the count reconciles
+    # against the *corpus*: carried plus named must equal supplied.
+    base = "The dog barked. The cat ran. The bird flew. The fish swam. " \
+           "The cow mooed. And then it was quiet."
+    plan = {
+      "cases" => [{ "essay_id" => "carried",
+                    "base_sha256" => Digest::SHA256.hexdigest(base),
+                    "frames" => [self.class.spec.frames.first.frame_id],
+                    "slots" => [16] }],
+      "unusable" => []
+    }
+    essays = [["carried", base], ["neither-carried-nor-named", base]]
+
+    error = assert_raises(Vicary::Conformance::SpecError) do
+      Vicary::Corpus.build_cases(essays, plan, self.class.spec)
+    end
+    assert_match(/dropped silently/, error.message)
+
+    # And naming it is what makes the same corpus measurable — otherwise the
+    # check would just be an assertion that plans are never short.
+    plan["unusable"] = [{ "essay_id" => "neither-carried-nor-named",
+                          "reason" => "declared for this test" }]
+    assert_equal 1, Vicary::Corpus.build_cases(essays, plan, self.class.spec).size
+  end
+
   # -------------------------------------------------------------------------
   # The census reader's guards — these need no census file
   # -------------------------------------------------------------------------

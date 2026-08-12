@@ -4,7 +4,7 @@
   "operator_default": "asap-aes-set8",
   "default_pending": {
     "id": "persuade-20",
-    "why_not_yet": "persuade-20 leaks two held-out lowercase-name spans that ASAP-AES never exercised in the same context, so its carrier recall is 84.2% against a 100% bar. Making it the default before that is fixed would put a red gate on main. The corpus, its plan and its measured baseline all ship now so the defect is visible and reproducible; the default flips in a follow-on change once the leak is closed."
+    "why_not_yet": "The leak that first blocked this is closed — persuade-20's carrier recall is 100% (19/19) in every port. What remains is that only Python can read a *shipped* corpus's essays.json: TypeScript and Ruby resolve corpus ids and key their baselines by them, but cannot load this corpus, so pointing the default at it would leave two of the three ports reporting NEEDS corpus on the very gates it was shipped to make measurable. Its own over-fire bar is the other half — 8.15 spans/essay against ASAP-AES's 0.61, which is PERSUADE's source-based prose naming real entities rather than a defect, and the single global bar cannot hold both."
   },
   "corpora": [
     "asap-aes-set8",

@@ -265,7 +265,31 @@ module Vicary
                 "over-firing and latency on an empty or partial set compute as 0.0 and " \
                 "read as a pass."
         end
+
+        reconcile_against_corpus(essays, plan, cases)
         cases
+      end
+
+      # Every *corpus* essay is either carried or named unusable.
+      #
+      # The check above only proves the plan got what it asked for; it cannot see
+      # an essay the plan never asked about. That was safe while a plan always
+      # covered its whole corpus, and stopped being safe when `unusable` made a
+      # short plan legitimate — without this, a plan that quietly lost ten essays
+      # would measure the fifteen it kept and report them under the same gate.
+      def reconcile_against_corpus(essays, plan, cases)
+        unusable = (plan["unusable"] || []).map { |e| e["essay_id"] }
+        accounted = cases.map(&:essay_id).to_set | unusable.to_set
+        unaccounted = essays.map(&:first).reject { |id| accounted.include?(id) }
+        return if unaccounted.empty?
+
+        raise Conformance::SpecError,
+              "the corpus supplies #{essays.size} essays and the carrier plan accounts " \
+              "for #{accounted.size} of them — #{plan['cases'].size} carried and " \
+              "#{unusable.size} declared unusable. Unaccounted: " \
+              "#{unaccounted.first(5).join(', ')}#{unaccounted.size > 5 ? ' …' : ''}. " \
+              "An essay the plan neither carries nor names is one it dropped silently, " \
+              "which is the same comfortable pass as a partial match."
       end
 
       def build_each(essays, planned, by_id)
