@@ -769,9 +769,44 @@ def capitalisation_habit(
             else CapitalisationHabit.SILENT)
 
 
+#: Words whose trailing period abbreviates rather than ends a sentence, and which
+#: are followed by a name more often than not.
+#:
+#: Load-bearing for :func:`_sentence_starts`, and the reason is a leak. The break
+#: pattern reads `[.!?]\s+` as a sentence boundary, so "Mrs. Okonkwo" put
+#: "Okonkwo" in sentence-initial position — where a capital is orthographically
+#: required and therefore proves nothing — and the document's one piece of
+#: testimony about that surname was discarded. In a persuade-20 carrier essay that
+#: withdrew the corroboration the lowercase route needed and leaked
+#: "terrence okonkwo". An honorific is the exact case where the capital that
+#: follows is *most* likely to be a name, so reading it as a sentence start
+#: inverts the signal.
+#:
+#: Deliberately only titles, not every abbreviation. "etc." or "vs." are also not
+#: sentence ends, but nothing follows them that this set exists to protect, and a
+#: wider list costs precision everywhere for no recall.
+_TITLE_ABBREVIATIONS: frozenset[str] = frozenset({
+    "mr", "mrs", "ms", "dr", "prof", "rev", "fr", "sr", "jr", "st",
+    "sgt", "capt", "lt", "col", "gen", "gov", "sen", "rep", "hon",
+})
+
+#: Matches the abbreviation a break candidate sits directly behind.
+_TRAILING_WORD = re.compile(r"([A-Za-z]+)\.\s*\Z")
+
+
 def _sentence_starts(text: str) -> frozenset[int]:
-    """Offsets at which a sentence begins."""
-    return frozenset(m.end() for m in _SENTENCE_BREAK.finditer(text))
+    """Offsets at which a sentence begins.
+
+    A break directly behind a title abbreviation is not one — see
+    :data:`_TITLE_ABBREVIATIONS` for the leak that rule exists to close.
+    """
+    out: set[int] = set()
+    for match in _SENTENCE_BREAK.finditer(text):
+        preceding = _TRAILING_WORD.search(text[:match.end()])
+        if preceding and preceding.group(1).lower() in _TITLE_ABBREVIATIONS:
+            continue
+        out.add(match.end())
+    return frozenset(out)
 
 
 def _emphasis_spans(text: str) -> tuple[tuple[int, int], ...]:
@@ -1134,9 +1169,6 @@ def _find_lowercase_candidates(
         if _is_stop(word) or not is_given(word):
             index += 1
             continue
-        if corroborate is not None and word.strip("'’") not in corroborate:
-            index += 1
-            continue
         if index and tokens[index - 1][0] in _DETERMINERS:
             preceding = text[tokens[index - 1][2] : start]
             # Only a directly-adjacent determiner counts. "the day terrence
@@ -1161,6 +1193,24 @@ def _find_lowercase_candidates(
             reach -= 1
         span_end = tokens[reach][2]
         if reach - index + 1 < _LOWERCASE_MIN_TOKENS or protected(start, span_end):
+            index += 1
+            continue
+        # Corroboration is asked of the WHOLE span, not of its first token, and it
+        # is asked here rather than before `reach` is known because the span's
+        # extent is what decides which tokens may vouch for it.
+        #
+        # Checking only the given name is what leaked "terrence okonkwo" out of a
+        # persuade-20 carrier essay. That document is INCONSISTENT, so this route
+        # runs with corroboration required; it capitalises "Okonkwo" mid-sentence
+        # and never writes "Terrence" at all, so the one token consulted was the
+        # one the writer happened not to capitalise — while the surname of the same
+        # person sat in the same document as exactly the evidence being asked for.
+        # `corroborated` already settled this question the other way ("ANY token
+        # counts, not just the first"); this channel simply never adopted it.
+        if corroborate is not None and not any(
+            tokens[i][0].strip("'’") in corroborate
+            for i in range(index, reach + 1)
+        ):
             index += 1
             continue
         joined = text[start:span_end]

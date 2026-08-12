@@ -31,8 +31,8 @@
         "essays": 20,
         "over_fire_spans_per_essay": 8.15,
         "over_fire_spans_total": 163,
-        "recall_held_out_passed": 16,
-        "recall_held_out_pct": 84.21052631578948,
+        "recall_held_out_passed": 19,
+        "recall_held_out_pct": 100.0,
         "recall_held_out_total": 19
       },
       "envelope": {
