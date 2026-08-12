@@ -79,6 +79,24 @@ from vicary.eval.fixture import (
 #: name frame went unnoticed.
 DEFAULT_PER_ESSAY: int = 3
 
+#: How many times each essay is redacted for the latency figure. The recorded
+#: number is the MEDIAN of these, not one sample.
+#:
+#: Why: the latency gate takes p95 across essays, and at n=20 that index *is* the
+#: maximum. So a single-sample-per-essay design asked "did a GC pause land in any
+#: one of twenty calls" and answered a `<=` gate with it. Measured on Ruby, five
+#: consecutive runs of unchanged code gave 13.8, 7.4, 13.1, 7.7, 6.8 ms against a
+#: 10 ms bar — two failures out of five, bimodal at 2x rather than noisy, which is
+#: the signature of a pause landing on the one sample that decides the answer.
+#: Taking a median of three per essay means a pause has to hit the same essay
+#: twice to move the number.
+#:
+#: Three rather than more because the cost is real — every repeat re-redacts the
+#: whole corpus — and three is the smallest odd count where one straggler cannot
+#: carry the median. The same constant lives in all three ports, because a gate
+#: two ports estimate differently is not the same gate.
+LATENCY_REPEATS: int = 3
+
 #: Words whose trailing period abbreviates rather than ends a sentence.
 #:
 #: Wider than the detector's ``_TITLE_ABBREVIATIONS`` and deliberately so — the
@@ -635,9 +653,12 @@ def run(cases: list[Case], mode: str, sidecar: str, *,
         for case in cases:
             if (arm, case.essay_id) in done:
                 continue
-            t0 = time.monotonic()
-            result = redactor._apply(case.text, source=source)
-            elapsed = (time.monotonic() - t0) * 1000.0
+            timings = []
+            for _ in range(LATENCY_REPEATS):
+                t0 = time.monotonic()
+                result = redactor._apply(case.text, source=source)
+                timings.append((time.monotonic() - t0) * 1000.0)
+            elapsed = statistics.median(timings)
             # The clean-prose pass is measurement scaffolding, not on the
             # request path, so its latency is deliberately not counted.
             base_result = redactor._apply(case.base, source=source)

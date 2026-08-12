@@ -3,9 +3,12 @@
  *
  * Held-out recall in a carrier essay, over-firing on real prose, and latency at
  * essay length cannot be measured on isolated sentences. They need fixture
- * frames planted inside genuine student prose — and the prose is a corpus no
- * package here ships, so all three stay NOT MEASURED until an operator points
- * `VICARY_EVAL_CORPUS_TSV` at one.
+ * frames planted inside genuine student prose. That prose ships: `persuade-20`
+ * lives in `conformance/corpora/` and is the registry default, so all three are
+ * measured on a bare checkout. They fall back to NOT MEASURED only when the
+ * corpus that *resolves* is operator-supplied — ASAP-AES, selected either by
+ * `VICARY_EVAL_CORPUS` or by having `VICARY_EVAL_CORPUS_TSV` configured — and no
+ * TSV is there to read.
  *
  * **Where the carrier text comes from.** Everything about building it is
  * deterministic except which sentence ends the frames land on, which the Python
@@ -65,6 +68,25 @@ export const EVAL_CORPUS_ENV_VAR = "VICARY_EVAL_CORPUS";
 /** Source kinds a corpus profile may declare. */
 export const KIND_SHIPPED = "shipped";
 export const KIND_OPERATOR_TSV = "operator_tsv";
+
+/**
+ * How many times each essay is redacted for the latency figure. The recorded
+ * number is the MEDIAN of these, not one sample. Must stay odd, so the median is
+ * a sample rather than a mean of two.
+ *
+ * Why: the latency gate takes p95 across essays, and at n=20 that index *is* the
+ * maximum. So a single-sample-per-essay design asked "did a GC pause land in any
+ * one of twenty calls" and answered a `<=` gate with it. Measured on Ruby, five
+ * consecutive runs of unchanged code gave 13.8, 7.4, 13.1, 7.7, 6.8 ms against a
+ * 10 ms bar — two failures out of five, bimodal at 2x rather than noisy, which is
+ * the signature of a pause landing on the one sample that decides the answer.
+ * A median of three per essay means a pause has to hit the same essay twice.
+ *
+ * Three rather than more because the cost is real — every repeat re-redacts the
+ * whole corpus. The same constant lives in all three ports, because a gate two
+ * ports estimate differently is not the same gate.
+ */
+export const LATENCY_REPEATS = 3;
 
 /** The essays file a shipped corpus keeps beside its profile. */
 const ESSAYS_FILENAME = "essays.json";
@@ -681,9 +703,16 @@ export function measureCorpus(
   if (cases.length > 0) redact(cases[0]!.base.slice(0, 200), identity);
 
   for (const testCase of cases) {
-    const started = performance.now();
-    const masked = redact(testCase.text, identity);
-    latencies.push(performance.now() - started);
+    // The median of LATENCY_REPEATS, not one sample — see that constant.
+    const timings: number[] = [];
+    let masked = "";
+    for (let i = 0; i < LATENCY_REPEATS; i += 1) {
+      const started = performance.now();
+      masked = redact(testCase.text, identity);
+      timings.push(performance.now() - started);
+    }
+    timings.sort((a, b) => a - b);
+    latencies.push(timings[(timings.length - 1) >> 1]!);
 
     for (const frame of testCase.frames) {
       outcomes.push(...scoreSpans(frame, masked));

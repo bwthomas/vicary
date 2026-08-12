@@ -83,7 +83,7 @@
         "corpus"
       ],
       "unit": "ms",
-      "why": "p95 rather than p50, because a threshold read off a median reads rosy. The claim is single-digit milliseconds with no network."
+      "why": "p95 across essays of each essay's median of three timed redactions, with the one-time asset load excluded. p95 across essays rather than p50, because a threshold read off a median reads rosy; a median WITHIN each essay because at n=20 the cross-essay p95 is the maximum, so one sample per essay made the gate answer \"did a pause land in any of twenty calls\" and flipped on unchanged code. The claim this bar protects is that redacting an essay costs single-digit milliseconds of warm CPU with no network — it is a claim about the length of the work, NOT a tail-latency claim about a deployed service."
     },
     {
       "bar": 1.0,
