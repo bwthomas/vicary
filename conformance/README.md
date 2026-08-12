@@ -92,8 +92,31 @@ is a different statement from nine of nine, and a badge cannot tell them apart.
 A runner that *can* reach one of them measures that one and no other. Satisfying
 `census` is not a licence to fill in the three gates that asked for `corpus`, so
 every port keeps operator-supplied values in a separate map from fixture-derived
-ones — structural, rather than a rule each port has to remember. All three
-currently reach `census`; none reaches `corpus`.
+ones — structural, rather than a rule each port has to remember. All three ports
+now reach both requirements and measure all nine.
+
+## `carrier.json`
+
+Where each fixture frame is injected into each corpus essay: per essay, its id, a
+digest of its text, the frames injected and the offsets they went in at, applied
+in the order recorded (descending, so an earlier insertion cannot shift a later
+one).
+
+It exists because building a carrier essay is deterministic in every respect
+*except* which sentence ends the frames land on, which the reference draws from
+Python's Mersenne Twister. Reproducing that draw would mean porting MT19937 and
+`random.sample` into every language — a lot of code with nothing to do with
+redaction, and a silent failure mode, since a subtly different draw yields
+different carrier text and the ports simply disagree on the gates while each one
+looks healthy.
+
+Two rules govern it. **It is an input, not an answer** — it says where to inject,
+exactly as `frames.json` says what to inject; what a port measures from the
+resulting text must be recovered from that port's own output. And **it carries no
+essay text, ever**: ids, digests, offsets and counts only, which is what lets it
+live here while the corpus does not. Every port must verify an essay against its
+recorded digest before using an offset into it, because an offset into the wrong
+text yields a plausible number rather than an error.
 
 Every port has to carry that discipline. A green JavaScript badge that means less
 than the Python one is worse than no badge, because nobody will notice.

@@ -28,22 +28,25 @@ each, not just the structured pass. All three load the identical gazetteer bytes
 same sha256, same seven tier counts, checked against the manifest rather than
 against a copied constant.
 
-Both ports also measure **five of the nine gates** in `conformance/gates.json` —
-held-out recall, KEEP precision, round-trip, unaccounted violations and asset
-entries — and all five hold in each, at the same values Python reports: 16/16
-held-out REDACT spans, 21/21 KEEP spans intact, 54/54 frames restoring exactly,
-one violation and it the accounted-for one, 360,793 asset entries. The counts are
-stated alongside the percentages because 100% of a wrong denominator is also 100%.
+Both ports also measure **five of the nine gates** in `conformance/gates.json`
+from the fixture alone — held-out recall, KEEP precision, round-trip, unaccounted
+violations and asset entries — and all five hold in each, at the same values
+Python reports: 16/16 held-out REDACT spans, 21/21 KEEP spans intact, 54/54
+frames restoring exactly, one violation and it the accounted-for one, 360,793
+asset entries. The counts are stated alongside the percentages because 100% of a
+wrong denominator is also 100%.
 
-A sixth — bare-surname Census exposure — is measured by all three the moment you
-point `VICARY_EVAL_CENSUS_CSV` at a copy of the file, and all three report the
-same 1.20%. The remaining three need an essay corpus no package here ships; the
-scoreboard prints `NOT MEASURED` beside each on every run rather than letting a
-green suite imply a clear gate set. A gate whose data is absent is never given a
-value — not even 0, which in a `<=` gate would read as the most comfortable pass
-on the board — and a requirement satisfied buys only its own gate: the value is
-carried in a separate map from the fixture-derived ones so that nothing measured
-from the fixture can ever be printed under a gate that asked for a corpus.
+**Given the two data files, all three ports now measure all nine.** Point
+`VICARY_EVAL_CENSUS_CSV` at the Census surname file and `VICARY_EVAL_CORPUS_TSV`
+at an essay corpus, and each port reports nine of nine — agreeing exactly on the
+eight that are properties of the detector, and each reporting its own on the one
+that is a property of the language. Without those files the scoreboard prints
+`NOT MEASURED` beside each affected gate rather than letting a green suite imply
+a clear gate set. A gate whose data is absent is never given a value — not even
+0, which in a `<=` gate would read as the most comfortable pass on the board —
+and a requirement satisfied buys only its own gate: operator-supplied values are
+carried in a map separate from the fixture-derived ones, so nothing measured from
+the fixture can ever be printed under a gate that asked for a corpus.
 
 Each port measures rather than reads: the spec carries `aligns` and `mapping` per
 frame, and a port that quoted those would only be restating Python's answer back.
@@ -451,31 +454,42 @@ the same reason.
 |---|---|---|---|
 | bare-surname Census exposure | ≤ 1.25% | **1.20%** (3,185,816 / 265,667,228 bearers) | Python, TypeScript, Ruby — byte-identical reports |
 
-**Three need an essay corpus no package here ships.** They print `NOT MEASURED`
-per gate rather than being reduced out of the denominator, because **six of nine
-held is a different statement from nine of nine** and a badge cannot tell them
-apart. The values below are from an operator corpus run, not from CI, and are the
-numbers that moved the `given` tier to SSA births:
+**Three need an essay corpus no package here ships**, and all three ports measure
+them once you supply one. Two are properties of the detector, so the ports agree
+exactly; the third is a property of the language, so each reports its own:
 
-| gate | bar | last measured on a corpus |
-|---|---|---|
-| held-out recall (carrier) | ≥ 100% | 100% |
-| over-firing on real prose | ≤ 0.6 spans/essay | 0.60 |
-| latency p95 (essay-length) | ≤ 10 ms | 3.4 ms |
+| gate | bar | Python | TypeScript | Ruby |
+|---|---|---|---|---|
+| held-out recall (carrier) | ≥ 100% | **100%** (29/29) | **100%** (29/29) | **100%** (29/29) |
+| over-firing on real prose | ≤ 0.6 spans/essay | **0.60** (15 spans) | **0.60** (15 spans) | **0.60** (15 spans) |
+| latency p95 (essay-length) | ≤ 10 ms | **4.0–4.2** | **2.1–2.6** | **8.8–9.9** |
 
-**The envelope those three were measured in**, because a rate without one is not
-a quotable number: the first 25 essays of ASAP-AES set 8, taken in file order so
-the sample is reproducible rather than sampled; fixture frames injected into each
-as carrier prose; arm `local-gazetteer-lowercase`; single-threaded, no network,
-warm process.
+**The envelope, because a rate without one is not a quotable number:** the first
+25 essays of ASAP-AES set 8, taken in file order so the sample is reproducible
+rather than sampled; fixture frames injected at recorded offsets; arm
+`local-gazetteer-lowercase`; single-threaded, no network. Each port builds
+byte-identical carrier text — sha256 `78f6926f…` over the 25 injected essays,
+asserted in all three suites — so an agreement between them is an agreement about
+the redactor rather than a coincidence of three different inputs.
 
-Two things that envelope makes visible and the table alone does not. **The
-over-fire gate passes with no margin at all** — 15 over-fired spans across 25
-essays is exactly 0.60 against a bar of ≤ 0.60, so one further span anywhere in
-the sample reads 0.64 and fails. It is deterministic across runs, so this is a
-knife-edge and not noise. And **latency p95 moves run to run**: 3.1–3.5 ms over
-seven warm runs, ~4.1 ms on a cold first one, against a 10 ms bar. Quote it as a
-band, not as 3.4.
+Three things that envelope makes visible and a table of percentages does not.
+
+**The over-fire gate passes with no margin at all.** 15 over-fired spans across
+25 essays is exactly 0.60 against a bar of ≤ 0.60, so one further span anywhere
+in the sample reads 0.64 and fails. It is deterministic across runs and identical
+in all three ports, so this is a knife-edge and not noise.
+
+**Ruby runs nearest the latency bar**, at roughly 4× Python and 4× that again
+from TypeScript. It passes at 8.8–9.9 ms against ≤ 10 ms, which is thin enough
+that the gate is a live constraint on that port rather than a formality.
+
+**The one-time asset load is excluded from latency, deliberately and in all three
+ports.** Loading 360,793 gazetteer entries costs ~84 ms in Python and ~207 ms in
+Ruby, and whichever essay runs first pays all of it; at n=25 that single sample
+lands at or above p95 and sets the gate's answer by itself. Including it made the
+same code report 3.1 ms or 4.0 ms depending only on whether something earlier in
+the process had touched the asset. The gate's claim is essay-length redaction
+latency, not process startup.
 
 Measured separately, on 14 real generated-feedback responses rather than on
 essays: **over-firing on the outbound pass is 0.00 spans/response**, down from
@@ -501,6 +515,22 @@ makes no claim to those terms and grants no rights in that data. What it ships i
 the *harness* — you point it at a corpus you are entitled to use, and it measures.
 The Census surname file is likewise not packaged, for the duller reason that it is
 3 MB the redaction path never reads.
+
+**How three languages inject into the same essays.** Everything about building a
+carrier essay is deterministic except which sentence ends the frames land on,
+which the Python reference draws from its Mersenne Twister. Reproducing that draw
+would mean porting MT19937 and `random.sample` into JavaScript and Ruby — a lot
+of code with nothing to do with redaction, whose failure mode is silent, since a
+subtly different draw just yields different numbers. So the draw is recorded once
+in `conformance/carrier.json`: per essay, its id, a digest of its text, the
+frames injected and the offsets they went in at. **No essay text is in that file
+and none may be** — it holds ids, digests, offsets and counts, which is what lets
+it live in the repository while the corpus does not. Each port checks every essay
+against its recorded digest before using an offset into it, because an offset
+into the wrong text produces a plausible number rather than an error.
+
+Like `frames.json`, the plan is an *input*: it says where to inject. What each
+port then measures from the resulting text is recovered from its own output.
 
 The harness reads a two-column TSV of `essay_id`/`essay`. Point
 `VICARY_EVAL_CORPUS_TSV` at the file, or `VICARY_EVAL_CORPUS_DIR` at a directory

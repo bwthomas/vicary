@@ -43,8 +43,17 @@ the census.gov 2010 surnames release, reporting 1.20% of US surname bearers, the
 same figure Python and TypeScript report from the same file. A `.zip` is refused
 by name rather than read as text: Ruby's standard library has no zip reader, and
 a binary read parsed as CSV yields zero rows — a *lower* exposure than the truth,
-and the wrong direction to fail in silently. The other three gates need an essay
-corpus no package here ships and stay `NOT MEASURED`.
+and the wrong direction to fail in silently.
+
+The last three need an essay corpus no package here ships, and this gem measures
+them once `VICARY_EVAL_CORPUS_TSV` points at one: 100% carrier recall (29/29
+held-out REDACT spans) and 0.60 over-fired spans per essay (15 across 25),
+identical to Python and TypeScript, plus its own latency p95 of 8.8–9.9 ms. **That
+last one is worth knowing about**: the bar is ≤ 10 ms, and this port runs nearest
+it of the three — roughly 4× Python — so the latency gate is a live constraint
+here rather than a formality. The carrier essays are built from offsets recorded
+in `conformance/carrier.json` rather than from a reimplementation of Python's
+RNG, and the suite asserts their sha256.
 
 The last two need the reference interpreter — run `just py-setup` from the
 repository root first.

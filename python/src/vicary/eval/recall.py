@@ -86,6 +86,13 @@ class Case:
     text: str
     base: str
     frames: tuple[Frame, ...]
+    #: Offsets into ``base`` where each frame in ``frames`` was inserted, in the
+    #: order they were applied — descending, so an earlier insertion cannot shift
+    #: a later one. Recorded rather than recomputed because this is the only part
+    #: of case building that consumes the RNG, and it is what
+    #: :mod:`vicary.eval.carrier` writes out so the other two ports can reproduce
+    #: the same carrier text without reimplementing Python's Mersenne Twister.
+    slots: tuple[int, ...] = ()
 
     @property
     def composite(self) -> Frame:
@@ -127,7 +134,75 @@ def build_cases(essays: list[tuple[str, str]], *, seed: int = 20260805,
         for frame, at in zip(picks, slots, strict=True):
             text = text[:at] + " " + frame.sentence + text[at:]
         cases.append(Case(essay_id=essay_id, text=text, base=base,
-                          frames=tuple(picks)))
+                          frames=tuple(picks), slots=tuple(slots)))
+    return cases
+
+
+def build_cases_from_plan(essays: list[tuple[str, str]],
+                          plan: dict,
+                          pool: tuple[Frame, ...] | None = None) -> list[Case]:
+    """The same cases, rebuilt from recorded slots rather than from the RNG.
+
+    This is the path every port shares. ``build_cases`` above consumes Python's
+    Mersenne Twister to choose where each frame lands, and reproducing that draw
+    in JavaScript and Ruby would mean reimplementing MT19937 and
+    ``random.sample`` three times over — a lot of code with nothing to do with
+    redaction, whose failure mode is silent: different slots make different
+    carrier text, and the gates simply report different numbers.
+
+    So the slots are recorded once, in ``conformance/carrier.json``, and read
+    back here. They are an *input* — where to inject — never an answer. Recall,
+    over-firing and latency are still measured by each port from its own output,
+    which is the distinction the spec already draws between carrying ``sentence``
+    and refusing to carry ``aligns``.
+
+    The essay each slot refers to is checked by digest, because an offset into
+    the wrong text is not an error anything downstream would notice.
+    """
+    import hashlib
+
+    by_id = {frame.frame_id: frame for frame in (pool or select_frames())}
+    planned = {entry["essay_id"]: entry for entry in plan["cases"]}
+    cases: list[Case] = []
+
+    for essay_id, base in essays:
+        entry = planned.get(essay_id)
+        if entry is None:
+            continue
+        digest = hashlib.sha256(base.encode("utf-8")).hexdigest()
+        if digest != entry["base_sha256"]:
+            raise ValueError(
+                f"essay {essay_id} in this corpus does not match the one the "
+                f"carrier plan was built from (sha256 {digest[:12]} vs "
+                f"{entry['base_sha256'][:12]}). The recorded offsets point into "
+                "different text, so every number downstream would be wrong "
+                "without being detectably wrong. Regenerate with "
+                "`python -m vicary.eval.carrier --write`."
+            )
+        picks = tuple(by_id[fid] for fid in entry["frames"])
+        text = base
+        for frame, at in zip(picks, entry["slots"], strict=True):
+            text = text[:at] + " " + frame.sentence + text[at:]
+        cases.append(Case(essay_id=essay_id, text=text, base=base,
+                          frames=picks, slots=tuple(entry["slots"])))
+
+    # Every planned essay, or none of them. A corpus that matches the plan only
+    # partly would measure a *subset* and report it under the same gate — and the
+    # degenerate case of matching nothing is worse than wrong, because
+    # over-firing and latency both then compute as 0.0, which in a `<=` gate is
+    # the most comfortable pass on the board. Refusing is the only outcome that
+    # cannot be mistaken for a green run.
+    if len(cases) != len(plan["cases"]):
+        found = {case.essay_id for case in cases}
+        missing = [e["essay_id"] for e in plan["cases"]
+                   if e["essay_id"] not in found]
+        raise ValueError(
+            f"the carrier plan names {len(plan['cases'])} essays and this "
+            f"corpus supplied {len(cases)} of them; missing "
+            f"{', '.join(missing[:5])}{' …' if len(missing) > 5 else ''}. "
+            "Refusing to measure a subset, because over-firing and latency on "
+            "an empty or partial set compute as 0.0 and read as a pass."
+        )
     return cases
 
 
@@ -407,6 +482,16 @@ def run(cases: list[Case], mode: str, sidecar: str, *,
                               relation_refusal=relation_refusal,
                               title_relation_refusal=title_relation_refusal)
     results: list[dict] = []
+    # Load the gazetteer before the clock starts. It is a one-time ~84 ms cost
+    # here and ~207 ms in Ruby, and whichever essay happens to be first pays all
+    # of it: at n=25 that single sample lands at or above p95 and sets the gate's
+    # answer by itself. The number the gate claims is essay-length redaction
+    # latency, not process startup, and leaving this in made the SAME code report
+    # 3.1 ms or 4.0 ms depending only on whether something earlier in the process
+    # had touched the asset. Excluded deliberately, and excluded identically in
+    # all three ports.
+    if cases:
+        redactor._apply(cases[0].base[:200], source=source)
     with open(sidecar, "a", encoding="utf-8") as fh:
         for case in cases:
             if (arm, case.essay_id) in done:

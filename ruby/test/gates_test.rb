@@ -166,6 +166,98 @@ class GatesTest < Minitest::Test
   end
 
   # -------------------------------------------------------------------------
+  # The corpus gates, when the operator supplies an essay corpus
+  # -------------------------------------------------------------------------
+
+  def self.corpus
+    return @corpus if defined?(@corpus)
+
+    @corpus = if Vicary::Corpus.corpus_source.empty?
+                nil
+              else
+                Vicary::Corpus.measure_from_config(spec) { |t, i| Vicary.redact(t, i) }
+              end
+  end
+
+  def skip_without_corpus
+    skip "no VICARY_EVAL_CORPUS_TSV; see ruby/lib/vicary/corpus.rb" if self.class.corpus.nil?
+  end
+
+  def test_the_carrier_essays_are_byte_identical_to_the_references
+    skip_without_corpus
+    # The load-bearing parity assertion. Every corpus gate is measured on this
+    # text, so if it diverges from Python's the three ports are answering
+    # different questions and agreeing on the numbers would prove nothing.
+    # Anchored on a digest rather than on the metrics, because the metrics can
+    # coincide across genuinely different inputs.
+    plan = Vicary::Corpus.load_carrier_plan
+    essays = Vicary::Corpus.load_set(Vicary::Corpus.corpus_source,
+                                     plan["corpus"]["essay_set"], plan["corpus"]["limit"])
+    cases = Vicary::Corpus.build_cases(essays, plan, self.class.spec)
+    assert_equal "78f6926fe5a358b118df7904ebd7dd3bd62cf7b22ddcec4dfaf43b311f0b72ef",
+                 Digest::SHA256.hexdigest(cases.map(&:text).join)
+  end
+
+  def test_the_corpus_gates_measure_what_the_reference_measures
+    skip_without_corpus
+    m = self.class.corpus
+    # Counts, not just percentages: 100% of a wrong denominator is still 100%.
+    assert_equal 25, m.essays
+    assert_equal 29, m.recall_held_out_passed
+    assert_equal 29, m.recall_held_out_total
+    assert_in_delta 100.0, m.recall_held_out, 1e-9
+    assert_equal 15, m.over_fire_spans_total
+    assert_in_delta 0.6, m.over_fire_spans_per_essay, 1e-9
+    assert_in_delta 0.0, m.asap_rewrites_per_essay, 1e-9
+  end
+
+  def test_latency_is_this_ports_own_and_is_not_asserted_against_the_references
+    skip_without_corpus
+    # The one corpus gate whose answer Python's number says nothing about. This
+    # port runs nearest the bar of the three, so the assertion is the bar itself
+    # rather than a figure — pinning it would make an ordinary CI machine fail a
+    # correctness suite for being busy.
+    m = self.class.corpus
+    assert_operator m.latency_p95_ms, :>, 0
+    assert_operator m.latency_p95_ms, :<=, 10.0,
+                    "latency p95 #{m.latency_p95_ms} ms exceeds the 10 ms bar"
+  end
+
+  def test_an_asap_anonymization_token_is_told_from_ordinary_prose
+    # The over-fire metric's whole meaning rests on this split.
+    ["@PERSON1", "@LOCATION2", "@CAPS", " @ORGANIZATION3 "].each do |token|
+      assert Vicary::Corpus.asap_token?(token), token
+    end
+    ["@", "@person1", "Mr. Okonkwo", "@PERSON1 and more"].each do |prose|
+      refute Vicary::Corpus.asap_token?(prose), prose
+    end
+  end
+
+  def test_a_corpus_essay_that_does_not_match_the_plan_is_refused
+    # An offset into the wrong text is not an error anything downstream notices;
+    # it produces a plausible number from text nobody intended.
+    plan = { "cases" => [{ "essay_id" => "1", "base_sha256" => "0" * 64,
+                           "frames" => [], "slots" => [] }] }
+    error = assert_raises(Vicary::Conformance::SpecError) do
+      Vicary::Corpus.build_cases([["1", "some other essay"]], plan, self.class.spec)
+    end
+    assert_match(/does not match the one the carrier plan was built from/, error.message)
+  end
+
+  def test_a_corpus_that_supplies_only_some_of_the_planned_essays_is_refused
+    # Caught in review by pointing the harness at a one-essay TSV: it built zero
+    # cases, and over-firing and latency then computed as 0.0 — which in a `<=`
+    # gate is the most comfortable pass on the board. Two gates went green on no
+    # data at all. A subset must be refused, not averaged.
+    plan = Vicary::Corpus.load_carrier_plan
+    error = assert_raises(Vicary::Conformance::SpecError) do
+      Vicary::Corpus.build_cases([["not-a-planned-id", "some other essay"]], plan,
+                                 self.class.spec)
+    end
+    assert_match(/Refusing to measure a subset/, error.message)
+  end
+
+  # -------------------------------------------------------------------------
   # The census reader's guards — these need no census file
   # -------------------------------------------------------------------------
 

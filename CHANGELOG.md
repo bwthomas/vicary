@@ -2,6 +2,49 @@
 
 ## Unreleased
 
+### All three ports measure all nine gates
+
+* **The three corpus gates were Python's alone; now every port measures them.**
+  TypeScript and Ruby had no corpus machinery at all. Both now load the operator's
+  corpus, rebuild the carrier essays, and measure held-out carrier recall,
+  over-firing on real prose and their own latency. With both data files
+  configured every port reports **9 of 9 holding**.
+* **They agree on the two gates that are properties of the detector, exactly**:
+  100% carrier recall (29/29 held-out REDACT spans) and 0.60 over-fired spans per
+  essay (15 across 25) in all three.
+* **They differ on the one that is a property of the language, which is the point
+  of porting it.** Latency p95: TypeScript 2.1–2.6 ms, Python 4.0–4.2 ms, **Ruby
+  8.8–9.9 ms against a ≤ 10 ms bar**. Python's number said nothing about Ruby's,
+  and Ruby turns out to run nearest the bar by a wide margin — a live constraint
+  on that port rather than a formality.
+* **`conformance/carrier.json` records where each frame is injected**, so three
+  languages build byte-identical carrier text without three copies of MT19937.
+  Each port asserts the sha256 of the 25 injected essays, which is the assertion
+  that makes the agreement mean anything: injecting the same frames at different
+  offsets still yields 29/29 and 15 spans, so the metrics alone would not have
+  caught it. The file carries ids, digests, offsets and counts — never essay
+  text — and every port verifies an essay against its digest before using an
+  offset into it.
+* **The one-time asset load is now excluded from latency in all three ports.**
+  Loading 360,793 entries costs ~84 ms in Python and ~207 ms in Ruby, and
+  whichever essay ran first paid all of it; at n=25 that one sample sits at or
+  above p95 and set the gate's answer by itself. The same Python code reported
+  3.1 ms or 4.0 ms depending only on whether something earlier in the process had
+  touched the asset. Ruby read 14.3 ms cold against its 10 ms bar and 7.6 ms warm.
+* **A corpus that matches the plan only partly is refused, not measured.** Found
+  by pointing the harness at a one-essay TSV: it built zero cases and reported
+  over-firing and latency as **0.0**, which in a `<=` gate is the most
+  comfortable pass on the board — two gates went green on no data at all, and the
+  scoreboard said "7 of 8 hold". All three ports now require every planned essay
+  or none, and say which are missing.
+* **The ASAP-token split in the over-fire metric is currently inert, and now says
+  so.** The 25 gate essays carry 713 `@`-tokens, 28.5 per essay, and the redactor
+  rewrites none of them; deleting the split changes no gate number. The docstring
+  claiming the `{USERNAME}` pattern "does exactly that to every `@`-token in the
+  corpus, at ~22 per essay" was stale. It stays, because the leg it guards is one
+  pattern change from returning — but a green suite no longer implies it is
+  load-bearing.
+
 ### All nine gates measured at once, and what the corpus three actually sit on
 
 * **The three corpus gates now have their envelope recorded**, having been run

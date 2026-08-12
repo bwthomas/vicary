@@ -99,16 +99,19 @@ lint:
 #   export VICARY_EVAL_CORPUS_DIR=/path/to/corpus   # holds one .tsv
 #   export VICARY_EVAL_CENSUS_CSV=/path/to/names.zip
 #
-# The census file takes every port from five of nine to six. Python reads the
-# .zip or the extracted .csv; TypeScript and Ruby read the .csv only and refuse a
-# .zip by name, so extract Names_2010Census.csv out of it to satisfy all three at
-# once. Nothing here reaches the corpus gates.
+# The census file takes every port from five of nine to six, and the corpus
+# takes it to nine. Python reads the .zip or the extracted .csv; TypeScript and
+# Ruby read the .csv only and refuse a .zip by name, so extract
+# Names_2010Census.csv out of it to satisfy all three at once.
 #
-# Every port that can measure, not just the reference. Python measures all nine
-# when the data is present; the two ports measure the five that need none of it
-# plus the census gate when it is configured, and each recovers its own numbers
-# rather than reading Python's out of the spec — which is the only version of this
-# that is evidence. Absent languages are skipped out loud, never silently.
+# Every port that can measure, not just the reference — all three now measure all
+# nine when both files are configured, and each recovers its own numbers rather
+# than reading Python's out of the spec, which is the only version of this that is
+# evidence. The one thing they share is conformance/carrier.json, which records
+# WHERE each frame is injected into each essay so three languages build the same
+# carrier text without three copies of Python's Mersenne Twister. That is an
+# input, like frames.json; the measurements stay each port's own. Absent
+# languages are skipped out loud, never silently.
 gates:
     @just py-gates
     @if [ -f typescript/package.json ]; then cd typescript && npm run gates; \
@@ -136,6 +139,12 @@ py-conformance:
 # regression all three front doors are about to inherit.
 sync-conformance:
     cd python && .venv/bin/python -m vicary.eval.conformance --write
+    @# carrier.json needs the corpus, so it is regenerated only when one is
+    @# configured. Left alone otherwise — an absent corpus must not silently
+    @# rewrite the plan the committed gate numbers were measured against.
+    @if [ -n "${VICARY_EVAL_CORPUS_TSV:-}${VICARY_EVAL_CORPUS_DIR:-}" ]; then \
+      cd python && .venv/bin/python -m vicary.eval.carrier --write; \
+    else echo "SKIPPED carrier.json — no VICARY_EVAL_CORPUS_TSV/_DIR set"; fi
     @git --no-pager diff --stat -- conformance/ || true
 
 # A missing spec must stop the run. Otherwise `just conformance` on a tree with

@@ -35,6 +35,11 @@ import {
   measureExposure,
   rate,
 } from "../src/census.js";
+import {
+  corpusSource,
+  measureFromConfig,
+  type CorpusMetrics,
+} from "../src/corpus.js";
 import { load } from "../src/gazetteer.js";
 import { measureGates, reportGates } from "../src/gates.js";
 import { redact, redactWithReport, restore } from "../src/redact.js";
@@ -73,12 +78,39 @@ const bareSurnameExposure = ((): number | undefined => {
   }
 })();
 
+/**
+ * The three corpus gates, measured when the operator has supplied an essay
+ * corpus. Swallowed on failure for the same reason the census read is: a
+ * mis-configured corpus should cost this run three NOT MEASURED gates, not the
+ * whole scoreboard.
+ */
+const corpus = ((): CorpusMetrics | null => {
+  if (corpusSource() === "") return null;
+  try {
+    return measureFromConfig(
+      spec,
+      (text: string, identity: Identity) => redact(text, identity),
+      spec.identity,
+    );
+  } catch (error) {
+    console.log(`  corpus unreadable, 3 gates stay NOT MEASURED: ${error}`);
+    return null;
+  }
+})();
+
 const gateReport = measureGates(
   spec,
   gates,
   (sentence: string, identity: Identity) => redact(sentence, identity),
   {
     assetEntries: load().entryCount,
+    ...(corpus === null
+      ? {}
+      : {
+          heldOutRecallCarrier: corpus.recallHeldOut,
+          overFirePerEssay: corpus.overFireSpansPerEssay,
+          latencyP95Ms: corpus.latencyP95Ms,
+        }),
     // Spread rather than passed as `undefined`: `exactOptionalPropertyTypes`
     // distinguishes "absent" from "present and undefined", and absent is what an
     // unsupplied census file means.

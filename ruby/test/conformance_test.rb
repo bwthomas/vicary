@@ -61,10 +61,28 @@ class ConformanceTest < Minitest::Test
     end
   end
 
+  # The three corpus gates, measured when the operator has supplied an essay
+  # corpus. Rescued for the same reason the census read is: a mis-configured
+  # corpus should cost this run three NOT MEASURED gates, not the whole
+  # scoreboard.
+  def self.corpus_metrics
+    return @corpus_metrics if defined?(@corpus_metrics)
+
+    @corpus_metrics = begin
+      Vicary::Corpus.measure_from_config(spec) { |t, i| Vicary.redact(t, i) }
+    rescue StandardError => e
+      puts "  corpus unreadable, 3 gates stay NOT MEASURED: #{e.message}"
+      nil
+    end
+  end
+
   def self.gate_report
     @gate_report ||= Vicary::Gates.measure(
       spec, gates, asset_entries: Vicary::Gazetteer.load.entry_count,
-                   bare_surname_exposure: bare_surname_exposure
+                   bare_surname_exposure: bare_surname_exposure,
+                   held_out_recall_carrier: corpus_metrics&.recall_held_out,
+                   over_fire_per_essay: corpus_metrics&.over_fire_spans_per_essay,
+                   latency_p95_ms: corpus_metrics&.latency_p95_ms
     ) { |sentence, identity| Vicary.redact(sentence, identity) }
   end
 

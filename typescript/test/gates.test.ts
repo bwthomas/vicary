@@ -13,6 +13,7 @@
  */
 
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { test } from "node:test";
 
 import {
@@ -23,6 +24,14 @@ import {
   rate,
 } from "../src/census.js";
 import { loadGates, loadSpec, type Identity } from "../src/conformance.js";
+import {
+  buildCases,
+  corpusSource,
+  isAsapToken,
+  loadCarrierPlan,
+  loadSet,
+  measureFromConfig,
+} from "../src/corpus.js";
 import { load } from "../src/gazetteer.js";
 import {
   ACCEPTED_VIOLATIONS,
@@ -165,6 +174,105 @@ test(
     ]);
   },
 );
+
+// ---------------------------------------------------------------------------
+// The corpus gates, when the operator supplies an essay corpus
+// ---------------------------------------------------------------------------
+
+const corpus =
+  corpusSource() === ""
+    ? null
+    : measureFromConfig(
+        spec,
+        (text: string, identity: Identity) => redact(text, identity),
+        spec.identity,
+      );
+const noCorpus = "no VICARY_EVAL_CORPUS_TSV; see typescript/src/corpus.ts";
+
+test(
+  "the carrier essays are byte-identical to the reference's",
+  { skip: corpus === null ? noCorpus : false },
+  () => {
+    // The load-bearing parity assertion. Every corpus gate is measured on this
+    // text, so if it diverges from Python's the three ports are answering
+    // different questions and agreeing on the numbers would prove nothing.
+    // Anchored on a digest rather than on the metrics, because the metrics can
+    // coincide across genuinely different inputs.
+    const plan = loadCarrierPlan();
+    const essays = loadSet(corpusSource(), plan.essaySet, plan.limit);
+    const cases = buildCases(essays, plan, spec);
+    const digest = createHash("sha256")
+      .update(cases.map((c) => c.text).join(""), "utf8")
+      .digest("hex");
+    assert.equal(
+      digest,
+      "78f6926fe5a358b118df7904ebd7dd3bd62cf7b22ddcec4dfaf43b311f0b72ef",
+    );
+  },
+);
+
+test(
+  "the corpus gates measure what the reference measures",
+  { skip: corpus === null ? noCorpus : false },
+  () => {
+    // Counts, not just percentages: 100% of a wrong denominator is still 100%.
+    assert.equal(corpus!.essays, 25);
+    assert.equal(corpus!.recallHeldOutPassed, 29);
+    assert.equal(corpus!.recallHeldOutTotal, 29);
+    assert.equal(corpus!.recallHeldOut, 100);
+    assert.equal(corpus!.overFireSpansTotal, 15);
+    assert.equal(corpus!.overFireSpansPerEssay, 0.6);
+    assert.equal(corpus!.asapRewritesPerEssay, 0);
+  },
+);
+
+test(
+  "latency is this port's own, and is not asserted against the reference's",
+  { skip: corpus === null ? noCorpus : false },
+  () => {
+    // The one corpus gate whose answer Python's number says nothing about.
+    // Asserted against the bar alone — pinning it to a figure would make an
+    // ordinary CI machine fail a correctness suite for being busy.
+    assert.ok(corpus!.latencyP95Ms > 0);
+    assert.ok(
+      corpus!.latencyP95Ms <= 10,
+      `latency p95 ${corpus!.latencyP95Ms} ms exceeds the 10 ms bar`,
+    );
+  },
+);
+
+test("a corpus that supplies only some of the planned essays is refused", () => {
+  // Caught in review by pointing the harness at a one-essay TSV: it built zero
+  // cases, and over-firing and latency then computed as 0 — which in a `<=`
+  // gate is the most comfortable pass on the board. Two gates went green on no
+  // data at all. A subset must be refused, not averaged.
+  const plan = loadCarrierPlan();
+  assert.throws(
+    () => buildCases([["not-a-planned-id", "some other essay"]], plan, spec),
+    /Refusing to measure a subset/,
+  );
+});
+
+test("a corpus essay that does not match the plan is refused", () => {
+  // An offset into the wrong text is not an error anything downstream notices;
+  // it produces a plausible number from text nobody intended.
+  const plan = loadCarrierPlan();
+  const first = plan.cases[0]!;
+  assert.throws(
+    () => buildCases([[first.essayId, "a different essay entirely"]], plan, spec),
+    /does not match the one the carrier plan was built from/,
+  );
+});
+
+test("an ASAP anonymization token is told from ordinary prose", () => {
+  // The over-fire metric's whole meaning rests on this split.
+  for (const token of ["@PERSON1", "@LOCATION2", "@CAPS", " @ORGANIZATION3 "]) {
+    assert.ok(isAsapToken(token), token);
+  }
+  for (const prose of ["@", "@person1", "Mr. Okonkwo", "@PERSON1 and more"]) {
+    assert.ok(!isAsapToken(prose), prose);
+  }
+});
 
 // ---------------------------------------------------------------------------
 // The census reader's guards — these need no census file

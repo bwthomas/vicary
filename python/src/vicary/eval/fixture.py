@@ -946,14 +946,20 @@ def align(original: str, masked: str) -> Alignment:
 def is_asap_token(region: str) -> bool:
     """True when a masked region was one of ASAP's own anonymization tokens.
 
-    Load-bearing for the over-firing metric, because the two legs it separates
-    have nothing to do with each other. Masking genuine prose is a precision
-    defect. Masking ``@PERSON1`` is not — the PII is already gone — but it does
-    rewrite a token a model trained on the corpus has *seen* into one it has not,
-    at ~22 per essay, and the current ``{USERNAME}`` pattern does exactly that
-    to every ``@``-token in the corpus. Averaged together the two look like one
-    catastrophic precision failure; separated, one is zero and the other is a
-    replay confound.
+    Separates the two legs of the over-firing metric, which have nothing to do
+    with each other. Masking genuine prose is a precision defect. Masking
+    ``@PERSON1`` is not — the PII is already gone — but it does rewrite a token a
+    model trained on the corpus has *seen* into one it has not. Averaged together
+    the two read as one catastrophic precision failure.
+
+    **Currently inert on the gate corpus, and measured to be** (2026-08-12): the
+    25 set-8 essays carry 713 ``@``-tokens, 28.5 per essay, and the redactor
+    rewrites **none** of them. The ``{USERNAME}`` pattern this docstring used to
+    say "does exactly that to every ``@``-token in the corpus, at ~22 per essay"
+    no longer fires on them. Deleting the split changes no gate number today,
+    which is exactly why it is worth saying so here rather than letting the next
+    reader infer from a green suite that the separation is load-bearing. It stays
+    because the leg it guards against is one pattern change away from returning.
     """
     return bool(_ASAP_TOKEN_RE.match(region.strip()))
 

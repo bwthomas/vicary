@@ -1,0 +1,411 @@
+/**
+ * The three gates that need an essay corpus, measured by this port.
+ *
+ * Held-out recall in a carrier essay, over-firing on real prose, and latency at
+ * essay length cannot be measured on isolated sentences. They need fixture
+ * frames planted inside genuine student prose — and the prose is a corpus no
+ * package here ships, so all three stay NOT MEASURED until an operator points
+ * `VICARY_EVAL_CORPUS_TSV` at one.
+ *
+ * **Where the carrier text comes from.** Everything about building it is
+ * deterministic except which sentence ends the frames land on, which the Python
+ * reference draws from its Mersenne Twister. Rather than reimplement MT19937 and
+ * `random.sample` here — several hundred lines with nothing to do with
+ * redaction, whose failure mode is silent — the draw is recorded once in
+ * `conformance/carrier.json` and read back. The plan is an *input*, exactly as
+ * `frames.json` is: it says where to inject. What this port then measures from
+ * the resulting text is recovered from its own output, never read from the spec.
+ *
+ * **Why the digest check is not paranoia.** An offset into the wrong essay is
+ * not an error anything downstream notices; it produces a plausible number from
+ * text nobody intended. So each essay is checked against the digest the plan was
+ * built from, and a mismatch raises rather than measuring.
+ */
+
+import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { join } from "node:path";
+
+import {
+  conformanceDir,
+  type Identity,
+  type Spec,
+  type SpecFrame,
+} from "./conformance.js";
+import { align, scoreSpans, type SpanOutcome } from "./gates.js";
+
+/** Where the operator's corpus TSV is configured. Both names, as Python reads. */
+export const EVAL_CORPUS_TSV_ENV_VAR = "VICARY_EVAL_CORPUS_TSV";
+export const EVAL_CORPUS_DIR_ENV_VAR = "VICARY_EVAL_CORPUS_DIR";
+
+/** Preferred filename inside the directory form. */
+export const EVAL_CORPUS_PREFERRED_FILENAME = "corpus.tsv";
+
+const CARRIER_FILENAME = "carrier.json";
+
+/** Bumped when a field's meaning changes. An unknown version is refused. */
+const CARRIER_DOCUMENT_VERSION = 1;
+
+/**
+ * One of ASAP's own anonymization tokens — `@PERSON1`, `@LOCATION2`.
+ *
+ * Load-bearing for the over-fire metric, because the two legs it separates are
+ * unrelated. Masking genuine prose is a precision defect; masking `@PERSON1` is
+ * not, since the PII is already gone. Summed they read as one catastrophic
+ * precision failure while the prose leg is zero.
+ */
+const ASAP_TOKEN_RE = /^@[A-Z]+\d*$/;
+
+export function isAsapToken(region: string): boolean {
+  return ASAP_TOKEN_RE.test(region.trim());
+}
+
+// ---------------------------------------------------------------------------
+// The corpus
+// ---------------------------------------------------------------------------
+
+/** Configured path to the corpus TSV, or `""`. */
+export function corpusSource(): string {
+  const explicit = (process.env[EVAL_CORPUS_TSV_ENV_VAR] ?? "").trim();
+  if (explicit !== "") return explicit;
+  const directory = (process.env[EVAL_CORPUS_DIR_ENV_VAR] ?? "").trim();
+  if (directory === "") return "";
+  return join(directory, EVAL_CORPUS_PREFERRED_FILENAME);
+}
+
+/**
+ * `[essayId, text]` for the first `limit` essays of the named set, in file
+ * order.
+ *
+ * **Decoded as latin-1, matching the reference.** ASAP-AES is not UTF-8, and
+ * decoding it as UTF-8 either throws or substitutes replacement characters —
+ * either way the text diverges from Python's, the digests stop matching, and
+ * every offset in the plan points somewhere slightly wrong.
+ */
+export function loadSet(
+  tsv: string,
+  essaySet: string,
+  limit: number,
+): Array<[string, string]> {
+  // latin-1 is a byte-for-byte map onto the first 256 code points, so this
+  // decode is exact rather than best-effort.
+  const rows = parseDelimited(readFileSync(tsv, "latin1"), "\t", limit, essaySet);
+  return rows;
+}
+
+/**
+ * Read the TSV the way Python's `csv` module does, because splitting on tabs
+ * and newlines does not.
+ *
+ * ASAP essays contain `"` characters, and some records span more than one
+ * physical line inside a quoted field — 12,980 lines for 12,976 records. A naive
+ * split silently truncates those essays mid-sentence, which changes their
+ * digests and moves every gate that reads them. Quoting rules are RFC4180 as
+ * Python implements them: a quote opens a field only at its start, `""` inside
+ * one is a literal quote, and anything after the closing quote is taken
+ * literally.
+ *
+ * Stops as soon as `limit` matching rows are found, so this walks only as far
+ * into a 16 MB file as it has to.
+ */
+function parseDelimited(
+  text: string,
+  delimiter: string,
+  limit: number,
+  essaySet: string,
+): Array<[string, string]> {
+  const out: Array<[string, string]> = [];
+  let header: string[] | null = null;
+  let setAt = -1;
+  let idAt = -1;
+  let essayAt = -1;
+
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  let i = 0;
+
+  const endRow = (): boolean => {
+    row.push(field);
+    field = "";
+    const finished = row;
+    row = [];
+    if (header === null) {
+      header = finished;
+      setAt = header.indexOf("essay_set");
+      idAt = header.indexOf("essay_id");
+      essayAt = header.indexOf("essay");
+      if (setAt === -1 || idAt === -1 || essayAt === -1) {
+        throw new Error(
+          "corpus has no essay_set/essay_id/essay header; got " +
+            header.join(","),
+        );
+      }
+      return false;
+    }
+    if (finished.length === 1 && finished[0] === "") return false; // blank line
+    if (finished[setAt] !== essaySet) return false;
+    out.push([finished[idAt] ?? "", finished[essayAt] ?? ""]);
+    return out.length >= limit;
+  };
+
+  while (i < text.length) {
+    const ch = text[i]!;
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i += 2;
+          continue;
+        }
+        inQuotes = false;
+        i += 1;
+        continue;
+      }
+      field += ch;
+      i += 1;
+      continue;
+    }
+    if (ch === '"' && field === "") {
+      inQuotes = true;
+      i += 1;
+      continue;
+    }
+    if (ch === delimiter) {
+      row.push(field);
+      field = "";
+      i += 1;
+      continue;
+    }
+    if (ch === "\r" || ch === "\n") {
+      if (ch === "\r" && text[i + 1] === "\n") i += 1;
+      i += 1;
+      if (endRow()) return out;
+      continue;
+    }
+    field += ch;
+    i += 1;
+  }
+  if (field !== "" || row.length > 0) endRow();
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// The carrier plan
+// ---------------------------------------------------------------------------
+
+export interface CarrierCase {
+  essayId: string;
+  baseSha256: string;
+  baseChars: number;
+  frames: string[];
+  slots: number[];
+}
+
+export interface CarrierPlan {
+  essaySet: string;
+  limit: number;
+  perEssay: number;
+  cases: CarrierCase[];
+}
+
+export function loadCarrierPlan(directory?: string): CarrierPlan {
+  const dir = directory ?? conformanceDir();
+  const raw = JSON.parse(readFileSync(join(dir, CARRIER_FILENAME), "utf8"));
+  if (raw.document_version !== CARRIER_DOCUMENT_VERSION) {
+    throw new Error(
+      `${CARRIER_FILENAME} is document_version ${raw.document_version}, and ` +
+        `this reader knows ${CARRIER_DOCUMENT_VERSION}. Refusing rather than ` +
+        "reading the fields it recognises, because a partly-read plan produces " +
+        "carrier text that is wrong without being detectably wrong.",
+    );
+  }
+  return {
+    essaySet: raw.corpus.essay_set as string,
+    limit: raw.corpus.limit as number,
+    perEssay: raw.per_essay as number,
+    cases: (raw.cases as Array<Record<string, unknown>>).map((c) => ({
+      essayId: c["essay_id"] as string,
+      baseSha256: c["base_sha256"] as string,
+      baseChars: c["base_chars"] as number,
+      frames: c["frames"] as string[],
+      slots: c["slots"] as number[],
+    })),
+  };
+}
+
+/** One injected essay plus the ground truth of what went into it. */
+export interface Case {
+  essayId: string;
+  /** The essay with the frames injected. */
+  text: string;
+  /** The essay as the corpus holds it, for the over-fire leg. */
+  base: string;
+  frames: SpecFrame[];
+}
+
+/**
+ * Rebuild the carrier essays from the plan.
+ *
+ * Slots are applied in the order recorded — descending — so an earlier insertion
+ * cannot shift a later one.
+ */
+export function buildCases(
+  essays: Array<[string, string]>,
+  plan: CarrierPlan,
+  spec: Spec,
+): Case[] {
+  const byId = new Map(spec.frames.map((f) => [f.frameId, f]));
+  const planned = new Map(plan.cases.map((c) => [c.essayId, c]));
+  const cases: Case[] = [];
+
+  for (const [essayId, base] of essays) {
+    const entry = planned.get(essayId);
+    if (entry === undefined) continue;
+    const digest = createHash("sha256").update(base, "utf8").digest("hex");
+    if (digest !== entry.baseSha256) {
+      throw new Error(
+        `essay ${essayId} in this corpus does not match the one the carrier ` +
+          `plan was built from (sha256 ${digest.slice(0, 12)} vs ` +
+          `${entry.baseSha256.slice(0, 12)}). The recorded offsets point into ` +
+          "different text, so every number downstream would be wrong without " +
+          "being detectably wrong.",
+      );
+    }
+    const picks = entry.frames.map((id) => {
+      const frame = byId.get(id);
+      if (frame === undefined) {
+        throw new Error(`carrier plan names frame ${id}, absent from the spec`);
+      }
+      return frame;
+    });
+    let text = base;
+    picks.forEach((frame, i) => {
+      const at = entry.slots[i]!;
+      text = text.slice(0, at) + " " + frame.sentence + text.slice(at);
+    });
+    cases.push({ essayId, text, base, frames: picks });
+  }
+
+  // Every planned essay, or none of them. A corpus that matches the plan only
+  // partly would measure a *subset* and report it under the same gate — and the
+  // degenerate case of matching nothing is worse than wrong, because over-firing
+  // and latency both then compute as 0, which in a `<=` gate is the most
+  // comfortable pass on the board. Refusing is the only outcome that cannot be
+  // mistaken for a green run.
+  if (cases.length !== plan.cases.length) {
+    const found = new Set(cases.map((c) => c.essayId));
+    const missing = plan.cases
+      .filter((c) => !found.has(c.essayId))
+      .map((c) => c.essayId);
+    throw new Error(
+      `the carrier plan names ${plan.cases.length} essays and this corpus ` +
+        `supplied ${cases.length} of them; missing ${missing.slice(0, 5).join(", ")}` +
+        `${missing.length > 5 ? " …" : ""}. Refusing to measure a subset, ` +
+        "because over-firing and latency on an empty or partial set compute as " +
+        "0 and read as a pass.",
+    );
+  }
+  return cases;
+}
+
+// ---------------------------------------------------------------------------
+// The measurement
+// ---------------------------------------------------------------------------
+
+export interface CorpusMetrics {
+  essays: number;
+  /** Held-out REDACT spans masked, as a percentage. */
+  recallHeldOut: number;
+  recallHeldOutPassed: number;
+  recallHeldOutTotal: number;
+  /** Spans this port masked in prose nobody planted anything in, per essay. */
+  overFireSpansPerEssay: number;
+  overFireSpansTotal: number;
+  /** ASAP's own `@`-tokens rewritten, per essay. Not a defect; reported apart. */
+  asapRewritesPerEssay: number;
+  latencyP50Ms: number;
+  latencyP95Ms: number;
+}
+
+/**
+ * Measure the three corpus gates.
+ *
+ * Each essay is redacted twice — once with the frames injected, to score recall,
+ * and once bare, to see what the redactor does to prose with nothing planted in
+ * it. The bare pass is where over-firing comes from, and it is why the metric
+ * means anything: the frames cannot contaminate it.
+ */
+export function measureCorpus(
+  cases: Case[],
+  redact: (text: string, identity: Identity) => string,
+  identity: Identity,
+): CorpusMetrics {
+  const outcomes: SpanOutcome[] = [];
+  const latencies: number[] = [];
+  let overFireSpans = 0;
+  let asapRewrites = 0;
+
+  // Load the gazetteer before the clock starts. It is a one-time cost — ~84 ms
+  // in Python, ~207 ms in Ruby — and whichever essay happens to be first pays
+  // all of it: at n=25 that single sample lands at or above p95 and sets the
+  // gate's answer by itself. The number the gate claims is essay-length
+  // redaction latency, not process startup, and leaving this in made the same
+  // code report different figures depending only on whether something earlier
+  // in the process had touched the asset. Excluded in all three ports alike.
+  if (cases.length > 0) redact(cases[0]!.base.slice(0, 200), identity);
+
+  for (const testCase of cases) {
+    const started = performance.now();
+    const masked = redact(testCase.text, identity);
+    latencies.push(performance.now() - started);
+
+    for (const frame of testCase.frames) {
+      outcomes.push(...scoreSpans(frame, masked));
+    }
+
+    const maskedBase = redact(testCase.base, identity);
+    const pairs = align(testCase.base, maskedBase).pairs;
+    const prose = pairs.filter(([, region]) => !isAsapToken(region));
+    overFireSpans += prose.length;
+    asapRewrites += pairs.length - prose.length;
+  }
+
+  const heldOutRedact = outcomes.filter(
+    (o) => o.heldOut && o.verdict !== "keep",
+  );
+  const passed = heldOutRedact.filter((o) => o.passed).length;
+  const sorted = [...latencies].sort((a, b) => a - b);
+  const at = (q: number): number =>
+    sorted.length === 0
+      ? 0
+      : sorted[Math.min(Math.floor(sorted.length * q), sorted.length - 1)]!;
+
+  return {
+    essays: cases.length,
+    recallHeldOut:
+      heldOutRedact.length === 0 ? 0 : (100.0 * passed) / heldOutRedact.length,
+    recallHeldOutPassed: passed,
+    recallHeldOutTotal: heldOutRedact.length,
+    overFireSpansPerEssay:
+      cases.length === 0 ? 0 : overFireSpans / cases.length,
+    overFireSpansTotal: overFireSpans,
+    asapRewritesPerEssay: cases.length === 0 ? 0 : asapRewrites / cases.length,
+    latencyP50Ms: at(0.5),
+    latencyP95Ms: at(0.95),
+  };
+}
+
+/** Load the corpus, rebuild the carriers, and measure. `null` with no corpus. */
+export function measureFromConfig(
+  spec: Spec,
+  redact: (text: string, identity: Identity) => string,
+  identity: Identity,
+): CorpusMetrics | null {
+  const tsv = corpusSource();
+  if (tsv === "") return null;
+  const plan = loadCarrierPlan();
+  const essays = loadSet(tsv, plan.essaySet, plan.limit);
+  if (essays.length === 0) return null;
+  return measureCorpus(buildCases(essays, plan, spec), redact, identity);
+}

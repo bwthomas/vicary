@@ -55,7 +55,15 @@ library has no zip reader, and a binary read parsed as CSV yields zero rows —
 a *lower* exposure than the truth, and the wrong direction to fail in silently.
 
 The remaining three — held-out recall (carrier), over-fire on prose, latency p95
-— need an essay corpus no package here ships. They print `NOT MEASURED` per gate
-rather than being reduced out of the denominator: **six of nine held is a
+— need an essay corpus no package here ships, and this port measures them too
+once `VICARY_EVAL_CORPUS_TSV` points at one: 100% carrier recall (29/29 held-out
+REDACT spans), 0.60 over-fired spans per essay (15 across 25 essays) — both
+identical to Python and Ruby — and 2.1–2.6 ms latency p95, which is this port's
+own and the fastest of the three. Without a corpus they print `NOT MEASURED` per
+gate rather than being reduced out of the denominator: **six of nine held is a
 different statement from nine of nine**, and a badge cannot tell them apart.
-Supply `VICARY_EVAL_CORPUS_TSV` and run the Python harness to measure those.
+
+The carrier essays are built from offsets recorded in `conformance/carrier.json`
+rather than from a reimplementation of Python's RNG, and the suite asserts their
+sha256 — so agreeing with the reference on a number means agreeing about the
+redactor, not about three different inputs that happened to score alike.

@@ -412,7 +412,13 @@ export function measureGates(
   spec: Spec,
   gateSpec: GateSpec,
   redact: (sentence: string, identity: Identity) => string,
-  options: { assetEntries?: number; bareSurnameExposure?: number } = {},
+  options: {
+    assetEntries?: number;
+    bareSurnameExposure?: number;
+    heldOutRecallCarrier?: number;
+    overFirePerEssay?: number;
+    latencyP95Ms?: number;
+  } = {},
 ): GateReport {
   const outcomes: SpanOutcome[] = [];
   const violations: Violation[] = [];
@@ -484,6 +490,27 @@ export function measureGates(
         options.bareSurnameExposure === undefined
           ? "no census file supplied by the caller"
           : `${round3(options.bareSurnameExposure)}% of US surname bearers`,
+    },
+    held_out_recall_carrier: {
+      value: options.heldOutRecallCarrier ?? null,
+      detail:
+        options.heldOutRecallCarrier === undefined
+          ? "no corpus supplied by the caller"
+          : `${round3(options.heldOutRecallCarrier)}% of held-out REDACT spans in carrier essays`,
+    },
+    over_fire_prose: {
+      value: options.overFirePerEssay ?? null,
+      detail:
+        options.overFirePerEssay === undefined
+          ? "no corpus supplied by the caller"
+          : `${round3(options.overFirePerEssay)} spans masked per essay of un-injected prose`,
+    },
+    latency_p95: {
+      value: options.latencyP95Ms ?? null,
+      detail:
+        options.latencyP95Ms === undefined
+          ? "no corpus supplied by the caller"
+          : `${round3(options.latencyP95Ms)} ms at essay length, one-time asset load excluded`,
     },
   };
 

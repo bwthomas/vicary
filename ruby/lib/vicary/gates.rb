@@ -285,7 +285,9 @@ module Vicary
       # read here so this module stays free of the gazetteer and the filesystem —
       # a caller that wants those gates supplies the number, and one that does
       # not gets NOT MEASURED rather than a load.
-      def measure(spec, gate_spec, asset_entries: nil, bare_surname_exposure: nil)
+      def measure(spec, gate_spec, asset_entries: nil, bare_surname_exposure: nil,
+                  held_out_recall_carrier: nil, over_fire_per_essay: nil,
+                  latency_p95_ms: nil)
         outcomes = []
         violations = []
         round_tripped = 0
@@ -336,6 +338,7 @@ module Vicary
         # requirement — never from anything derived from the fixture, because
         # computing something else and calling it that gate is the more dangerous
         # failure. Two hashes make that structural rather than a rule to remember.
+        no_corpus = "no corpus supplied by the caller"
         supplied = {
           "bare_surname_exposure" => {
             value: bare_surname_exposure,
@@ -343,6 +346,30 @@ module Vicary
                       "no census file supplied by the caller"
                     else
                       "#{round3(bare_surname_exposure)}% of US surname bearers"
+                    end,
+          },
+          "held_out_recall_carrier" => {
+            value: held_out_recall_carrier,
+            detail: if held_out_recall_carrier.nil?
+                      no_corpus
+                    else
+                      "#{round3(held_out_recall_carrier)}% of held-out REDACT spans in carrier essays"
+                    end,
+          },
+          "over_fire_prose" => {
+            value: over_fire_per_essay,
+            detail: if over_fire_per_essay.nil?
+                      no_corpus
+                    else
+                      "#{round3(over_fire_per_essay)} spans masked per essay of un-injected prose"
+                    end,
+          },
+          "latency_p95" => {
+            value: latency_p95_ms,
+            detail: if latency_p95_ms.nil?
+                      no_corpus
+                    else
+                      "#{round3(latency_p95_ms)} ms at essay length, one-time asset load excluded"
                     end,
           },
         }

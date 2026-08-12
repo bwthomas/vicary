@@ -30,11 +30,12 @@ import statistics
 import pytest
 
 from vicary import DEFAULT_NAME_DETECTION, config, gazetteer
+from vicary.eval import carrier
 from vicary.eval import census as census_eval
 from vicary.eval.fixture import FIXTURE_VERSION
 from vicary.eval.fixture import frames as select_frames
 from vicary.eval.recall import (
-    build_cases,
+    build_cases_from_plan,
     load_set8,
     run,
     run_frames,
@@ -197,10 +198,14 @@ def corpus_metrics(record_gate, tmp_path_factory) -> dict:
             f"no corpus: set {config.EVAL_CORPUS_TSV_ENV_VAR} or "
             f"{config.EVAL_CORPUS_DIR_ENV_VAR}"
         )
-    essays = load_set8(tsv, None, 25)
+    plan = carrier.load_document()
+    essays = load_set8(tsv, None, plan["corpus"]["limit"])
     if not essays:
         pytest.skip(f"corpus at {tsv} yielded no set-8 essays")
-    cases = build_cases(essays, pool=select_frames())
+    # From the recorded plan, not from the RNG — the same path TypeScript and
+    # Ruby take, so a divergence between the ports is a divergence in the
+    # redactor rather than in where three languages happened to inject.
+    cases = build_cases_from_plan(essays, plan, pool=select_frames())
     sidecar = tmp_path_factory.mktemp("gates") / "recall.jsonl"
     records = run(cases, _GATE_ARM, str(sidecar), guardrail_id=None)
     arm = f"{_GATE_ARM}:INPUT:{FIXTURE_VERSION}"
@@ -352,6 +357,28 @@ def test_over_firing_on_real_prose(corpus_metrics, record_gate) -> None:
         f"{OVER_FIRE_SPANS_CEILING:.2f}. This is the visible defect: a student "
         "reads their own words replaced by a placeholder."
     )
+
+
+def test_a_corpus_supplying_only_some_planned_essays_is_refused() -> None:
+    """A subset is refused rather than measured.
+
+    Caught by pointing the harness at a one-essay TSV: it built zero cases, and
+    over-firing and latency then computed as 0.0 — which in a ``<=`` gate is the
+    most comfortable pass on the board. Two gates went green on no data at all.
+    """
+    plan = carrier.load_document()
+    with pytest.raises(ValueError, match="Refusing to measure a subset"):
+        build_cases_from_plan([("not-a-planned-id", "some other essay")], plan,
+                              pool=select_frames())
+
+
+def test_a_corpus_essay_that_does_not_match_the_plan_is_refused() -> None:
+    """An offset into the wrong text yields a plausible number, not an error."""
+    plan = carrier.load_document()
+    first = plan["cases"][0]["essay_id"]
+    with pytest.raises(ValueError, match="does not match the one the carrier"):
+        build_cases_from_plan([(first, "a different essay entirely")], plan,
+                              pool=select_frames())
 
 
 def test_bare_surname_census_exposure(census_exposure, record_gate) -> None:
