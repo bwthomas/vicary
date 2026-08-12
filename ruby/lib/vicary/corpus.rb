@@ -37,6 +37,12 @@ module Vicary
     # Bumped when a field's meaning changes. An unknown version is refused.
     CARRIER_DOCUMENT_VERSION = 1
 
+    # The reference's ANSWERS on the plan the carrier file describes. Separate
+    # file because they are a different kind of thing: `carrier.json` is an input
+    # every port replays, `measured.json` is what Python got from replaying it.
+    MEASURED_FILENAME = "measured.json"
+    MEASURED_DOCUMENT_VERSION = 1
+
     # One of ASAP's own anonymization tokens — `@PERSON1`, `@LOCATION2`.
     #
     # Load-bearing for the over-fire metric, because the two legs it separates
@@ -109,6 +115,34 @@ module Vicary
                 "reader knows #{CARRIER_DOCUMENT_VERSION}. Refusing rather than reading " \
                 "the fields it recognises, because a partly-read plan produces carrier " \
                 "text that is wrong without being detectably wrong."
+        end
+        raw
+      end
+
+      def measured_path(dir = nil)
+        Pathname.new(dir || Conformance.directory).join(MEASURED_FILENAME)
+      end
+
+      # The counts the Python reference gets on the carrier text the plan builds.
+      #
+      # Read rather than transcribed. These were literals in this port's gate
+      # test — `assert_equal 29, m.recall_held_out_passed` — and in TypeScript's,
+      # and in Python's. Three copies of a number is not three checks of it: when
+      # the reference's figure legitimately moves, Python's suite is updated
+      # because that is where the change was made, and the other two keep
+      # asserting the stale value and stay green while measuring something else.
+      #
+      # Returns the raw document. The envelope matters as much as the numbers, so
+      # nothing here flattens it away — see `Gates.check_measured_envelope`.
+      def load_measured(dir = nil)
+        raw = JSON.parse(measured_path(dir).read)
+        version = raw["document_version"]
+        unless version == MEASURED_DOCUMENT_VERSION
+          raise Conformance::SpecError,
+                "#{MEASURED_FILENAME} is document_version #{version.inspect}, and this " \
+                "reader knows #{MEASURED_DOCUMENT_VERSION}. Refusing rather than reading " \
+                "the fields it recognises: a partly-read document compares this port " \
+                "against numbers whose meaning it is guessing at."
         end
         raw
       end

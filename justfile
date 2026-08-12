@@ -172,6 +172,13 @@ sync-conformance:
     @if [ -n "${VICARY_EVAL_CORPUS_TSV:-}${VICARY_EVAL_CORPUS_DIR:-}" ]; then \
       cd python && .venv/bin/python -m vicary.eval.carrier --write; \
     else echo "SKIPPED carrier.json — no VICARY_EVAL_CORPUS_TSV/_DIR set"; fi
+    @# measured.json is the reference's ANSWERS on that plan — the counts all
+    @# three ports assert against instead of typing 29 into three test suites.
+    @# Same corpus condition, and for a sharper reason: regenerating it without
+    @# one would publish zeroes, which every port would then agree with.
+    @if [ -n "${VICARY_EVAL_CORPUS_TSV:-}${VICARY_EVAL_CORPUS_DIR:-}" ]; then \
+      cd python && .venv/bin/python -m vicary.eval.measured --write; \
+    else echo "SKIPPED measured.json — no VICARY_EVAL_CORPUS_TSV/_DIR set"; fi
     @git --no-pager diff --stat -- conformance/ || true
 
 # A missing spec must stop the run. Otherwise `just conformance` on a tree with

@@ -29,6 +29,7 @@ import {
   corpusSource,
   isAsapToken,
   loadCarrierPlan,
+  loadReferenceMeasurements,
   loadSet,
   measureFromConfig,
 } from "../src/corpus.js";
@@ -204,10 +205,7 @@ test(
     const digest = createHash("sha256")
       .update(cases.map((c) => c.text).join(""), "utf8")
       .digest("hex");
-    assert.equal(
-      digest,
-      "78f6926fe5a358b118df7904ebd7dd3bd62cf7b22ddcec4dfaf43b311f0b72ef",
-    );
+    assert.equal(digest, loadReferenceMeasurements().carrierTextSha256);
   },
 );
 
@@ -215,14 +213,37 @@ test(
   "the corpus gates measure what the reference measures",
   { skip: corpus === null ? noCorpus : false },
   () => {
-    // Counts, not just percentages: 100% of a wrong denominator is still 100%.
-    assert.equal(corpus!.essays, 25);
-    assert.equal(corpus!.recallHeldOutPassed, 29);
-    assert.equal(corpus!.recallHeldOutTotal, 29);
-    assert.equal(corpus!.recallHeldOut, 100);
-    assert.equal(corpus!.overFireSpansTotal, 15);
-    assert.equal(corpus!.overFireSpansPerEssay, 0.6);
-    assert.equal(corpus!.asapRewritesPerEssay, 0);
+    // Read off `conformance/measured.json`, not typed here. These were literals
+    // in this file, in Ruby's gate test and in Python's — and three copies of a
+    // number is not three checks of it. When the reference's figure moves,
+    // Python is updated because that is where the change was made, and the other
+    // two go on asserting the stale value while staying green: measuring a
+    // different thing from the reference and reporting agreement.
+    const reference = loadReferenceMeasurements();
+
+    // Before comparing anything, that the two are the same question. A count
+    // taken at another fixture version fails as an off-by-a-few that reads like
+    // a detector regression and costs a bisect to attribute.
+    assert.equal(
+      reference.fixtureVersion,
+      spec.fixtureVersion,
+      `measured.json was measured at fixture ${reference.fixtureVersion} and ` +
+        `this port is scoring against ${spec.fixtureVersion} — regenerate it ` +
+        "with `just sync-conformance` rather than comparing across fixtures",
+    );
+
+    // Counts, not just percentages: 100% of a wrong denominator is still 100%,
+    // and the denominator is what moves when a fixture revision adds a span.
+    assert.equal(corpus!.essays, reference.essays);
+    assert.equal(corpus!.recallHeldOutPassed, reference.recallHeldOutPassed);
+    assert.equal(corpus!.recallHeldOutTotal, reference.recallHeldOutTotal);
+    assert.equal(corpus!.recallHeldOut, reference.recallHeldOutPct);
+    assert.equal(corpus!.overFireSpansTotal, reference.overFireSpansTotal);
+    assert.equal(
+      corpus!.overFireSpansPerEssay,
+      reference.overFireSpansPerEssay,
+    );
+    assert.equal(corpus!.asapRewritesPerEssay, reference.asapRewritesPerEssay);
   },
 );
 

@@ -234,6 +234,67 @@ export function loadCarrierPlan(directory?: string): CarrierPlan {
   };
 }
 
+// ---------------------------------------------------------------------------
+// What the reference measured
+// ---------------------------------------------------------------------------
+
+const MEASURED_FILENAME = "measured.json";
+const MEASURED_DOCUMENT_VERSION = 1;
+
+/**
+ * The counts the Python reference gets on the carrier text this plan produces.
+ *
+ * Read rather than transcribed. These numbers used to be literals in this port's
+ * gate test — `assert.equal(corpus.recallHeldOutPassed, 29)` — and in Ruby's, and
+ * in Python's. Three copies of a number is not three checks of it: when the
+ * reference's figure legitimately moves, Python's suite is updated because that
+ * is where the change was made, and the other two keep asserting the stale value
+ * and stay green while measuring something else.
+ */
+export interface ReferenceMeasurements {
+  /** sha256 of every carrier essay's text, concatenated in plan order. */
+  carrierTextSha256: string;
+  /** The fixture the numbers were measured against. Compared, not assumed. */
+  fixtureVersion: string;
+  /** The arm. Without the gazetteer the same detector reads 0% held-out. */
+  arm: string;
+  essays: number;
+  recallHeldOutPassed: number;
+  recallHeldOutTotal: number;
+  recallHeldOutPct: number;
+  overFireSpansTotal: number;
+  overFireSpansPerEssay: number;
+  asapRewritesPerEssay: number;
+}
+
+export function loadReferenceMeasurements(
+  directory?: string,
+): ReferenceMeasurements {
+  const dir = directory ?? conformanceDir();
+  const raw = JSON.parse(readFileSync(join(dir, MEASURED_FILENAME), "utf8"));
+  if (raw.document_version !== MEASURED_DOCUMENT_VERSION) {
+    throw new Error(
+      `${MEASURED_FILENAME} is document_version ${raw.document_version}, and ` +
+        `this reader knows ${MEASURED_DOCUMENT_VERSION}. Refusing rather than ` +
+        "reading the fields it recognises: a partly-read document compares " +
+        "this port against numbers whose meaning it is guessing at.",
+    );
+  }
+  const gates = raw.corpus_gates as Record<string, number>;
+  return {
+    carrierTextSha256: raw.carrier_text_sha256 as string,
+    fixtureVersion: raw.envelope.fixture_version as string,
+    arm: raw.envelope.arm as string,
+    essays: gates["essays"]!,
+    recallHeldOutPassed: gates["recall_held_out_passed"]!,
+    recallHeldOutTotal: gates["recall_held_out_total"]!,
+    recallHeldOutPct: gates["recall_held_out_pct"]!,
+    overFireSpansTotal: gates["over_fire_spans_total"]!,
+    overFireSpansPerEssay: gates["over_fire_spans_per_essay"]!,
+    asapRewritesPerEssay: gates["asap_rewrites_per_essay"]!,
+  };
+}
+
 /** One injected essay plus the ground truth of what went into it. */
 export interface Case {
   essayId: string;

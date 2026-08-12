@@ -194,21 +194,39 @@ class GatesTest < Minitest::Test
     essays = Vicary::Corpus.load_set(Vicary::Corpus.corpus_source,
                                      plan["corpus"]["essay_set"], plan["corpus"]["limit"])
     cases = Vicary::Corpus.build_cases(essays, plan, self.class.spec)
-    assert_equal "78f6926fe5a358b118df7904ebd7dd3bd62cf7b22ddcec4dfaf43b311f0b72ef",
+    assert_equal Vicary::Corpus.load_measured["carrier_text_sha256"],
                  Digest::SHA256.hexdigest(cases.map(&:text).join)
   end
 
   def test_the_corpus_gates_measure_what_the_reference_measures
     skip_without_corpus
     m = self.class.corpus
-    # Counts, not just percentages: 100% of a wrong denominator is still 100%.
-    assert_equal 25, m.essays
-    assert_equal 29, m.recall_held_out_passed
-    assert_equal 29, m.recall_held_out_total
-    assert_in_delta 100.0, m.recall_held_out, 1e-9
-    assert_equal 15, m.over_fire_spans_total
-    assert_in_delta 0.6, m.over_fire_spans_per_essay, 1e-9
-    assert_in_delta 0.0, m.asap_rewrites_per_essay, 1e-9
+    # Read off `conformance/measured.json`, not typed here. These were literals
+    # in this file, in TypeScript's gate test and in Python's — and three copies
+    # of a number is not three checks of it. When the reference's figure moves,
+    # Python is updated because that is where the change was made, and the other
+    # two go on asserting the stale value while staying green: measuring a
+    # different thing from the reference and reporting agreement.
+    measured = Vicary::Corpus.load_measured
+    reference = measured["corpus_gates"]
+
+    # Before comparing anything, that the two are the same question. A count
+    # taken at another fixture version fails as an off-by-a-few that reads like a
+    # detector regression and costs a bisect to attribute.
+    assert_equal self.class.spec.fixture_version, measured["envelope"]["fixture_version"],
+                 "measured.json was measured at a different fixture than this port is " \
+                 "scoring against — regenerate it with `just sync-conformance` rather " \
+                 "than comparing across fixtures"
+
+    # Counts, not just percentages: 100% of a wrong denominator is still 100%,
+    # and the denominator is what moves when a fixture revision adds a span.
+    assert_equal reference["essays"], m.essays
+    assert_equal reference["recall_held_out_passed"], m.recall_held_out_passed
+    assert_equal reference["recall_held_out_total"], m.recall_held_out_total
+    assert_in_delta reference["recall_held_out_pct"], m.recall_held_out, 1e-9
+    assert_equal reference["over_fire_spans_total"], m.over_fire_spans_total
+    assert_in_delta reference["over_fire_spans_per_essay"], m.over_fire_spans_per_essay, 1e-9
+    assert_in_delta reference["asap_rewrites_per_essay"], m.asap_rewrites_per_essay, 1e-9
   end
 
   def test_latency_is_this_ports_own_and_is_not_asserted_against_the_references

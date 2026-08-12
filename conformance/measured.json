@@ -1,0 +1,29 @@
+{
+  "carrier_text_sha256": "78f6926fe5a358b118df7904ebd7dd3bd62cf7b22ddcec4dfaf43b311f0b72ef",
+  "corpus_gates": {
+    "asap_rewrites_per_essay": 0.0,
+    "essays": 25,
+    "over_fire_spans_per_essay": 0.6,
+    "over_fire_spans_total": 15,
+    "recall_held_out_passed": 29,
+    "recall_held_out_pct": 100.0,
+    "recall_held_out_total": 29
+  },
+  "document_version": 1,
+  "envelope": {
+    "arm": "local-gazetteer-lowercase",
+    "carrier_document_version": 1,
+    "corpus": {
+      "essay_set": "8",
+      "limit": 25,
+      "name": "ASAP-AES",
+      "selection": "first N essays of the set, in file order"
+    },
+    "fixture_version": "2026-08-11.2",
+    "reference": "python"
+  },
+  "not_recorded": {
+    "latency_p50_ms": "Measures the machine, not the port. Each port asserts its own against the published bar.",
+    "latency_p95_ms": "Same. Pinning it would fail a correctness suite on a busy CI box."
+  }
+}

@@ -30,7 +30,7 @@ import statistics
 import pytest
 
 from vicary import DEFAULT_NAME_DETECTION, config, gazetteer
-from vicary.eval import carrier, conformance
+from vicary.eval import carrier, conformance, measured
 from vicary.eval import census as census_eval
 from vicary.eval.fixture import FIXTURE_VERSION
 from vicary.eval.fixture import frames as select_frames
@@ -547,6 +547,47 @@ _ALL_GATES = {
     "latency p95",
     "asset entries",
 }
+
+
+# ---------------------------------------------------------------------------
+# The published measurements are this run's measurements.
+# ---------------------------------------------------------------------------
+
+
+def test_the_published_measurements_are_what_this_run_measures() -> None:
+    """``conformance/measured.json`` still describes the reference.
+
+    The other two ports assert their corpus counts against that file rather than
+    against literals, which makes the reference the one port nothing was checking
+    — its measurement could drift, the file would go stale, and the first symptom
+    would be TypeScript and Ruby failing against a document that describes
+    nothing. That names the wrong two ports and costs a bisect through two
+    languages to attribute.
+
+    So the reference checks its own publication. A failure here means run
+    `just sync-conformance` with a corpus configured and read the diff: either
+    the detector changed and every port's numbers move together, or it did not
+    and something is wrong with the measurement.
+    """
+    tsv = config.eval_corpus_tsv()
+    if not tsv:
+        pytest.skip(
+            f"no corpus: set {config.EVAL_CORPUS_TSV_ENV_VAR} or "
+            f"{config.EVAL_CORPUS_DIR_ENV_VAR}"
+        )
+    digest, gates, envelope = measured.measure()
+    published = measured.load_document()
+
+    assert published["envelope"] == envelope, (
+        "measured.json was taken in a different envelope from this run — the "
+        "fixture, the arm or the corpus slice moved, so its numbers describe a "
+        "different question"
+    )
+    assert published["carrier_text_sha256"] == digest, (
+        "measured.json pins carrier text this run does not reproduce, so every "
+        "number in it was measured on text no port now builds"
+    )
+    assert published["corpus_gates"] == gates
 
 
 # ---------------------------------------------------------------------------
