@@ -39,6 +39,14 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      publish_probe:
+        description: >-
+          Prove the trusted-publishing credential without publishing: mint the
+          OIDC token and exchange it against the registry for a publish
+          credential. Never uploads a tarball. Leave this off for a real release.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -54,6 +62,16 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Say which of the two things this run is
+        run: |
+          if [ "${{ inputs.publish_probe }}" = "true" ]; then
+            echo "PUBLISH PROBE — nothing will be uploaded. This run proves the"
+            echo "trusted-publishing credential works and then stops."
+          else
+            echo "RELEASE — this run publishes if the registry does not already"
+            echo "serve this version."
+          fi
 
       # Node 24 and an explicit npm upgrade, because OIDC trusted publishing needs
       # npm >= 11.5.1 and no Node line bundles that by default on a schedule we
@@ -179,11 +197,91 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # THE CREDENTIAL PROBE, and why it does the exchange by hand.
+      #
+      # Every run of the Publish step below has so far either failed (EOTP, twice,
+      # under the deleted token) or been skipped (0.2.1 was hand-published, so the
+      # guard above correctly declined). So the OIDC credential this workflow now
+      # depends on has never once succeeded, and the first thing that would find
+      # out is a real release. This probe is how that stops being true.
+      #
+      # It does NOT use `npm publish --dry-run`. That looks like the obvious probe
+      # and is a false green: npm calls the OIDC exchange unconditionally, before
+      # any dry-run branch, but `lib/utils/oidc.js` is documented to *never throw*
+      # — every failure path logs at verbose/silly and returns `undefined`, leaving
+      # the credential simply unset. The failure surfaces only when the upload is
+      # attempted, and a dry run never attempts one. So `--dry-run` passes whether
+      # or not the credential works, which is the one thing a probe may not do.
+      #
+      # Instead it makes the two calls npm would make, where a non-200 is a hard
+      # failure this step can see: ask GitHub for an ID token with npm's audience,
+      # then POST it to the registry's exchange endpoint for this package. A 200
+      # with a token in the body proves the whole trust chain — that this
+      # repository, this workflow, and this package's configured trusted publisher
+      # actually agree. It proves nothing about the upload itself, which is what
+      # the pack and conformance gates above are for.
+      #
+      # It cannot publish by accident: it never sends a tarball, and the Publish
+      # step is skipped outright whenever `publish_probe` is set.
+      - name: Prove the trusted-publishing credential without publishing
+        if: ${{ inputs.publish_probe }}
+        run: |
+          registry="https://registry.npmjs.org"
+          name=$(node -p "require('./package.json').name")
+          # npm escapes the scope separator for this endpoint: @scope/pkg is
+          # @scope%2fpkg. Done in shell rather than by requiring npm's own
+          # npm-package-arg, so the probe does not depend on npm internals.
+          escaped="${name/\//%2f}"
+
+          if [ -z "$ACTIONS_ID_TOKEN_REQUEST_URL" ] || [ -z "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+            echo "no OIDC request credentials in the environment — the job is missing"
+            echo "id-token: write. This is the permission npm needs to authenticate."
+            exit 1
+          fi
+
+          # The audience is `npm:<registry hostname>`, per npm's own client.
+          id_token=$(curl -sS --fail-with-body \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            -H "Accept: application/json" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org" \
+            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const v=JSON.parse(s).value;if(!v){console.error("no value in id-token response");process.exit(1)}process.stdout.write(v)})')
+          test -n "$id_token" || { echo "could not mint a GitHub ID token"; exit 1; }
+          # Mask before it can reach a log through any later command's echo.
+          echo "::add-mask::$id_token"
+          echo "minted a GitHub ID token for audience npm:registry.npmjs.org"
+
+          # The exchange. Capture the body and the status separately so a failure
+          # reports the registry's own reason instead of a bare exit code.
+          response=$(curl -sS -w '\n%{http_code}' -X POST \
+            -H "Authorization: Bearer $id_token" \
+            "$registry/-/npm/v1/oidc/token/exchange/package/$escaped")
+          http_status=$(printf '%s' "$response" | tail -n1)
+          body=$(printf '%s' "$response" | sed '$d')
+
+          if [ "$http_status" != "200" ]; then
+            echo "REFUSED: the registry answered $http_status for $name"
+            # The body carries the reason and no credential — a 4xx has no token.
+            echo "$body" | head -c 500
+            echo
+            echo "This is the probe's finding: either no trusted publisher is"
+            echo "configured on $name, or it does not name this repository,"
+            echo "workflow, and environment. A real release would fail here."
+            exit 1
+          fi
+
+          # Never print the token. Assert its presence and report only that.
+          printf '%s' "$body" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{let j;try{j=JSON.parse(s)}catch{console.error("exchange returned 200 with a body that is not JSON");process.exit(1)}if(!j.token){console.error("exchange returned 200 with no token in the body");process.exit(1)}console.log(`the registry issued a publish credential (${j.token.length} chars, not printed)`)})'
+
+          echo "PROBE PASSED — trusted publishing is correctly configured for $name."
+          echo "Nothing was uploaded. A real release would have published from here."
+
       # No NODE_AUTH_TOKEN. The secret was a classic Publish token, which demands
       # a 2FA OTP that CI cannot supply — it failed with EOTP after signing
       # provenance — and it has been deleted from npm and from this repository.
       # Authentication is OIDC against the trusted publisher configured on the
       # package, which is why the npm version check above is a hard gate.
+      #
+      # Skipped in probe mode: a probe that could publish is not a probe.
       - name: Publish
-        if: steps.already.outputs.skip == 'false'
+        if: ${{ steps.already.outputs.skip == 'false' && !inputs.publish_probe }}
         run: npm publish --provenance --access public
