@@ -1,0 +1,135 @@
+{
+  "document_version": 1,
+  "note": "Which behavioural concern each front door is expected to unit-test, and every accepted gap with its reason. Read by mechanism/tests/test_coverage_parity.py. Three implementations of one detector should be tested to the same depth; where they are not, the divergence is declared here with a reason rather than discovered by counting test files a year later. Adding a suite to one port and not the others fails this file, which is the point.",
+  "concerns": {
+    "primitives": {
+      "why": "The shared primitives spec, one test per case family plus the constant tables.",
+      "python": "tests/test_name_candidates.py",
+      "typescript": "test/primitives.test.ts",
+      "ruby": "test/primitives_test.rb"
+    },
+    "candidates": {
+      "why": "Candidate generation internals — the regexes, the capitalisation habit, the relation window, the corroboration guard. Distinct from `primitives`: that checks agreement with the reference on recorded cases, this names each behaviour so a failure says which rule broke rather than which case differs.",
+      "python": "tests/test_name_candidates.py",
+      "typescript": "test/candidates.test.ts",
+      "ruby": null
+    },
+    "structured": {
+      "why": "The structured-identifier pass — phone, email, SSN, card with its Luhn gate, address, ZIP, age, DOB, username, URL — and the order they are applied in.",
+      "python": "tests/test_redaction.py",
+      "typescript": "test/structured.test.ts",
+      "ruby": null
+    },
+    "redact": {
+      "why": "The public entry point: identity interpolation, the two passes, arm selection, and the restore map.",
+      "python": "tests/test_redaction.py",
+      "typescript": "test/redact.test.ts",
+      "ruby": null
+    },
+    "gazetteer": {
+      "why": "The notability index as the detector reads it: the fold, tier precedence, and the title prefix walk.",
+      "python": null,
+      "typescript": "test/gazetteer.test.ts",
+      "ruby": "test/gazetteer_test.rb"
+    },
+    "lexicon": {
+      "why": "The stoplist and the shipped word lists as loaded from the asset.",
+      "python": null,
+      "typescript": "test/lexicon.test.ts",
+      "ruby": "test/lexicon_test.rb"
+    },
+    "asset": {
+      "why": "Loading the vendored asset, verifying its digest, and refusing one that declares an unknown tier.",
+      "python": "tests/test_assets.py",
+      "typescript": "test/asset.test.ts",
+      "ruby": "test/asset_test.rb"
+    },
+    "conformance": {
+      "why": "Reading the shared spec and scoring the 54 frames off the file.",
+      "python": null,
+      "typescript": "test/conformance.test.ts",
+      "ruby": "test/conformance_test.rb"
+    },
+    "gates": {
+      "why": "The nine gates, the NOT MEASURED discipline, and each port's own bars against the published ones.",
+      "python": "tests/test_gates.py",
+      "typescript": "test/gates.test.ts",
+      "ruby": "test/gates_test.rb"
+    },
+    "packaging": {
+      "why": "That the built artifact carries the asset and installs. A packaging break is invisible to every other suite and shows up for whoever runs install first.",
+      "python": "tests/test_packaging.py",
+      "typescript": null,
+      "ruby": "test/release_test.rb"
+    },
+    "dialect": {
+      "why": "Demonyms and the lower-case route's dialect handling.",
+      "python": null,
+      "typescript": null,
+      "ruby": "test/dialect_test.rb"
+    },
+    "config": {
+      "why": "Environment-variable resolution: which name wins, what counts as unset, and the legacy-name fallbacks.",
+      "python": "tests/test_config.py",
+      "typescript": null,
+      "ruby": null
+    }
+  },
+  "accepted_divergences": [
+    {
+      "concern": "candidates",
+      "port": "ruby",
+      "reason": "OPEN GAP, not a justified divergence. Ruby carries candidates.rb (1,702 lines, the most detector logic of any file in the port) and unit-tests none of it directly. It is reached by the 37 shared primitive families and by the frames, which is why the port is green: of eleven deliberate mutations to candidates.rb the frames caught one and the primitives caught seven. Three were inert and one — a regex end-anchor — escaped both and is now covered by conformance/probes.json. TypeScript spends 77 tests here."
+    },
+    {
+      "concern": "structured",
+      "port": "ruby",
+      "reason": "OPEN GAP. structured.rb (370 lines) is covered end to end by the frames, which carry PHONE, EMAIL, ADDRESS, URL, AGE, SSN, USERNAME and CARD spans, and by the `structured` probe. No test names an individual pattern, so a Luhn or boundary regression fails as a frame diff rather than by name. TypeScript spends 30 tests here."
+    },
+    {
+      "concern": "redact",
+      "port": "ruby",
+      "reason": "OPEN GAP. redact.rb (172 lines) is exercised by every other Ruby suite through Vicary.redact and by both parity probes, but nothing tests arm selection or the restore map directly. TypeScript spends 13 tests here."
+    },
+    {
+      "concern": "packaging",
+      "port": "typescript",
+      "reason": "OPEN GAP. The npm package has no equivalent of Ruby's release_test.rb or Python's test_packaging.py, and it is the one front door whose publish path has never completed — see the repository README on the blocked unscoped name. CI checks the wheel carries the asset and does not check the tarball does."
+    },
+    {
+      "concern": "dialect",
+      "port": "typescript",
+      "reason": "OPEN GAP, small. Demonym handling is covered in TypeScript through the shared primitive families and the frames; Ruby gives it six tests of its own."
+    },
+    {
+      "concern": "config",
+      "port": "typescript",
+      "reason": "PARTIALLY JUSTIFIED. Python's 34 tests are mostly the seven legacy environment-variable names it kept a fallback for when it became a library — history this port never had. What is NOT justified is that TypeScript reads five current variables (asset path, redaction arm, corpus TSV, corpus dir, census CSV) and tests the resolution of none."
+    },
+    {
+      "concern": "config",
+      "port": "ruby",
+      "reason": "PARTIALLY JUSTIFIED, same as TypeScript: the legacy-name half does not apply, the five current variables are read by asset.rb, census.rb, corpus.rb and redact.rb and their resolution is untested."
+    },
+    {
+      "concern": "gazetteer",
+      "port": "python",
+      "reason": "JUSTIFIED. Python's gazetteer tests are about BUILDING the asset and moved to mechanism/tests/test_gazetteer_build.py; the runtime read path is covered by tests/test_assets.py and by the primitives spec. The other two ports only ever read the asset, so a read-path suite is the whole of their concern."
+    },
+    {
+      "concern": "lexicon",
+      "port": "python",
+      "reason": "JUSTIFIED. Python generates the stoplist rather than loading it, so the equivalent assertions live in the mechanism suite beside the generator."
+    },
+    {
+      "concern": "conformance",
+      "port": "python",
+      "reason": "JUSTIFIED. Python IS the reference, so 'does this port match the spec' is instead 'does the spec still match this port', which is mechanism/tests/test_conformance.py."
+    },
+    {
+      "concern": "dialect",
+      "port": "python",
+      "reason": "JUSTIFIED. Demonym derivation is a build-time concern in Python and lives in mechanism/tests/test_demonyms_and_carryover.py."
+    }
+  ]
+}
