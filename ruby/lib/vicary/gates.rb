@@ -383,8 +383,7 @@ module Vicary
             given = supplied[gate.id]
             if given.nil? || given[:value].nil?
               next GateMeasurement.new(gate: gate, value: nil, passed: nil,
-                                     bar: gate.bar_for(corpus_id), detail: "",
-                                       bar: gate.bar_for(corpus_id))
+                                       bar: gate.bar_for(corpus_id), detail: "")
             end
 
             next GateMeasurement.new(gate: gate, value: given[:value],
