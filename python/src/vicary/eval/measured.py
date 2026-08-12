@@ -43,15 +43,22 @@ import json
 from pathlib import Path
 from typing import Any
 
-from vicary import config
 from vicary.eval import carrier
 from vicary.eval import conformance as conf
+from vicary.eval import corpus as corpus_mod
 
 #: The file, beside the rest of the spec.
 MEASURED_FILENAME = "measured.json"
 
 #: Bumped when the meaning of a field changes, never when a value does.
-DOCUMENT_VERSION = 1
+#:
+#: 2 keyed the measurements by corpus id. Two of the three numbers here are
+#: properties of the prose rather than of the detector — over-firing scales with
+#: how many keepable names an essay holds, latency with how long it is — so a
+#: single unkeyed block invited exactly one mistake: measure a second corpus,
+#: compare it to the first corpus's figures, and read the difference as a
+#: regression in the port.
+DOCUMENT_VERSION = 2
 
 #: The arm every number here was measured on. Named in the envelope because the
 #: same detector measured without the gazetteer answers 0% held-out recall, and a
@@ -69,8 +76,9 @@ NOT_RECORDED = {
 }
 
 
-def measure() -> tuple[str, dict[str, Any], dict[str, Any]]:
-    """Measure the reference: ``(carrier digest, corpus gates, envelope)``.
+def measure(corpus_id: str | None = None
+            ) -> tuple[str, str, dict[str, Any], dict[str, Any]]:
+    """Measure the reference: ``(corpus id, carrier digest, gates, envelope)``.
 
     Split out from :func:`build_document` so the Python gate suite can call the
     *same* code that wrote the file and compare. Without that, the reference is
@@ -84,17 +92,10 @@ def measure() -> tuple[str, dict[str, Any], dict[str, Any]]:
     # pay that.
     from vicary.eval.fixture import FIXTURE_VERSION
     from vicary.eval.fixture import frames as select_frames
-    from vicary.eval.recall import build_cases_from_plan, load_set8, run
+    from vicary.eval.recall import build_cases_from_plan, run
 
-    tsv = config.eval_corpus_tsv()
-    if not tsv:
-        raise FileNotFoundError(
-            f"no corpus: set {config.EVAL_CORPUS_TSV_ENV_VAR} or "
-            f"{config.EVAL_CORPUS_DIR_ENV_VAR} to measure the reference"
-        )
-
-    plan = carrier.load_document()
-    essays = load_set8(tsv, None, plan["corpus"]["limit"])
+    corpus_id, essays = corpus_mod.load_essays(corpus_id)
+    plan = carrier.load_plan(corpus_id)
     cases = build_cases_from_plan(essays, plan, pool=select_frames())
 
     # The load-bearing parity anchor. Every number below is measured on this
@@ -135,7 +136,7 @@ def measure() -> tuple[str, dict[str, Any], dict[str, Any]]:
         "arm": REFERENCE_ARM,
         "fixture_version": FIXTURE_VERSION,
         "corpus": plan["corpus"],
-        "carrier_document_version": plan["document_version"],
+        "carrier_document_version": carrier.DOCUMENT_VERSION,
     }
     gates = {
         "essays": len(rows),
@@ -147,23 +148,54 @@ def measure() -> tuple[str, dict[str, Any], dict[str, Any]]:
         "over_fire_spans_per_essay": over_fire_total / len(rows),
         "asap_rewrites_per_essay": asap_rewrites / len(rows),
     }
-    return digest, gates, envelope
+    return corpus_id, digest, gates, envelope
 
 
-def build_document() -> dict[str, Any]:
-    """Measure the corpus gates on the reference and return the document.
+def build_document(existing: dict[str, Any] | None = None,
+                   corpus_ids: list[str] | None = None) -> dict[str, Any]:
+    """Measure every corpus this machine can reach, keeping the ones it cannot.
 
-    Needs the corpus: this is a measurement, and there is nothing to measure
-    without one.
+    Same merge discipline as the carrier plan, for the same reason: a machine
+    without the operator's ASAP-AES copy must not delete the ASAP-AES baseline
+    from the repository as a side effect of regenerating the shipped one.
     """
-    digest, gates, envelope = measure()
+    corpora: dict[str, Any] = dict((existing or {}).get("corpora", {}))
+    skipped: dict[str, str] = {}
+    for candidate in (corpus_ids or corpus_mod.available()):
+        try:
+            corpus_id, digest, gates, envelope = measure(candidate)
+        except (FileNotFoundError, ValueError, KeyError) as exc:
+            skipped[candidate] = str(exc)
+            continue
+        corpora[corpus_id] = {
+            "envelope": envelope,
+            "carrier_text_sha256": digest,
+            "corpus_gates": gates,
+        }
     return {
         "document_version": DOCUMENT_VERSION,
-        "envelope": envelope,
-        "carrier_text_sha256": digest,
-        "corpus_gates": gates,
+        "corpora": corpora,
         "not_recorded": NOT_RECORDED,
+        "_skipped": skipped,
     }
+
+
+def load_measurements(corpus_id: str,
+                      path: Path | None = None) -> dict[str, Any]:
+    """One corpus's measurements.
+
+    A missing corpus names itself rather than surfacing as a ``KeyError`` on
+    ``corpus_gates`` two frames later.
+    """
+    corpora = load_document(path).get("corpora", {})
+    if corpus_id not in corpora:
+        raise KeyError(
+            f"{MEASURED_FILENAME} holds no measurements for corpus "
+            f"{corpus_id!r}; it has {', '.join(sorted(corpora)) or 'none'}. "
+            "Regenerate with `just sync-conformance` on a machine that can read "
+            "that corpus."
+        )
+    return corpora[corpus_id]
 
 
 def measured_path(directory: Path | None = None) -> Path:
@@ -193,15 +225,18 @@ def load_document(path: Path | None = None) -> dict[str, Any]:
     return document
 
 
-def check_envelope(document: dict[str, Any], *, fixture_version: str) -> None:
+def check_envelope(measurements: dict[str, Any], *, fixture_version: str) -> None:
     """Refuse measurements taken in a different envelope from the caller's.
 
     The one check that cannot be left to the comparison itself. A port scored
     against fixture 2026-08-11.2 comparing its counts to numbers taken at
     2026-08-05.6 does not get a clean failure — it gets an off-by-a-few that
     reads like a detector regression and costs a bisect to attribute.
+
+    Takes one corpus's block, not the whole document, because there is no
+    document-wide envelope any more: each corpus was measured on its own.
     """
-    recorded = document["envelope"]["fixture_version"]
+    recorded = measurements["envelope"]["fixture_version"]
     if recorded != fixture_version:
         raise ValueError(
             f"{MEASURED_FILENAME} was measured at fixture {recorded} and this "
@@ -211,11 +246,22 @@ def check_envelope(document: dict[str, Any], *, fixture_version: str) -> None:
         )
 
 
-def write(directory: Path | None = None) -> Path:
-    """Regenerate the measurements in place. Needs the corpus."""
+def write(directory: Path | None = None,
+          corpus_ids: list[str] | None = None) -> Path:
+    """Regenerate the measurements in place, merging over what is recorded."""
     path = measured_path(directory)
+    existing: dict[str, Any] | None = None
+    if path.exists():
+        try:
+            existing = load_document(path)
+        except ValueError:
+            print(f"note: {path.name} was an older document_version; its "
+                  "measurements are not carried forward")
+    document = build_document(existing=existing, corpus_ids=corpus_ids)
+    for corpus_id, reason in document.pop("_skipped", {}).items():
+        print(f"SKIPPED {corpus_id} — {reason.splitlines()[0]}")
     path.write_text(
-        json.dumps(build_document(), indent=2, sort_keys=True) + "\n",
+        json.dumps(document, indent=2, sort_keys=True) + "\n",
         encoding="utf-8")
     return path
 
@@ -232,12 +278,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--write", action="store_true",
                         help=f"write conformance/{MEASURED_FILENAME} in place "
                              "(default: print it to stdout)")
+    parser.add_argument("--corpus", action="append", default=None,
+                        help="measure only this corpus id (repeatable); default "
+                             "is every registered corpus this machine can read")
     args = parser.parse_args(argv)
 
     if args.write:
-        print(f"wrote {write()}")
+        print(f"wrote {write(corpus_ids=args.corpus)}")
     else:
-        print(json.dumps(build_document(), indent=2, sort_keys=True))
+        document = build_document(corpus_ids=args.corpus)
+        for corpus_id, reason in document.pop("_skipped", {}).items():
+            print(f"SKIPPED {corpus_id} — {reason.splitlines()[0]}")
+        print(json.dumps(document, indent=2, sort_keys=True))
     return 0
 
 

@@ -1,389 +1,705 @@
 {
-  "cases": [
-    {
-      "base_chars": 3421,
-      "base_sha256": "6aabc697f1bad5b51ac70baf4029a4636ad33d1f191ab78d9f9b19d956b85daf",
-      "essay_id": "20716",
-      "frames": [
-        "kinship-possessive",
-        "bare-first-name",
-        "dialogue-attribution"
+  "document_version": 2,
+  "note": "Offsets into each essay where the named frames were injected, in the order applied \u2014 descending, so an earlier insertion cannot shift a later one. frames[i] goes at slots[i]. An input, not an answer: what each port measures from the resulting text is its own. Keyed by corpus id, because an offset means nothing in another corpus's essays.",
+  "plans": {
+    "asap-aes-set8": {
+      "cases": [
+        {
+          "base_chars": 3421,
+          "base_sha256": "6aabc697f1bad5b51ac70baf4029a4636ad33d1f191ab78d9f9b19d956b85daf",
+          "essay_id": "20716",
+          "frames": [
+            "kinship-possessive",
+            "bare-first-name",
+            "dialogue-attribution"
+          ],
+          "slots": [
+            2940,
+            1176,
+            929
+          ]
+        },
+        {
+          "base_chars": 3963,
+          "base_sha256": "3e7f55f6f6ba8290f7eee91ad77ef10984470b83b142743394947e246badf74d",
+          "essay_id": "20717",
+          "frames": [
+            "title-surname",
+            "honorific-surname",
+            "lowercase-writing"
+          ],
+          "slots": [
+            3420,
+            2578,
+            2221
+          ]
+        },
+        {
+          "base_chars": 4397,
+          "base_sha256": "421afec87cefd7f7ee3aa333e38c1dcb3e59fe382f8b0b723eb4bd758dd6269b",
+          "essay_id": "20718",
+          "frames": [
+            "allcaps-writing",
+            "appositive",
+            "private-surname-shadowed-by-a-notable-one"
+          ],
+          "slots": [
+            2039,
+            1274,
+            435
+          ]
+        },
+        {
+          "base_chars": 3415,
+          "base_sha256": "a2d5e1a40693b8a5e0dd02e5f54636c3a830dd5d9f315d4b63b5de3c19d6e6c0",
+          "essay_id": "20719",
+          "frames": [
+            "heading-capital-on-an-ordinary-word",
+            "heading-that-actually-names-somebody",
+            "notable-surname-in-a-first-person-appositive"
+          ],
+          "slots": [
+            2939,
+            2055,
+            1530
+          ]
+        },
+        {
+          "base_chars": 2943,
+          "base_sha256": "0c230608daaef95862191e04457b1d2e8ccfb0e3b807db06953acb6602f37b74",
+          "essay_id": "20721",
+          "frames": [
+            "private-person-shadowed-by-a-work-title",
+            "relative-whose-phrase-is-also-a-film-title",
+            "relation-led-film-title-with-no-capitalisation-tell"
+          ],
+          "slots": [
+            2845,
+            2475,
+            1270
+          ]
+        },
+        {
+          "base_chars": 4051,
+          "base_sha256": "5d482589b6dde7924e5bf948c65a57cfa97e7f0c2ef709081891ef5c83b9454e",
+          "essay_id": "20722",
+          "frames": [
+            "private-person-shadowed-by-a-real-public-figure",
+            "full-name-midsentence",
+            "hyphenated-surname"
+          ],
+          "slots": [
+            3094,
+            490,
+            314
+          ]
+        },
+        {
+          "base_chars": 4429,
+          "base_sha256": "5a4038bbbdad58d19cb36cce2d4dcd451f38c365fca882d99f369178bbbf8f32",
+          "essay_id": "20723",
+          "frames": [
+            "possessive-third-party",
+            "initial-plus-surname",
+            "nickname-and-full-name"
+          ],
+          "slots": [
+            4156,
+            3806,
+            2590
+          ]
+        },
+        {
+          "base_chars": 1445,
+          "base_sha256": "b8b52b5375f756766d2af927d310f7b141aa32c2a8ff32f9bc6a868f63025f76",
+          "essay_id": "20724",
+          "frames": [
+            "student-own-name",
+            "notable-possessive",
+            "notable-bare-surname"
+          ],
+          "slots": [
+            1312,
+            1051,
+            429
+          ]
+        },
+        {
+          "base_chars": 4007,
+          "base_sha256": "9d9d11b41a4dc979ef703346f0bbbd08d576e831dbcec2ba8f917e50cb74522d",
+          "essay_id": "20725",
+          "frames": [
+            "notable-name-is-also-a-place",
+            "notable-full-name",
+            "notable-in-kinship-shaped-frame"
+          ],
+          "slots": [
+            3052,
+            563,
+            333
+          ]
+        },
+        {
+          "base_chars": 3007,
+          "base_sha256": "70b38083b83e5f76cf0b5353e035b327607847c4e01ff819d701bce5bb102411",
+          "essay_id": "20726",
+          "frames": [
+            "notable-single-name",
+            "source-author-cited",
+            "prompt-context-figure"
+          ],
+          "slots": [
+            2694,
+            2636,
+            1033
+          ]
+        },
+        {
+          "base_chars": 2253,
+          "base_sha256": "172a023e588856b02fd07c96e66576d62f6f9754f1c584310e8087d23cc9d885",
+          "essay_id": "20727",
+          "frames": [
+            "work-title-with-interior-stopword",
+            "notable-surname-established-in-document",
+            "fictional-character"
+          ],
+          "slots": [
+            1843,
+            1728,
+            1176
+          ]
+        },
+        {
+          "base_chars": 4765,
+          "base_sha256": "7c142e7a097c3dd6a2ee300b2f8991c24d2247c320388f4f583897f154498aea",
+          "essay_id": "20728",
+          "frames": [
+            "admiration-invocation-before-a-public-figure",
+            "fictional-character-described-by-a-relation",
+            "relation-led-title-written-as-a-title"
+          ],
+          "slots": [
+            2967,
+            566,
+            243
+          ]
+        },
+        {
+          "base_chars": 3808,
+          "base_sha256": "1d5fd72035c947e21b89d48bfabc491188eb4e7a59c67efc83de9435d4d0c6ac",
+          "essay_id": "20732",
+          "frames": [
+            "work-title-near-an-unattached-first-person-relation",
+            "intersect-notable-beside-private",
+            "intersect-person-org-location"
+          ],
+          "slots": [
+            2648,
+            2583,
+            2479
+          ]
+        },
+        {
+          "base_chars": 2964,
+          "base_sha256": "fee8cdb819e2e88e2bd27bf6562485a2194deece6e694cb6ee23db6b14cf8574",
+          "essay_id": "20733",
+          "frames": [
+            "intersect-self-and-third-party",
+            "intersect-school-and-friend",
+            "intersect-landmark-and-hometown"
+          ],
+          "slots": [
+            2728,
+            2408,
+            1516
+          ]
+        },
+        {
+          "base_chars": 4490,
+          "base_sha256": "0bbb0dcaf4520e21ce4ab07488d926380eed5c4c1bba13d1f67d36caacda2045",
+          "essay_id": "20734",
+          "frames": [
+            "intersect-hometown-that-ends-in-a-landmark-suffix",
+            "intersect-name-beside-structured",
+            "structured-address"
+          ],
+          "slots": [
+            2770,
+            2327,
+            102
+          ]
+        },
+        {
+          "base_chars": 729,
+          "base_sha256": "5fe2db86a26fda95cc5b6a6301a3f9361bf3ff9e8093d570666d9ae89f8f0f7a",
+          "essay_id": "20735",
+          "frames": [
+            "structured-phone",
+            "structured-email",
+            "structured-email-is-the-writers-own-name"
+          ],
+          "slots": [
+            365,
+            274,
+            147
+          ]
+        },
+        {
+          "base_chars": 3823,
+          "base_sha256": "b8b2ecea13cc9af162e7e11502db4b16f93d882705756d303d6e957e81a84e71",
+          "essay_id": "20736",
+          "frames": [
+            "structured-url-ends-in-the-writers-own-name",
+            "structured-age",
+            "structured-ssn"
+          ],
+          "slots": [
+            2618,
+            2048,
+            258
+          ]
+        },
+        {
+          "base_chars": 2695,
+          "base_sha256": "4e7b05a1dff4f77114bc97d542729496cec5087eedbbf78268ed996c7f759e2d",
+          "essay_id": "20737",
+          "frames": [
+            "structured-url",
+            "structured-username",
+            "structured-card"
+          ],
+          "slots": [
+            2249,
+            806,
+            123
+          ]
+        },
+        {
+          "base_chars": 3634,
+          "base_sha256": "ad07e53f2c8b8dda0ace850a1789adab0b1e4a552e339818d503a07f92899a3d",
+          "essay_id": "20739",
+          "frames": [
+            "kinship-possessive",
+            "bare-first-name",
+            "dialogue-attribution"
+          ],
+          "slots": [
+            2602,
+            1144,
+            939
+          ]
+        },
+        {
+          "base_chars": 1513,
+          "base_sha256": "d4e3ce2ffd00eaa22976af35093f702d4ee3bc3ba930f9d96b930a244beedaff",
+          "essay_id": "20741",
+          "frames": [
+            "title-surname",
+            "honorific-surname",
+            "lowercase-writing"
+          ],
+          "slots": [
+            1481,
+            1193,
+            921
+          ]
+        },
+        {
+          "base_chars": 3223,
+          "base_sha256": "94b3828489c81a85fe3c8f5a7da78979979e79b1b8216e07c01fc3145d0962ce",
+          "essay_id": "20742",
+          "frames": [
+            "allcaps-writing",
+            "appositive",
+            "private-surname-shadowed-by-a-notable-one"
+          ],
+          "slots": [
+            2788,
+            1742,
+            1021
+          ]
+        },
+        {
+          "base_chars": 4611,
+          "base_sha256": "72105d05655352ad3fed117249ee45a055abc088e74ccb4758cae3229d331c6e",
+          "essay_id": "20743",
+          "frames": [
+            "heading-capital-on-an-ordinary-word",
+            "heading-that-actually-names-somebody",
+            "notable-surname-in-a-first-person-appositive"
+          ],
+          "slots": [
+            3863,
+            2996,
+            64
+          ]
+        },
+        {
+          "base_chars": 2720,
+          "base_sha256": "0267e0d6bba2e098dcbcbd4545b0a82b6d5726535b55e07e66b81ccb8048eb65",
+          "essay_id": "20745",
+          "frames": [
+            "private-person-shadowed-by-a-work-title",
+            "relative-whose-phrase-is-also-a-film-title",
+            "relation-led-film-title-with-no-capitalisation-tell"
+          ],
+          "slots": [
+            569,
+            214,
+            174
+          ]
+        },
+        {
+          "base_chars": 4117,
+          "base_sha256": "cfc0a84efd7ba4306df967099332baf01cbdbe04691356ec0a03b6c88af9b311",
+          "essay_id": "20746",
+          "frames": [
+            "private-person-shadowed-by-a-real-public-figure",
+            "full-name-midsentence",
+            "hyphenated-surname"
+          ],
+          "slots": [
+            3381,
+            1522,
+            233
+          ]
+        },
+        {
+          "base_chars": 1857,
+          "base_sha256": "8383958a9e579bfac540dca2cce5b37e6c2b3c09c1287bdf267c816930bb378b",
+          "essay_id": "20747",
+          "frames": [
+            "possessive-third-party",
+            "initial-plus-surname",
+            "nickname-and-full-name"
+          ],
+          "slots": [
+            871,
+            772,
+            528
+          ]
+        }
       ],
-      "slots": [
-        2940,
-        1176,
-        929
-      ]
+      "corpus": {
+        "id": "asap-aes-set8",
+        "limit": 25,
+        "name": "ASAP-AES",
+        "selection": "Rows whose essay_set column is 8, in file order, first N. Recorded so a port cannot quietly measure a different slice of the corpus and report it under the same gate."
+      },
+      "generated_with_seed": 20260805,
+      "per_essay": 3
     },
-    {
-      "base_chars": 3963,
-      "base_sha256": "3e7f55f6f6ba8290f7eee91ad77ef10984470b83b142743394947e246badf74d",
-      "essay_id": "20717",
-      "frames": [
-        "title-surname",
-        "honorific-surname",
-        "lowercase-writing"
+    "persuade-20": {
+      "cases": [
+        {
+          "base_chars": 3590,
+          "base_sha256": "bc83168abae5748f337070ade3fcc6b8c194d07879148ea3eb9f60288c722053",
+          "essay_id": "00066EA9880D",
+          "frames": [
+            "kinship-possessive",
+            "bare-first-name",
+            "dialogue-attribution"
+          ],
+          "slots": [
+            2988,
+            2219,
+            592
+          ]
+        },
+        {
+          "base_chars": 4565,
+          "base_sha256": "ea2db62962f9e791f06036851bcbb7ab300bf9d46dbb263d01655e5178cbf339",
+          "essay_id": "00203C45FC55",
+          "frames": [
+            "title-surname",
+            "honorific-surname",
+            "lowercase-writing"
+          ],
+          "slots": [
+            4420,
+            3987,
+            3448
+          ]
+        },
+        {
+          "base_chars": 3073,
+          "base_sha256": "55c51d2509c77b3c169d34811e5dd33c6b5920bf2a592e13232ef57a3f2a5e28",
+          "essay_id": "004BE23B05BF",
+          "frames": [
+            "allcaps-writing",
+            "appositive",
+            "private-surname-shadowed-by-a-notable-one"
+          ],
+          "slots": [
+            2252,
+            1907,
+            889
+          ]
+        },
+        {
+          "base_chars": 3603,
+          "base_sha256": "5322ebcc77da820aae6d796cdf79440c8d33aa671f97d7797381199a7d63e17a",
+          "essay_id": "0056F3D261D5",
+          "frames": [
+            "heading-capital-on-an-ordinary-word",
+            "heading-that-actually-names-somebody",
+            "notable-surname-in-a-first-person-appositive"
+          ],
+          "slots": [
+            1868,
+            1330,
+            805
+          ]
+        },
+        {
+          "base_chars": 2775,
+          "base_sha256": "428fb093fee1dc544c457c823f11621d35201c8e8ad0c7868942bfde78327df7",
+          "essay_id": "006E0B604E93",
+          "frames": [
+            "private-person-shadowed-by-a-work-title",
+            "relative-whose-phrase-is-also-a-film-title",
+            "relation-led-film-title-with-no-capitalisation-tell"
+          ],
+          "slots": [
+            2579,
+            2056,
+            1617
+          ]
+        },
+        {
+          "base_chars": 2745,
+          "base_sha256": "469b3b186796fde0dda2c8b5a6ee9fb4c2f375e51d6ccafa2b89a774d9b656c3",
+          "essay_id": "006FCE4404E3",
+          "frames": [
+            "private-person-shadowed-by-a-real-public-figure",
+            "full-name-midsentence",
+            "hyphenated-surname"
+          ],
+          "slots": [
+            2578,
+            2184,
+            1331
+          ]
+        },
+        {
+          "base_chars": 3102,
+          "base_sha256": "fc457bf8139e00c617900fb25cd4c5348b5c5833170f5bb0b66f9ecc2b1974e7",
+          "essay_id": "008015604AA0",
+          "frames": [
+            "possessive-third-party",
+            "initial-plus-surname",
+            "nickname-and-full-name"
+          ],
+          "slots": [
+            3015,
+            1797,
+            414
+          ]
+        },
+        {
+          "base_chars": 4218,
+          "base_sha256": "4c35f66b80121ca855444902ee6cd20bec2ce0ee0c51e19744fb9c5070c978d5",
+          "essay_id": "00885C23A764",
+          "frames": [
+            "student-own-name",
+            "notable-possessive",
+            "notable-bare-surname"
+          ],
+          "slots": [
+            2651,
+            2582,
+            318
+          ]
+        },
+        {
+          "base_chars": 3126,
+          "base_sha256": "c289397babdedb3c7b86369a146394e8473cef8a5989252945e72260cbd5484b",
+          "essay_id": "00A4CB36E006",
+          "frames": [
+            "notable-name-is-also-a-place",
+            "notable-full-name",
+            "notable-in-kinship-shaped-frame"
+          ],
+          "slots": [
+            2186,
+            1577,
+            448
+          ]
+        },
+        {
+          "base_chars": 3578,
+          "base_sha256": "2575709c7e714b83e7f85b089366556cac3058315e433bd6d54f0ea6f5e1a50b",
+          "essay_id": "00A551B2B4B2",
+          "frames": [
+            "notable-single-name",
+            "source-author-cited",
+            "prompt-context-figure"
+          ],
+          "slots": [
+            1554,
+            638,
+            224
+          ]
+        },
+        {
+          "base_chars": 3994,
+          "base_sha256": "8c988e96bd0e08e30c09ff949a6c4b2014652eeeb604965bfa27c6ad1b01be37",
+          "essay_id": "00C819ADE423",
+          "frames": [
+            "work-title-with-interior-stopword",
+            "notable-surname-established-in-document",
+            "fictional-character"
+          ],
+          "slots": [
+            3573,
+            2718,
+            692
+          ]
+        },
+        {
+          "base_chars": 2909,
+          "base_sha256": "a3098ba334693f2baeaf23e408e1c484a6974fa0ca3de70bba573151df82ba1c",
+          "essay_id": "00D719F00D9F",
+          "frames": [
+            "admiration-invocation-before-a-public-figure",
+            "fictional-character-described-by-a-relation",
+            "relation-led-title-written-as-a-title"
+          ],
+          "slots": [
+            1907,
+            1731,
+            208
+          ]
+        },
+        {
+          "base_chars": 2753,
+          "base_sha256": "4695f57c51b1db2ff0f594bd524d4e6a14ddecd62bc0a10f3c4e8a60330f1cb0",
+          "essay_id": "00E9AC98B45E",
+          "frames": [
+            "work-title-near-an-unattached-first-person-relation",
+            "intersect-notable-beside-private",
+            "intersect-person-org-location"
+          ],
+          "slots": [
+            2076,
+            1963,
+            1473
+          ]
+        },
+        {
+          "base_chars": 3206,
+          "base_sha256": "52a85d7e3ebc569545465117674aeee1c437b490d54d6da3e724dd199b7afa55",
+          "essay_id": "00F22B7F3998",
+          "frames": [
+            "intersect-self-and-third-party",
+            "intersect-school-and-friend",
+            "intersect-landmark-and-hometown"
+          ],
+          "slots": [
+            2992,
+            1313,
+            279
+          ]
+        },
+        {
+          "base_chars": 3441,
+          "base_sha256": "dab71270d807cfd165d6ffa3935d303de417dc0b393cc65a93ab15c83b5fcf5e",
+          "essay_id": "013099FBB46C",
+          "frames": [
+            "intersect-hometown-that-ends-in-a-landmark-suffix",
+            "intersect-name-beside-structured",
+            "structured-address"
+          ],
+          "slots": [
+            1888,
+            932,
+            362
+          ]
+        },
+        {
+          "base_chars": 4116,
+          "base_sha256": "482f016b64599500b04184adeeab1b1300ca116c7dbe34e6d5f2312439c6812b",
+          "essay_id": "013B38AF4588",
+          "frames": [
+            "structured-phone",
+            "structured-email",
+            "structured-email-is-the-writers-own-name"
+          ],
+          "slots": [
+            3278,
+            2270,
+            1361
+          ]
+        },
+        {
+          "base_chars": 2887,
+          "base_sha256": "296664542e3b0634f48870e4e595d3a6ce6278bbd601adf4d639e88ed651d76d",
+          "essay_id": "013CE7FDECAD",
+          "frames": [
+            "structured-url-ends-in-the-writers-own-name",
+            "structured-age",
+            "structured-ssn"
+          ],
+          "slots": [
+            2251,
+            1947,
+            672
+          ]
+        },
+        {
+          "base_chars": 3146,
+          "base_sha256": "1d17ef9da6f4373fcb59d3bd3c7d0223ca6001dcd02a631e738444a83ca89b57",
+          "essay_id": "0158970BC5D2",
+          "frames": [
+            "structured-url",
+            "structured-username",
+            "structured-card"
+          ],
+          "slots": [
+            1346,
+            1009,
+            471
+          ]
+        },
+        {
+          "base_chars": 2953,
+          "base_sha256": "ca659d542484991b8f5c3168f8356d3122ac5eaa209bc258de57424196c059e9",
+          "essay_id": "015FCB04F2D9",
+          "frames": [
+            "kinship-possessive",
+            "bare-first-name",
+            "dialogue-attribution"
+          ],
+          "slots": [
+            2636,
+            2386,
+            2055
+          ]
+        },
+        {
+          "base_chars": 2939,
+          "base_sha256": "d193e0e045897da45ec7e89de2973dc73bb39e37bee03a019b98023f1ac8d01a",
+          "essay_id": "0168325D0E24",
+          "frames": [
+            "title-surname",
+            "honorific-surname",
+            "lowercase-writing"
+          ],
+          "slots": [
+            2512,
+            1736,
+            118
+          ]
+        }
       ],
-      "slots": [
-        3420,
-        2578,
-        2221
-      ]
-    },
-    {
-      "base_chars": 4397,
-      "base_sha256": "421afec87cefd7f7ee3aa333e38c1dcb3e59fe382f8b0b723eb4bd758dd6269b",
-      "essay_id": "20718",
-      "frames": [
-        "allcaps-writing",
-        "appositive",
-        "private-surname-shadowed-by-a-notable-one"
-      ],
-      "slots": [
-        2039,
-        1274,
-        435
-      ]
-    },
-    {
-      "base_chars": 3415,
-      "base_sha256": "a2d5e1a40693b8a5e0dd02e5f54636c3a830dd5d9f315d4b63b5de3c19d6e6c0",
-      "essay_id": "20719",
-      "frames": [
-        "heading-capital-on-an-ordinary-word",
-        "heading-that-actually-names-somebody",
-        "notable-surname-in-a-first-person-appositive"
-      ],
-      "slots": [
-        2939,
-        2055,
-        1530
-      ]
-    },
-    {
-      "base_chars": 2943,
-      "base_sha256": "0c230608daaef95862191e04457b1d2e8ccfb0e3b807db06953acb6602f37b74",
-      "essay_id": "20721",
-      "frames": [
-        "private-person-shadowed-by-a-work-title",
-        "relative-whose-phrase-is-also-a-film-title",
-        "relation-led-film-title-with-no-capitalisation-tell"
-      ],
-      "slots": [
-        2845,
-        2475,
-        1270
-      ]
-    },
-    {
-      "base_chars": 4051,
-      "base_sha256": "5d482589b6dde7924e5bf948c65a57cfa97e7f0c2ef709081891ef5c83b9454e",
-      "essay_id": "20722",
-      "frames": [
-        "private-person-shadowed-by-a-real-public-figure",
-        "full-name-midsentence",
-        "hyphenated-surname"
-      ],
-      "slots": [
-        3094,
-        490,
-        314
-      ]
-    },
-    {
-      "base_chars": 4429,
-      "base_sha256": "5a4038bbbdad58d19cb36cce2d4dcd451f38c365fca882d99f369178bbbf8f32",
-      "essay_id": "20723",
-      "frames": [
-        "possessive-third-party",
-        "initial-plus-surname",
-        "nickname-and-full-name"
-      ],
-      "slots": [
-        4156,
-        3806,
-        2590
-      ]
-    },
-    {
-      "base_chars": 1445,
-      "base_sha256": "b8b52b5375f756766d2af927d310f7b141aa32c2a8ff32f9bc6a868f63025f76",
-      "essay_id": "20724",
-      "frames": [
-        "student-own-name",
-        "notable-possessive",
-        "notable-bare-surname"
-      ],
-      "slots": [
-        1312,
-        1051,
-        429
-      ]
-    },
-    {
-      "base_chars": 4007,
-      "base_sha256": "9d9d11b41a4dc979ef703346f0bbbd08d576e831dbcec2ba8f917e50cb74522d",
-      "essay_id": "20725",
-      "frames": [
-        "notable-name-is-also-a-place",
-        "notable-full-name",
-        "notable-in-kinship-shaped-frame"
-      ],
-      "slots": [
-        3052,
-        563,
-        333
-      ]
-    },
-    {
-      "base_chars": 3007,
-      "base_sha256": "70b38083b83e5f76cf0b5353e035b327607847c4e01ff819d701bce5bb102411",
-      "essay_id": "20726",
-      "frames": [
-        "notable-single-name",
-        "source-author-cited",
-        "prompt-context-figure"
-      ],
-      "slots": [
-        2694,
-        2636,
-        1033
-      ]
-    },
-    {
-      "base_chars": 2253,
-      "base_sha256": "172a023e588856b02fd07c96e66576d62f6f9754f1c584310e8087d23cc9d885",
-      "essay_id": "20727",
-      "frames": [
-        "work-title-with-interior-stopword",
-        "notable-surname-established-in-document",
-        "fictional-character"
-      ],
-      "slots": [
-        1843,
-        1728,
-        1176
-      ]
-    },
-    {
-      "base_chars": 4765,
-      "base_sha256": "7c142e7a097c3dd6a2ee300b2f8991c24d2247c320388f4f583897f154498aea",
-      "essay_id": "20728",
-      "frames": [
-        "admiration-invocation-before-a-public-figure",
-        "fictional-character-described-by-a-relation",
-        "relation-led-title-written-as-a-title"
-      ],
-      "slots": [
-        2967,
-        566,
-        243
-      ]
-    },
-    {
-      "base_chars": 3808,
-      "base_sha256": "1d5fd72035c947e21b89d48bfabc491188eb4e7a59c67efc83de9435d4d0c6ac",
-      "essay_id": "20732",
-      "frames": [
-        "work-title-near-an-unattached-first-person-relation",
-        "intersect-notable-beside-private",
-        "intersect-person-org-location"
-      ],
-      "slots": [
-        2648,
-        2583,
-        2479
-      ]
-    },
-    {
-      "base_chars": 2964,
-      "base_sha256": "fee8cdb819e2e88e2bd27bf6562485a2194deece6e694cb6ee23db6b14cf8574",
-      "essay_id": "20733",
-      "frames": [
-        "intersect-self-and-third-party",
-        "intersect-school-and-friend",
-        "intersect-landmark-and-hometown"
-      ],
-      "slots": [
-        2728,
-        2408,
-        1516
-      ]
-    },
-    {
-      "base_chars": 4490,
-      "base_sha256": "0bbb0dcaf4520e21ce4ab07488d926380eed5c4c1bba13d1f67d36caacda2045",
-      "essay_id": "20734",
-      "frames": [
-        "intersect-hometown-that-ends-in-a-landmark-suffix",
-        "intersect-name-beside-structured",
-        "structured-address"
-      ],
-      "slots": [
-        2770,
-        2327,
-        102
-      ]
-    },
-    {
-      "base_chars": 729,
-      "base_sha256": "5fe2db86a26fda95cc5b6a6301a3f9361bf3ff9e8093d570666d9ae89f8f0f7a",
-      "essay_id": "20735",
-      "frames": [
-        "structured-phone",
-        "structured-email",
-        "structured-email-is-the-writers-own-name"
-      ],
-      "slots": [
-        365,
-        274,
-        147
-      ]
-    },
-    {
-      "base_chars": 3823,
-      "base_sha256": "b8b2ecea13cc9af162e7e11502db4b16f93d882705756d303d6e957e81a84e71",
-      "essay_id": "20736",
-      "frames": [
-        "structured-url-ends-in-the-writers-own-name",
-        "structured-age",
-        "structured-ssn"
-      ],
-      "slots": [
-        2618,
-        2048,
-        258
-      ]
-    },
-    {
-      "base_chars": 2695,
-      "base_sha256": "4e7b05a1dff4f77114bc97d542729496cec5087eedbbf78268ed996c7f759e2d",
-      "essay_id": "20737",
-      "frames": [
-        "structured-url",
-        "structured-username",
-        "structured-card"
-      ],
-      "slots": [
-        2249,
-        806,
-        123
-      ]
-    },
-    {
-      "base_chars": 3634,
-      "base_sha256": "ad07e53f2c8b8dda0ace850a1789adab0b1e4a552e339818d503a07f92899a3d",
-      "essay_id": "20739",
-      "frames": [
-        "kinship-possessive",
-        "bare-first-name",
-        "dialogue-attribution"
-      ],
-      "slots": [
-        2602,
-        1144,
-        939
-      ]
-    },
-    {
-      "base_chars": 1513,
-      "base_sha256": "d4e3ce2ffd00eaa22976af35093f702d4ee3bc3ba930f9d96b930a244beedaff",
-      "essay_id": "20741",
-      "frames": [
-        "title-surname",
-        "honorific-surname",
-        "lowercase-writing"
-      ],
-      "slots": [
-        1481,
-        1193,
-        921
-      ]
-    },
-    {
-      "base_chars": 3223,
-      "base_sha256": "94b3828489c81a85fe3c8f5a7da78979979e79b1b8216e07c01fc3145d0962ce",
-      "essay_id": "20742",
-      "frames": [
-        "allcaps-writing",
-        "appositive",
-        "private-surname-shadowed-by-a-notable-one"
-      ],
-      "slots": [
-        2788,
-        1742,
-        1021
-      ]
-    },
-    {
-      "base_chars": 4611,
-      "base_sha256": "72105d05655352ad3fed117249ee45a055abc088e74ccb4758cae3229d331c6e",
-      "essay_id": "20743",
-      "frames": [
-        "heading-capital-on-an-ordinary-word",
-        "heading-that-actually-names-somebody",
-        "notable-surname-in-a-first-person-appositive"
-      ],
-      "slots": [
-        3863,
-        2996,
-        64
-      ]
-    },
-    {
-      "base_chars": 2720,
-      "base_sha256": "0267e0d6bba2e098dcbcbd4545b0a82b6d5726535b55e07e66b81ccb8048eb65",
-      "essay_id": "20745",
-      "frames": [
-        "private-person-shadowed-by-a-work-title",
-        "relative-whose-phrase-is-also-a-film-title",
-        "relation-led-film-title-with-no-capitalisation-tell"
-      ],
-      "slots": [
-        569,
-        214,
-        174
-      ]
-    },
-    {
-      "base_chars": 4117,
-      "base_sha256": "cfc0a84efd7ba4306df967099332baf01cbdbe04691356ec0a03b6c88af9b311",
-      "essay_id": "20746",
-      "frames": [
-        "private-person-shadowed-by-a-real-public-figure",
-        "full-name-midsentence",
-        "hyphenated-surname"
-      ],
-      "slots": [
-        3381,
-        1522,
-        233
-      ]
-    },
-    {
-      "base_chars": 1857,
-      "base_sha256": "8383958a9e579bfac540dca2cce5b37e6c2b3c09c1287bdf267c816930bb378b",
-      "essay_id": "20747",
-      "frames": [
-        "possessive-third-party",
-        "initial-plus-surname",
-        "nickname-and-full-name"
-      ],
-      "slots": [
-        871,
-        772,
-        528
-      ]
+      "corpus": {
+        "id": "persuade-20",
+        "limit": 20,
+        "name": "PERSUADE 2.0",
+        "selection": "Essays whose character length falls within ASAP-AES set 8's own first-quartile-to-maximum band, ordered by id ascending, first N. The band holds essay length comparable to the ASAP-AES baseline so the latency bar keeps its meaning; the naive first-N rule yields a median of 1,607 characters against that baseline's 3,421 and would have weakened the one gate that constrains a port."
+      },
+      "generated_with_seed": 20260805,
+      "per_essay": 3
     }
-  ],
-  "corpus": {
-    "essay_set": "8",
-    "limit": 25,
-    "name": "ASAP-AES",
-    "selection": "first N essays of the set, in file order"
-  },
-  "document_version": 1,
-  "generated_with_seed": 20260805,
-  "note": "Offsets into each essay where the named frames were injected, in the order applied \u2014 descending, so an earlier insertion cannot shift a later one. frames[i] goes at slots[i]. An input, not an answer: what each port measures from the resulting text is its own.",
-  "per_essay": 3
+  }
 }

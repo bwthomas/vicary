@@ -32,11 +32,11 @@ import pytest
 from vicary import DEFAULT_NAME_DETECTION, config, gazetteer
 from vicary.eval import carrier, conformance, measured
 from vicary.eval import census as census_eval
+from vicary.eval import corpus as corpus_mod
 from vicary.eval.fixture import FIXTURE_VERSION
 from vicary.eval.fixture import frames as select_frames
 from vicary.eval.recall import (
     build_cases_from_plan,
-    load_set8,
     run,
     run_frames,
     summarize,
@@ -198,10 +198,10 @@ def corpus_metrics(record_gate, tmp_path_factory) -> dict:
             f"no corpus: set {config.EVAL_CORPUS_TSV_ENV_VAR} or "
             f"{config.EVAL_CORPUS_DIR_ENV_VAR}"
         )
-    plan = carrier.load_document()
-    essays = load_set8(tsv, None, plan["corpus"]["limit"])
+    corpus_id, essays = corpus_mod.load_essays()
+    plan = carrier.load_plan(corpus_id)
     if not essays:
-        pytest.skip(f"corpus at {tsv} yielded no set-8 essays")
+        pytest.skip(f"corpus at {tsv} yielded no essays")
     # From the recorded plan, not from the RNG — the same path TypeScript and
     # Ruby take, so a divergence between the ports is a divergence in the
     # redactor rather than in where three languages happened to inject.
@@ -366,7 +366,7 @@ def test_a_corpus_supplying_only_some_planned_essays_is_refused() -> None:
     over-firing and latency then computed as 0.0 — which in a ``<=`` gate is the
     most comfortable pass on the board. Two gates went green on no data at all.
     """
-    plan = carrier.load_document()
+    plan = carrier.load_plan(corpus_mod.resolve_corpus_id())
     with pytest.raises(ValueError, match="Refusing to measure a subset"):
         build_cases_from_plan([("not-a-planned-id", "some other essay")], plan,
                               pool=select_frames())
@@ -374,7 +374,7 @@ def test_a_corpus_supplying_only_some_planned_essays_is_refused() -> None:
 
 def test_a_corpus_essay_that_does_not_match_the_plan_is_refused() -> None:
     """An offset into the wrong text yields a plausible number, not an error."""
-    plan = carrier.load_document()
+    plan = carrier.load_plan(corpus_mod.resolve_corpus_id())
     first = plan["cases"][0]["essay_id"]
     with pytest.raises(ValueError, match="does not match the one the carrier"):
         build_cases_from_plan([(first, "a different essay entirely")], plan,
@@ -575,8 +575,8 @@ def test_the_published_measurements_are_what_this_run_measures() -> None:
             f"no corpus: set {config.EVAL_CORPUS_TSV_ENV_VAR} or "
             f"{config.EVAL_CORPUS_DIR_ENV_VAR}"
         )
-    digest, gates, envelope = measured.measure()
-    published = measured.load_document()
+    corpus_id, digest, gates, envelope = measured.measure()
+    published = measured.load_measurements(corpus_id)
 
     assert published["envelope"] == envelope, (
         "measured.json was taken in a different envelope from this run — the "

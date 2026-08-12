@@ -1,0 +1,139 @@
+{
+  "description": "Twenty argumentative essays by US students in grades 6-12, shipped so the three corpus gates are measurable on a fresh checkout.",
+  "document_version": 1,
+  "essays": [
+    {
+      "chars": 3590,
+      "id": "00066EA9880D",
+      "sha256": "bc83168abae5748f337070ade3fcc6b8c194d07879148ea3eb9f60288c722053"
+    },
+    {
+      "chars": 4565,
+      "id": "00203C45FC55",
+      "sha256": "ea2db62962f9e791f06036851bcbb7ab300bf9d46dbb263d01655e5178cbf339"
+    },
+    {
+      "chars": 3073,
+      "id": "004BE23B05BF",
+      "sha256": "55c51d2509c77b3c169d34811e5dd33c6b5920bf2a592e13232ef57a3f2a5e28"
+    },
+    {
+      "chars": 3603,
+      "id": "0056F3D261D5",
+      "sha256": "5322ebcc77da820aae6d796cdf79440c8d33aa671f97d7797381199a7d63e17a"
+    },
+    {
+      "chars": 2775,
+      "id": "006E0B604E93",
+      "sha256": "428fb093fee1dc544c457c823f11621d35201c8e8ad0c7868942bfde78327df7"
+    },
+    {
+      "chars": 2745,
+      "id": "006FCE4404E3",
+      "sha256": "469b3b186796fde0dda2c8b5a6ee9fb4c2f375e51d6ccafa2b89a774d9b656c3"
+    },
+    {
+      "chars": 3102,
+      "id": "008015604AA0",
+      "sha256": "fc457bf8139e00c617900fb25cd4c5348b5c5833170f5bb0b66f9ecc2b1974e7"
+    },
+    {
+      "chars": 4218,
+      "id": "00885C23A764",
+      "sha256": "4c35f66b80121ca855444902ee6cd20bec2ce0ee0c51e19744fb9c5070c978d5"
+    },
+    {
+      "chars": 3126,
+      "id": "00A4CB36E006",
+      "sha256": "c289397babdedb3c7b86369a146394e8473cef8a5989252945e72260cbd5484b"
+    },
+    {
+      "chars": 3578,
+      "id": "00A551B2B4B2",
+      "sha256": "2575709c7e714b83e7f85b089366556cac3058315e433bd6d54f0ea6f5e1a50b"
+    },
+    {
+      "chars": 3994,
+      "id": "00C819ADE423",
+      "sha256": "8c988e96bd0e08e30c09ff949a6c4b2014652eeeb604965bfa27c6ad1b01be37"
+    },
+    {
+      "chars": 2909,
+      "id": "00D719F00D9F",
+      "sha256": "a3098ba334693f2baeaf23e408e1c484a6974fa0ca3de70bba573151df82ba1c"
+    },
+    {
+      "chars": 2753,
+      "id": "00E9AC98B45E",
+      "sha256": "4695f57c51b1db2ff0f594bd524d4e6a14ddecd62bc0a10f3c4e8a60330f1cb0"
+    },
+    {
+      "chars": 3206,
+      "id": "00F22B7F3998",
+      "sha256": "52a85d7e3ebc569545465117674aeee1c437b490d54d6da3e724dd199b7afa55"
+    },
+    {
+      "chars": 3441,
+      "id": "013099FBB46C",
+      "sha256": "dab71270d807cfd165d6ffa3935d303de417dc0b393cc65a93ab15c83b5fcf5e"
+    },
+    {
+      "chars": 4116,
+      "id": "013B38AF4588",
+      "sha256": "482f016b64599500b04184adeeab1b1300ca116c7dbe34e6d5f2312439c6812b"
+    },
+    {
+      "chars": 2887,
+      "id": "013CE7FDECAD",
+      "sha256": "296664542e3b0634f48870e4e595d3a6ce6278bbd601adf4d639e88ed651d76d"
+    },
+    {
+      "chars": 3146,
+      "id": "0158970BC5D2",
+      "sha256": "1d17ef9da6f4373fcb59d3bd3c7d0223ca6001dcd02a631e738444a83ca89b57"
+    },
+    {
+      "chars": 2953,
+      "id": "015FCB04F2D9",
+      "sha256": "ca659d542484991b8f5c3168f8356d3122ac5eaa209bc258de57424196c059e9"
+    },
+    {
+      "chars": 2939,
+      "id": "0168325D0E24",
+      "sha256": "d193e0e045897da45ec7e89de2973dc73bb39e37bee03a019b98023f1ac8d01a"
+    }
+  ],
+  "id": "persuade-20",
+  "license": {
+    "conflicting_claim": "A widely-mirrored academic copy of the same data states CC BY-NC-SA 4.0. This repository relies on the copyright holder's grant above. See NOTICE.",
+    "holder": "The Learning Agency Lab",
+    "id": "CC-BY-4.0",
+    "statement": "Persuade dataset (c) 2024 by The Learning Agency Lab is licensed under CC BY 4.0."
+  },
+  "measured_lengths": {
+    "asap_aes_set8_mean_for_comparison": 3291,
+    "chars_max": 4565,
+    "chars_mean": 3336,
+    "chars_median": 3136.0,
+    "chars_min": 2745,
+    "count": 20
+  },
+  "name": "PERSUADE 2.0",
+  "selection": {
+    "char_band": [
+      2720,
+      4765
+    ],
+    "limit": 20,
+    "order": "essay_id_comp ascending",
+    "reproducer": "tools/persuade_build.py",
+    "rule": "Essays whose character length falls within ASAP-AES set 8's own first-quartile-to-maximum band, ordered by id ascending, first N. The band holds essay length comparable to the ASAP-AES baseline so the latency bar keeps its meaning; the naive first-N rule yields a median of 1,607 characters against that baseline's 3,421 and would have weakened the one gate that constrains a port."
+  },
+  "source": {
+    "kind": "shipped",
+    "text_file": "essays.json",
+    "transform": "CRLF newlines normalised to LF; text otherwise verbatim",
+    "upstream_sha256": "187c509645ea25a396572146dbad2270bb02eef32bee0e74076f530739320401",
+    "upstream_url": "https://huggingface.co/datasets/realbenpope/PERSUADE_manageable/resolve/main/persuade_full_text.csv"
+  }
+}

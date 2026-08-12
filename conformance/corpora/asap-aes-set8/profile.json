@@ -1,0 +1,45 @@
+{
+  "document_version": 1,
+  "id": "asap-aes-set8",
+  "name": "ASAP-AES",
+  "description": "The first 25 essays of ASAP-AES set 8, in file order. The corpus every published number in this repository's history was measured on, and the reason the three corpus gates were unmeasurable anywhere but on a machine holding the file.",
+  "license": {
+    "id": "NOT-REDISTRIBUTABLE",
+    "holder": "Hewlett Foundation / Kaggle ASAP-AES",
+    "statement": "Not redistributable. No package in this repository ships it, and none may. The operator supplies their own copy.",
+    "conflicting_claim": null
+  },
+  "source": {
+    "kind": "operator_tsv",
+    "env_vars": [
+      "VICARY_EVAL_CORPUS_TSV",
+      "VICARY_EVAL_CORPUS_DIR"
+    ],
+    "encoding": "latin-1",
+    "delimiter": "\t",
+    "id_column": "essay_id",
+    "text_column": "essay",
+    "filter": {
+      "column": "essay_set",
+      "equals": "8"
+    },
+    "why_latin1": "The distributed file is not UTF-8. Decoding it as UTF-8 fails outright on some rows, and decoding with replacement would alter essay text — which changes the digests every port verifies and therefore what the gates measure."
+  },
+  "selection": {
+    "rule": "Rows whose essay_set column is 8, in file order, first N. Recorded so a port cannot quietly measure a different slice of the corpus and report it under the same gate.",
+    "char_band": null,
+    "order": "file order",
+    "limit": 25,
+    "reproducer": null
+  },
+  "measured_lengths": {
+    "count": 25,
+    "chars_min": 729,
+    "chars_median": 3421,
+    "chars_mean": 3291,
+    "chars_max": 4765,
+    "asap_aes_set8_mean_for_comparison": 3291
+  },
+  "essays": [],
+  "why_no_essay_digests": "A shipped corpus pins the sha256 of each essay here, because the file in this repository is the thing gates measure and an edit to it must fail loudly. This corpus is not shipped, so there is nothing here to pin. What catches a wrong file is `conformance/carrier.json`, which records a digest per essay and which every port already verifies before injecting a frame at an offset into one."
+}

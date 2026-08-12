@@ -35,13 +35,29 @@ module Vicary
     CARRIER_FILENAME = "carrier.json"
 
     # Bumped when a field's meaning changes. An unknown version is refused.
-    CARRIER_DOCUMENT_VERSION = 1
+    # 2 keyed the plans by corpus id. A version-1 reader handed a version-2 file
+    # finds no `cases` at the top level and builds zero carrier essays — which in a
+    # `<=` gate is the most comfortable pass on the board, so the refusal is the
+    # point of the number.
+    CARRIER_DOCUMENT_VERSION = 2
+
+    # Where the corpus profiles live, under `conformance/`.
+    CORPORA_DIRNAME = "corpora"
+    CORPORA_INDEX_FILENAME = "index.json"
+    CORPUS_PROFILE_FILENAME = "profile.json"
+    PROFILE_DOCUMENT_VERSION = 1
+
+    # Names a corpus id directly, overriding the operator-TSV inference.
+    EVAL_CORPUS_ENV_VAR = "VICARY_EVAL_CORPUS"
 
     # The reference's ANSWERS on the plan the carrier file describes. Separate
     # file because they are a different kind of thing: `carrier.json` is an input
     # every port replays, `measured.json` is what Python got from replaying it.
     MEASURED_FILENAME = "measured.json"
-    MEASURED_DOCUMENT_VERSION = 1
+    # 2 keyed the measurements by corpus id. Two of the three numbers are
+    # properties of the prose rather than of the detector, so an unkeyed block
+    # invited comparing one corpus's figures against another's.
+    MEASURED_DOCUMENT_VERSION = 2
 
     # One of ASAP's own anonymization tokens — `@PERSON1`, `@LOCATION2`.
     #
@@ -106,7 +122,43 @@ module Vicary
         Pathname.new(dir || Conformance.directory).join(CARRIER_FILENAME)
       end
 
-      def load_carrier_plan(dir = nil)
+      # The corpus registry: which corpora exist, and which applies by default.
+      def load_corpus_index(dir = nil)
+        read_versioned(
+          Pathname.new(dir || Conformance.directory)
+                  .join(CORPORA_DIRNAME, CORPORA_INDEX_FILENAME), "registry"
+        )
+      end
+
+      # One corpus's profile: where its essays come from and which are in.
+      def load_corpus_profile(corpus_id, dir = nil)
+        read_versioned(
+          Pathname.new(dir || Conformance.directory)
+                  .join(CORPORA_DIRNAME, corpus_id, CORPUS_PROFILE_FILENAME), "profile"
+        )
+      end
+
+      # Which corpus applies here, in the reference's order: an explicit
+      # VICARY_EVAL_CORPUS wins, then an operator with a configured TSV keeps
+      # measuring the corpus they always measured, then the registry default.
+      def resolve_corpus_id(dir = nil)
+        index = load_corpus_index(dir)
+        known = index["corpora"] || []
+        explicit = (ENV[EVAL_CORPUS_ENV_VAR] || "").strip
+        unless explicit.empty?
+          unless known.include?(explicit)
+            raise Conformance::SpecError,
+                  "#{EVAL_CORPUS_ENV_VAR}=#{explicit} is not a registered corpus; this " \
+                  "checkout registers #{known.join(', ')}"
+          end
+          return explicit
+        end
+        return index["operator_default"] if !corpus_source.empty? && index["operator_default"]
+
+        index["default"]
+      end
+
+      def load_carrier_plan(corpus_id = nil, dir = nil)
         raw = JSON.parse(carrier_path(dir).read)
         version = raw["document_version"]
         unless version == CARRIER_DOCUMENT_VERSION
@@ -116,7 +168,25 @@ module Vicary
                 "the fields it recognises, because a partly-read plan produces carrier " \
                 "text that is wrong without being detectably wrong."
         end
-        raw
+        id = corpus_id || resolve_corpus_id(dir)
+        plans = raw["plans"] || {}
+        plan = plans[id]
+        if plan.nil?
+          raise Conformance::SpecError,
+                "#{CARRIER_FILENAME} holds no plan for corpus #{id}; it has " \
+                "#{plans.keys.sort.join(', ')}. Regenerate with " \
+                "`python -m vicary.eval.carrier --write` on a machine that can read " \
+                "that corpus."
+        end
+        # The row filter and essay count are properties of the corpus, so they are
+        # read off its profile rather than restated here — two records of one fact
+        # is how they drift.
+        profile = load_corpus_profile(id, dir)
+        plan.merge(
+          "corpus_id" => id,
+          "essay_set" => profile.dig("source", "filter", "equals"),
+          "limit" => profile.dig("selection", "limit")
+        )
       end
 
       def measured_path(dir = nil)
@@ -134,7 +204,7 @@ module Vicary
       #
       # Returns the raw document. The envelope matters as much as the numbers, so
       # nothing here flattens it away — see `Gates.check_measured_envelope`.
-      def load_measured(dir = nil)
+      def load_measured(corpus_id = nil, dir = nil)
         raw = JSON.parse(measured_path(dir).read)
         version = raw["document_version"]
         unless version == MEASURED_DOCUMENT_VERSION
@@ -143,6 +213,28 @@ module Vicary
                 "reader knows #{MEASURED_DOCUMENT_VERSION}. Refusing rather than reading " \
                 "the fields it recognises: a partly-read document compares this port " \
                 "against numbers whose meaning it is guessing at."
+        end
+        id = corpus_id || resolve_corpus_id(dir)
+        corpora = raw["corpora"] || {}
+        entry = corpora[id]
+        if entry.nil?
+          raise Conformance::SpecError,
+                "#{MEASURED_FILENAME} holds no measurements for corpus #{id}; it has " \
+                "#{corpora.keys.sort.join(', ')}. Regenerate with `just sync-conformance` " \
+                "on a machine that can read that corpus."
+        end
+        entry
+      end
+
+      def read_versioned(path, what)
+        raw = JSON.parse(path.read)
+        version = raw["document_version"]
+        unless version == PROFILE_DOCUMENT_VERSION
+          raise Conformance::SpecError,
+                "#{path.basename} is document_version #{version.inspect} and this reader " \
+                "knows #{PROFILE_DOCUMENT_VERSION}. Refusing to read the fields it " \
+                "recognises: a partly-read #{what} selects a different slice of prose " \
+                "without being detectably wrong."
         end
         raw
       end
@@ -269,7 +361,7 @@ module Vicary
         return nil if tsv.empty?
 
         plan = load_carrier_plan
-        essays = load_set(tsv, plan["corpus"]["essay_set"], plan["corpus"]["limit"])
+        essays = load_set(tsv, plan["essay_set"], plan["limit"])
         return nil if essays.empty?
 
         measure(build_cases(essays, plan, spec), spec.identity, &redact)

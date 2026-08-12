@@ -1039,9 +1039,15 @@ def build_gates_document() -> dict[str, Any]:
         "document_version": DOCUMENT_VERSION,
         "reference_arm": REFERENCE_ARM,
         "requirements": {
-            "corpus": "An essay corpus TSV the operator supplies "
-                      "(VICARY_EVAL_CORPUS_TSV / _DIR). Not shipped by any "
-                      "package here.",
+            "corpus": "An essay corpus. Which one is declared in "
+                      "conformance/corpora/ and selected per the registry there: "
+                      "VICARY_EVAL_CORPUS names one outright, else a configured "
+                      "VICARY_EVAL_CORPUS_TSV / _DIR keeps the operator on "
+                      "ASAP-AES, else the registry default. ASAP-AES is "
+                      "operator-supplied and not shipped by any package here; "
+                      "persuade-20 ships its essays, so these gates are "
+                      "measurable without operator setup once it becomes the "
+                      "default.",
             "census": "The US Census surname file (VICARY_EVAL_CENSUS_CSV). Not "
                       "shipped: 3 MB the redaction path never reads.",
         },

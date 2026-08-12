@@ -1,0 +1,19 @@
+{
+  "document_version": 1,
+  "default": "asap-aes-set8",
+  "operator_default": "asap-aes-set8",
+  "default_pending": {
+    "id": "persuade-20",
+    "why_not_yet": "persuade-20 leaks two held-out lowercase-name spans that ASAP-AES never exercised in the same context, so its carrier recall is 84.2% against a 100% bar. Making it the default before that is fixed would put a red gate on main. The corpus, its plan and its measured baseline all ship now so the defect is visible and reproducible; the default flips in a follow-on change once the leak is closed."
+  },
+  "corpora": [
+    "asap-aes-set8",
+    "persuade-20"
+  ],
+  "resolution": [
+    "VICARY_EVAL_CORPUS names a corpus id directly and wins outright.",
+    "Failing that, if an operator TSV is configured (VICARY_EVAL_CORPUS_TSV or _DIR) the corpus named by `operator_default` applies, so a machine that has always measured ASAP-AES keeps measuring ASAP-AES and does not silently change its answer.",
+    "Failing both, `default` applies. It is a shipped corpus, so the three corpus gates are measured on a fresh checkout with no operator setup at all."
+  ],
+  "why_this_file": "Ports enumerate corpora from here rather than globbing the directory, so a half-added corpus — a profile written but not registered, or registered but not written — fails loudly on the next run instead of changing what a glob happens to return. The three corpus gates are keyed by these ids in carrier.json and measured.json; an id that appears in one and not the others is what those files' own checks are for."
+}

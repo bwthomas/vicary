@@ -188,19 +188,17 @@ py-conformance:
 # regression all three front doors are about to inherit.
 sync-conformance:
     cd python && .venv/bin/python -m vicary.eval.conformance --write
-    @# carrier.json needs the corpus, so it is regenerated only when one is
-    @# configured. Left alone otherwise — an absent corpus must not silently
-    @# rewrite the plan the committed gate numbers were measured against.
-    @if [ -n "${VICARY_EVAL_CORPUS_TSV:-}${VICARY_EVAL_CORPUS_DIR:-}" ]; then \
-      cd python && .venv/bin/python -m vicary.eval.carrier --write; \
-    else echo "SKIPPED carrier.json — no VICARY_EVAL_CORPUS_TSV/_DIR set"; fi
-    @# measured.json is the reference's ANSWERS on that plan — the counts all
-    @# three ports assert against instead of typing 29 into three test suites.
-    @# Same corpus condition, and for a sharper reason: regenerating it without
-    @# one would publish zeroes, which every port would then agree with.
-    @if [ -n "${VICARY_EVAL_CORPUS_TSV:-}${VICARY_EVAL_CORPUS_DIR:-}" ]; then \
-      cd python && .venv/bin/python -m vicary.eval.measured --write; \
-    else echo "SKIPPED measured.json — no VICARY_EVAL_CORPUS_TSV/_DIR set"; fi
+    @# carrier.json and measured.json are per-corpus now, and both generators
+    @# MERGE: each regenerates the corpora this machine can read and keeps the
+    @# ones it cannot, naming every skip on stdout. So they no longer need an
+    @# operator corpus to run at all — a checkout with only the shipped corpus
+    @# rebuilds that corpus's plan and answers without touching ASAP-AES's, which
+    @# is what the earlier blanket skip existed to protect. What must still never
+    @# happen is regenerating a plan from an absent corpus and publishing zeroes
+    @# every port would then agree with; that is now the generators' own refusal
+    @# rather than a shell guard here.
+    cd python && .venv/bin/python -m vicary.eval.carrier --write
+    cd python && .venv/bin/python -m vicary.eval.measured --write
     @git --no-pager diff --stat -- conformance/ || true
 
 # A missing spec must stop the run. Otherwise `just conformance` on a tree with

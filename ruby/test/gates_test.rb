@@ -192,7 +192,7 @@ class GatesTest < Minitest::Test
     # coincide across genuinely different inputs.
     plan = Vicary::Corpus.load_carrier_plan
     essays = Vicary::Corpus.load_set(Vicary::Corpus.corpus_source,
-                                     plan["corpus"]["essay_set"], plan["corpus"]["limit"])
+                                     plan["essay_set"], plan["limit"])
     cases = Vicary::Corpus.build_cases(essays, plan, self.class.spec)
     assert_equal Vicary::Corpus.load_measured["carrier_text_sha256"],
                  Digest::SHA256.hexdigest(cases.map(&:text).join)

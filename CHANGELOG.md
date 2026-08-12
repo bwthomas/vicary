@@ -2,6 +2,79 @@
 
 ## Unreleased
 
+### A corpus is now declared rather than assumed, and one of them ships
+
+* **The three corpus gates were unmeasurable on any machine but one.** They need
+  real student prose, and the prose was ASAP-AES — not redistributable, reached
+  through an environment variable pointing at the operator's own copy. On every
+  other checkout, CI included, four of nine gates reported NOT MEASURED, and a
+  board of five greens and four blanks reads very much like a board of nine.
+* **`conformance/corpora/` declares corpora; `persuade-20` ships twenty essays.**
+  PERSUADE 2.0 is the closest available match — argumentative essays by US
+  students in grades 6-12, anonymised upstream the same way ASAP-AES is, with
+  placeholder tokens standing in for names. Its copyright holder licenses it
+  CC BY 4.0. A widely-mirrored academic copy of the same data says CC BY-NC-SA
+  4.0 instead; we rely on the holder's grant and the disagreement is written into
+  the shipped `NOTICE` rather than resolved silently.
+* **The selection rule is load-bearing, and the obvious rule was wrong.** Taking
+  the first twenty essays gives a median of 1,607 characters against ASAP-AES set
+  8's 3,421. Latency p95 scales with the text it walks and Ruby sits at 8.8-9.9 ms
+  against a 10 ms bar, so a shorter corpus would have halved the measured latency
+  and turned the one gate that constrains a port into a formality — with every
+  number still reading green. The band is therefore ASAP-AES set 8's own
+  first-quartile-to-maximum char range, giving a mean of 3,336 against that
+  baseline's 3,291. Within the band nothing is hand-picked, and
+  `tools/persuade_build.py` reproduces the selection from an upstream whose digest
+  it pins.
+* **What was welded in is now read off a profile:** the essay set, the row limit,
+  the column names and the file encoding. `VICARY_EVAL_CORPUS` names a corpus
+  outright; failing that a configured `VICARY_EVAL_CORPUS_TSV` keeps an operator
+  on ASAP-AES, so the machine that has always measured it does not change its
+  answer because this landed; failing both, the registry default applies.
+* **`carrier.json` and `measured.json` are keyed by corpus id** (both bumped to
+  `document_version` 2). Offsets are character positions into specific essays, so
+  there is no such thing as one that means anything in two corpora — and two of
+  the three corpus gates are properties of the prose, not the detector. An
+  unkeyed block invited measuring a second corpus and reading the difference from
+  the first as a port regression. Both readers refuse an unknown version rather
+  than finding no `cases` and building zero carrier essays, which in a `<=` gate
+  is the most comfortable pass on the board.
+* **Regeneration merges rather than replaces.** A machine without the operator's
+  ASAP-AES copy can rebuild the shipped corpus's plan, and must not delete the
+  baseline it cannot rebuild as a side effect. Every skipped corpus says so on
+  stdout.
+* **The ASAP-AES path is byte-identical.** Its 25 essays load exactly as
+  `load_set8` returned them, its recorded plan was carried across verbatim, and
+  re-measuring reproduces all seven published figures and the carrier-text digest.
+
+### What the new corpus found, which ASAP-AES could not
+
+* **`persuade-20` is not yet the default, because it fails a gate.** Carrier recall
+  is 16/19 (84.2%) against a 100% bar. Shipping it as the default would put a red
+  gate on main, so the corpus, its plan and its measured baseline all land now —
+  visible and reproducible — and the default flips once the leak is closed.
+* **Two of the three misses are a real leak; one was the harness.** `build_cases`
+  treats every `.` as a sentence end, so one frame was injected inside "U.S.":
+  `cars in the U.` + frame + `S. has gone down`. That flaw is pre-existing and
+  worse on ASAP-AES — **14 of its 75 injection points** against 4 of 60 here.
+  Beside it, the guard requires `per_essay + 1` sentence ends but then samples
+  from `stops[1:-1]`, which needs `+ 2`.
+* **The remaining two are the all-lowercase name `terrence okonkwo`, and they are
+  not the same failure.** Both corpora exercise the same 15 frames, and this one
+  passes 2/2 on ASAP-AES, so it is context rather than coverage. Splitting them by
+  `capitalisation_habit`: one essay reads `CONSISTENT`, which withdraws the
+  permissive lowercase route by design and is the documented precision trade. The
+  other reads `INCONSISTENT` — the route is available, the document contains a
+  cleanly-injected capitalised `Okonkwo`, and it still leaks. That one is a defect,
+  and the token rule behind it is not yet identified.
+* **Over-firing is 8.15 spans/essay here against ASAP-AES's 0.60, and that is the
+  prose.** The surfaces are `Venus` (11), `Vauban` (4), `Paris` (4), `Earth` (3),
+  `Science Olympiad`, `Mathcounts`, `Georgia's Hands-Free Law`. PERSUADE's prompts
+  are source-based, so the essays name real-world entities constantly; ASAP-AES set
+  8 is a personal narrative whose names were already `@PERSON` tokens. It is the
+  clearest possible case for a per-corpus bar, and setting one is part of the
+  default flip rather than this change.
+
 ### All three ports measure all nine gates
 
 * **The three corpus gates were Python's alone; now every port measures them.**

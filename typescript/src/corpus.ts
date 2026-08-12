@@ -43,8 +43,102 @@ export const EVAL_CORPUS_PREFERRED_FILENAME = "corpus.tsv";
 
 const CARRIER_FILENAME = "carrier.json";
 
-/** Bumped when a field's meaning changes. An unknown version is refused. */
-const CARRIER_DOCUMENT_VERSION = 1;
+/**
+ * Bumped when a field's meaning changes. An unknown version is refused.
+ *
+ * 2 keyed the plans by corpus id. A version-1 reader handed a version-2 file
+ * finds no `cases` at the top level and builds zero carrier essays — which in a
+ * `<=` gate is the most comfortable pass on the board, so the refusal is the
+ * point of the number.
+ */
+const CARRIER_DOCUMENT_VERSION = 2;
+
+/** Where the corpus profiles live, under `conformance/`. */
+const CORPORA_DIRNAME = "corpora";
+const CORPORA_INDEX_FILENAME = "index.json";
+const CORPUS_PROFILE_FILENAME = "profile.json";
+const PROFILE_DOCUMENT_VERSION = 1;
+
+/** Names a corpus id directly, overriding the operator-TSV inference. */
+export const EVAL_CORPUS_ENV_VAR = "VICARY_EVAL_CORPUS";
+
+/** What a corpus profile says about where its essays come from. */
+export interface CorpusProfile {
+  id: string;
+  name: string;
+  kind: string;
+  /** Row filter value for the operator-TSV kind, or `""`. */
+  essaySet: string;
+  limit: number;
+}
+
+function readVersioned(path: string, what: string): Record<string, unknown> {
+  const raw = JSON.parse(readFileSync(path, "utf8"));
+  if (raw.document_version !== PROFILE_DOCUMENT_VERSION) {
+    throw new Error(
+      `${path} is document_version ${raw.document_version} and this reader ` +
+        `knows ${PROFILE_DOCUMENT_VERSION}. Refusing to read the fields it ` +
+        `recognises: a partly-read ${what} selects a different slice of prose ` +
+        "without being detectably wrong.",
+    );
+  }
+  return raw;
+}
+
+/** The corpus registry: which corpora exist, and which applies by default. */
+export function loadCorpusIndex(directory?: string): Record<string, unknown> {
+  const dir = directory ?? conformanceDir();
+  return readVersioned(
+    join(dir, CORPORA_DIRNAME, CORPORA_INDEX_FILENAME),
+    "registry",
+  );
+}
+
+/** One corpus's profile. */
+export function loadCorpusProfile(
+  corpusId: string,
+  directory?: string,
+): CorpusProfile {
+  const dir = directory ?? conformanceDir();
+  const raw = readVersioned(
+    join(dir, CORPORA_DIRNAME, corpusId, CORPUS_PROFILE_FILENAME),
+    "profile",
+  );
+  const source = raw["source"] as Record<string, unknown>;
+  const filter = (source["filter"] ?? {}) as Record<string, unknown>;
+  const selection = raw["selection"] as Record<string, unknown>;
+  return {
+    id: raw["id"] as string,
+    name: raw["name"] as string,
+    kind: source["kind"] as string,
+    essaySet: (filter["equals"] as string | undefined) ?? "",
+    limit: selection["limit"] as number,
+  };
+}
+
+/**
+ * Which corpus applies here, matching the reference's order exactly: an explicit
+ * `VICARY_EVAL_CORPUS` wins, then an operator who has configured a TSV keeps
+ * measuring the corpus they always measured, then the registry default.
+ */
+export function resolveCorpusId(directory?: string): string {
+  const index = loadCorpusIndex(directory);
+  const known = (index["corpora"] ?? []) as string[];
+  const explicit = (process.env[EVAL_CORPUS_ENV_VAR] ?? "").trim();
+  if (explicit !== "") {
+    if (!known.includes(explicit)) {
+      throw new Error(
+        `${EVAL_CORPUS_ENV_VAR}=${explicit} is not a registered corpus; this ` +
+          `checkout registers ${known.join(", ")}`,
+      );
+    }
+    return explicit;
+  }
+  if (corpusSource() !== "" && index["operator_default"]) {
+    return index["operator_default"] as string;
+  }
+  return index["default"] as string;
+}
 
 /**
  * One of ASAP's own anonymization tokens — `@PERSON1`, `@LOCATION2`.
@@ -203,13 +297,17 @@ export interface CarrierCase {
 }
 
 export interface CarrierPlan {
+  corpusId: string;
   essaySet: string;
   limit: number;
   perEssay: number;
   cases: CarrierCase[];
 }
 
-export function loadCarrierPlan(directory?: string): CarrierPlan {
+export function loadCarrierPlan(
+  corpusId?: string,
+  directory?: string,
+): CarrierPlan {
   const dir = directory ?? conformanceDir();
   const raw = JSON.parse(readFileSync(join(dir, CARRIER_FILENAME), "utf8"));
   if (raw.document_version !== CARRIER_DOCUMENT_VERSION) {
@@ -220,11 +318,27 @@ export function loadCarrierPlan(directory?: string): CarrierPlan {
         "carrier text that is wrong without being detectably wrong.",
     );
   }
+  const id = corpusId ?? resolveCorpusId(directory);
+  const plans = (raw.plans ?? {}) as Record<string, Record<string, unknown>>;
+  const plan = plans[id];
+  if (plan === undefined) {
+    throw new Error(
+      `${CARRIER_FILENAME} holds no plan for corpus ${id}; it has ` +
+        `${Object.keys(plans).sort().join(", ") || "none"}. Regenerate with ` +
+        "`python -m vicary.eval.carrier --write` on a machine that can read " +
+        "that corpus.",
+    );
+  }
+  // The row filter and the essay count are properties of the corpus, so they
+  // come off its profile rather than being restated in the plan — two records of
+  // one fact is how they drift.
+  const profile = loadCorpusProfile(id, directory);
   return {
-    essaySet: raw.corpus.essay_set as string,
-    limit: raw.corpus.limit as number,
-    perEssay: raw.per_essay as number,
-    cases: (raw.cases as Array<Record<string, unknown>>).map((c) => ({
+    corpusId: id,
+    essaySet: profile.essaySet,
+    limit: profile.limit,
+    perEssay: plan["per_essay"] as number,
+    cases: (plan["cases"] as Array<Record<string, unknown>>).map((c) => ({
       essayId: c["essay_id"] as string,
       baseSha256: c["base_sha256"] as string,
       baseChars: c["base_chars"] as number,
@@ -239,7 +353,14 @@ export function loadCarrierPlan(directory?: string): CarrierPlan {
 // ---------------------------------------------------------------------------
 
 const MEASURED_FILENAME = "measured.json";
-const MEASURED_DOCUMENT_VERSION = 1;
+
+/**
+ * 2 keyed the measurements by corpus id. Two of the three numbers here are
+ * properties of the prose rather than of the detector, so an unkeyed block
+ * invited comparing one corpus's figures against another's and reading the
+ * difference as a regression in the port.
+ */
+const MEASURED_DOCUMENT_VERSION = 2;
 
 /**
  * The counts the Python reference gets on the carrier text this plan produces.
@@ -268,6 +389,7 @@ export interface ReferenceMeasurements {
 }
 
 export function loadReferenceMeasurements(
+  corpusId?: string,
   directory?: string,
 ): ReferenceMeasurements {
   const dir = directory ?? conformanceDir();
@@ -280,11 +402,25 @@ export function loadReferenceMeasurements(
         "this port against numbers whose meaning it is guessing at.",
     );
   }
-  const gates = raw.corpus_gates as Record<string, number>;
+  const id = corpusId ?? resolveCorpusId(directory);
+  const corpora = (raw.corpora ?? {}) as Record<
+    string,
+    Record<string, unknown>
+  >;
+  const entry = corpora[id];
+  if (entry === undefined) {
+    throw new Error(
+      `${MEASURED_FILENAME} holds no measurements for corpus ${id}; it has ` +
+        `${Object.keys(corpora).sort().join(", ") || "none"}. Regenerate with ` +
+        "`just sync-conformance` on a machine that can read that corpus.",
+    );
+  }
+  const gates = entry["corpus_gates"] as Record<string, number>;
+  const envelope = entry["envelope"] as Record<string, string>;
   return {
-    carrierTextSha256: raw.carrier_text_sha256 as string,
-    fixtureVersion: raw.envelope.fixture_version as string,
-    arm: raw.envelope.arm as string,
+    carrierTextSha256: entry["carrier_text_sha256"] as string,
+    fixtureVersion: envelope["fixture_version"]!,
+    arm: envelope["arm"]!,
     essays: gates["essays"]!,
     recallHeldOutPassed: gates["recall_held_out_passed"]!,
     recallHeldOutTotal: gates["recall_held_out_total"]!,

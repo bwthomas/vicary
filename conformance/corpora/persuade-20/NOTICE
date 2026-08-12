@@ -1,0 +1,30 @@
+PERSUADE 2.0 — twenty essays, redistributed in this repository
+=============================================================
+
+`essays.json` in this directory contains twenty essays from the PERSUADE 2.0
+corpus. They are not vicary's work and are not MIT-licensed; the rest of this
+repository is.
+
+    Persuade dataset (c) 2024 by The Learning Agency Lab
+    is licensed under CC BY 4.0.
+    https://creativecommons.org/licenses/by/4.0/
+
+Cite the corpus as:
+
+    Crossley, S. A., Baffour, P., Tian, Y., Franklin, A., Benner, M., & Boser, U.
+    A large-scale corpus for assessing written argumentation: PERSUADE 2.0.
+
+Two sources disagree about the licence, and this repository has taken a side.
+The Learning Agency Lab, which holds the copyright, publishes the statement
+above. A widely-mirrored academic copy of the same data instead states
+CC BY-NC-SA 4.0. We rely on the copyright holder's grant, because it is theirs
+to give — but if a NonCommercial term would matter to you, that disagreement is
+the thing to check before depending on this directory.
+
+Why these twenty and not others: `profile.json` records the selection rule, and
+`tools/persuade_build.py` reproduces it from the upstream file whose digest that
+profile pins. No essay was chosen by hand.
+
+What was changed: nothing but newlines. CRLF was normalised to LF so that a
+digest of an essay does not depend on the platform that wrote the file. No
+redaction, truncation or reordering was applied to any essay's text.
