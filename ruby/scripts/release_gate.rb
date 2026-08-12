@@ -80,7 +80,13 @@ module ReleaseGate
     spec_board = board
     decision = decide(spec_board)
 
-    out.puts Vicary::Conformance.report(spec_board, Vicary::Conformance.load_gates)
+    spec = Vicary::Conformance.load_spec
+    gates = Vicary::Conformance.load_gates
+    gate_report = Vicary::Gates.measure(
+      spec, gates, asset_entries: Vicary::Gazetteer.load.entry_count
+    ) { |sentence, identity| Vicary.redact(sentence, identity) }
+
+    out.puts Vicary::Conformance.report(spec_board, gates, Vicary::Gates.report(gate_report))
     out.puts
     out.puts "release gate: #{decision.publishable ? 'PUBLISHABLE' : 'BLOCKED'}"
     out.puts decision.reason

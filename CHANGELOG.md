@@ -1,5 +1,52 @@
 # Changelog
 
+## Unreleased
+
+### Ruby measures five of the nine gates, closing the last parity gap
+
+* **The gem printed `NOT MEASURED` for all nine gates.** TypeScript measured five
+  and Ruby measured none, so "parity" held at the frame level and stopped there:
+  the gem reproduced all 38 masking-required frames while saying nothing about
+  recall, precision, round-trip, unaccounted violations or the asset. `Vicary::Gates`
+  now measures the same five TypeScript does, and reports the same values Python
+  does — 16/16 held-out REDACT spans, 21/21 KEEP spans intact, 54/54 frames
+  restoring exactly, one violation and it the accounted-for `Robinson` keep, and
+  360,793 asset entries.
+* **Measured, not read.** The spec carries `aligns` and `mapping` per frame,
+  computed by the reference, and quoting them would have made the gem's gate
+  report a restatement of Python's. The span-to-placeholder mapping is recovered
+  from the port's own output by chunk matching instead, so the masker is never the
+  witness for its own redaction.
+* **Two hazards that only exist in Ruby, both now covered by a test that fails
+  without the guard.** `String#split` drops trailing empty fields where
+  JavaScript's keeps them, which silently shortens the chunk list and makes a
+  placeholder ending a sentence recover the wrong region — hence `split(re, -1)`.
+  And Ruby's `^`/`$` match at every line boundary with no opt-out, so a
+  line-anchored reconstruction reports a clean alignment while a whole line of the
+  essay is missing; the pattern is anchored with `\A`/`\z` at both ends. Neither
+  is reachable from the fixture, which is single-line.
+* **The four gates needing an essay corpus or the Census file stay
+  `NOT MEASURED`, and are asserted to stay that way** — never given a value, not
+  even 0, which in a `<=` gate would read as the most comfortable pass on the
+  board.
+* **`just gates` now runs every port present, not only Python.** It claimed "the
+  nine, in every language present" while running one. `npm run gates` and
+  `rake gates` are its per-port entry points.
+
+### The npm credential is proven before a release depends on it
+
+* **Every run of the npm publish step had either failed or been skipped**, so the
+  OIDC trusted-publishing credential the workflow now relies on had never once
+  succeeded, and the first thing that would have found out is a real release.
+  `release-npm.yml` takes `publish_probe=true`, which mints the ID token, exchanges
+  it against the registry for a publish credential, and stops.
+* **It does not use `npm publish --dry-run`,** which looks like the obvious probe
+  and is a false green: npm calls the exchange unconditionally before any dry-run
+  branch, but `oidc.js` is documented to never throw — every failure path logs at
+  verbose and returns `undefined`, leaving the credential simply unset. The failure
+  surfaces only on upload, and a dry run never uploads. The probe makes the two
+  HTTP calls itself, where a non-200 is a hard failure it can see.
+
 ## 0.2.1 — 2026-08-11
 
 The Ruby gem published, exercising the published artifact found an email that came

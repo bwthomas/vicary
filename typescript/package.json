@@ -52,6 +52,7 @@
     "build:test": "npm run sync-assets && tsc -p tsconfig.test.json",
     "test": "npm run build:test && node --test dist-test/test/*.test.js",
     "conformance": "npm run build:test && node dist-test/test/conformance.test.js",
+    "gates": "npm run build:test && node dist-test/test/gates.test.js",
     "prepack": "npm run build"
   }
 }

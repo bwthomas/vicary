@@ -98,8 +98,18 @@ lint:
 #
 #   export VICARY_EVAL_CORPUS_DIR=/path/to/corpus   # holds one .tsv
 #   export VICARY_EVAL_CENSUS_CSV=/path/to/names.zip
+#
+# Every port that can measure, not just the reference. Python measures all nine
+# when the data is present; the two ports measure the five that need none of it,
+# and each recovers its own numbers rather than reading Python's out of the spec —
+# which is the only version of this that is evidence. Absent languages are skipped
+# out loud, never silently.
 gates:
     @just py-gates
+    @if [ -f typescript/package.json ]; then cd typescript && npm run gates; \
+      else echo "SKIPPED typescript — no package.json yet"; fi
+    @if [ -f ruby/Rakefile ]; then cd ruby && rake gates; \
+      else echo "SKIPPED ruby — no Rakefile yet"; fi
 
 # The shared conformance suite: the same frames and the same bars, run against
 # every implementation present. This is what makes "parity" a build result

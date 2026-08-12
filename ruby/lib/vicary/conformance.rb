@@ -191,7 +191,14 @@ module Vicary
       # cannot inflate. Gates print NOT MEASURED per gate rather than being
       # reduced out of the denominator — five of nine held is a different
       # statement from nine of nine, and a badge cannot tell them apart.
-      def report(board, gates)
+      #
+      # +gate_block+ is a rendered gate block from `gates.rb`. Passed in rather
+      # than computed here because measuring a gate needs the detector and the
+      # asset, and this module is the spec loader — requiring them would make the
+      # loader depend on the thing it exists to score. Absent, the unmeasured
+      # block below is printed, which is the honest output for a caller that
+      # measured nothing.
+      def report(board, gates, gate_block = nil)
         lines = []
         lines << "conformance — fixture #{board.fixture_version}, arm #{board.reference_arm}"
         lines << ("-" * 58)
@@ -202,14 +209,19 @@ module Vicary
                         board.matched, board.total,
                         board.total - board.requiring_masking)
         lines << ("-" * 58)
+        if gate_block
+          lines << gate_block
+          return lines.join("\n")
+        end
+
         lines << "  gates:"
         gates.gates.each do |gate|
           needs = gate.requires.empty? ? "" : "  NEEDS #{gate.requires.join('+')}"
           lines << format("    NOT MEASURED  %-28s %s %s %s%s",
                           gate.label, gate.op, gate.bar, gate.unit, needs)
         end
-        lines << "  -> no gate is measured by this port yet. A green run here " \
-                 "means the spec loads,"
+        lines << "  -> the caller measured no gate. A green run here means the " \
+                 "spec loads,"
         lines << "     never that the gate set is clear."
         lines.join("\n")
       end

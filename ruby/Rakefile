@@ -18,6 +18,11 @@ task :conformance do
   ruby "-Ilib -Itest test/conformance_test.rb"
 end
 
+desc "Measure the gates this port can measure without operator-supplied data"
+task :gates do
+  ruby "-Ilib -Itest test/gates_test.rb"
+end
+
 desc "Diff this port's gazetteer verdicts against the Python reference"
 task :parity do
   ruby "scripts/parity_probe.rb"

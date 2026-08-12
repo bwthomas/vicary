@@ -44,11 +44,17 @@ class ConformanceTest < Minitest::Test
     @gates ||= Vicary::Conformance.load_gates
   end
 
+  def self.gate_report
+    @gate_report ||= Vicary::Gates.measure(
+      spec, gates, asset_entries: Vicary::Gazetteer.load.entry_count
+    ) { |sentence, identity| Vicary.redact(sentence, identity) }
+  end
+
   # Printed unconditionally, including on a green run. The report is the artifact;
   # a pass with no numbers is the state this project has a written rule against.
   Minitest.after_run do
     puts
-    puts Vicary::Conformance.report(board, gates)
+    puts Vicary::Conformance.report(board, gates, Vicary::Gates.report(gate_report))
   end
 
   def test_the_spec_loads_with_every_frame_and_its_golden_output

@@ -17,7 +17,7 @@ and it answers in single-digit milliseconds.
 | front door | package | status |
 |---|---|---|
 | Python | [`vicary`](https://pypi.org/project/vicary/) on PyPI | **published**, 9 of 9 gates PASS — see [`python/`](python/) |
-| Ruby | [`vicary`](https://rubygems.org/gems/vicary) on RubyGems | **published**, **38 of 38** — see [`ruby/`](ruby/) |
+| Ruby | [`vicary`](https://rubygems.org/gems/vicary) on RubyGems | **published**, **38 of 38**, 5 of 5 measurable gates PASS — see [`ruby/`](ruby/) |
 | TypeScript | [`@bwthomas/vicary`](https://www.npmjs.com/package/@bwthomas/vicary) on npm | **published**, **38 of 38**, 5 of 5 measurable gates PASS — scoped because npm refuses the bare `vicary` as too similar to `vary`; the appeal for it is open — see [`typescript/`](typescript/) |
 
 That fraction is the number of masking-required fixture frames the port reproduces
@@ -28,13 +28,23 @@ each, not just the structured pass. All three load the identical gazetteer bytes
 same sha256, same seven tier counts, checked against the manifest rather than
 against a copied constant.
 
-TypeScript also measures **five of the nine gates** in `conformance/gates.json` —
+Both ports also measure **five of the nine gates** in `conformance/gates.json` —
 held-out recall, KEEP precision, round-trip, unaccounted violations and asset
-entries — and all five hold, at the same values Python reports. The other four
-need an essay corpus or the Census surname file that no package here ships; the
-scoreboard prints `NOT MEASURED` beside each on every run rather than letting a
-green suite imply a clear gate set. Ruby does not measure the gates yet, and says
-so the same way.
+entries — and all five hold in each, at the same values Python reports: 16/16
+held-out REDACT spans, 21/21 KEEP spans intact, 54/54 frames restoring exactly,
+one violation and it the accounted-for one, 360,793 asset entries. The counts are
+stated alongside the percentages because 100% of a wrong denominator is also 100%.
+
+The other four need an essay corpus or the Census surname file that no package
+here ships; the scoreboard prints `NOT MEASURED` beside each on every run rather
+than letting a green suite imply a clear gate set. A gate that needs data is never
+given a value — not even 0, which in a `<=` gate would read as the most
+comfortable pass on the board.
+
+Each port measures rather than reads: the spec carries `aligns` and `mapping` per
+frame, and a port that quoted those would only be restating Python's answer back.
+The span-to-placeholder mapping is recovered from the port's own output by chunk
+matching, so the masker is never the witness for its own redaction.
 
 **38 of 38 is the bar to publish, not the bar to trust.** Measured on the Ruby
 port the day it landed: of eleven deliberate mutations to its candidate
