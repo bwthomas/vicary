@@ -53,6 +53,9 @@
     "test": "npm run build:test && node --test dist-test/test/*.test.js",
     "conformance": "npm run build:test && node dist-test/test/conformance.test.js",
     "gates": "npm run build:test && node dist-test/test/gates.test.js",
+    "parity:gazetteer": "npm run build && node scripts/gazetteer-parity.mjs",
+    "parity:redaction": "npm run build && node scripts/redaction-parity.mjs",
+    "parity": "npm run parity:gazetteer && npm run parity:redaction",
     "prepack": "npm run build"
   }
 }

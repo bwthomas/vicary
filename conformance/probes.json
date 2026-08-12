@@ -1,0 +1,186 @@
+{
+  "document_version": 1,
+  "arm": "local-gazetteer-lowercase",
+  "note": "Probes for the seams a single-sentence fixture cannot reach. Shared by every port's parity script so the two are diffing the same questions — two ports probing different seams would reproduce the drift the scripts exist to catch. Each entry says WHICH seam, because a probe whose purpose is forgotten gets deleted as redundant.",
+  "identity": {
+    "first_name": "Marguerite",
+    "last_name": "Delacroix-Whitfield",
+    "school_name": "Westfield High School"
+  },
+  "redaction_probes": [
+    {
+      "id": "multiline-zip",
+      "why": "`$` vs `\\Z`: a five-digit number ending a line is not a ZIP code.",
+      "text": "I live at 12345\nMy locker combination is 90210 and I always forget it."
+    },
+    {
+      "id": "relation-across-lines",
+      "why": "`$` vs `\\z`: a relation cue on an earlier line is not attached to this name.",
+      "text": "my cousin \nand then the dog ran past Wright and kept going."
+    },
+    {
+      "id": "wrapped-prose",
+      "why": "Corroboration and its sentence-level refusal, across hard-wrapped lines.",
+      "text": "Richard Wright wrote Native Son, and Wright is the author my\nteacher assigned. My neighbor Robinson lives two doors down from us,\nso Robinson is not Jackie Robinson."
+    },
+    {
+      "id": "heading-doc",
+      "why": "Headings: the blank-line rule, and a heading's capitals vouching for nothing.",
+      "text": "My Description of a Horse\n\nHorses are big. My cousin Terrence Okonkwo rode one at the fair in\nAllen Park last summer, and Mrs. Okonkwo took a picture.\n\nBreeds I Like\n\nI like the Arabian best."
+    },
+    {
+      "id": "lowercase-writer",
+      "why": "The lowercase route, and a relation-led title used literally.",
+      "text": "i went to the store with terrence okonkwo and then i came home. my cousin vinny came over that summer and never left."
+    },
+    {
+      "id": "allcaps",
+      "why": "The emphasis rule against a long all-caps run.",
+      "text": "MY BEST FRIEND DESHAWN PRITCHARD WOULD NEVER DO THAT. it was SLAM and then WHACK."
+    },
+    {
+      "id": "structured",
+      "why": "Every structured pattern at once, in application order.",
+      "text": "Call me at (555) 123-4567 or email marguerite.d@example.com. I live at 412 N Maple Street, Apt 3B, Akron 44301. My SSN is 123-45-6789 and my card is 4111 1111 1111 1111. Follow @terrence_ok on there. I am 16 years old. Born on 03/14/2009. See https://example.com/~mine and www.foo.co.uk/bar."
+    },
+    {
+      "id": "titles",
+      "why": "Title protection, and a character described by a relation who must be kept.",
+      "text": "I read To Kill a Mockingbird and Charlotte's Web. My Cousin Vinny is my favorite movie. Atticus Finch, a father who taught me plenty, is in the first one."
+    },
+    {
+      "id": "quoted-and-possessive",
+      "why": "Curly and straight apostrophes, plural possessives, particle-led surnames.",
+      "text": "The teacher liked vivid words like 'Giggles filled the school'. Terrence's essay and the Delacroix-Whitfields' house were both mentioned. Vincent van Gogh painted; van Gogh died young."
+    },
+    {
+      "id": "protected-idempotence",
+      "why": "Idempotence: our own placeholders and upstream markers survive a second pass.",
+      "text": "{NAME_1} went with @PERSON1 to see {LOCATION_2} and Terrence Okonkwo."
+    },
+    {
+      "id": "accented",
+      "why": "Word boundaries against accented letters — where Ruby, Python and JavaScript all three disagree about what `\\b` means.",
+      "text": "Ana said naïve things to René Descartes and to Renée at the café."
+    },
+    {
+      "id": "org-and-place",
+      "why": "The precedence table's colliding rows: settlement vs org suffix vs landmark.",
+      "text": "Progressive Insurance is in Falls Church. The Lincoln Memorial is in Washington. Allen Park has a park. Springfield Township hired Akron Public Library."
+    }
+  ],
+  "gazetteer_names": [
+    {
+      "name": "Rosa Parks",
+      "why": "full tier, the ordinary keep"
+    },
+    {
+      "name": "Abraham Lincoln",
+      "why": "full tier, the ordinary keep"
+    },
+    {
+      "name": "Lincoln’s",
+      "why": "curly possessive — folds to a short-tier hit or misses"
+    },
+    {
+      "name": "Terrence Okonkwo",
+      "why": "the ordinary redact"
+    },
+    {
+      "name": "Vincent van Gogh",
+      "why": "full name that contains a particle"
+    },
+    {
+      "name": "van Gogh",
+      "why": "particle-led partial, short tier"
+    },
+    {
+      "name": "de Gaulle",
+      "why": "particle-led partial, short tier"
+    },
+    {
+      "name": "Priya Raghunathan-Bell",
+      "why": "must NOT resolve piecewise off a surname"
+    },
+    {
+      "name": "O'Keeffe",
+      "why": "straight apostrophe survives the fold"
+    },
+    {
+      "name": "Coach Bramwell",
+      "why": "honorific NOT stripped before lookup"
+    },
+    {
+      "name": "Washington",
+      "why": "place beats short beats given"
+    },
+    {
+      "name": "Delaware",
+      "why": "place tier"
+    },
+    {
+      "name": "Cuban",
+      "why": "demonym"
+    },
+    {
+      "name": "Nigerian",
+      "why": "demonym"
+    },
+    {
+      "name": "Akron",
+      "why": "settlement: masked, but typed"
+    },
+    {
+      "name": "Allen Park",
+      "why": "settlement whose name ends in a landmark suffix"
+    },
+    {
+      "name": "Avon Lake",
+      "why": "settlement whose name ends in a landmark suffix"
+    },
+    {
+      "name": "Falls Church",
+      "why": "settlement whose name ends in an org suffix"
+    },
+    {
+      "name": "Harry Potter",
+      "why": "title tier"
+    },
+    {
+      "name": "Joan of Arc",
+      "why": "person AND title — precedence"
+    },
+    {
+      "name": "Terrence's",
+      "why": "straight possessive"
+    },
+    {
+      "name": "students'",
+      "why": "plural possessive"
+    },
+    {
+      "name": "It",
+      "why": "single-token film names must stay redactable"
+    },
+    {
+      "name": "Up",
+      "why": "single-token film names must stay redactable"
+    },
+    {
+      "name": "Cats",
+      "why": "single-token film names must stay redactable"
+    },
+    {
+      "name": "José",
+      "why": "NFKD"
+    },
+    {
+      "name": "Beyoncé",
+      "why": "NFKD"
+    },
+    {
+      "name": "São Paulo",
+      "why": "NFKD"
+    }
+  ]
+}

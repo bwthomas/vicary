@@ -146,6 +146,21 @@ gates:
     @if [ -f ruby/Rakefile ]; then cd ruby && rake gates; \
       else echo "SKIPPED ruby — no Rakefile yet"; fi
 
+# Diff each port's answers against the Python reference directly, on the seams
+# `conformance/frames.json` and `primitives.json` cannot reach — both are
+# single-line corpora, and several rules only diverge across a newline.
+#
+# Two layers per port: gazetteer verdicts name by name, then whole-detector
+# masked bytes. The probes are shared (`conformance/probes.json`), so the two
+# ports are answering the same questions rather than each picking its own.
+#
+# Python is the reference here, so it has nothing to diff against and no recipe.
+parity:
+    @if [ -f typescript/package.json ]; then cd typescript && npm run --silent parity; \
+      else echo "SKIPPED typescript — no package.json yet"; fi
+    @if [ -f ruby/Rakefile ]; then cd ruby && rake parity && rake redaction_parity; \
+      else echo "SKIPPED ruby — no Rakefile yet"; fi
+
 # The shared conformance suite: the same frames and the same bars, run against
 # every implementation present. This is what makes "parity" a build result
 # instead of an opinion.
@@ -191,4 +206,4 @@ _conformance-check:
       || { echo "conformance/primitives.json is missing — the ports would check their tokenisation against nothing"; exit 1; }
 
 # Everything CI runs, in CI's order.
-ci: lint test gates conformance
+ci: lint test gates conformance parity

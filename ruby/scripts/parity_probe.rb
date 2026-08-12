@@ -20,6 +20,7 @@
 #
 # Exits non-zero on any divergence, so it can gate a commit.
 
+require "json"
 require "open3"
 require "pathname"
 require "tempfile"
@@ -29,38 +30,21 @@ require_relative "../lib/vicary"
 ROOT = Pathname.new(__dir__).join("..", "..").expand_path
 PYTHON = ROOT.join("python", ".venv", "bin", "python")
 
-# Names chosen for the seams, not for coverage: each one is a place two
-# implementations can drift apart without any frame noticing.
-DEFAULT_PROBES = [
-  "Rosa Parks",           # full tier, the ordinary keep
-  "Abraham Lincoln",
-  "Lincoln’s",       # curly possessive — folds to a short-tier hit or misses
-  "Terrence Okonkwo",     # the ordinary redact
-  "Vincent van Gogh",     # full name that contains a particle
-  "van Gogh",             # particle-led partial, short tier
-  "de Gaulle",
-  "Priya Raghunathan-Bell", # must NOT resolve piecewise off a surname
-  "O'Keeffe",             # straight apostrophe survives the fold
-  "Coach Bramwell",       # honorific NOT stripped before lookup
-  "Washington",           # place beats short beats given
-  "Delaware",
-  "Cuban",                # demonym
-  "Nigerian",
-  "Akron",                # settlement: masked, but typed
-  "Allen Park",           # settlement whose name ends in a landmark suffix
-  "Avon Lake",
-  "Falls Church",         # settlement whose name ends in an org suffix
-  "Harry Potter",         # title tier
-  "Joan of Arc",          # person AND title — precedence
-  "Terrence's",           # straight possessive
-  "students'",            # plural possessive
-  "It",                   # single-token film names must stay redactable
-  "Up",
-  "Cats",
-  "José",            # NFKD
-  "Beyoncé",
-  "São Paulo"
-].freeze
+# The names live in `conformance/probes.json`, shared with
+# `typescript/scripts/gazetteer-parity.mjs` rather than kept here. Each is a place
+# two implementations can drift apart without any frame noticing, and each entry
+# there says which — a probe whose purpose is forgotten gets deleted as redundant.
+SPEC_PATH = ROOT.join("conformance", "probes.json")
+
+DEFAULT_PROBES = begin
+  raw = JSON.parse(SPEC_PATH.read)
+  unless raw["document_version"] == 1
+    warn "probes.json is document_version #{raw['document_version'].inspect}, and " \
+         "this reader knows 1. Refusing rather than probing a subset of it."
+    exit 2
+  end
+  raw["gazetteer_names"].map { |entry| entry["name"] }.freeze
+end
 
 def probes(argv)
   return DEFAULT_PROBES if argv.empty?
