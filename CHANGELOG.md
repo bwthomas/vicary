@@ -45,7 +45,16 @@
   branch, but `oidc.js` is documented to never throw — every failure path logs at
   verbose and returns `undefined`, leaving the credential simply unset. The failure
   surfaces only on upload, and a dry run never uploads. The probe makes the two
-  HTTP calls itself, where a non-200 is a hard failure it can see.
+  HTTP calls itself, where a refusal is a hard failure it can see.
+* **Run, and the credential is confirmed good.** The exchange issued a token for
+  `@bwthomas/vicary` and the registry still serves only `0.2.1`, so nothing was
+  published — the trusted publisher was unverified until this run. Getting there
+  cost one round trip: the endpoint answers `201`, because it *mints* a credential,
+  and demanding exactly `200` reported a correct configuration as `REFUSED` while
+  printing the token it had just been issued into a public log. It accepts 2xx and
+  treats the token's presence as the proof, and it now redacts a `token` field
+  before printing any body — including on the path that is not supposed to have
+  one.
 
 ## 0.2.1 — 2026-08-11
 
