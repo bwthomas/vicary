@@ -4,7 +4,8 @@
   "description": "Offline redaction of personal names in student compositions",
   "license": "MIT",
   "author": "Blake Thomas <bwthomas@gmail.com>",
-  "homepage": "https://github.com/bwthomas/vicary#readme",
+  "homepage": "https://github.com/bwthomas/vicary",
+  "comment:repository": "The same three links each front door declares — repository, changelog, issue tracker — except npm has no changelog field. `repository` is kept alongside `homepage` here where the other two ports dropped their second repo key: npm reads this one structurally for provenance attestation and for `directory`, so it is not the display duplicate that makes `gem build` warn.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bwthomas/vicary.git",

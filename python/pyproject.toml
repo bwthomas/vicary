@@ -27,9 +27,13 @@ dependencies = []
 # Keep this table LAST in [project]. A TOML sub-table swallows every key after
 # it, so `[project.urls]` placed above `dependencies` reads it as a URL and the
 # build fails with `project.urls.dependencies must be string`.
+#
+# Three links, the same three each front door declares: the repository, the
+# changelog, the issue tracker. No separate `Repository` key — it would be the
+# homepage again, which is the redundancy `gem build` warns about on the Ruby
+# side. The homepage IS the source here.
 [project.urls]
 Homepage = "https://github.com/bwthomas/vicary"
-Repository = "https://github.com/bwthomas/vicary"
 Changelog = "https://github.com/bwthomas/vicary/blob/main/CHANGELOG.md"
 Issues = "https://github.com/bwthomas/vicary/issues"
 
@@ -44,6 +48,11 @@ dev = [
     "mypy>=1.8",
     "ruff>=0.5",
     "build>=1.0",
+    # `just py-build` runs `python -m twine check` on what `build` produced, so
+    # twine belongs in the same extra that installs `build`. It was omitted, and
+    # `just py-setup && just py-build` on a fresh clone therefore died at the
+    # check step with `No module named twine`.
+    "twine>=5.0",
 ]
 
 [project.scripts]

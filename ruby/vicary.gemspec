@@ -19,8 +19,12 @@ Gem::Specification.new do |spec|
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1"
 
+  # Three links, the same three each front door declares: the repository, the
+  # changelog, the issue tracker. No `source_code_uri` — it would be the homepage
+  # again, and `gem build` warns when two keys carry one URI because rubygems.org
+  # renders only the first. The homepage IS the source here; there is no separate
+  # project site to point at.
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/bwthomas/vicary"
   spec.metadata["changelog_uri"] = "https://github.com/bwthomas/vicary/blob/main/CHANGELOG.md"
   spec.metadata["bug_tracker_uri"] = "https://github.com/bwthomas/vicary/issues"
 
