@@ -172,15 +172,18 @@ class GatesTest < Minitest::Test
   def self.corpus
     return @corpus if defined?(@corpus)
 
-    @corpus = if Vicary::Corpus.corpus_source.empty?
-                nil
-              else
-                Vicary::Corpus.measure_from_config(spec) { |t, i| Vicary.redact(t, i) }
-              end
+    # No `corpus_source` guard: a shipped corpus needs no operator TSV, and
+    # `measure_from_config` returns nil for exactly the case where the data is
+    # absent. Guarding on the env var here is what kept this port reporting NEEDS
+    # corpus against a corpus sitting in the repository.
+    @corpus = Vicary::Corpus.measure_from_config(spec) { |t, i| Vicary.redact(t, i) }
   end
 
   def skip_without_corpus
-    skip "no VICARY_EVAL_CORPUS_TSV; see ruby/lib/vicary/corpus.rb" if self.class.corpus.nil?
+    return unless self.class.corpus.nil?
+
+    skip "the resolved corpus is operator-supplied and no VICARY_EVAL_CORPUS_TSV " \
+         "is set; see ruby/lib/vicary/corpus.rb"
   end
 
   def test_the_carrier_essays_are_byte_identical_to_the_references
@@ -190,10 +193,10 @@ class GatesTest < Minitest::Test
     # different questions and agreeing on the numbers would prove nothing.
     # Anchored on a digest rather than on the metrics, because the metrics can
     # coincide across genuinely different inputs.
-    plan = Vicary::Corpus.load_carrier_plan
-    essays = Vicary::Corpus.load_set(Vicary::Corpus.corpus_source,
-                                     plan["essay_set"], plan["limit"])
-    cases = Vicary::Corpus.build_cases(essays, plan, self.class.spec)
+    corpus_id = Vicary::Corpus.resolve_corpus_id
+    plan = Vicary::Corpus.load_carrier_plan(corpus_id)
+    cases = Vicary::Corpus.build_cases(Vicary::Corpus.load_essays(corpus_id), plan,
+                                       self.class.spec)
     assert_equal Vicary::Corpus.load_measured["carrier_text_sha256"],
                  Digest::SHA256.hexdigest(cases.map(&:text).join)
   end

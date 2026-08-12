@@ -36,7 +36,6 @@ import {
   rate,
 } from "../src/census.js";
 import {
-  corpusSource,
   measureFromConfig,
   type CorpusMetrics,
 } from "../src/corpus.js";
@@ -85,7 +84,6 @@ const bareSurnameExposure = ((): number | undefined => {
  * whole scoreboard.
  */
 const corpus = ((): CorpusMetrics | null => {
-  if (corpusSource() === "") return null;
   try {
     return measureFromConfig(
       spec,

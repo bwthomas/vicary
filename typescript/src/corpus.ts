@@ -62,6 +62,13 @@ const PROFILE_DOCUMENT_VERSION = 1;
 /** Names a corpus id directly, overriding the operator-TSV inference. */
 export const EVAL_CORPUS_ENV_VAR = "VICARY_EVAL_CORPUS";
 
+/** Source kinds a corpus profile may declare. */
+export const KIND_SHIPPED = "shipped";
+export const KIND_OPERATOR_TSV = "operator_tsv";
+
+/** The essays file a shipped corpus keeps beside its profile. */
+const ESSAYS_FILENAME = "essays.json";
+
 /** What a corpus profile says about where its essays come from. */
 export interface CorpusProfile {
   id: string;
@@ -70,6 +77,10 @@ export interface CorpusProfile {
   /** Row filter value for the operator-TSV kind, or `""`. */
   essaySet: string;
   limit: number;
+  /** File the shipped kind reads, relative to the corpus directory. */
+  textFile: string;
+  /** `essayId -> sha256`, what the profile pins the shipped text to. */
+  digests: Map<string, string>;
 }
 
 function readVersioned(path: string, what: string): Record<string, unknown> {
@@ -107,12 +118,17 @@ export function loadCorpusProfile(
   const source = raw["source"] as Record<string, unknown>;
   const filter = (source["filter"] ?? {}) as Record<string, unknown>;
   const selection = raw["selection"] as Record<string, unknown>;
+  const essays = (raw["essays"] ?? []) as Array<Record<string, unknown>>;
   return {
     id: raw["id"] as string,
     name: raw["name"] as string,
     kind: source["kind"] as string,
     essaySet: (filter["equals"] as string | undefined) ?? "",
     limit: selection["limit"] as number,
+    textFile: (source["text_file"] as string | undefined) ?? ESSAYS_FILENAME,
+    digests: new Map(
+      essays.map((e) => [e["id"] as string, e["sha256"] as string]),
+    ),
   };
 }
 
@@ -185,6 +201,81 @@ export function loadSet(
   // decode is exact rather than best-effort.
   const rows = parseDelimited(readFileSync(tsv, "latin1"), "\t", limit, essaySet);
   return rows;
+}
+
+/**
+ * `[essayId, text]` for a corpus whose essays ship in this repository.
+ *
+ * **The essays ARE the baseline**, so every byte is checked against the digest
+ * the profile pins. A corrupted or edited file has to fail here rather than
+ * quietly rebase what every corpus gate means — the numbers describe this exact
+ * prose and nothing warns you when the prose changes underneath them. The carrier
+ * plan checks the same bytes again from its own digests, which is deliberate: two
+ * independent records of what this corpus is, and either catches an edit to the
+ * other.
+ */
+export function loadShipped(
+  corpusId: string,
+  directory?: string,
+): Array<[string, string]> {
+  const dir = directory ?? conformanceDir();
+  const profile = loadCorpusProfile(corpusId, directory);
+  const path = join(dir, CORPORA_DIRNAME, corpusId, profile.textFile);
+  const document = readVersioned(path, "corpus");
+  const essays = (document["essays"] as Array<Record<string, unknown>>).map(
+    (e) => [e["id"] as string, e["text"] as string] as [string, string],
+  );
+
+  for (const [essayId, text] of essays) {
+    const want = profile.digests.get(essayId);
+    if (want === undefined) {
+      throw new Error(
+        `${corpusId}: ${profile.textFile} carries essay ${essayId}, which ` +
+          `${CORPUS_PROFILE_FILENAME} does not list`,
+      );
+    }
+    const got = createHash("sha256").update(text, "utf8").digest("hex");
+    if (got !== want) {
+      throw new Error(
+        `${corpusId}: essay ${essayId} in ${profile.textFile} is sha256 ` +
+          `${got}, and ${CORPUS_PROFILE_FILENAME} pins ${want}. Refusing: the ` +
+          "essays are the baseline, so different text means every gate number " +
+          "measured on this corpus describes different prose.",
+      );
+    }
+  }
+  if (profile.digests.size !== essays.length) {
+    throw new Error(
+      `${corpusId}: ${CORPUS_PROFILE_FILENAME} lists ${profile.digests.size} ` +
+        `essays and ${profile.textFile} holds ${essays.length}`,
+    );
+  }
+  return essays;
+}
+
+/**
+ * The resolved corpus's essays, whichever kind it is.
+ *
+ * Returns `null` only for an operator corpus with no TSV configured — the one
+ * case where the data genuinely is not here. A shipped corpus always loads, which
+ * is the whole point of shipping one.
+ */
+export function loadEssays(
+  corpusId?: string,
+  directory?: string,
+): Array<[string, string]> | null {
+  const id = corpusId ?? resolveCorpusId(directory);
+  const profile = loadCorpusProfile(id, directory);
+  if (profile.kind === KIND_SHIPPED) return loadShipped(id, directory);
+  if (profile.kind === KIND_OPERATOR_TSV) {
+    const tsv = corpusSource();
+    if (tsv === "") return null;
+    return loadSet(tsv, profile.essaySet, profile.limit);
+  }
+  throw new Error(
+    `corpus ${id} declares source kind ${profile.kind}; this reader knows ` +
+      `${KIND_SHIPPED} and ${KIND_OPERATOR_TSV}`,
+  );
 }
 
 /**
@@ -636,10 +727,9 @@ export function measureFromConfig(
   redact: (text: string, identity: Identity) => string,
   identity: Identity,
 ): CorpusMetrics | null {
-  const tsv = corpusSource();
-  if (tsv === "") return null;
-  const plan = loadCarrierPlan();
-  const essays = loadSet(tsv, plan.essaySet, plan.limit);
-  if (essays.length === 0) return null;
+  const corpusId = resolveCorpusId();
+  const essays = loadEssays(corpusId);
+  if (essays === null || essays.length === 0) return null;
+  const plan = loadCarrierPlan(corpusId);
   return measureCorpus(buildCases(essays, plan, spec), redact, identity);
 }

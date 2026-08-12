@@ -27,12 +27,12 @@ import { loadGates, loadSpec, type Identity } from "../src/conformance.js";
 import {
   type CarrierPlan,
   buildCases,
-  corpusSource,
   isAsapToken,
   loadCarrierPlan,
+  loadEssays,
   loadReferenceMeasurements,
-  loadSet,
   measureFromConfig,
+  resolveCorpusId,
 } from "../src/corpus.js";
 import { load } from "../src/gazetteer.js";
 import {
@@ -182,15 +182,18 @@ test(
 // The corpus gates, when the operator supplies an essay corpus
 // ---------------------------------------------------------------------------
 
-const corpus =
-  corpusSource() === ""
-    ? null
-    : measureFromConfig(
-        spec,
-        (text: string, identity: Identity) => redact(text, identity),
-        spec.identity,
-      );
-const noCorpus = "no VICARY_EVAL_CORPUS_TSV; see typescript/src/corpus.ts";
+// No `corpusSource()` guard: a shipped corpus needs no operator TSV, and
+// `measureFromConfig` returns null for exactly the case where the data is absent.
+// Guarding on the env var here is what kept this port reporting NEEDS corpus
+// against a corpus sitting in the repository.
+const corpus = measureFromConfig(
+  spec,
+  (text: string, identity: Identity) => redact(text, identity),
+  spec.identity,
+);
+const noCorpus =
+  "the resolved corpus is operator-supplied and no VICARY_EVAL_CORPUS_TSV is " +
+  "set; see typescript/src/corpus.ts";
 
 test(
   "the carrier essays are byte-identical to the reference's",
@@ -201,9 +204,9 @@ test(
     // different questions and agreeing on the numbers would prove nothing.
     // Anchored on a digest rather than on the metrics, because the metrics can
     // coincide across genuinely different inputs.
-    const plan = loadCarrierPlan();
-    const essays = loadSet(corpusSource(), plan.essaySet, plan.limit);
-    const cases = buildCases(essays, plan, spec);
+    const corpusId = resolveCorpusId();
+    const plan = loadCarrierPlan(corpusId);
+    const cases = buildCases(loadEssays(corpusId)!, plan, spec);
     const digest = createHash("sha256")
       .update(cases.map((c) => c.text).join(""), "utf8")
       .digest("hex");

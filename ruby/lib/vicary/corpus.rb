@@ -45,6 +45,12 @@ module Vicary
     CORPORA_DIRNAME = "corpora"
     CORPORA_INDEX_FILENAME = "index.json"
     CORPUS_PROFILE_FILENAME = "profile.json"
+
+    # Source kinds a corpus profile may declare, and the file the shipped kind
+    # keeps beside its profile.
+    KIND_SHIPPED = "shipped"
+    KIND_OPERATOR_TSV = "operator_tsv"
+    ESSAYS_FILENAME = "essays.json"
     PROFILE_DOCUMENT_VERSION = 1
 
     # Names a corpus id directly, overriding the operator-TSV inference.
@@ -116,6 +122,71 @@ module Vicary
       def load_set(tsv, essay_set, limit)
         text = File.read(tsv, encoding: "ISO-8859-1").encode("UTF-8")
         parse_delimited(text, "\t", essay_set, limit)
+      end
+
+      # `[essay_id, text]` for a corpus whose essays ship in this repository.
+      #
+      # **The essays ARE the baseline**, so every byte is checked against the
+      # digest the profile pins. A corrupted or edited file has to fail here
+      # rather than quietly rebase what every corpus gate means — the numbers
+      # describe this exact prose and nothing warns you when the prose changes
+      # underneath them. The carrier plan checks the same bytes again from its own
+      # digests, which is deliberate: two independent records of what this corpus
+      # is, and either catches an edit to the other.
+      def load_shipped(corpus_id, dir = nil)
+        profile = load_corpus_profile(corpus_id, dir)
+        text_file = profile.dig("source", "text_file") || ESSAYS_FILENAME
+        path = Pathname.new(dir || Conformance.directory)
+                       .join(CORPORA_DIRNAME, corpus_id, text_file)
+        document = read_versioned(path, "corpus")
+        essays = document["essays"].map { |e| [e["id"], e["text"]] }
+        pinned = (profile["essays"] || []).to_h { |e| [e["id"], e["sha256"]] }
+
+        essays.each do |essay_id, text|
+          want = pinned[essay_id]
+          if want.nil?
+            raise Conformance::SpecError,
+                  "#{corpus_id}: #{text_file} carries essay #{essay_id}, which " \
+                  "#{CORPUS_PROFILE_FILENAME} does not list"
+          end
+          got = Digest::SHA256.hexdigest(text)
+          next if got == want
+
+          raise Conformance::SpecError,
+                "#{corpus_id}: essay #{essay_id} in #{text_file} is sha256 #{got}, and " \
+                "#{CORPUS_PROFILE_FILENAME} pins #{want}. Refusing: the essays are the " \
+                "baseline, so different text means every gate number measured on this " \
+                "corpus describes different prose."
+        end
+        if pinned.size != essays.size
+          raise Conformance::SpecError,
+                "#{corpus_id}: #{CORPUS_PROFILE_FILENAME} lists #{pinned.size} essays " \
+                "and #{text_file} holds #{essays.size}"
+        end
+        essays
+      end
+
+      # The resolved corpus's essays, whichever kind it is.
+      #
+      # `nil` only for an operator corpus with no TSV configured — the one case
+      # where the data genuinely is not here. A shipped corpus always loads, which
+      # is the whole point of shipping one.
+      def load_essays(corpus_id = nil, dir = nil)
+        id = corpus_id || resolve_corpus_id(dir)
+        profile = load_corpus_profile(id, dir)
+        kind = profile.dig("source", "kind")
+        return load_shipped(id, dir) if kind == KIND_SHIPPED
+
+        unless kind == KIND_OPERATOR_TSV
+          raise Conformance::SpecError,
+                "corpus #{id} declares source kind #{kind}; this reader knows " \
+                "#{KIND_SHIPPED} and #{KIND_OPERATOR_TSV}"
+        end
+        tsv = corpus_source
+        return nil if tsv.empty?
+
+        load_set(tsv, profile.dig("source", "filter", "equals") || "",
+                 profile.dig("selection", "limit"))
       end
 
       def carrier_path(dir = nil)
@@ -381,13 +452,11 @@ module Vicary
 
       # Load the corpus, rebuild the carriers, and measure. `nil` with no corpus.
       def measure_from_config(spec, &redact)
-        tsv = corpus_source
-        return nil if tsv.empty?
+        corpus_id = resolve_corpus_id
+        essays = load_essays(corpus_id)
+        return nil if essays.nil? || essays.empty?
 
-        plan = load_carrier_plan
-        essays = load_set(tsv, plan["essay_set"], plan["limit"])
-        return nil if essays.empty?
-
+        plan = load_carrier_plan(corpus_id)
         measure(build_cases(essays, plan, spec), spec.identity, &redact)
       end
 

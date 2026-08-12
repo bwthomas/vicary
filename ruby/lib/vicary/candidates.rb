@@ -190,6 +190,23 @@ module Vicary
     # Matches the abbreviation a break candidate sits directly behind.
     TRAILING_WORD = /([A-Za-z]+)\.\s*\z/
 
+    # {SENTENCE_BREAK} with the `\A` arm removed, so it cannot match empty.
+    #
+    # A dialect difference, and it moved a number. `SENTENCE_BREAK` matches the
+    # empty string at offset 0 via its `\A` arm. Python's `re` then retries a
+    # **non-empty** match at that same offset before advancing; {.each_match}
+    # advances past a zero-width match instead and never looks again. On an essay
+    # that opens with a quotation — `"Pedestrian, bicycle, private cars…` —
+    # Python records sentence starts at both 0 and 1, this port recorded only 0,
+    # and `Pedestrian` lost the sentence-initial discount its capital is owed. It
+    # was then read as a name and masked: one over-fire span on `persuade-20`
+    # that Python does not produce.
+    #
+    # Every arm here consumes at least one character, which is what makes the
+    # retry terminate.
+    SENTENCE_BREAK_NONEMPTY =
+      /(?:[.!?]["'’”)]*\s+|\n+|(?:(?<=\s)|\A)["'‘“](?=[A-Za-z]))\s*/
+
     # One entirely-lowercase word. The leading boundary is what keeps this from
     # matching the tail of a capitalised word — there is no word boundary between
     # the "T" and the "errence" of "Terrence", so the capitalised route keeps
@@ -756,13 +773,31 @@ module Vicary
       # A break directly behind a title abbreviation is not one — see
       # {TITLE_ABBREVIATIONS} for the leak that rule exists to close.
       def sentence_starts(text)
-        each_match(text, SENTENCE_BREAK).filter_map do |m|
-          finish = m.begin(0) + m[0].length
+        out = Set.new
+        keep = lambda do |finish|
           preceding = TRAILING_WORD.match(text[0...finish])
           next if preceding && TITLE_ABBREVIATIONS.include?(preceding[1].downcase)
 
-          finish
-        end.to_set
+          out << finish
+        end
+
+        pos = 0
+        while pos <= text.length && (m = SENTENCE_BREAK.match(text, pos))
+          keep.call(m.begin(0) + m[0].length)
+          if m[0].empty?
+            # Empty match: Python retries a non-empty one here before moving on.
+            again = SENTENCE_BREAK_NONEMPTY.match(text, m.begin(0))
+            if again && again.begin(0) == m.begin(0)
+              keep.call(again.end(0))
+              pos = again.end(0)
+            else
+              pos = m.begin(0) + 1
+            end
+          else
+            pos = m.end(0)
+          end
+        end
+        out
       end
 
       # Character ranges of all-caps runs SHORTER than {ALLCAPS_RUN}.

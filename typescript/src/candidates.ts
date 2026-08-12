@@ -208,6 +208,25 @@ export const TITLE_ABBREVIATIONS: ReadonlySet<string> = new Set([
 const TRAILING_WORD = /([A-Za-z]+)\.\s*$/;
 
 /**
+ * {@link SENTENCE_BREAK} with the `^` arm removed, so it cannot match empty.
+ *
+ * A dialect difference, and it moved a number. `SENTENCE_BREAK` matches the
+ * empty string at offset 0 via its `^` arm. Python's `re` then retries a
+ * **non-empty** match at that same offset before advancing; `matchAll` advances
+ * past a zero-width match instead and never looks again. On an essay that opens
+ * with a quotation — `"Pedestrian, bicycle, private cars…` — Python records
+ * sentence starts at both 0 and 1, this port recorded only 0, and `Pedestrian`
+ * lost the sentence-initial discount its capital is owed. It was then read as a
+ * name and masked: one over-fire span on `persuade-20` that Python does not
+ * produce, invisible for as long as this port could not read that corpus.
+ *
+ * Every arm here consumes at least one character, which is what makes the retry
+ * terminate.
+ */
+const SENTENCE_BREAK_NONEMPTY =
+  /(?:[.!?]["'’”)]*\s+|\n+|(?:(?<=\s)|^)["'‘“](?=[A-Za-z]))\s*/y;
+
+/**
  * One entirely-lowercase word. The leading boundary is what keeps this from
  * matching the tail of a capitalised word — there is no word boundary between the
  * "T" and the "errence" of "Terrence", so the capitalised route keeps exclusive
@@ -569,14 +588,32 @@ export function trim(tokens: readonly string[]): string[][] {
  *
  * A break directly behind a title abbreviation is not one — see
  * {@link TITLE_ABBREVIATIONS} for the leak that rule exists to close.
+ *
+ * Iterated by hand rather than with `matchAll`, to reproduce the reference's
+ * handling of a zero-width match — see {@link SENTENCE_BREAK_NONEMPTY}.
  */
 export function sentenceStarts(text: string): Set<number> {
   const out = new Set<number>();
-  for (const match of text.matchAll(SENTENCE_BREAK)) {
-    const end = match.index + match[0].length;
+  const keep = (end: number): void => {
     const preceding = TRAILING_WORD.exec(text.slice(0, end));
-    if (preceding && TITLE_ABBREVIATIONS.has(preceding[1]!.toLowerCase())) continue;
+    if (preceding && TITLE_ABBREVIATIONS.has(preceding[1]!.toLowerCase())) return;
     out.add(end);
+  };
+
+  const scan = new RegExp(SENTENCE_BREAK.source, "g");
+  let match: RegExpExecArray | null;
+  while ((match = scan.exec(text)) !== null) {
+    keep(match.index + match[0].length);
+    if (match[0].length > 0) continue;
+    // Empty match: Python retries a non-empty one here before moving on.
+    SENTENCE_BREAK_NONEMPTY.lastIndex = match.index;
+    const again = SENTENCE_BREAK_NONEMPTY.exec(text);
+    if (again === null) {
+      scan.lastIndex = match.index + 1;
+      continue;
+    }
+    keep(again.index + again[0].length);
+    scan.lastIndex = again.index + again[0].length;
   }
   return out;
 }
