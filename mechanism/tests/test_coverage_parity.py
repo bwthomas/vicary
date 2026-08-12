@@ -171,7 +171,6 @@ def test_the_open_gaps_are_the_ones_currently_known(coverage: dict) -> None:
     }
     assert open_gaps == {
         ("candidates", "ruby"),
-        ("structured", "ruby"),
         ("redact", "ruby"),
         ("packaging", "typescript"),
         ("dialect", "typescript"),

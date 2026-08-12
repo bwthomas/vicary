@@ -18,7 +18,7 @@
       "why": "The structured-identifier pass — phone, email, SSN, card with its Luhn gate, address, ZIP, age, DOB, username, URL — and the order they are applied in.",
       "python": "tests/test_redaction.py",
       "typescript": "test/structured.test.ts",
-      "ruby": null
+      "ruby": "test/structured_test.rb"
     },
     "redact": {
       "why": "The public entry point: identity interpolation, the two passes, arm selection, and the restore map.",
@@ -80,11 +80,6 @@
       "concern": "candidates",
       "port": "ruby",
       "reason": "OPEN GAP, not a justified divergence. Ruby carries candidates.rb (1,702 lines, the most detector logic of any file in the port) and unit-tests none of it directly. It is reached by the 37 shared primitive families and by the frames, which is why the port is green: of eleven deliberate mutations to candidates.rb the frames caught one and the primitives caught seven. Three were inert and one — a regex end-anchor — escaped both and is now covered by conformance/probes.json. TypeScript spends 77 tests here."
-    },
-    {
-      "concern": "structured",
-      "port": "ruby",
-      "reason": "OPEN GAP. structured.rb (370 lines) is covered end to end by the frames, which carry PHONE, EMAIL, ADDRESS, URL, AGE, SSN, USERNAME and CARD spans, and by the `structured` probe. No test names an individual pattern, so a Luhn or boundary regression fails as a frame diff rather than by name. TypeScript spends 30 tests here."
     },
     {
       "concern": "redact",
