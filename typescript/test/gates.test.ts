@@ -704,6 +704,7 @@ process.on("exit", () => {
             heldOutRecallCarrier: corpus.recallHeldOut,
             overFirePerEssay: corpus.overFireSpansPerEssay,
             latencyP95Ms: corpus.latencyP95Ms,
+            corpusId: resolveCorpusId(),
           }),
     },
   );

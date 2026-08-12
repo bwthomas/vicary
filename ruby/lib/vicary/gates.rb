@@ -74,7 +74,11 @@ module Vicary
                              :passed, keyword_init: true)
     # `value` is nil when this port does not measure the gate — never 0, which
     # would read as a measured failure.
-    GateMeasurement = Struct.new(:gate, :value, :passed, :detail, keyword_init: true)
+    # `bar` is the one actually applied — the gate's default unless the measured
+    # corpus has an override. Carried here rather than re-derived by the renderer,
+    # so what is printed cannot drift from what was compared.
+    GateMeasurement = Struct.new(:gate, :value, :passed, :detail, :bar,
+                                 keyword_init: true)
     GateReport = Struct.new(:measurements, :violations, :unaccounted,
                             :missing_accepted, keyword_init: true)
 
@@ -287,7 +291,7 @@ module Vicary
       # not gets NOT MEASURED rather than a load.
       def measure(spec, gate_spec, asset_entries: nil, bare_surname_exposure: nil,
                   held_out_recall_carrier: nil, over_fire_per_essay: nil,
-                  latency_p95_ms: nil)
+                  latency_p95_ms: nil, corpus_id: nil)
         outcomes = []
         violations = []
         round_tripped = 0
@@ -378,22 +382,29 @@ module Vicary
           unless gate.requires.empty?
             given = supplied[gate.id]
             if given.nil? || given[:value].nil?
-              next GateMeasurement.new(gate: gate, value: nil, passed: nil, detail: "")
+              next GateMeasurement.new(gate: gate, value: nil, passed: nil,
+                                     bar: gate.bar_for(corpus_id), detail: "",
+                                       bar: gate.bar_for(corpus_id))
             end
 
             next GateMeasurement.new(gate: gate, value: given[:value],
-                                     passed: compare(given[:value], gate.op, gate.bar),
+                                     bar: gate.bar_for(corpus_id),
+                                     passed: compare(given[:value], gate.op,
+                                                     gate.bar_for(corpus_id)),
                                      detail: given[:detail])
           end
 
           found = values[gate.id]
           if found.nil? || found[:value].nil?
             next GateMeasurement.new(gate: gate, value: nil, passed: nil,
+                                     bar: gate.bar_for(corpus_id),
                                      detail: found ? found[:detail] : "")
           end
 
           GateMeasurement.new(gate: gate, value: found[:value],
-                              passed: compare(found[:value], gate.op, gate.bar),
+                              bar: gate.bar_for(corpus_id),
+                              passed: compare(found[:value], gate.op,
+                                              gate.bar_for(corpus_id)),
                               detail: found[:detail])
         end
 
@@ -424,7 +435,7 @@ module Vicary
                    end
           measured = m.value.nil? ? "" : "   measured #{round3(m.value)} #{gate.unit}"
           lines << format("    %s  %-28s %s %s %s%s%s", status, gate.label, gate.op,
-                          gate.bar, gate.unit, needs, measured)
+                          m.bar, gate.unit, needs, measured)
           lines << format("                  %s", m.detail) if m.passed == false && !m.detail.empty?
         end
         measured = gate_report.measurements.reject { |m| m.passed.nil? }

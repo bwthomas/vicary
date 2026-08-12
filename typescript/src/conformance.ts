@@ -71,8 +71,24 @@ export interface Gate {
   unit: string;
   op: string;
   bar: number;
+  /**
+   * Per-corpus overrides of {@link Gate.bar}, keyed by corpus id.
+   *
+   * Snake_case because this is read straight off `gates.json`. Only
+   * `over_fire_prose` carries one: it is the sole gate whose bar describes the
+   * *prose* rather than the detector, and ASAP-AES's 0.61 against PERSUADE's
+   * 8.15 is what one corpus naming real entities and another naming `@PERSON`
+   * tokens costs. `bar` remains the fallback, and is the tighter of the two.
+   */
+  bars_by_corpus?: Record<string, number>;
   requires: string[];
   why: string;
+}
+
+/** The bar `gate` holds `corpusId` to — its override, else its default. */
+export function barFor(gate: Gate, corpusId?: string): number {
+  if (corpusId === undefined) return gate.bar;
+  return gate.bars_by_corpus?.[corpusId] ?? gate.bar;
 }
 
 export interface GateSpec {

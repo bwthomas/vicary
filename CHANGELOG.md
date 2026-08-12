@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+### `persuade-20` is the default, and a fresh checkout measures eight of nine gates
+
+* **Five of nine became eight of nine.** With no operator setup at all, a clone
+  now measures held-out recall, KEEP precision, round-trip, unaccounted
+  violations, asset entries **and the three corpus gates**. Only bare-surname
+  exposure still needs a file no package ships.
+* **`operator_default` still points at ASAP-AES**, so a machine with
+  `VICARY_EVAL_CORPUS_TSV` configured keeps measuring the corpus it has always
+  measured and does not change its answer because this landed.
+* **The over-fire bar is per corpus now**, because it is the only gate whose bar
+  describes the *prose* rather than the detector: 8.15 spans/essay on PERSUADE
+  against 0.61 on ASAP-AES set 8. One is source-based argumentative writing that
+  names `Venus`, `Vauban` and `Paris` constantly; the other is a personal
+  narrative whose names were already `@PERSON` tokens. A single bar loose enough
+  for the first retires the gate on the second. `bar` stays as the fallback for an
+  unregistered corpus and is deliberately the tighter of the two.
+* **TypeScript and Ruby read a shipped corpus.** Both had the registry and could
+  resolve ids, but only Python could load `essays.json`, so pointing the default
+  at a shipped corpus would have left two of three ports reporting NEEDS corpus on
+  the gates it was shipped to make measurable. Both now verify every essay against
+  the digest the profile pins, as the reference does.
+* **Doing that exposed a dialect divergence worth one over-fire span.**
+  `SENTENCE_BREAK` matches empty at offset 0; Python's `re` then retries a
+  non-empty match at that same offset before advancing, while `matchAll` and
+  Ruby's scan move past it. On an essay opening `"Pedestrian, bicycle, private
+  cars…` the two ports never recorded the sentence start at offset 1, `Pedestrian`
+  lost the sentence-initial discount its capital is owed, and both masked it —
+  164 spans against Python's 163. It had been true since the ports were written
+  and was invisible for exactly as long as they could not read this corpus.
+
 ### The lowercase leak `persuade-20` found is closed, in all three ports
 
 * **Carrier recall on `persuade-20` goes 16/19 to 19/19, with no precision cost.**

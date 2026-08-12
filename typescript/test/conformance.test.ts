@@ -37,6 +37,7 @@ import {
 } from "../src/census.js";
 import {
   measureFromConfig,
+  resolveCorpusId,
   type CorpusMetrics,
 } from "../src/corpus.js";
 import { load } from "../src/gazetteer.js";
@@ -108,6 +109,9 @@ const gateReport = measureGates(
           heldOutRecallCarrier: corpus.recallHeldOut,
           overFirePerEssay: corpus.overFireSpansPerEssay,
           latencyP95Ms: corpus.latencyP95Ms,
+          // Which corpus these came from, so the over-fire gate is held to that
+          // corpus's bar rather than to ASAP-AES's on every corpus.
+          corpusId: resolveCorpusId(),
         }),
     // Spread rather than passed as `undefined`: `exactOptionalPropertyTypes`
     // distinguishes "absent" from "present and undefined", and absent is what an

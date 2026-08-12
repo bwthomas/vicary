@@ -33,8 +33,20 @@ module Vicary
                         keyword_init: true)
     Spec = Struct.new(:fixture_version, :reference_arm, :identity, :frames,
                       :golden, keyword_init: true)
-    Gate = Struct.new(:id, :label, :unit, :op, :bar, :requires, :why,
-                      keyword_init: true)
+    # `bars_by_corpus` overrides `bar` per corpus id. Only `over_fire_prose`
+    # carries one: it is the sole gate whose bar describes the *prose* rather
+    # than the detector, and ASAP-AES's 0.61 against PERSUADE's 8.15 is what one
+    # corpus naming real entities and another naming `@PERSON` tokens costs.
+    # `bar` remains the fallback, and is the tighter of the two.
+    Gate = Struct.new(:id, :label, :unit, :op, :bar, :bars_by_corpus, :requires,
+                      :why, keyword_init: true) do
+      # The bar this gate holds `corpus_id` to — its override, else its default.
+      def bar_for(corpus_id)
+        return bar if corpus_id.nil?
+
+        (bars_by_corpus || {}).fetch(corpus_id, bar)
+      end
+    end
     GateSpec = Struct.new(:reference_arm, :requirements, :gates,
                           keyword_init: true)
     Outcome = Struct.new(:frame_id, :requires_masking, :matched, :expected,
@@ -110,8 +122,8 @@ module Vicary
           gates: raw.fetch("gates").map do |g|
             Gate.new(id: g.fetch("id"), label: g.fetch("label"),
                      unit: g.fetch("unit"), op: g.fetch("op"),
-                     bar: g.fetch("bar"), requires: g.fetch("requires"),
-                     why: g.fetch("why"))
+                     bar: g.fetch("bar"), bars_by_corpus: g["bars_by_corpus"],
+                     requires: g.fetch("requires"), why: g.fetch("why"))
           end,
         )
       end

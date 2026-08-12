@@ -18,6 +18,7 @@
  */
 
 import {
+  barFor,
   score,
   type Gate,
   type GateSpec,
@@ -383,6 +384,10 @@ export interface GateMeasurement {
   value: number | null;
   passed: boolean | null;
   detail: string;
+  /** The bar actually applied — {@link Gate.bar} unless the measured corpus has
+   * an override. Carried here rather than re-derived by the renderer, so what is
+   * printed cannot drift from what was compared. */
+  bar: number;
 }
 
 export interface GateReport {
@@ -418,6 +423,8 @@ export function measureGates(
     heldOutRecallCarrier?: number;
     overFirePerEssay?: number;
     latencyP95Ms?: number;
+    /** Which corpus the corpus-gate values came from, for the per-corpus bars. */
+    corpusId?: string;
   } = {},
 ): GateReport {
   const outcomes: SpanOutcome[] = [];
@@ -517,25 +524,29 @@ export function measureGates(
   const measurements = gateSpec.gates.map((gate): GateMeasurement => {
     if (gate.requires.length > 0) {
       const given = supplied[gate.id];
+      const bar = barFor(gate, options.corpusId);
       if (given === undefined || given.value === null) {
-        return { gate, value: null, passed: null, detail: "" };
+        return { gate, value: null, passed: null, detail: "", bar };
       }
       return {
         gate,
         value: given.value,
-        passed: compare(given.value, gate.op, gate.bar),
+        passed: compare(given.value, gate.op, bar),
         detail: given.detail,
+        bar,
       };
     }
+    const bar = barFor(gate, options.corpusId);
     const found = values[gate.id];
     if (found === undefined || found.value === null) {
-      return { gate, value: null, passed: null, detail: found?.detail ?? "" };
+      return { gate, value: null, passed: null, detail: found?.detail ?? "", bar };
     }
     return {
       gate,
       value: found.value,
-      passed: compare(found.value, gate.op, gate.bar),
+      passed: compare(found.value, gate.op, bar),
       detail: found.detail,
+      bar,
     };
   });
 
@@ -549,7 +560,7 @@ export function measureGates(
  */
 export function reportGates(report: GateReport): string {
   const lines: string[] = ["  gates:"];
-  for (const { gate, value, passed, detail } of report.measurements) {
+  for (const { gate, value, passed, detail, bar } of report.measurements) {
     // `FROM` rather than `NEEDS` once it holds a value, so the line never reads
     // as though a measured gate were still waiting on its data — and so the
     // provenance of an operator-supplied number stays attached to it.
@@ -562,7 +573,7 @@ export function reportGates(report: GateReport): string {
     const measured =
       value === null ? "" : `   measured ${round3(value)} ${gate.unit}`;
     lines.push(
-      `    ${status}  ${gate.label.padEnd(28)} ${gate.op} ${gate.bar}` +
+      `    ${status}  ${gate.label.padEnd(28)} ${gate.op} ${bar}` +
         ` ${gate.unit}${needs}${measured}`,
     );
     if (passed === false && detail !== "") lines.push(`                  ${detail}`);

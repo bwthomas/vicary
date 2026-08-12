@@ -1113,13 +1113,25 @@ def build_gates_document() -> dict[str, Any]:
                 "unit": "spans/essay",
                 "op": "<=",
                 "bar": 0.61,
+                "bars_by_corpus": {
+                    "asap-aes-set8": 0.61,
+                    "persuade-20": 8.15,
+                },
                 "requires": ["corpus"],
                 "why": "Over-redaction is the cost side of recall. A FLOOR, not "
                        "a rate: the measured corpus is pre-scrubbed, so real "
-                       "prose offers more to over-fire on. The bar is per "
-                       "corpus in everything but name — it is ASAP-AES's, and a "
-                       "corpus whose prose names real entities constantly will "
-                       "exceed it without over-firing on anything private.",
+                       "prose offers more to over-fire on. The only gate whose "
+                       "bar is a property of the PROSE rather than the "
+                       "detector, so it is set per corpus: ASAP-AES set 8 is a "
+                       "personal narrative whose names were already @PERSON "
+                       "tokens, while PERSUADE's prompts are source-based and "
+                       "its essays name real entities constantly (Venus, "
+                       "Vauban, Paris, Earth). One bar cannot hold both, and a "
+                       "single bar loose enough for PERSUADE would retire the "
+                       "gate on ASAP-AES. `bar` is the fallback for a corpus "
+                       "with no entry, and it is deliberately the tighter of "
+                       "the two so a new corpus fails loudly rather than "
+                       "passing quietly.",
             },
             {
                 "id": "bare_surname_exposure",
