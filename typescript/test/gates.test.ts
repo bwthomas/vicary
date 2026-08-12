@@ -708,8 +708,13 @@ process.on("exit", () => {
           }),
     },
   );
+  // The corpus is named, not implied. Two of these gates carry a per-corpus bar
+  // — over-firing is 8.15 spans/essay on persuade-20 against 0.61 on ASAP-AES —
+  // so a board that prints `8.150 <= 8.15 PASS` without saying which corpus
+  // produced it is a number filed under no corpus at all.
+  const corpusId = corpus === null ? "(none measured)" : resolveCorpusId();
   process.stdout.write(
-    `\ngate report — fixture ${spec.fixtureVersion}, arm ${spec.referenceArm}\n` +
-      `${reportGates(full)}\n`,
+    `\ngate report — fixture ${spec.fixtureVersion}, arm ${spec.referenceArm}, ` +
+      `corpus ${corpusId}\n${reportGates(full)}\n`,
   );
 });

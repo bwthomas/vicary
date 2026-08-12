@@ -619,6 +619,7 @@ class GatesTest < Minitest::Test
   # print it would make the report expensive enough to switch off.
   def self.print_board
     corpus_metrics = corpus
+    corpus_id = corpus_metrics.nil? ? nil : Vicary::Corpus.resolve_corpus_id
     full = Vicary::Gates.measure(
       spec, Vicary::Conformance.load_gates,
       asset_entries: Vicary::Gazetteer.load.entry_count,
@@ -626,10 +627,15 @@ class GatesTest < Minitest::Test
       held_out_recall_carrier: corpus_metrics&.recall_held_out,
       over_fire_per_essay: corpus_metrics&.over_fire_spans_per_essay,
       latency_p95_ms: corpus_metrics&.latency_p95_ms,
-      corpus_id: corpus_metrics.nil? ? nil : Vicary::Corpus.resolve_corpus_id
+      corpus_id: corpus_id
     ) { |sentence, identity| Vicary.redact(sentence, identity) }
     puts
-    puts "gate report — fixture #{spec.fixture_version}, arm #{spec.reference_arm}"
+    # The corpus is named, not implied. Two of these gates carry a per-corpus
+    # bar — over-firing is 8.15 spans/essay on persuade-20 against 0.61 on
+    # ASAP-AES — so a board that prints `8.150 <= 8.15 PASS` without saying which
+    # corpus produced it is a number filed under no corpus at all.
+    puts "gate report — fixture #{spec.fixture_version}, arm #{spec.reference_arm}, " \
+         "corpus #{corpus_id || '(none measured)'}"
     puts Vicary::Gates.report(full)
   end
 end
