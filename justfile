@@ -172,8 +172,15 @@ conformance:
     @if [ -f ruby/Rakefile ]; then cd ruby && rake conformance; \
       else echo "SKIPPED ruby — no Rakefile yet"; fi
 
+# The spec-still-matches-the-reference direction. This lives in the tools suite,
+# not the Python front door: it asks whether `conformance/*.json` still describes
+# what the reference does, which is a question about the shared spec rather than
+# about the package. It moved there with the rest of the fourth suite and this
+# recipe kept pointing at the old path, so `just conformance` — and therefore
+# `just ci` — failed on a fresh checkout while GitHub Actions passed, because
+# `.github/workflows/ci.yml` had been updated and this had not.
 py-conformance:
-    cd python && .venv/bin/python -m pytest tests/test_conformance.py -q
+    cd python && .venv/bin/python -m pytest ../tools/tests/test_conformance.py -q
 
 # Regenerate conformance/*.json from the Python implementation, which defines the
 # spec. READ THE DIFF before committing: a changed `golden` block means the

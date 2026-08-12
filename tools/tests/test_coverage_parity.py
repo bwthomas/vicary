@@ -80,6 +80,68 @@ def test_every_declared_suite_exists(coverage: dict, repository_root: Path) -> N
     )
 
 
+#: Where each port keeps its unit tests, and what a suite file is called there.
+PORT_SUITES = {
+    "python": ("tests", "test_*.py"),
+    "typescript": ("test", "*.test.ts"),
+    "ruby": ("test", "*_test.rb"),
+}
+
+#: Suite files that are deliberately not a declared concern of their own.
+#: Keep this SHORT — an entry here is an exemption from the check below, and the
+#: reason it is a tuple of explicit names rather than a glob is that a glob would
+#: quietly absorb the next undeclared suite too.
+UNDECLARED_BY_DESIGN: dict[str, frozenset[str]] = {
+    "python": frozenset(),
+    "typescript": frozenset(),
+    "ruby": frozenset(),
+}
+
+
+def test_every_suite_on_disk_is_a_declared_concern(
+    coverage: dict, repository_root: Path
+) -> None:
+    """The other direction, and the one this file spent its first weeks missing.
+
+    ``test_every_gap_is_declared_with_a_reason`` walks the *declared* concerns and
+    asks which ports lack a suite. That cannot see a suite which exists on disk
+    under no concern at all — and a suite nothing declares is precisely how a
+    concern ends up tested in one port only, because the file that is supposed to
+    notice has never heard of it.
+
+    It was not hypothetical. ``python/tests/test_local_classifier.py`` sat here for
+    weeks — 41 collected tests, no declared concern, and this suite green the whole
+    time. It turned out to be justified (the module is the reference evaluation
+    harness's, not the detector's), but nothing had ever *asked*, and the headline
+    claim at the top of this file — "a suite added to one port and not the others
+    fails" — was only true of concerns already listed.
+    """
+    declared: dict[str, set[str]] = {port: set() for port in PORT_ROOTS}
+    for ports in coverage["concerns"].values():
+        for port in PORT_ROOTS:
+            path = ports.get(port)
+            if path is not None:
+                declared[port].add(path)
+
+    undeclared = []
+    for port, root in PORT_ROOTS.items():
+        directory, pattern = PORT_SUITES[port]
+        for found in sorted((repository_root / root / directory).glob(pattern)):
+            relative = f"{directory}/{found.name}"
+            if relative in declared[port]:
+                continue
+            if found.name in UNDECLARED_BY_DESIGN[port]:
+                continue
+            undeclared.append(f"{port}: {relative}")
+
+    assert not undeclared, (
+        "these suite files exist but no concern in coverage.json declares them, so "
+        "this file cannot tell whether the other two ports are missing an "
+        "equivalent. Declare the concern (and give the other ports a suite or an "
+        f"accepted_divergences entry): {undeclared}"
+    )
+
+
 def test_every_gap_is_declared_with_a_reason(coverage: dict) -> None:
     """The load-bearing assertion, and the one that catches drift.
 
@@ -167,14 +229,13 @@ def test_the_open_gaps_are_the_ones_currently_known(coverage: dict) -> None:
     open_gaps = {
         (entry["concern"], entry["port"])
         for entry in coverage["accepted_divergences"]
-        if entry["reason"].lstrip().startswith("OPEN GAP")
+        if entry["reason"].lstrip().startswith(("OPEN GAP", "PARTIALLY JUSTIFIED"))
     }
-    assert open_gaps == {
-        ("candidates", "ruby"),
-        ("redact", "ruby"),
-        ("packaging", "typescript"),
-        ("dialect", "typescript"),
-    }, (
-        "the open coverage gaps moved. If you closed one, delete its entry and "
-        "update this set; if you opened one, that is what this test is for."
+    assert open_gaps == set(), (
+        "the open coverage gaps moved. This set was emptied on 2026-08-12, when the "
+        "last four — candidates/ruby, redact/ruby, packaging/typescript and "
+        "dialect/typescript — and the two PARTIALLY JUSTIFIED config entries were "
+        "closed by writing the suites. Every remaining divergence is JUSTIFIED, "
+        "meaning a decision rather than a to-do. If you opened one, that is what "
+        f"this test is for: {sorted(open_gaps)}"
     )

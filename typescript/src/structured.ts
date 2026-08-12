@@ -112,7 +112,7 @@ const ADDRESS = new RegExp(
 );
 
 /** US ZIP, with the optional +4. Bounded so it can't eat a 5-digit year range. */
-const ZIP = /\b\d{5}(?:-\d{4})?\b(?=\s*$|\s*[,.]|\s+[A-Z]{2}\b)/g;
+export const ZIP = /\b\d{5}(?:-\d{4})?\b(?=\s*$|\s*[,.]|\s+[A-Z]{2}\b)/g;
 
 /** Explicit age statements. Bare numbers are not ages; the phrasing is. */
 const AGE =

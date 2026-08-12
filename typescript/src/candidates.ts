@@ -54,7 +54,7 @@ import { PlaceholderMinter } from "./minter.js";
  * `gazetteer.ts` uses for `str.isalnum()`, plus the underscore Python's `\w`
  * adds.
  */
-const NOT_WORD_BEFORE = "(?<![\\p{L}\\p{N}_])";
+export const NOT_WORD_BEFORE = "(?<![\\p{L}\\p{N}_])";
 
 /**
  * The same correction on the trailing side: `\b` *after* a letter. Python finds
@@ -62,7 +62,7 @@ const NOT_WORD_BEFORE = "(?<![\\p{L}\\p{N}_])";
  * and matches `cousin`, which would let an accented word tail satisfy a relation
  * cue the reference never accepts.
  */
-const NOT_WORD_AFTER = "(?![\\p{L}\\p{N}_])";
+export const NOT_WORD_AFTER = "(?![\\p{L}\\p{N}_])";
 
 /**
  * Role titles and honorifics that introduce a name. Part of the span: masking

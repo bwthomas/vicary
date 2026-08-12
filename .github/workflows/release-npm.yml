@@ -120,25 +120,18 @@ jobs:
 
       - run: npm test
 
+      # The gate lives in `scripts/release-gate.mjs` rather than in shell here, for
+      # the reason the gem workflow moved its own: this was
+      # `npm run conformance | grep ... | awk '{print $4}'`, comparing two strings
+      # scraped from a human-readable report. It had three failure modes nobody
+      # could see — a relabelled line, a changed column, and an `awk` yielding ""
+      # on both — and it is the only thing between an unfinished port and npm.
+      # `test/packaging.test.ts` now drives the decision in both directions,
+      # including the allow branch this port has never reached.
       - name: Conformance must be complete before this package may be published
         run: |
-          npm run conformance | tee /tmp/conformance.txt
-          # Parse the scoreboard's leading line rather than trusting an exit code:
-          # the suite passed at 0 of 36 on purpose, because a ratchet that failed
-          # the build for being incomplete would make the port unmergeable. The
-          # PUBLISH gate is the stricter one, and it reads the number.
-          line=$(grep 'frames requiring masking' /tmp/conformance.txt)
-          matched=$(echo "$line" | awk '{print $4}')
-          total=$(echo "$line" | awk '{print $6}')
-          echo "conformance: $matched of $total masking-required frames"
-          test -n "$matched" && test -n "$total" \
-            || { echo "could not read the scoreboard — refusing to publish on an unparsed number"; exit 1; }
-          test "$matched" = "$total" || {
-            echo "REFUSING TO PUBLISH: $matched of $total masking-required frames match"
-            echo "the reference output. Publishing now would ship a package named"
-            echo "vicary that does not redact, and a caller cannot tell."
-            exit 1
-          }
+          npm run build
+          node scripts/release-gate.mjs
 
       # `npm pack --json` changed shape in npm 12: it emitted an ARRAY of one entry
       # up to npm 11 and emits an OBJECT KEYED BY PACKAGE NAME from 12 on. Reading
@@ -151,23 +144,7 @@ jobs:
       - name: The packed tarball must carry the asset
         run: |
           npm pack --dry-run --json > /tmp/pack.json
-          node -e '
-            const raw = require("/tmp/pack.json");
-            const entry = Array.isArray(raw) ? raw[0] : Object.values(raw)[0];
-            if (!entry || !Array.isArray(entry.files)) {
-              console.error("npm pack --json gave a shape this check does not know:");
-              console.error(JSON.stringify(raw).slice(0, 400));
-              process.exit(1);
-            }
-            const files = entry.files.map(f => f.path);
-            for (const need of ["assets/notability.txt.gz", "assets/MANIFEST.json", "assets/stop_words.txt"]) {
-              if (!files.includes(need)) {
-                console.error(`tarball is missing ${need}`);
-                process.exit(1);
-              }
-            }
-            console.log(`tarball carries the gazetteer asset (${files.length} files)`);
-          '
+          node scripts/pack-contents.mjs /tmp/pack.json
 
       # The first version of a new npm name cannot be published from here, and that
       # is npm's constraint rather than a gap in this file: trusted publishing is
@@ -187,7 +164,16 @@ jobs:
         run: |
           name=$(node -p "require('./package.json').name")
           version=$(node -p "require('./package.json').version")
-          if npm view "$name@$version" version >/dev/null 2>&1; then
+          # One lookup through the tested reader rather than `npm view ... 2>&1
+          # >/dev/null`, whose non-zero exit collapsed "not published", "no such
+          # package", "network refused", "registry 503" and "not authenticated"
+          # into one bit with both streams discarded.
+          #
+          # An unreadable registry still falls through to publishing, and that is
+          # the safe direction: `npm publish` on a version that already exists is a
+          # hard error, so the failure mode is a loud refusal rather than a silent
+          # skip that turns a failed publish into a green check.
+          if node scripts/registry-serves.mjs --attempts 1 --interval 0 "$name" "$version"; then
             echo "$name@$version is already on the registry — published out of band."
             echo "This run has nothing to do. It is NOT a substitute for a publish"
             echo "that failed: the check is that the registry serves this version."
@@ -297,3 +283,17 @@ jobs:
       - name: Publish
         if: ${{ steps.already.outputs.skip == 'false' && !inputs.publish_probe }}
         run: npm publish --provenance --access public
+
+      # `npm publish` printing `+ @bwthomas/vicary@0.2.1` is the system under
+      # measurement describing itself. The gem workflow has verified its own push
+      # against rubygems.org since it was written and this one never did, so a
+      # publish that reported success and did not land would have read as a green
+      # release here. Same script, same distinction between "not served yet" and
+      # "could not tell" — only the second is a failure of the check rather than of
+      # the publish, and both exit non-zero rather than passing.
+      - name: The registry must actually serve what was published
+        if: ${{ steps.already.outputs.skip == 'false' && !inputs.publish_probe }}
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          node scripts/registry-serves.mjs --attempts 12 --interval 10 "$name" "$version"
