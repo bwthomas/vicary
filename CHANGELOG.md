@@ -1,13 +1,53 @@
 # Changelog
 
-## Unreleased
+## 0.2.2 — 2026-08-12
+
+### The reference port measures the corpus it is the reference for
+
+* **Python measured five of nine on a bare checkout while TypeScript and Ruby
+  measured eight.** The previous release's headline — "a fresh checkout measures
+  eight of nine" — was true for the two ports and false for the one they check
+  themselves against. `load_essays()` had been taught to resolve the shipped
+  corpus, but the gate fixture still guarded on `VICARY_EVAL_CORPUS_TSV`, so it
+  reported NEEDS corpus against twenty essays in the repository. The guard now
+  asks the question the other two ports ask — is the corpus that *resolves* one
+  this checkout can read — and all three measure eight of nine bare, nine of nine
+  with the Census file.
+* **The gate report names the corpus it measured.** Two gates carry a per-corpus
+  bar, so `over-fire on prose 8.150 <= 8.15 PASS` was a number filed under no
+  corpus at all: on ASAP-AES the same gate reads 0.609 against 0.61. All three
+  report headers now print the corpus id.
+
+### The latency gate stops flipping on unchanged code
+
+* **At n=20, p95 across essays *is* the maximum**, so one timed sample per essay
+  asked "did a pause land in any of twenty calls" and answered a `<=` gate with
+  it. Five consecutive Ruby runs of unchanged code gave 13.8, 7.4, 13.1, 7.7 and
+  6.8 ms against a 10 ms bar — two failures in five, bimodal at 2x rather than
+  noisy.
+* **Each essay is now redacted three times and the median recorded**, identically
+  in all three ports, before the cross-essay p95. Over 28 runs since, Ruby ranges
+  5.8–8.7 ms with a single 10.6 ms exceedance; Python 5.4–5.7; TypeScript
+  1.3–2.0. A pause now has to hit the same essay twice to move the number.
+* **The bar's rationale in `gates.json` states the envelope**, because the figure
+  is a claim about the length of the work — warm CPU, no network, asset load
+  excluded — and not a tail-latency claim about a deployed service.
+
+### Fixed
+
+* Ruby passed `bar:` twice to `GateMeasurement.new`, warning on every gates run
+  and silently discarding the first.
+* Docs across the justfile, both READMEs and two port module headers still said
+  four of nine gates need unshipped data. One does: the Census file.
 
 ### `persuade-20` is the default, and a fresh checkout measures eight of nine gates
 
 * **Five of nine became eight of nine.** With no operator setup at all, a clone
   now measures held-out recall, KEEP precision, round-trip, unaccounted
   violations, asset entries **and the three corpus gates**. Only bare-surname
-  exposure still needs a file no package ships.
+  exposure still needs a file no package ships. (This reached TypeScript and Ruby
+  here and the reference port only in the fix above — see *The reference port
+  measures the corpus it is the reference for*.)
 * **`operator_default` still points at ASAP-AES**, so a machine with
   `VICARY_EVAL_CORPUS_TSV` configured keeps measuring the corpus it has always
   measured and does not change its answer because this landed.

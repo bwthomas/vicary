@@ -16,7 +16,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vicary-build"
-version = "0.2.1"
+version = "0.2.2"
 description = "Build vicary's shared gazetteer asset from its public upstreams"
 requires-python = ">=3.11"
 # Stdlib only, like the redaction path. A build that needed a SPARQL client
