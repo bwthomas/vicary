@@ -463,6 +463,20 @@ numbers that moved the `given` tier to SSA births:
 | over-firing on real prose | ≤ 0.6 spans/essay | 0.60 |
 | latency p95 (essay-length) | ≤ 10 ms | 3.4 ms |
 
+**The envelope those three were measured in**, because a rate without one is not
+a quotable number: the first 25 essays of ASAP-AES set 8, taken in file order so
+the sample is reproducible rather than sampled; fixture frames injected into each
+as carrier prose; arm `local-gazetteer-lowercase`; single-threaded, no network,
+warm process.
+
+Two things that envelope makes visible and the table alone does not. **The
+over-fire gate passes with no margin at all** — 15 over-fired spans across 25
+essays is exactly 0.60 against a bar of ≤ 0.60, so one further span anywhere in
+the sample reads 0.64 and fails. It is deterministic across runs, so this is a
+knife-edge and not noise. And **latency p95 moves run to run**: 3.1–3.5 ms over
+seven warm runs, ~4.1 ms on a cold first one, against a 10 ms bar. Quote it as a
+band, not as 3.4.
+
 Measured separately, on 14 real generated-feedback responses rather than on
 essays: **over-firing on the outbound pass is 0.00 spans/response**, down from
 0.21. Two of the three residual spans needed the essay to close, not a rule —

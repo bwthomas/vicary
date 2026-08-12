@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### All nine gates measured at once, and what the corpus three actually sit on
+
+* **The three corpus gates now have their envelope recorded**, having been run
+  against ASAP-AES set 8 rather than quoted from an earlier operator run. With
+  both the corpus and the census file configured, Python measures and passes all
+  nine. The sample is the first 25 essays in file order — reproducible, not
+  sampled.
+* **The over-fire gate passes with zero margin, which the table hid.** 15
+  over-fired spans across 25 essays is exactly 0.60 against a bar of ≤ 0.60; one
+  more span anywhere reads 0.64 and fails. It is deterministic across seven runs,
+  so this is a knife-edge rather than noise, and worth knowing before the next
+  tier lands.
+* **Latency p95 is a band, not the 3.4 ms the README quoted.** 3.1–3.5 ms over
+  seven warm runs and ~4.1 ms cold, against a 10 ms bar. The old figure sits
+  inside the band; it just was not the whole of it.
+
 ### The census gate goes from one port's skip to three ports' number
 
 * **The bare-surname gate had never once been measured by a run of this
