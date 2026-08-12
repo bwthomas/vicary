@@ -70,6 +70,12 @@ the email defect below and **should be skipped**; there is no 0.2.0 on npm.
   exist. It therefore carries no provenance attestation; every later version does.
   The workflow now asks the registry before publishing and skips a version already
   served, which is the one seam that hand-publishing the first version creates.
+* **`npm pack --json` changed shape in npm 12** — an array of one entry up to
+  npm 11, an object keyed by package name from 12 on — so upgrading npm to reach
+  the OIDC minimum broke the step that checks the tarball carries the gazetteer.
+  It reads both shapes now and fails loudly on a third, because "no files" and
+  "cannot see the files" must not reach the same conclusion when the conclusion is
+  whether the asset shipped.
 
 ### The gem is published
 
