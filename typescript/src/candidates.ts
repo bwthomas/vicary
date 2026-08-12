@@ -182,6 +182,32 @@ export const SENTENCE_BREAK =
   /(?:^|[.!?]["'’”)]*\s+|\n+|(?:(?<=\s)|^)["'‘“](?=[A-Za-z]))\s*/g;
 
 /**
+ * Words whose trailing period abbreviates rather than ends a sentence, and which
+ * are followed by a name more often than not.
+ *
+ * Load-bearing for {@link sentenceStarts}, and the reason is a leak. The break
+ * pattern reads `[.!?]\s+` as a sentence boundary, so "Mrs. Okonkwo" put
+ * "Okonkwo" in sentence-initial position — where a capital is orthographically
+ * required and therefore proves nothing — and the document's one piece of
+ * testimony about that surname was discarded. In a persuade-20 carrier essay that
+ * withdrew the corroboration the lowercase route needed and leaked
+ * "terrence okonkwo". An honorific is the exact case where the capital that
+ * follows is *most* likely to be a name, so reading it as a sentence start
+ * inverts the signal.
+ *
+ * Deliberately only titles, not every abbreviation. "etc." or "vs." are also not
+ * sentence ends, but nothing follows them that this set exists to protect, and a
+ * wider list costs precision everywhere for no recall.
+ */
+export const TITLE_ABBREVIATIONS: ReadonlySet<string> = new Set([
+  "mr", "mrs", "ms", "dr", "prof", "rev", "fr", "sr", "jr", "st",
+  "sgt", "capt", "lt", "col", "gen", "gov", "sen", "rep", "hon",
+]);
+
+/** Matches the abbreviation a break candidate sits directly behind. */
+const TRAILING_WORD = /([A-Za-z]+)\.\s*$/;
+
+/**
  * One entirely-lowercase word. The leading boundary is what keeps this from
  * matching the tail of a capitalised word — there is no word boundary between the
  * "T" and the "errence" of "Terrence", so the capitalised route keeps exclusive
@@ -538,11 +564,19 @@ export function trim(tokens: readonly string[]): string[][] {
   return runs;
 }
 
-/** Offsets at which a sentence begins. */
+/**
+ * Offsets at which a sentence begins.
+ *
+ * A break directly behind a title abbreviation is not one — see
+ * {@link TITLE_ABBREVIATIONS} for the leak that rule exists to close.
+ */
 export function sentenceStarts(text: string): Set<number> {
   const out = new Set<number>();
   for (const match of text.matchAll(SENTENCE_BREAK)) {
-    out.add(match.index + match[0].length);
+    const end = match.index + match[0].length;
+    const preceding = TRAILING_WORD.exec(text.slice(0, end));
+    if (preceding && TITLE_ABBREVIATIONS.has(preceding[1]!.toLowerCase())) continue;
+    out.add(end);
   }
   return out;
 }
@@ -1655,10 +1689,6 @@ export function findLowercaseCandidates(
       index += 1;
       continue;
     }
-    if (corroborate !== undefined && !corroborate.has(strip(word, "'’"))) {
-      index += 1;
-      continue;
-    }
     if (index > 0 && DETERMINERS.has(tokens[index - 1]![0])) {
       // Only a directly-adjacent determiner counts. "the day terrence arrived"
       // must stay reachable, and punctuation between the two means they are not
@@ -1687,6 +1717,31 @@ export function findLowercaseCandidates(
     if (reach - index + 1 < LOWERCASE_MIN_TOKENS || protectedSpan(start, spanEnd)) {
       index += 1;
       continue;
+    }
+    // Corroboration is asked of the WHOLE span, not of its first token, and it is
+    // asked here rather than before `reach` is known because the span's extent is
+    // what decides which tokens may vouch for it.
+    //
+    // Checking only the given name is what leaked "terrence okonkwo" out of a
+    // persuade-20 carrier essay. That document is INCONSISTENT, so this route runs
+    // with corroboration required; it capitalises "Okonkwo" mid-sentence and never
+    // writes "Terrence" at all, so the one token consulted was the one the writer
+    // happened not to capitalise — while the surname of the same person sat in the
+    // same document as exactly the evidence being asked for. {@link corroborated}
+    // already settled this question the other way ("ANY token counts, not just the
+    // first"); this channel simply never adopted it.
+    if (corroborate !== undefined) {
+      let vouched = false;
+      for (let i = index; i <= reach; i += 1) {
+        if (corroborate.has(strip(tokens[i]![0], "'’"))) {
+          vouched = true;
+          break;
+        }
+      }
+      if (!vouched) {
+        index += 1;
+        continue;
+      }
     }
     const joined = text.slice(start, spanEnd);
     out.push({

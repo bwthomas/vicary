@@ -166,6 +166,30 @@ module Vicary
     # corpus.
     SENTENCE_BREAK = /(?:\A|[.!?]["'’”)]*\s+|\n+|(?:(?<=\s)|\A)["'‘“](?=[A-Za-z]))\s*/
 
+    # Words whose trailing period abbreviates rather than ends a sentence, and
+    # which are followed by a name more often than not.
+    #
+    # Load-bearing for {.sentence_starts}, and the reason is a leak. The break
+    # pattern reads `[.!?]\s+` as a sentence boundary, so "Mrs. Okonkwo" put
+    # "Okonkwo" in sentence-initial position — where a capital is orthographically
+    # required and therefore proves nothing — and the document's one piece of
+    # testimony about that surname was discarded. In a persuade-20 carrier essay
+    # that withdrew the corroboration the lowercase route needed and leaked
+    # "terrence okonkwo". An honorific is the exact case where the capital that
+    # follows is *most* likely to be a name, so reading it as a sentence start
+    # inverts the signal.
+    #
+    # Deliberately only titles, not every abbreviation. "etc." or "vs." are also
+    # not sentence ends, but nothing follows them that this set exists to protect,
+    # and a wider list costs precision everywhere for no recall.
+    TITLE_ABBREVIATIONS = Set.new(%w[
+      mr mrs ms dr prof rev fr sr jr st
+      sgt capt lt col gen gov sen rep hon
+    ]).freeze
+
+    # Matches the abbreviation a break candidate sits directly behind.
+    TRAILING_WORD = /([A-Za-z]+)\.\s*\z/
+
     # One entirely-lowercase word. The leading boundary is what keeps this from
     # matching the tail of a capitalised word — there is no word boundary between
     # the "T" and the "errence" of "Terrence", so the capitalised route keeps
@@ -728,8 +752,17 @@ module Vicary
       # ---------------------------------------------------------------------
 
       # Offsets at which a sentence begins.
+      #
+      # A break directly behind a title abbreviation is not one — see
+      # {TITLE_ABBREVIATIONS} for the leak that rule exists to close.
       def sentence_starts(text)
-        each_match(text, SENTENCE_BREAK).map { |m| m.begin(0) + m[0].length }.to_set
+        each_match(text, SENTENCE_BREAK).filter_map do |m|
+          finish = m.begin(0) + m[0].length
+          preceding = TRAILING_WORD.match(text[0...finish])
+          next if preceding && TITLE_ABBREVIATIONS.include?(preceding[1].downcase)
+
+          finish
+        end.to_set
       end
 
       # Character ranges of all-caps runs SHORTER than {ALLCAPS_RUN}.
@@ -1427,10 +1460,6 @@ module Vicary
             index += 1
             next
           end
-          if !corroborate.nil? && !corroborate.include?(strip(word, "'’"))
-            index += 1
-            next
-          end
           if index.positive? && DETERMINERS.include?(tokens[index - 1][0])
             # Only a directly-adjacent determiner counts. "the day terrence
             # arrived" must stay reachable, and punctuation between the two means
@@ -1457,6 +1486,23 @@ module Vicary
           reach -= 1 while reach > index && PARTICLE_SET.include?(tokens[reach][0])
           span_end = tokens[reach][2]
           if reach - index + 1 < LOWERCASE_MIN_TOKENS || protected_span.call(start, span_end)
+            index += 1
+            next
+          end
+          # Corroboration is asked of the WHOLE span, not of its first token, and
+          # it is asked here rather than before `reach` is known because the span's
+          # extent is what decides which tokens may vouch for it.
+          #
+          # Checking only the given name is what leaked "terrence okonkwo" out of a
+          # persuade-20 carrier essay. That document is INCONSISTENT, so this route
+          # runs with corroboration required; it capitalises "Okonkwo" mid-sentence
+          # and never writes "Terrence" at all, so the one token consulted was the
+          # one the writer happened not to capitalise — while the surname of the
+          # same person sat in the same document as exactly the evidence being
+          # asked for. {.corroborated?} already settled this question the other way
+          # ("ANY token counts, not just the first"); this channel simply never
+          # adopted it.
+          if !corroborate.nil? && (index..reach).none? { |i| corroborate.include?(strip(tokens[i][0], "'’")) }
             index += 1
             next
           end
