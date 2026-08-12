@@ -204,6 +204,29 @@ module Vicary
     # Delacroix-Whitfields' house").
     POSSESSIVE_TAIL = "(?:['’]s|s['’])?"
 
+    # Is this single character a word character? Used to decide whether a literal
+    # needs a boundary lookaround on each end.
+    #
+    # A constant because it was previously built inside {literal_boundaries},
+    # which runs five times per redaction: at 50 redactions of one identity that
+    # was 250 regex compilations of a pattern that never varies.
+    #
+    # `Regexp#initialize` was 26% of this port's redaction CPU before this and
+    # the identity-pattern cache below; the fold cache in `gazetteer.rb` took the
+    # allocation half. Over ten runs of the 25-essay corpus gate, median p50 went
+    # 5.79 -> 3.10 ms and median p95 8.46 -> 4.43 ms.
+    #
+    # The number that mattered is the worst run, not the median: p95 ranged
+    # 7.75-11.35 ms before, so the 10 ms latency gate was failing outright about
+    # one run in ten and being read as a busy machine. It ranges 4.13-8.63 ms now.
+    # Three samples could not see that — the tail is one essay plus a GC pause,
+    # and it took ten runs per arm to separate the fix from the noise.
+    WORD_CHARACTER = /\A[#{W}]\z/.freeze
+
+    # How many identities' compiled patterns to keep. Small on purpose: the shape
+    # this serves is one student's essays in a row, not a working set.
+    IDENTITY_CACHE_MAX = 64
+
     class << self
       # Luhn checksum. Cuts the card pattern's false positives on long numbers.
       def luhn_ok?(digits)
@@ -232,10 +255,9 @@ module Vicary
       # ASCII-only where Python's is Unicode-aware; these agree with Python for
       # an accented name.
       def literal_boundaries(literal)
-        word = /\A[#{W}]\z/
         [
-          literal[0].to_s.match?(word) ? "(?<![#{W}])" : "",
-          literal[-1].to_s.match?(word) ? "(?![#{W}])" : "",
+          literal[0].to_s.match?(WORD_CHARACTER) ? "(?<![#{W}])" : "",
+          literal[-1].to_s.match?(WORD_CHARACTER) ? "(?![#{W}])" : "",
         ]
       end
 
@@ -264,10 +286,39 @@ module Vicary
       # of it, so "Jane Quincy-Adams" becomes one `{NAME}` rather than two
       # adjacent placeholders.
       def identity_patterns(identity)
-        out = []
         first = identity_field(identity, :first_name)
         last = identity_field(identity, :last_name)
         school = identity_field(identity, :school_name)
+        extras = extra_names(identity).map { |raw| raw.to_s.strip }
+
+        # Keyed on the field VALUES, never on the identity object: a host that
+        # reuses one mutable struct per request would otherwise get the previous
+        # student's patterns, which is a privacy failure rather than a stale
+        # cache. Two identities with the same fields produce the same patterns by
+        # construction, so sharing an entry between them is exact.
+        key = [first, last, school, extras].freeze
+        cached = @identity_patterns_cache&.[](key)
+        return cached if cached
+
+        patterns = build_identity_patterns(first, last, school, extras)
+
+        # Bounded, and cleared wholesale rather than evicted one at a time. The
+        # win is a batch redacting many essays for ONE student, where the cache
+        # holds a single entry; a long-running host cycling through thousands
+        # gets the bound instead of a leak, and refilling it costs what building
+        # the patterns cost before this existed.
+        @identity_patterns_cache ||= {}
+        @identity_patterns_cache.clear if @identity_patterns_cache.size >= IDENTITY_CACHE_MAX
+        @identity_patterns_cache[key] = patterns
+      end
+
+      # Drop the memoized identity patterns. For tests that measure the build.
+      def reset_identity_cache
+        @identity_patterns_cache = nil
+      end
+
+      def build_identity_patterns(first, last, school, extras)
+        out = []
 
         if !first.empty? && !last.empty?
           out << ["NAME", word_pattern("#{first} #{last}")]
@@ -277,8 +328,7 @@ module Vicary
         out << ["NAME", word_pattern(last)] if !last.empty? && !AMBIGUOUS_SURNAMES.include?(last.downcase)
         out << ["NAME", word_pattern(first)] if !first.empty? && !AMBIGUOUS_GIVEN_NAMES.include?(first.downcase)
 
-        extra_names(identity).each do |raw|
-          extra = raw.to_s.strip
+        extras.each do |extra|
           out << ["NAME", word_pattern(extra)] unless extra.empty?
         end
 

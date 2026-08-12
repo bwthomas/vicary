@@ -125,7 +125,35 @@ module Vicary
     # outright. That changes a key only when such a mark sits *between* two
     # alphanumerics, which cannot happen in a gazetteer whose keys are
     # Latin-folded, nor in the English prose the conformance frames carry.
+    # How many folded keys to remember. Sized against the measurement that
+    # motivated the cache: 25 carrier essays, redacted twice each, made 29,361
+    # calls over 11,888 distinct inputs — 59.5% repeats. A document's vocabulary
+    # is the working set, so this holds several essays' worth and is cleared
+    # wholesale rather than evicted entry by entry.
+    NORMALIZE_CACHE_MAX = 20_000
+
+    # Memoized {normalize}. Pure function of its argument, so the cache cannot
+    # change an answer — it removes an NFKD decomposition and five intermediate
+    # strings per repeated token.
+    #
+    # Worth doing because of what it does to GC, not only to CPU: after the
+    # identity-pattern fix, sweeping and marking were ~29% of this port's time on
+    # the longest essays, and this path allocates on every call.
     def self.normalize(name)
+      cache = (@normalize_cache ||= {})
+      hit = cache[name]
+      return hit if hit
+
+      cache.clear if cache.size >= NORMALIZE_CACHE_MAX
+      cache[name] = normalize_uncached(name)
+    end
+
+    # Drop the fold cache. For tests that swap the asset underneath.
+    def self.reset_normalize_cache
+      @normalize_cache = nil
+    end
+
+    def self.normalize_uncached(name)
       folded = name.gsub(SMART_QUOTE_PATTERN) { |char| SMART_QUOTES.fetch(char, char) }
       folded = folded.unicode_normalize(:nfkd)
       folded = folded.gsub(/\p{M}/, "")

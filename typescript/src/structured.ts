@@ -296,8 +296,35 @@ const POSSESSIVE_TAIL = "(?:['’]s|s['’])?";
  * `\b` is ASCII-only where Python's is Unicode-aware; these agree with Python
  * for an accented name.
  */
+/**
+ * Is this single character a word character?
+ *
+ * A module constant because it used to be built inside `literalBoundaries` — a
+ * `new RegExp` per character tested, so two per literal and ten per redaction of
+ * a pattern that never varies.
+ *
+ * **This port showed no measurable gain from it, and the cache below.** Ten runs
+ * of the corpus gate per arm put median p95 at 2.16 ms before and 1.85 ms after,
+ * with a third run of the same build reading 3.11 — the arms overlap, so the
+ * honest statement is that the difference is below this machine's noise floor.
+ * It is here because the *defect* is real and identical to Ruby's, where the
+ * same two changes were worth 8.46 -> 4.43 ms median p95 against a 10 ms bar.
+ * TypeScript runs at a fifth of the bar, so removing redundant work buys
+ * headroom nobody needed rather than a fix. Kept for the parity of shape: three
+ * ports that construct their patterns differently drift differently.
+ */
+const WORD_CHARACTER = new RegExp(`^[${W}]$`, "u");
+
+/**
+ * How many identities' compiled patterns to keep. Small on purpose: the shape
+ * this serves is one student's essays in a row, not a working set.
+ */
+const IDENTITY_CACHE_MAX = 64;
+
+const identityCache = new Map<string, Array<readonly [string, RegExp]>>();
+
 function literalBoundaries(literal: string): [string, string] {
-  const isWord = (ch: string) => ch.length > 0 && new RegExp(`^[${W}]$`, "u").test(ch);
+  const isWord = (ch: string) => ch.length > 0 && WORD_CHARACTER.test(ch);
   return [
     isWord(literal.slice(0, 1)) ? `(?<![${W}])` : "",
     isWord(literal.slice(-1)) ? `(?![${W}])` : "",
@@ -347,10 +374,24 @@ export function schoolAcronym(name: string): string | null {
 export function identityPatterns(
   identity: StudentIdentity,
 ): Array<readonly [string, RegExp]> {
-  const out: Array<readonly [string, RegExp]> = [];
   const first = (identity.firstName ?? "").trim();
   const last = (identity.lastName ?? "").trim();
   const school = (identity.schoolName ?? "").trim();
+  const extras = (identity.extraNames ?? []).map((raw) => raw.trim());
+
+  // Keyed on the field VALUES, never on the identity object: a host that reuses
+  // one mutable object per request would otherwise get the previous student's
+  // patterns, which is a privacy failure rather than a stale cache. Two
+  // identities with the same fields produce the same patterns by construction.
+  //
+  // Safe to hand the same RegExp objects back repeatedly even though they carry
+  // `g`: the only consumer is `PlaceholderMinter.substitute`, which passes them
+  // to `String.replace`, and that resets `lastIndex` rather than resuming from it.
+  const key = JSON.stringify([first, last, school, extras]);
+  const hit = identityCache.get(key);
+  if (hit) return hit;
+
+  const out: Array<readonly [string, RegExp]> = [];
 
   if (first && last) {
     out.push(["NAME", wordPattern(`${first} ${last}`)]);
@@ -363,8 +404,7 @@ export function identityPatterns(
   if (first && !AMBIGUOUS_GIVEN_NAMES.has(first.toLowerCase())) {
     out.push(["NAME", wordPattern(first)]);
   }
-  for (const raw of identity.extraNames ?? []) {
-    const extra = raw.trim();
+  for (const extra of extras) {
     if (extra) out.push(["NAME", wordPattern(extra)]);
   }
   if (school) {
@@ -376,7 +416,19 @@ export function identityPatterns(
       out.push(["SCHOOL", new RegExp(`\\b${escapeLiteral(acronym)}\\b`, "g")]);
     }
   }
+
+  // Bounded, and cleared wholesale rather than evicted one at a time. The win is
+  // a batch redacting many essays for ONE student, where the cache holds a single
+  // entry; a long-running host cycling through thousands gets the bound instead
+  // of a leak, and refilling it costs what building the patterns cost before.
+  if (identityCache.size >= IDENTITY_CACHE_MAX) identityCache.clear();
+  identityCache.set(key, out);
   return out;
+}
+
+/** Drop the memoized identity patterns. For tests that measure the build. */
+export function resetIdentityCache(): void {
+  identityCache.clear();
 }
 
 // ---------------------------------------------------------------------------
