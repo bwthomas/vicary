@@ -1,8 +1,12 @@
 # vicary (TypeScript)
 
-The npm front door. **Not published yet** — the conformance bar is met, but npm
-refuses the unscoped name `vicary` as too similar to the existing `vary`. An
-appeal is open; the fallback is the scoped `@bwthomas/vicary`.
+The npm front door, published as
+[`@bwthomas/vicary`](https://www.npmjs.com/package/@bwthomas/vicary).
+
+**The scope is interim.** npm refuses the unscoped `vicary` as too similar to the
+existing `vary` — the name is owned by nobody, so it reads as available in any
+404 check and is not. An appeal is open; PyPI and RubyGems both carry the
+unscoped name, so this is the one front door whose import path differs.
 
 The detector, the data asset and the measured numbers are described in the
 [project README](https://github.com/bwthomas/vicary#readme). What lives here is a
@@ -17,7 +21,7 @@ this paragraph — the scoreboard prints on every test run, and this line is a
 copy of a number that moves.
 
 ```ts
-import { redact } from "vicary";
+import { redact } from "@bwthomas/vicary";
 
 redact("My cousin Vinny came over that summer and never left.", {
   firstName: "Marguerite",

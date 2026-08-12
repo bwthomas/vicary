@@ -18,7 +18,7 @@ and it answers in single-digit milliseconds.
 |---|---|---|
 | Python | [`vicary`](https://pypi.org/project/vicary/) on PyPI | **published**, 9 of 9 gates PASS — see [`python/`](python/) |
 | Ruby | [`vicary`](https://rubygems.org/gems/vicary) on RubyGems | **published**, **38 of 38** — see [`ruby/`](ruby/) |
-| TypeScript | `vicary` on npm | detector complete, **38 of 38**, 5 of 5 measurable gates PASS; unpublished — npm refuses the unscoped name as too similar to `vary`, and the appeal is open — see [`typescript/`](typescript/) |
+| TypeScript | [`@bwthomas/vicary`](https://www.npmjs.com/package/@bwthomas/vicary) on npm | **published**, **38 of 38**, 5 of 5 measurable gates PASS — scoped because npm refuses the bare `vicary` as too similar to `vary`; the appeal for it is open — see [`typescript/`](typescript/) |
 
 That fraction is the number of masking-required fixture frames the port reproduces
 byte-for-byte, printed by every `npm test` / `rake test` run and ratcheted by it.
@@ -84,7 +84,7 @@ is not standing in for anything.
 ```sh
 pip install vicary                    # Python 3.11+, stdlib only
 gem install vicary                    # Ruby 3.1+
-npm install vicary                    # once the name appeal resolves
+npm install @bwthomas/vicary          # scoped: npm refuses the bare name
 ```
 
 The Python package has **no runtime dependencies** by default;

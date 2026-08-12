@@ -1,9 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.2.1 — 2026-08-11
 
-The Ruby gem published, and exercising the published artifact found an email that
-came apart instead of masking.
+The Ruby gem published, exercising the published artifact found an email that came
+apart instead of masking, and the npm package went out scoped.
+
+All three front doors carry this version. 0.2.0 shipped to PyPI and RubyGems with
+the email defect below and **should be skipped**; there is no 0.2.0 on npm.
 
 ### An email or URL carrying the writer's own name masks whole
 
@@ -49,6 +52,24 @@ came apart instead of masking.
   and the table had not caught up with. The five corpus-free gates and the four
   needing operator data are now separate tables, because a single table listing
   both invites reading CI as having measured all nine.
+
+### The npm package is published, scoped
+
+* **`@bwthomas/vicary` on npm.** npm's typosquat filter refuses the unscoped
+  `vicary` as too similar to the existing `vary`, and the name is owned by nobody,
+  so a 404 lookup reads as available and is not. The scope is interim — an appeal
+  for the bare name is open — and it makes npm the one front door whose import
+  path differs from `vicary`.
+* **No token in the repository.** The old `NPM_TOKEN` was a classic Publish token
+  that demands a 2FA OTP CI cannot supply; it is deleted from npm and from this
+  repository. `release-npm.yml` now authenticates by OIDC trusted publishing, on
+  Node 24 with npm upgraded past 11.5.1 — npm 10.x does not attempt the OIDC
+  exchange at all and fails as though the credential were wrong.
+* **0.2.1 was published by hand**, because npm configures trusted publishing on a
+  package's settings page and so cannot pre-authorize a package that does not yet
+  exist. It therefore carries no provenance attestation; every later version does.
+  The workflow now asks the registry before publishing and skips a version already
+  served, which is the one seam that hand-publishing the first version creates.
 
 ### The gem is published
 

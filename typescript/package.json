@@ -1,6 +1,6 @@
 {
-  "name": "vicary",
-  "version": "0.2.0",
+  "name": "@bwthomas/vicary",
+  "version": "0.2.1",
   "description": "Offline redaction of personal names in student compositions",
   "license": "MIT",
   "author": "Blake Thomas <bwthomas@gmail.com>",
@@ -11,6 +11,10 @@
     "directory": "typescript"
   },
   "bugs": "https://github.com/bwthomas/vicary/issues",
+  "comment:name": "Scoped under @bwthomas because npm's typosquat filter refuses the unscoped `vicary` as too similar to the existing `vary`. The name is owned by nobody — registry.npmjs.org/vicary is a 404 — so it reads as available and is not. An appeal is open; this scope is the interim, and PyPI and RubyGems both carry the unscoped name.",
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "redaction",
     "anonymization",

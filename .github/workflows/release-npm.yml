@@ -1,11 +1,21 @@
 # Publish the npm package when a `v*` tag is pushed.
 #
-# Same trust story as the Python release: no long-lived token in this repository.
-# npm mints provenance from the workflow's OIDC identity (`--provenance`), so the
-# published tarball carries a verifiable link back to this commit and this
-# workflow. The one secret that remains is NPM_TOKEN, because npm's *trusted
-# publishing* still requires a granular automation token for the initial link;
-# scope it to this package and nothing else.
+# Same trust story as the Python and Ruby releases, and now literally: **no token
+# in this repository at all.** Authentication is OIDC trusted publishing, and
+# `--provenance` mints the attestation from the same identity, so the published
+# tarball carries a verifiable link back to this commit and this workflow.
+#
+# The `NPM_TOKEN` secret that used to be here is deleted, from npm and from this
+# repository. It was a classic Publish token, which still demands a 2FA OTP that CI
+# cannot supply: the v0.2.0 run signed provenance, published it to the sigstore
+# transparency log, and *then* failed with `EOTP`. The bypass-2FA automation token
+# would have worked and is exactly the long-lived unattended credential this header
+# claims not to have, so it was not the fix.
+#
+# The package is `@bwthomas/vicary`, scoped. npm's typosquat filter refuses the
+# unscoped `vicary` as too similar to the existing `vary` — a name owned by nobody,
+# so it reads as available in any 404 check and is not. An appeal is open; PyPI and
+# RubyGems carry the unscoped name.
 #
 # THE GATE THAT MATTERS IS CONFORMANCE, NOT THE TESTS.
 #
@@ -45,12 +55,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Node 24 and an explicit npm upgrade, because OIDC trusted publishing needs
+      # npm >= 11.5.1 and no Node line bundles that by default on a schedule we
+      # control. Pinning `"22"` bundled npm 10.x, which does not attempt the OIDC
+      # exchange at all — it falls back to looking for a token, finds none, and
+      # fails as though the credential were wrong rather than as though the client
+      # were too old. The version print is here so the log answers that question
+      # without a re-run.
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
           cache: npm
           cache-dependency-path: typescript/package-lock.json
+
+      - name: npm must be new enough to attempt OIDC
+        run: |
+          npm install -g npm@latest
+          node --version
+          npm --version
+          npm --version | awk -F. '$1 < 11 || ($1 == 11 && $2 == 5 && $3 < 1) {
+            print "npm " $0 " is too old to attempt the OIDC exchange"; exit 1 }'
 
       - run: npm ci
 
@@ -104,6 +129,39 @@ jobs:
             console.log("tarball carries the gazetteer asset");
           '
 
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # The first version of a new npm name cannot be published from here, and that
+      # is npm's constraint rather than a gap in this file: trusted publishing is
+      # configured on a package's settings page, so a package that does not exist
+      # yet cannot be pre-authorized the way PyPI's pending publishers allow. The
+      # first version goes up by hand, with an interactive OTP, so no long-lived
+      # credential is ever minted; every version after it comes through here.
+      #
+      # Which leaves exactly one seam: the tag for that hand-published version
+      # still fires this workflow, and `npm publish` on an existing version is a
+      # hard error. So this asks the registry first. Skipping is reported loudly and
+      # only ever for a version the registry ALREADY serves — it cannot turn a
+      # failed publish into a green check, because the only thing it accepts as
+      # proof is the version being there.
+      - name: Skip if this version was published out of band
+        id: already
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "$name@$version is already on the registry — published out of band."
+            echo "This run has nothing to do. It is NOT a substitute for a publish"
+            echo "that failed: the check is that the registry serves this version."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "$name@$version is not on the registry; publishing."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # No NODE_AUTH_TOKEN. The secret was a classic Publish token, which demands
+      # a 2FA OTP that CI cannot supply — it failed with EOTP after signing
+      # provenance — and it has been deleted from npm and from this repository.
+      # Authentication is OIDC against the trusted publisher configured on the
+      # package, which is why the npm version check above is a hard gate.
+      - name: Publish
+        if: steps.already.outputs.skip == 'false'
+        run: npm publish --provenance --access public
