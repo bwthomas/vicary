@@ -42,6 +42,7 @@ import {
   leakProbes,
   measureGates,
   placeholderKind,
+  reportGates,
   restoreByToken,
   roundTrips,
   violationKey,
@@ -626,4 +627,43 @@ test("restore by token is keyed on what a consumer actually sees", () => {
   // An unmapped token is left alone rather than dropped — losing it would
   // silently shorten the text and read as a successful restore.
   assert.equal(restoreByToken("{NAME_9} stayed.", new Map()), "{NAME_9} stayed.");
+});
+
+// ---------------------------------------------------------------------------
+// The board
+// ---------------------------------------------------------------------------
+
+// `npm run gates` used to print node's tick list and nothing else, while Python's
+// `pytest -m gates -s` printed the nine numbers. Same gates, same bars, and only
+// one of the three ports would tell you what it measured — so "all three agree"
+// was a claim you had to run the reference to check.
+//
+// Assembled from the measurements above rather than re-measuring: the corpus arm
+// redacts 50 essays, and paying for that twice to print it would make the report
+// expensive enough to switch off.
+//
+// Registered with `process.on("exit")` so it lands after the assertions. A report
+// that runs first prints an empty table and passes — the same ordering
+// `python/tests/conftest.py` enforces, for the same reason.
+process.on("exit", () => {
+  const full = measureGates(
+    spec,
+    gates,
+    (sentence: string, identity: Identity) => redact(sentence, identity),
+    {
+      assetEntries: load().entryCount,
+      ...(exposure === null ? {} : { bareSurnameExposure: rate(exposure) }),
+      ...(corpus === null
+        ? {}
+        : {
+            heldOutRecallCarrier: corpus.recallHeldOut,
+            overFirePerEssay: corpus.overFireSpansPerEssay,
+            latencyP95Ms: corpus.latencyP95Ms,
+          }),
+    },
+  );
+  process.stdout.write(
+    `\ngate report — fixture ${spec.fixtureVersion}, arm ${spec.referenceArm}\n` +
+      `${reportGates(full)}\n`,
+  );
 });

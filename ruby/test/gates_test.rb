@@ -573,4 +573,34 @@ class GatesTest < Minitest::Test
     assert_match(/the caller measured no gate/, bare)
     assert_equal 9, bare.scan("NOT MEASURED").size
   end
+
+  # Print the board, whatever this run could reach.
+  #
+  # `rake gates` used to print minitest's dot row and nothing else, while Python's
+  # `pytest -m gates -s` printed the nine numbers. Same gates, same bars, and only
+  # one of the three ports would tell you what it measured — so "all three agree"
+  # was a claim you had to run the reference to check.
+  #
+  # Assembled from the measurements the tests above already made rather than
+  # re-measuring: the corpus arm redacts 50 essays and paying for that twice to
+  # print it would make the report expensive enough to switch off.
+  def self.print_board
+    corpus_metrics = corpus
+    full = Vicary::Gates.measure(
+      spec, Vicary::Conformance.load_gates,
+      asset_entries: Vicary::Gazetteer.load.entry_count,
+      bare_surname_exposure: exposure&.rate,
+      held_out_recall_carrier: corpus_metrics&.recall_held_out,
+      over_fire_per_essay: corpus_metrics&.over_fire_spans_per_essay,
+      latency_p95_ms: corpus_metrics&.latency_p95_ms
+    ) { |sentence, identity| Vicary.redact(sentence, identity) }
+    puts
+    puts "gate report — fixture #{spec.fixture_version}, arm #{spec.reference_arm}"
+    puts Vicary::Gates.report(full)
+  end
 end
+
+# After the assertions, so a failing gate still reports the value that failed it
+# — the same ordering `python/tests/conftest.py` enforces, and for the same
+# reason: a report that runs first prints an empty table and passes.
+Minitest.after_run { GatesTest.print_board }
