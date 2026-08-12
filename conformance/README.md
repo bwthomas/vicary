@@ -83,11 +83,18 @@ output changes cannot detect the divergence it exists to detect.
 
 ## What a green conformance run does not mean
 
-Four of the nine gates need data that no package here ships — three need an essay
-corpus the operator supplies, one needs the US Census surname file. Each gate
-declares this in its `requires` field. A runner that cannot reach them must report
-`NOT MEASURED` **by name** and must not reduce the denominator: five of nine held
-is a different statement from nine of nine, and a badge cannot tell them apart.
+Four of the nine gates declare a `requires` — three need an essay corpus, one the
+US Census surname file. The corpus requirement is satisfied on a bare checkout,
+because `persuade-20` ships here and is the registry default; the census file is
+not shipped by anything, so bare-surname exposure is the one gate a fresh clone
+cannot reach. A runner that cannot reach a gate must report `NOT MEASURED` **by
+name** and must not reduce the denominator: eight of nine held is a different
+statement from nine of nine, and a badge cannot tell them apart.
+
+`requires: ["corpus"]` therefore means "this gate's answer depends on which corpus
+was measured", not "this gate is unreachable by default" — and since two of the
+three carry a per-corpus bar, a runner must name the corpus it measured alongside
+the numbers.
 
 A runner that *can* reach one of them measures that one and no other. Satisfying
 `census` is not a licence to fill in the three gates that asked for `corpus`, so

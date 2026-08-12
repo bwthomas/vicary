@@ -658,16 +658,25 @@ copies are gitignored in all three packages, so importing the library raises rat
 than answering from an empty one — which is the intended failure. `just py-setup`
 does the sync for you.
 
-Four of the nine gates need data that is not packaged: three need an essay corpus
-you supply, one needs the US Census surname file. They **skip** when it is
-absent, and the gate report prints `NOT MEASURED` for each one, so a green run
-means "the corpus-free gates hold" and never "the gate set is clear". Same
-discipline is required of every port; a green badge that means less than the
-Python one is worse than no badge.
+One of the nine gates needs data that is not packaged: bare-surname exposure needs
+the US Census surname file. It **skips** when that is absent, and the gate report
+prints `NOT MEASURED` for it, so a green run on a bare checkout means "eight of
+nine hold" and never "the gate set is clear". Same discipline is required of every
+port; a green badge that means less than the Python one is worse than no badge.
+
+The three corpus gates need no setup — `persuade-20` ships in `conformance/` and
+is the default. Set `VICARY_EVAL_CORPUS_TSV` to measure the ASAP-AES corpus
+instead, or `VICARY_EVAL_CORPUS` to name a registered one per run. Two of those
+gates carry a **per-corpus bar**, so the report names the corpus it measured in
+its header rather than leaving you to infer it.
 
 ## Licence
 
-MIT — see [`LICENSE`](LICENSE). No essay corpus ships with any package here, and
-none is redistributed by them. Measurement data is supplied by the operator under
-whatever terms its own distributor sets; this project makes no claim to those
-terms and grants no rights in that data.
+MIT — see [`LICENSE`](LICENSE). No essay corpus ships inside the published
+Python, npm or Ruby packages — none of the three includes `conformance/`. The
+repository does ship one: twenty PERSUADE 2.0 essays under their owner's CC BY 4.0
+grant, with attribution and a note on a conflicting third-party licence claim in
+[`conformance/corpora/persuade-20/NOTICE`](conformance/corpora/persuade-20/NOTICE).
+Any other measurement data is supplied by the operator under whatever terms its
+own distributor sets; this project makes no claim to those terms and grants no
+rights in that data.

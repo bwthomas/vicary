@@ -313,9 +313,11 @@ def committed_gates(conformance_directory: Path) -> dict:
 def test_the_spec_says_which_gates_need_data_no_package_ships(
     committed_gates: dict,
 ) -> None:
-    """Four of nine. A port that does not carry this distinction publishes a
-    green badge meaning "five gates held" while the Python one means nine, and
-    nobody notices because both badges are the same colour."""
+    """Four of nine declare a `requires`, though only the census one is out of
+    reach on a bare checkout now that `persuade-20` ships. A port that does not
+    carry the distinction publishes a green badge meaning "eight gates held"
+    while the Python one means nine, and nobody notices because both badges are
+    the same colour."""
     needs_data = {
         g["label"] for g in committed_gates["gates"] if g["requires"]
     }

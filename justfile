@@ -118,18 +118,24 @@ lint:
     @just py-lint
     @just tools-lint
 
-# The nine gates, measured wherever they can be. FOUR OF NINE need data that is
-# not packaged: three an essay corpus you supply, one the US Census surname file.
-# They skip when it is absent and the report prints NOT MEASURED for each, so a
-# green run means "the corpus-free gates hold", never "the gate set is clear".
+# The nine gates, measured wherever they can be. ONE OF NINE needs data that is
+# not packaged: bare-surname exposure needs the US Census surname file. It skips
+# when that is absent and the report prints NOT MEASURED for it, so a green run
+# on a bare checkout means "eight of nine hold", never "the gate set is clear".
 #
-#   export VICARY_EVAL_CORPUS_DIR=/path/to/corpus   # holds one .tsv
 #   export VICARY_EVAL_CENSUS_CSV=/path/to/names.zip
+#   export VICARY_EVAL_CORPUS_DIR=/path/to/corpus   # optional; holds one .tsv
 #
-# The census file takes every port from five of nine to six, and the corpus
-# takes it to nine. Python reads the .zip or the extracted .csv; TypeScript and
-# Ruby read the .csv only and refuse a .zip by name, so extract
-# Names_2010Census.csv out of it to satisfy all three at once.
+# The census file takes every port from eight of nine to nine. Python reads the
+# .zip or the extracted .csv; TypeScript and Ruby read the .csv only and refuse a
+# .zip by name, so extract Names_2010Census.csv out of it to satisfy all three at
+# once.
+#
+# The corpus variables are no longer needed for coverage — `persuade-20` ships
+# and is the default. They select the ASAP-AES corpus this library was developed
+# against, which is what `VICARY_EVAL_CORPUS` overrides per run. The three corpus
+# gates are measured either way; which corpus they measured is printed in the
+# report header, because two of them carry a per-corpus bar.
 #
 # Every port that can measure, not just the reference — all three now measure all
 # nine when both files are configured, and each recovers its own numbers rather
