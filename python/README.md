@@ -81,11 +81,13 @@ vicary-assets verify          # checksum the installed asset against the manifes
 
 Five of the nine gates need nothing an operator supplies and hold on every CI
 run — held-out recall, KEEP precision, round-trip restorability, unaccounted
-invariant violations and asset entries. The other four need an essay corpus you
-supply or the US Census surname file, and print `NOT MEASURED` rather than being
-reduced out of the denominator: **five of nine held is a different statement from
-nine of nine.** Point `VICARY_EVAL_CORPUS_DIR` and `VICARY_EVAL_CENSUS_CSV` at
-your own copies to measure the rest. Numbers and bars:
+invariant violations and asset entries. A sixth — bare-surname exposure — is
+measured once `VICARY_EVAL_CENSUS_CSV` points at the US Census surname file,
+which this package reads as either the distributed `.zip` or the extracted
+`.csv`. The remaining three need an essay corpus you supply, and print
+`NOT MEASURED` rather than being reduced out of the denominator: **six of nine
+held is a different statement from nine of nine.** Point
+`VICARY_EVAL_CORPUS_DIR` at your own copy to measure those. Numbers and bars:
 [Measurement](https://github.com/bwthomas/vicary#measurement).
 
 **No essay corpus ships with this package, and none is redistributed by it.**

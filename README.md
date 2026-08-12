@@ -35,11 +35,15 @@ held-out REDACT spans, 21/21 KEEP spans intact, 54/54 frames restoring exactly,
 one violation and it the accounted-for one, 360,793 asset entries. The counts are
 stated alongside the percentages because 100% of a wrong denominator is also 100%.
 
-The other four need an essay corpus or the Census surname file that no package
-here ships; the scoreboard prints `NOT MEASURED` beside each on every run rather
-than letting a green suite imply a clear gate set. A gate that needs data is never
-given a value — not even 0, which in a `<=` gate would read as the most
-comfortable pass on the board.
+A sixth — bare-surname Census exposure — is measured by all three the moment you
+point `VICARY_EVAL_CENSUS_CSV` at a copy of the file, and all three report the
+same 1.20%. The remaining three need an essay corpus no package here ships; the
+scoreboard prints `NOT MEASURED` beside each on every run rather than letting a
+green suite imply a clear gate set. A gate whose data is absent is never given a
+value — not even 0, which in a `<=` gate would read as the most comfortable pass
+on the board — and a requirement satisfied buys only its own gate: the value is
+carried in a separate map from the fixture-derived ones so that nothing measured
+from the fixture can ever be printed under a gate that asked for a corpus.
 
 Each port measures rather than reads: the spec carries `aligns` and `mapping` per
 frame, and a port that quoted those would only be restating Python's answer back.
@@ -434,18 +438,29 @@ Fixture `2026-08-11.2`, arm `local-gazetteer-lowercase`:
 | unaccounted invariant violations | 0 | **0** |
 | asset entries | ≥ 1 | **360,793** |
 
-**Four need data no package here ships** — three an essay corpus you supply, one
-the US Census surname file. They print `NOT MEASURED` per gate rather than being
-reduced out of the denominator, because **five of nine held is a different
-statement from nine of nine** and a badge cannot tell them apart. The values below
-are from an operator corpus run, not from CI, and are the numbers that moved the
-`given` tier to SSA births:
+**A sixth needs one file you fetch once, and all three ports then measure it.**
+Point `VICARY_EVAL_CENSUS_CSV` at the US Census 2010 surname file and the gate
+goes from `NEEDS census` to `FROM census`. Python reads the distributed `.zip` or
+the extracted `.csv`; the TypeScript and Ruby ports read the `.csv` only, because
+neither standard library has a zip reader and a binary read parsed as CSV yields
+zero rows — which is a *lower* exposure than the truth, and the wrong direction
+to fail in silently. All three refuse a file parsing to under 100,000 rows for
+the same reason.
+
+| gate | bar | measured | agreeing |
+|---|---|---|---|
+| bare-surname Census exposure | ≤ 1.25% | **1.20%** (3,185,816 / 265,667,228 bearers) | Python, TypeScript, Ruby — byte-identical reports |
+
+**Three need an essay corpus no package here ships.** They print `NOT MEASURED`
+per gate rather than being reduced out of the denominator, because **six of nine
+held is a different statement from nine of nine** and a badge cannot tell them
+apart. The values below are from an operator corpus run, not from CI, and are the
+numbers that moved the `given` tier to SSA births:
 
 | gate | bar | last measured on a corpus |
 |---|---|---|
 | held-out recall (carrier) | ≥ 100% | 100% |
 | over-firing on real prose | ≤ 0.6 spans/essay | 0.60 |
-| bare-surname Census exposure | ≤ 1.25% | 1.20% |
 | latency p95 (essay-length) | ≤ 10 ms | 3.4 ms |
 
 Measured separately, on 14 real generated-feedback responses rather than on
@@ -484,6 +499,17 @@ skipped gate must mean "no corpus configured" and never "configured, mis-named".
 export VICARY_EVAL_CORPUS_DIR=/path/to/your/corpus     # holds one .tsv
 export VICARY_EVAL_CENSUS_CSV=/path/to/names.zip       # census.gov 2010 surnames
 pytest -m gates -s
+```
+
+The Census file is `names.zip` from the census.gov 2010 surnames release, public
+domain and needing no credentials. The TypeScript and Ruby ports want the
+`Names_2010Census.csv` extracted out of it, and refuse a `.zip` by name rather
+than reading it as text:
+
+```sh
+unzip names.zip Names_2010Census.csv
+export VICARY_EVAL_CENSUS_CSV=/path/to/Names_2010Census.csv
+just gates                    # all three ports, six of nine measured
 ```
 
 ## What it does not do
@@ -564,7 +590,8 @@ host that ran `pip install vicary`. See [`asset/README.md`](asset/README.md).
 ```sh
 just --list          # every task
 just test            # every language's suite
-just gates           # the nine gates (four need data you supply — see above)
+just gates           # the nine gates (four need data you supply — see above);
+                     #   VICARY_EVAL_CENSUS_CSV takes that to six of nine
 just conformance     # the shared suite, across every implementation present
 just asset-sync      # vendor the shared asset into every front door present
 just sync-conformance  # regenerate conformance/*.json from the Python reference

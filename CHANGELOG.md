@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+### The census gate goes from one port's skip to three ports' number
+
+* **The bare-surname gate had never once been measured by a run of this
+  repository.** Python carried the machinery and skipped, because nothing pointed
+  `VICARY_EVAL_CENSUS_CSV` anywhere; TypeScript and Ruby carried no machinery at
+  all and hard-coded every `requires` gate to `NOT MEASURED` regardless of what a
+  caller supplied. The 1.20% in the README came from an operator run nobody could
+  reproduce from the repo. All three now measure it, and their reports are
+  byte-identical — same sha256 over the rendered block: 162,253 surnames scored,
+  792 matched, 1.20% population-weighted (3,185,816 of 265,667,228 bearers).
+* **A satisfied requirement buys exactly one gate.** Operator-supplied values
+  live in a map separate from the fixture-derived ones in all three ports, so
+  nothing computed from the 54 frames can be printed under a gate that asked for
+  a corpus. Supplying the census file takes the board from five of nine to six of
+  nine and leaves the three corpus gates `NOT MEASURED` — asserted by a test, not
+  by intent. The scoreboard reads `FROM census` where it used to read
+  `NEEDS census`, so a measured gate never looks like it is still waiting.
+* **The `.zip` is refused by name in the two ports that cannot read one.** Neither
+  Node's nor Ruby's standard library has a zip reader, and the failure that
+  matters is not the crash — it is a binary read parsed as CSV yielding zero rows,
+  which is a *lower* exposure than the truth. Both also refuse a file parsing to
+  under 100,000 rows, for the same one-directional reason the builder does.
+* **Two of three mutations moved the number; the third is inert and now known to
+  be.** Dropping the demonym tier moves 1.1992% → 1.1718%, and counting the
+  `ALL OTHER NAMES` aggregate row moves it → 1.0800%, identically in both new
+  ports. Removing the single-token filter on `place` moves nothing at all: no
+  census key contains a space, so the 25,115 multi-token place entries it excludes
+  could never have matched one. The filter is defensive, not load-bearing.
+* **`fetch_census_surnames()` no longer reaches census.gov.** The host now answers
+  the documented URL with HTTP **200** and a WAF rejection page in the body, under
+  any User-Agent — so the fallback returns 247 bytes of HTML that a status check
+  reads as success. The local-copy path is unaffected, and is what the gate uses.
+
 ### Ruby measures five of the nine gates, closing the last parity gap
 
 * **The gem printed `NOT MEASURED` for all nine gates.** TypeScript measured five

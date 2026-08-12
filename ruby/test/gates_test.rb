@@ -34,6 +34,43 @@ class GatesTest < Minitest::Test
     @spec ||= Vicary::Conformance.load_spec
   end
 
+  # The exposure measured from an operator-supplied census file, or nil when no
+  # one pointed `VICARY_EVAL_CENSUS_CSV` at a copy.
+  def self.exposure
+    return @exposure if defined?(@exposure)
+
+    @exposure = if Vicary::Census.census_source.empty?
+                  nil
+                else
+                  Vicary::Census.measure(Vicary::Census.load_census)
+                end
+  end
+
+  # The same gates again with the census requirement satisfied.
+  #
+  # Measured separately rather than folded into `report` so the assertions above
+  # keep testing what they were written to test: that an *absent* requirement
+  # yields NOT MEASURED. Both paths then have a test, which is the point — the
+  # failure being guarded against is a gate that quietly acquires a value.
+  def self.census_report
+    return @census_report if defined?(@census_report)
+
+    @census_report = if exposure.nil?
+                       nil
+                     else
+                       Vicary::Gates.measure(
+                         spec, Vicary::Conformance.load_gates,
+                         asset_entries: Vicary::Gazetteer.load.entry_count,
+                         bare_surname_exposure: exposure.rate
+                       ) { |sentence, identity| Vicary.redact(sentence, identity) }
+                     end
+  end
+
+  # Minitest has no per-test skip predicate, so each census test opens with this.
+  def skip_without_census
+    skip "no VICARY_EVAL_CENSUS_CSV; see ruby/lib/vicary/census.rb" if self.class.exposure.nil?
+  end
+
   def measurement(id)
     self.class.report.measurements.find { |m| m.gate.id == id }
   end
@@ -80,7 +117,7 @@ class GatesTest < Minitest::Test
     assert_equal 360_793, measurement("asset_entries").value
   end
 
-  def test_the_four_gates_needing_data_stay_not_measured
+  def test_with_no_data_supplied_all_four_gates_needing_data_stay_not_measured
     unmeasured = self.class.report.measurements
                      .select { |m| m.passed.nil? }.map { |m| m.gate.id }.sort
     assert_equal %w[bare_surname_exposure held_out_recall_carrier latency_p95
@@ -91,12 +128,67 @@ class GatesTest < Minitest::Test
     end
   end
 
-  def test_a_gate_that_needs_data_is_never_given_a_value
+  def test_a_gate_whose_data_is_absent_is_never_given_a_value
     # The dangerous failure is not "unmeasured" — it is a plausible number
     # computed from the wrong inputs and printed under the right label.
     self.class.report.measurements.each do |m|
       assert_nil m.value, m.gate.id unless m.gate.requires.empty?
     end
+  end
+
+  # -------------------------------------------------------------------------
+  # The census gate, when the operator supplies the file
+  # -------------------------------------------------------------------------
+
+  def test_bare_surname_exposure_is_measured_and_holds_when_supplied
+    skip_without_census
+    m = self.class.census_report.measurements.find { |x| x.gate.id == "bare_surname_exposure" }
+    refute_nil m.value
+    # Reconciled against `python -m vicary.eval.census` on the same file, to four
+    # decimals rather than the two the report rounds to — the gate bar is 1.25
+    # and 1.2 would sit under it whatever the later digits did.
+    assert_equal "1.1992", format("%.4f", m.value)
+    exposure = self.class.exposure
+    assert_equal 162_253, exposure.surnames_scored
+    assert_equal 792, exposure.surnames_matched
+    assert_equal 265_667_228, exposure.bearers_total
+    assert_equal 3_185_816, exposure.bearers_exposed
+    assert_equal true, m.passed
+  end
+
+  def test_supplying_the_census_file_measures_that_gate_and_no_other
+    skip_without_census
+    # A requirement satisfied is not a licence for the other three: the corpus
+    # gates must stay NOT MEASURED, or "six of nine" silently becomes "nine".
+    still_unmeasured = self.class.census_report.measurements
+                           .select { |m| m.passed.nil? }.map { |m| m.gate.id }.sort
+    assert_equal %w[held_out_recall_carrier latency_p95 over_fire_prose], still_unmeasured
+  end
+
+  # -------------------------------------------------------------------------
+  # The census reader's guards — these need no census file
+  # -------------------------------------------------------------------------
+
+  def test_a_truncated_census_file_is_refused_rather_than_scored
+    # The failure mode is silent and one-directional: fewer rows is a smaller
+    # denominator, which reports a more comfortable exposure than the truth.
+    short = "name,rank,count\nSMITH,1,2442977\nJOHNSON,2,1932812"
+    error = assert_raises(RuntimeError) { Vicary::Census.parse_census_surnames(short) }
+    assert_match(/only 2 rows/, error.message)
+  end
+
+  def test_a_census_file_with_no_usable_header_is_refused
+    error = assert_raises(ArgumentError) do
+      Vicary::Census.parse_census_surnames("surname,total\nSMITH,2442977")
+    end
+    assert_match(%r{no 'name'/'count' header}, error.message)
+  end
+
+  def test_a_zip_is_refused_by_name_rather_than_read_as_text
+    # Reading the archive's bytes as CSV yields zero rows, and zero rows is the
+    # most comfortable exposure rate there is.
+    error = assert_raises(ArgumentError) { Vicary::Census.load_census("/nonexistent/names.zip") }
+    assert_match(/reads the extracted \.csv only/, error.message)
   end
 
   def test_an_unmeasured_gate_reports_no_value_rather_than_zero

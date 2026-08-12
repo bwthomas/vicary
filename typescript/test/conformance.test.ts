@@ -29,6 +29,12 @@ import {
   score,
   type Identity,
 } from "../src/conformance.js";
+import {
+  censusSource,
+  loadCensus,
+  measureExposure,
+  rate,
+} from "../src/census.js";
 import { load } from "../src/gazetteer.js";
 import { measureGates, reportGates } from "../src/gates.js";
 import { redact, redactWithReport, restore } from "../src/redact.js";
@@ -49,11 +55,35 @@ const board = score(spec, (sentence: string, identity: Identity) =>
   redact(sentence, identity),
 );
 
+/**
+ * Measured when the operator has supplied the census file, absent otherwise.
+ *
+ * Read here rather than in `gates.ts` so that module stays free of the
+ * filesystem, and swallowed on failure so a malformed or unreadable copy costs
+ * this run one NOT MEASURED gate instead of the whole scoreboard — the reader
+ * itself is tested in `gates.test.ts`, where a bad file is supposed to throw.
+ */
+const bareSurnameExposure = ((): number | undefined => {
+  if (censusSource() === "") return undefined;
+  try {
+    return rate(measureExposure(loadCensus(), load()));
+  } catch (error) {
+    console.log(`  census file unreadable, gate stays NOT MEASURED: ${error}`);
+    return undefined;
+  }
+})();
+
 const gateReport = measureGates(
   spec,
   gates,
   (sentence: string, identity: Identity) => redact(sentence, identity),
-  { assetEntries: load().entryCount },
+  {
+    assetEntries: load().entryCount,
+    // Spread rather than passed as `undefined`: `exactOptionalPropertyTypes`
+    // distinguishes "absent" from "present and undefined", and absent is what an
+    // unsupplied census file means.
+    ...(bareSurnameExposure === undefined ? {} : { bareSurnameExposure }),
+  },
 );
 
 // Printed unconditionally, including on a green run. The report is the artifact;

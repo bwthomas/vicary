@@ -44,9 +44,27 @@ class ConformanceTest < Minitest::Test
     @gates ||= Vicary::Conformance.load_gates
   end
 
+  # Measured when the operator has supplied the census file, nil otherwise.
+  #
+  # Read here rather than in `gates.rb` so that module stays free of the
+  # filesystem, and rescued so a malformed or unreadable copy costs this run one
+  # NOT MEASURED gate instead of the whole scoreboard — the reader itself is
+  # tested in `gates_test.rb`, where a bad file is supposed to raise.
+  def self.bare_surname_exposure
+    return @bare_surname_exposure if defined?(@bare_surname_exposure)
+
+    @bare_surname_exposure = begin
+      Vicary::Census.measure(Vicary::Census.load_census).rate unless Vicary::Census.census_source.empty?
+    rescue StandardError => e
+      puts "  census file unreadable, gate stays NOT MEASURED: #{e.message}"
+      nil
+    end
+  end
+
   def self.gate_report
     @gate_report ||= Vicary::Gates.measure(
-      spec, gates, asset_entries: Vicary::Gazetteer.load.entry_count
+      spec, gates, asset_entries: Vicary::Gazetteer.load.entry_count,
+                   bare_surname_exposure: bare_surname_exposure
     ) { |sentence, identity| Vicary.redact(sentence, identity) }
   end
 

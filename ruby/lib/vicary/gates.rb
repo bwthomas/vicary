@@ -278,12 +278,14 @@ module Vicary
         "#{violation.kind}\u0000#{violation.detail}"
       end
 
-      # Measure every gate this port can measure without operator-supplied data.
+      # Measure every gate this port can measure from the fixture, plus any whose
+      # `requires` the caller has satisfied by supplying the data.
       #
-      # `asset_entries` is passed in rather than read here so this module stays
-      # free of the gazetteer — a caller that wants the asset gate supplies the
-      # count, and one that does not gets NOT MEASURED rather than a load.
-      def measure(spec, gate_spec, asset_entries: nil)
+      # `asset_entries` and `bare_surname_exposure` are passed in rather than
+      # read here so this module stays free of the gazetteer and the filesystem —
+      # a caller that wants those gates supplies the number, and one that does
+      # not gets NOT MEASURED rather than a load.
+      def measure(spec, gate_spec, asset_entries: nil, bare_surname_exposure: nil)
         outcomes = []
         violations = []
         round_tripped = 0
@@ -329,12 +331,33 @@ module Vicary
           },
         }
 
+        # Kept in a SEPARATE hash from `values` on purpose. A gate declaring
+        # `requires` may be measured only from data that actually satisfies that
+        # requirement — never from anything derived from the fixture, because
+        # computing something else and calling it that gate is the more dangerous
+        # failure. Two hashes make that structural rather than a rule to remember.
+        supplied = {
+          "bare_surname_exposure" => {
+            value: bare_surname_exposure,
+            detail: if bare_surname_exposure.nil?
+                      "no census file supplied by the caller"
+                    else
+                      "#{round3(bare_surname_exposure)}% of US surname bearers"
+                    end,
+          },
+        }
+
         measurements = gate_spec.gates.map do |gate|
-          # A gate declaring `requires` is NOT MEASURED by this port regardless of
-          # anything computed above: no package here ships a corpus or the census
-          # file, and computing something else and calling it that gate would be
-          # the more dangerous failure.
-          next GateMeasurement.new(gate: gate, value: nil, passed: nil, detail: "") unless gate.requires.empty?
+          unless gate.requires.empty?
+            given = supplied[gate.id]
+            if given.nil? || given[:value].nil?
+              next GateMeasurement.new(gate: gate, value: nil, passed: nil, detail: "")
+            end
+
+            next GateMeasurement.new(gate: gate, value: given[:value],
+                                     passed: compare(given[:value], gate.op, gate.bar),
+                                     detail: given[:detail])
+          end
 
           found = values[gate.id]
           if found.nil? || found[:value].nil?
@@ -359,7 +382,14 @@ module Vicary
         lines = ["  gates:"]
         gate_report.measurements.each do |m|
           gate = m.gate
-          needs = gate.requires.empty? ? "" : "  NEEDS #{gate.requires.join('+')}"
+          # `FROM` rather than `NEEDS` once it holds a value, so the line never
+          # reads as though a measured gate were still waiting on its data — and
+          # so the provenance of an operator-supplied number stays attached to it.
+          needs = if gate.requires.empty?
+                    ""
+                  else
+                    "  #{m.passed.nil? ? 'NEEDS' : 'FROM'} #{gate.requires.join('+')}"
+                  end
           status = if m.passed.nil?
                      "NOT MEASURED"
                    else

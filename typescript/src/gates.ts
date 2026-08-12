@@ -2,9 +2,10 @@
  * The gates, measured by this port rather than read from the spec.
  *
  * Five of the nine gates in `conformance/gates.json` need no data beyond the
- * fixture, so this port measures them. The other four declare `requires` —
- * `corpus` or `census` — and no package here ships either; they stay NOT
- * MEASURED, spelled out per gate, because five of nine held is a different
+ * fixture, so this port measures them unconditionally. The other four declare
+ * `requires` — `corpus` or `census` — and no package here ships either. A
+ * caller that supplies the data gets those measured too; one that does not gets
+ * NOT MEASURED, spelled out per gate, because five of nine held is a different
  * statement from nine of nine and a badge cannot tell them apart.
  *
  * **Why this is measured and not asserted from the golden.** The spec already
@@ -399,17 +400,19 @@ function compare(value: number, op: string, bar: number): boolean {
 }
 
 /**
- * Measure every gate this port can measure without operator-supplied data.
+ * Measure every gate this port can measure from the fixture, plus any whose
+ * `requires` the caller has satisfied by supplying the data.
  *
- * `assetEntries` is passed in rather than read here so this module stays free of
- * the gazetteer — a caller that wants the asset gate supplies the count, and one
- * that does not gets NOT MEASURED rather than a load.
+ * `assetEntries` and `bareSurnameExposure` are passed in rather than read here
+ * so this module stays free of the gazetteer and the filesystem — a caller that
+ * wants those gates supplies the number, and one that does not gets NOT
+ * MEASURED rather than a load.
  */
 export function measureGates(
   spec: Spec,
   gateSpec: GateSpec,
   redact: (sentence: string, identity: Identity) => string,
-  options: { assetEntries?: number } = {},
+  options: { assetEntries?: number; bareSurnameExposure?: number } = {},
 ): GateReport {
   const outcomes: SpanOutcome[] = [];
   const violations: Violation[] = [];
@@ -469,13 +472,33 @@ export function measureGates(
     },
   };
 
+  // Kept in a SEPARATE map from `values` on purpose. A gate declaring
+  // `requires` may be measured only from data that actually satisfies that
+  // requirement — never from anything derived from the fixture, because
+  // computing something else and calling it that gate is the more dangerous
+  // failure. Two maps make that structural rather than a rule to remember.
+  const supplied: Record<string, { value: number | null; detail: string }> = {
+    bare_surname_exposure: {
+      value: options.bareSurnameExposure ?? null,
+      detail:
+        options.bareSurnameExposure === undefined
+          ? "no census file supplied by the caller"
+          : `${round3(options.bareSurnameExposure)}% of US surname bearers`,
+    },
+  };
+
   const measurements = gateSpec.gates.map((gate): GateMeasurement => {
-    // A gate declaring `requires` is NOT MEASURED by this port regardless of
-    // anything computed above: no package here ships a corpus or the census
-    // file, and computing something else and calling it that gate would be the
-    // more dangerous failure.
     if (gate.requires.length > 0) {
-      return { gate, value: null, passed: null, detail: "" };
+      const given = supplied[gate.id];
+      if (given === undefined || given.value === null) {
+        return { gate, value: null, passed: null, detail: "" };
+      }
+      return {
+        gate,
+        value: given.value,
+        passed: compare(given.value, gate.op, gate.bar),
+        detail: given.detail,
+      };
     }
     const found = values[gate.id];
     if (found === undefined || found.value === null) {
@@ -500,8 +523,13 @@ export function measureGates(
 export function reportGates(report: GateReport): string {
   const lines: string[] = ["  gates:"];
   for (const { gate, value, passed, detail } of report.measurements) {
+    // `FROM` rather than `NEEDS` once it holds a value, so the line never reads
+    // as though a measured gate were still waiting on its data — and so the
+    // provenance of an operator-supplied number stays attached to it.
     const needs =
-      gate.requires.length === 0 ? "" : `  NEEDS ${gate.requires.join("+")}`;
+      gate.requires.length === 0
+        ? ""
+        : `  ${passed === null ? "NEEDS" : "FROM"} ${gate.requires.join("+")}`;
     const status =
       passed === null ? "NOT MEASURED" : passed ? "PASS        " : "FAIL        ";
     const measured =

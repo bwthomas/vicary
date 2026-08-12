@@ -15,6 +15,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import {
+  censusSource,
+  loadCensus,
+  measureExposure,
+  parseCensusSurnames,
+  rate,
+} from "../src/census.js";
 import { loadGates, loadSpec, type Identity } from "../src/conformance.js";
 import { load } from "../src/gazetteer.js";
 import {
@@ -43,6 +50,28 @@ const report = measureGates(
 const measurement = (id: string) =>
   report.measurements.find((m) => m.gate.id === id)!;
 
+/**
+ * The same gates again, with the census requirement satisfied — or null when no
+ * operator has pointed `VICARY_EVAL_CENSUS_CSV` at a copy of the file.
+ *
+ * Measured separately rather than folded into `report` so the assertions above
+ * keep testing what they were written to test: that an *absent* requirement
+ * yields NOT MEASURED. Both paths then have a test, which is the point — the
+ * failure being guarded against is a gate that quietly acquires a value.
+ */
+const exposure =
+  censusSource() === "" ? null : measureExposure(loadCensus(), load());
+const censusReport =
+  exposure === null
+    ? null
+    : measureGates(
+        spec,
+        gates,
+        (sentence: string, identity: Identity) => redact(sentence, identity),
+        { assetEntries: load().entryCount, bareSurnameExposure: rate(exposure) },
+      );
+const noCensus = "no VICARY_EVAL_CENSUS_CSV; see typescript/src/census.ts";
+
 // ---------------------------------------------------------------------------
 // The gates
 // ---------------------------------------------------------------------------
@@ -70,7 +99,7 @@ test("the measured values match the Python gate report", () => {
   assert.equal(measurement("asset_entries").value, 360793);
 });
 
-test("the four gates needing data stay NOT MEASURED", () => {
+test("with no data supplied, all four gates needing data stay NOT MEASURED", () => {
   const unmeasured = report.measurements
     .filter((m) => m.passed === null)
     .map((m) => m.gate.id)
@@ -87,12 +116,83 @@ test("the four gates needing data stay NOT MEASURED", () => {
   }
 });
 
-test("a gate that needs data is never given a value", () => {
+test("a gate whose data is absent is never given a value", () => {
   // The dangerous failure is not "unmeasured" — it is a plausible number
   // computed from the wrong inputs and printed under the right label.
   for (const m of report.measurements) {
     if (m.gate.requires.length > 0) assert.equal(m.value, null, m.gate.id);
   }
+});
+
+// ---------------------------------------------------------------------------
+// The census gate, when the operator supplies the file
+// ---------------------------------------------------------------------------
+
+test(
+  "bare-surname exposure is measured and holds when the census file is supplied",
+  { skip: censusReport === null ? noCensus : false },
+  () => {
+    const m = censusReport!.measurements.find(
+      (x) => x.gate.id === "bare_surname_exposure",
+    )!;
+    assert.notEqual(m.value, null);
+    // Reconciled against `python -m vicary.eval.census` on the same file, to
+    // three decimals rather than the two the report rounds to — the gate bar is
+    // 1.25 and 1.2 would sit under it whatever the third digit did.
+    assert.equal(m.value!.toFixed(4), "1.1992");
+    assert.equal(exposure!.surnamesScored, 162253);
+    assert.equal(exposure!.surnamesMatched, 792);
+    assert.equal(exposure!.bearersTotal, 265667228);
+    assert.equal(exposure!.bearersExposed, 3185816);
+    assert.equal(m.passed, true);
+  },
+);
+
+test(
+  "supplying the census file measures that gate and no other",
+  { skip: censusReport === null ? noCensus : false },
+  () => {
+    // A requirement satisfied is not a licence for the other three: the corpus
+    // gates must stay NOT MEASURED, or "six of nine" silently becomes "nine".
+    const stillUnmeasured = censusReport!.measurements
+      .filter((m) => m.passed === null)
+      .map((m) => m.gate.id)
+      .sort();
+    assert.deepEqual(stillUnmeasured, [
+      "held_out_recall_carrier",
+      "latency_p95",
+      "over_fire_prose",
+    ]);
+  },
+);
+
+// ---------------------------------------------------------------------------
+// The census reader's guards — these need no census file
+// ---------------------------------------------------------------------------
+
+test("a truncated census file is refused rather than scored", () => {
+  // The failure mode is silent and one-directional: fewer rows is a smaller
+  // denominator, which reports a more comfortable exposure than the truth.
+  const short = ["name,rank,count", "SMITH,1,2442977", "JOHNSON,2,1932812"].join(
+    "\n",
+  );
+  assert.throws(() => parseCensusSurnames(short), /only 2 rows/);
+});
+
+test("a census file with no usable header is refused", () => {
+  assert.throws(
+    () => parseCensusSurnames("surname,total\nSMITH,2442977"),
+    /no 'name'\/'count' header/,
+  );
+});
+
+test("a .zip is refused by name rather than read as text", () => {
+  // Reading the archive's bytes as CSV yields zero rows, and zero rows is the
+  // most comfortable exposure rate there is.
+  assert.throws(
+    () => loadCensus("/nonexistent/names.zip"),
+    /reads the extracted \.csv only/,
+  );
 });
 
 // ---------------------------------------------------------------------------

@@ -880,7 +880,15 @@ def read_census_surnames(source: str | Path) -> dict[str, int]:
 
 
 def fetch_census_surnames() -> dict[str, int]:
-    """Download and parse the Census surname file. Reaches the network."""
+    """Download and parse the Census surname file. Reaches the network.
+
+    As of 2026-08-11 this no longer succeeds: census.gov answers this URL with
+    HTTP **200** and a WAF rejection page in the body, under any User-Agent. The
+    status line is therefore not evidence of anything, which is why the payload
+    is checked for the zip magic before it is opened — an unchecked read fails as
+    a bare ``BadZipFile`` and reads like a corrupt download rather than a refusal.
+    Use a local copy via :func:`read_census_surnames`.
+    """
     import zipfile
 
     request = urllib.request.Request(
@@ -888,6 +896,13 @@ def fetch_census_surnames() -> dict[str, int]:
     )
     with urllib.request.urlopen(request, timeout=180) as response:
         payload = response.read()
+    if not payload.startswith(b"PK"):
+        raise RuntimeError(
+            f"{CENSUS_SURNAMES_URL} returned {len(payload)} bytes that are not a "
+            "zip archive — census.gov serves a WAF rejection page with a 200 "
+            "status, so the status code cannot be trusted here. Download the file "
+            f"by hand and set {CENSUS_SURNAMES_MEMBER} via the eval env var."
+        )
     with zipfile.ZipFile(io.BytesIO(payload)) as archive:
         with archive.open(CENSUS_SURNAMES_MEMBER) as member:
             text = io.TextIOWrapper(member, encoding="utf-8").read()

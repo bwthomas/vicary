@@ -89,6 +89,12 @@ declares this in its `requires` field. A runner that cannot reach them must repo
 `NOT MEASURED` **by name** and must not reduce the denominator: five of nine held
 is a different statement from nine of nine, and a badge cannot tell them apart.
 
+A runner that *can* reach one of them measures that one and no other. Satisfying
+`census` is not a licence to fill in the three gates that asked for `corpus`, so
+every port keeps operator-supplied values in a separate map from fixture-derived
+ones — structural, rather than a rule each port has to remember. All three
+currently reach `census`; none reaches `corpus`.
+
 Every port has to carry that discipline. A green JavaScript badge that means less
 than the Python one is worse than no badge, because nobody will notice.
 

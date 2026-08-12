@@ -99,11 +99,16 @@ lint:
 #   export VICARY_EVAL_CORPUS_DIR=/path/to/corpus   # holds one .tsv
 #   export VICARY_EVAL_CENSUS_CSV=/path/to/names.zip
 #
+# The census file takes every port from five of nine to six. Python reads the
+# .zip or the extracted .csv; TypeScript and Ruby read the .csv only and refuse a
+# .zip by name, so extract Names_2010Census.csv out of it to satisfy all three at
+# once. Nothing here reaches the corpus gates.
+#
 # Every port that can measure, not just the reference. Python measures all nine
-# when the data is present; the two ports measure the five that need none of it,
-# and each recovers its own numbers rather than reading Python's out of the spec —
-# which is the only version of this that is evidence. Absent languages are skipped
-# out loud, never silently.
+# when the data is present; the two ports measure the five that need none of it
+# plus the census gate when it is configured, and each recovers its own numbers
+# rather than reading Python's out of the spec — which is the only version of this
+# that is evidence. Absent languages are skipped out loud, never silently.
 gates:
     @just py-gates
     @if [ -f typescript/package.json ]; then cd typescript && npm run gates; \

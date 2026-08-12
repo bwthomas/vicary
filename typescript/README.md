@@ -47,10 +47,15 @@ port measures the five that need no operator-supplied data, and all five hold:
 | unaccounted violations | == 0 | **0** |
 | asset entries | >= 1 | **360,793** |
 
-The other four — held-out recall (carrier), over-fire on prose, latency p95,
-bare-surname exposure — need an essay corpus or the US Census surname file, and
-no package here ships either. They print `NOT MEASURED` per gate rather than
-being reduced out of the denominator: **five of nine held is a different
-statement from nine of nine**, and a badge cannot tell them apart. Supply
-`VICARY_EVAL_CORPUS_TSV` / `VICARY_EVAL_CENSUS_CSV` and run the Python harness to
-measure the rest.
+A sixth — bare-surname exposure — this port measures itself once you point
+`VICARY_EVAL_CENSUS_CSV` at the **extracted** `Names_2010Census.csv`, reporting
+1.20% of US surname bearers, the same figure Python and Ruby report from the same
+file. A `.zip` is refused by name rather than read as text: Node's standard
+library has no zip reader, and a binary read parsed as CSV yields zero rows —
+a *lower* exposure than the truth, and the wrong direction to fail in silently.
+
+The remaining three — held-out recall (carrier), over-fire on prose, latency p95
+— need an essay corpus no package here ships. They print `NOT MEASURED` per gate
+rather than being reduced out of the denominator: **six of nine held is a
+different statement from nine of nine**, and a badge cannot tell them apart.
+Supply `VICARY_EVAL_CORPUS_TSV` and run the Python harness to measure those.
