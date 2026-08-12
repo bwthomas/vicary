@@ -213,13 +213,13 @@ jobs:
       # attempted, and a dry run never attempts one. So `--dry-run` passes whether
       # or not the credential works, which is the one thing a probe may not do.
       #
-      # Instead it makes the two calls npm would make, where a non-200 is a hard
+      # Instead it makes the two calls npm would make, where a refusal is a hard
       # failure this step can see: ask GitHub for an ID token with npm's audience,
-      # then POST it to the registry's exchange endpoint for this package. A 200
-      # with a token in the body proves the whole trust chain — that this
-      # repository, this workflow, and this package's configured trusted publisher
-      # actually agree. It proves nothing about the upload itself, which is what
-      # the pack and conformance gates above are for.
+      # then POST it to the registry's exchange endpoint for this package. A 2xx
+      # carrying a token proves the whole trust chain — that this repository, this
+      # workflow, and this package's configured trusted publisher actually agree.
+      # It proves nothing about the upload itself, which is what the pack and
+      # conformance gates above are for.
       #
       # It cannot publish by accident: it never sends a tarball, and the Publish
       # step is skipped outright whenever `publish_probe` is set.
@@ -258,16 +258,28 @@ jobs:
           http_status=$(printf '%s' "$response" | tail -n1)
           body=$(printf '%s' "$response" | sed '$d')
 
-          if [ "$http_status" != "200" ]; then
-            echo "REFUSED: the registry answered $http_status for $name"
-            # The body carries the reason and no credential — a 4xx has no token.
-            echo "$body" | head -c 500
-            echo
-            echo "This is the probe's finding: either no trusted publisher is"
-            echo "configured on $name, or it does not name this repository,"
-            echo "workflow, and environment. A real release would fail here."
-            exit 1
-          fi
+          # 201, not 200. The endpoint MINTS a credential, so `201 Created` is the
+          # success it actually returns — the first version of this check demanded
+          # 200 and reported a correctly-configured publisher as REFUSED while
+          # quoting the very token it had just been issued. Both are accepted
+          # rather than only 201, because the substantive proof is the token in the
+          # body and the exact 2xx is the registry's business.
+          case "$http_status" in
+            200 | 201) ;;
+            *)
+              echo "REFUSED: the registry answered $http_status for $name"
+              # Redact before printing. A failing status is not supposed to carry a
+              # credential, but this branch has already fired once on a body that
+              # did, and a token reaching a public log must not depend on GitHub
+              # having guessed to mask it.
+              printf '%s' "$body" | head -c 500 | sed -E 's/"token":"[^"]*"/"token":"[REDACTED]"/g'
+              echo
+              echo "This is the probe's finding: either no trusted publisher is"
+              echo "configured on $name, or it does not name this repository,"
+              echo "workflow, and environment. A real release would fail here."
+              exit 1
+              ;;
+          esac
 
           # Never print the token. Assert its presence and report only that.
           printf '%s' "$body" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{let j;try{j=JSON.parse(s)}catch{console.error("exchange returned 200 with a body that is not JSON");process.exit(1)}if(!j.token){console.error("exchange returned 200 with no token in the body");process.exit(1)}console.log(`the registry issued a publish credential (${j.token.length} chars, not printed)`)})'
