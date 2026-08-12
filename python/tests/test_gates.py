@@ -30,7 +30,7 @@ import statistics
 import pytest
 
 from vicary import DEFAULT_NAME_DETECTION, config, gazetteer
-from vicary.eval import carrier
+from vicary.eval import carrier, conformance
 from vicary.eval import census as census_eval
 from vicary.eval.fixture import FIXTURE_VERSION
 from vicary.eval.fixture import frames as select_frames
@@ -547,6 +547,49 @@ _ALL_GATES = {
     "latency p95",
     "asset entries",
 }
+
+
+# ---------------------------------------------------------------------------
+# The published bars are the asserted bars.
+# ---------------------------------------------------------------------------
+
+
+def test_the_spec_lists_exactly_the_gates_this_report_knows_about() -> None:
+    """``_ALL_GATES`` is what this report calls a complete run. A spec listing
+    eight of them hands the ports a smaller bar than this one holds, and the
+    ninth would never be missed by name."""
+    published = {g["label"] for g in conformance.load_gates_document()["gates"]}
+    assert published == _ALL_GATES
+
+
+def test_every_published_bar_is_the_bar_this_port_asserts() -> None:
+    """The numbers in ``conformance/gates.json``, against the module constants
+    the gates above assert against.
+
+    Without this, ``gates.json`` is documentation: somebody moves
+    ``OVER_FIRE_SPANS_CEILING`` and the other two ports keep holding the old
+    value, or hold a tighter one and fail for no reason anybody can find.
+
+    Each front door asks this for itself — the TypeScript and Ruby suites carry
+    the same test against their own constants. It deliberately does *not* live
+    with the generator: a spec that checked its own bars against one port's
+    literals would be checking Python twice and the other two not at all.
+    """
+    asserted = {
+        "held-out recall": HELD_OUT_RECALL_FLOOR,
+        "held-out recall (carrier)": HELD_OUT_RECALL_FLOOR,
+        "KEEP precision": KEEP_PRECISION_FLOOR,
+        "round-trip": ROUND_TRIP_FLOOR,
+        "unaccounted violations": 0.0,
+        "over-fire on prose": OVER_FIRE_SPANS_CEILING,
+        "bare-surname exposure": CENSUS_BARE_SURNAME_CEILING,
+        "latency p95": LATENCY_P95_MS_CEILING,
+        "asset entries": 1.0,
+    }
+    published = {
+        g["label"]: g["bar"] for g in conformance.load_gates_document()["gates"]
+    }
+    assert published == asserted
 
 
 def _passes(value: float, op: str, bar: float) -> bool:

@@ -25,9 +25,11 @@ py-setup:
       && .venv/bin/pip install -q -e '.[dev]' && .venv/bin/pip install -q -e ../asset
     @just asset-sync-python
 
+# The Python front door only. The build mechanism and the eval-harness tests are
+# linted by `just mechanism-lint`, so a lint failure names the suite that owns the
+# file rather than always naming Python.
 py-lint:
     cd python && .venv/bin/ruff check src tests && .venv/bin/mypy src/vicary
-    cd python && .venv/bin/ruff check ../asset/vicary_build ../asset/tests
 
 py-test:
     cd python && .venv/bin/python -m pytest -m "not gates" -q
@@ -68,10 +70,33 @@ asset-sync:
 asset-sync-python:
     cd python && .venv/bin/python -m vicary_build vendor src/vicary/data
 
-# The build mechanism's own tests. Its own suite because it is not part of any
-# front door: it is the thing all three consume.
+# The build mechanism's own tests. Kept as a named recipe because `asset/` is an
+# installable package and its tests sit beside it; `just mechanism` runs this and
+# the rest of the mechanism suite together.
 asset-test:
     cd python && .venv/bin/python -m pytest ../asset/tests -q
+
+# ---------------------------------------------------------------------------
+# The mechanism — see mechanism/README.md
+# ---------------------------------------------------------------------------
+
+# The fourth suite: everything that is not one of the three redactors. The eval
+# fixture, the over-fire harness, the gazetteer builder, and the generator behind
+# `conformance/*.json` that the other two ports check themselves against.
+#
+# Two directories, one suite. `asset/tests` stays beside the package it tests
+# because `vicary_build` is installable and that is where Python looks; the rest
+# has no package to sit beside, which is the whole reason it used to be filed
+# under the Python front door and made it look twice as covered as the others.
+mechanism:
+    cd python && .venv/bin/python -m pytest ../mechanism/tests ../asset/tests -q
+
+# Each directory is linted from its own rootdir. Running both through `python/`
+# would apply that package's `src` setting to files outside it, which reclassifies
+# `vicary` as third-party and demands a reshuffle of every import block here.
+mechanism-lint:
+    cd mechanism && ../python/.venv/bin/ruff check tests
+    cd asset && ../python/.venv/bin/ruff check vicary_build tests
 
 # ---------------------------------------------------------------------------
 # Across every front door
@@ -80,8 +105,9 @@ asset-test:
 # Every implementation's own suite. Languages that are not present yet are
 # skipped out loud, never silently: a run that tested one of three and said
 # nothing is the failure mode this whole repository exists to prevent.
+# All four: the mechanism, then the three front doors.
 test:
-    @just asset-test
+    @just mechanism
     @just py-test
     @if [ -f typescript/package.json ]; then cd typescript && npm test; \
       else echo "SKIPPED typescript — no package.json yet"; fi
@@ -90,6 +116,7 @@ test:
 
 lint:
     @just py-lint
+    @just mechanism-lint
 
 # The nine gates, measured wherever they can be. FOUR OF NINE need data that is
 # not packaged: three an essay corpus you supply, one the US Census surname file.

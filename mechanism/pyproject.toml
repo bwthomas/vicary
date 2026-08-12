@@ -1,0 +1,42 @@
+# Not a distribution. There is deliberately no `[build-system]` here and nothing
+# to `pip install` — this directory is a *test suite*, and the code it tests ships
+# inside two packages that already exist: `vicary.eval` (in `python/`) and
+# `vicary_build` (in `asset/`). Both must be installed before this suite runs.
+#
+# The file exists so `pytest mechanism/tests` and `ruff check mechanism/tests`
+# find a rootdir with settings on it instead of walking up to the repository root
+# and inheriting whatever `python/pyproject.toml` happens to say.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The gazetteer-build tests reach the network only through injected fakes, but
+# they are slower than the rest; the marker lets a developer skip them without
+# naming files.
+markers = [
+    "slow: builds or fetches rather than asserting on data already in hand",
+    # The conformance generator's golden-bytes check loads the 2.1 MB gazetteer
+    # and measures the shipped detector, so it carries the same marker the front
+    # doors use for the same kind of test. Registered here because an unknown
+    # mark is a warning, and a warning is how a typo'd marker silently stops
+    # selecting anything.
+    "gates: measured quality gates rather than unit assertions",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["tests"]
+# Matches `requires-python` in python/pyproject.toml, which is where these files
+# came from. Without it ruff assumes a different floor and reclassifies `tomllib`,
+# which is stdlib from 3.11 — an import-order diff that says nothing about the code.
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+# Both are installed as distributions, so ruff would otherwise sort them in with
+# `pytest` as third-party — and the import blocks here came from `python/tests/`,
+# where `src = ["src", "tests"]` makes `vicary` first-party. Declaring them keeps
+# one convention across the repository instead of reshuffling every moved file to
+# satisfy a rootdir that happens to sit one directory over.
+known-first-party = ["vicary"]

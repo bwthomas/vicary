@@ -30,7 +30,6 @@ from pathlib import Path
 
 import pytest
 
-import test_gates
 from vicary.eval import conformance
 from vicary.eval import fixture as fx
 
@@ -303,38 +302,12 @@ def committed_gates(conformance_directory: Path) -> dict:
     )
 
 
-def test_the_spec_lists_exactly_the_gates_the_report_knows_about(
-    committed_gates: dict,
-) -> None:
-    """`_ALL_GATES` is what the gate report calls a complete run. A spec listing
-    eight of them hands the ports a smaller bar than Python holds, and the ninth
-    would never be missed by name."""
-    spec_labels = {g["label"] for g in committed_gates["gates"]}
-    assert spec_labels == test_gates._ALL_GATES
-
-
-def test_every_published_bar_is_the_bar_python_asserts(
-    committed_gates: dict,
-) -> None:
-    """The numbers in the spec, against the module constants the gates assert.
-
-    Without this, `gates.json` is documentation: somebody moves
-    OVER_FIRE_SPANS_CEILING and the ports keep holding the old value, or hold a
-    tighter one and fail for no reason anybody can find.
-    """
-    asserted = {
-        "held-out recall": test_gates.HELD_OUT_RECALL_FLOOR,
-        "held-out recall (carrier)": test_gates.HELD_OUT_RECALL_FLOOR,
-        "KEEP precision": test_gates.KEEP_PRECISION_FLOOR,
-        "round-trip": test_gates.ROUND_TRIP_FLOOR,
-        "unaccounted violations": 0.0,
-        "over-fire on prose": test_gates.OVER_FIRE_SPANS_CEILING,
-        "bare-surname exposure": test_gates.CENSUS_BARE_SURNAME_CEILING,
-        "latency p95": test_gates.LATENCY_P95_MS_CEILING,
-        "asset entries": 1.0,
-    }
-    published = {g["label"]: g["bar"] for g in committed_gates["gates"]}
-    assert published == asserted
+# Whether each port's own asserted bar matches the published one is that port's
+# question, not the generator's, and it is asked once per front door:
+# `python/tests/test_gates.py`, `typescript/test/gates.test.ts` and
+# `ruby/test/gates_test.rb` each read `gates.json` and compare it to the constants
+# they assert against. Asking it here as well would have this suite import a front
+# door, which is the coupling the split exists to remove.
 
 
 def test_the_spec_says_which_gates_need_data_no_package_ships(

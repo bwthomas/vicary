@@ -51,7 +51,16 @@ from vicary.gazetteer import (
 )
 from vicary.name_candidates import find_title_spans
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+#: The repository root, two levels up from `mechanism/tests/`. This suite sits
+#: outside every package on purpose, so a path to one has to name it — before the
+#: mechanism split this file lived in `python/tests/` and `parents[1]` *was* the
+#: Python package, which is why the one test below that reads a `pyproject.toml`
+#: now says which one it means.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+#: The Python front door's packaging metadata. The `package-data` globs that
+#: decide what reaches the wheel are declared here and nowhere else.
+PYTHON_PACKAGE_ROOT = REPO_ROOT / "python"
 
 #: Every private-name literal in the fixture, plus the ones the redaction plan
 #: names explicitly. None of these may ever resolve notable.
@@ -631,7 +640,7 @@ def test_every_data_file_is_declared_as_package_data() -> None:
     globs match and nothing else, so a second asset with a new extension is
     dropped just as quietly. Add the glob when you add the file.
     """
-    pyproject = REPO_ROOT / "pyproject.toml"
+    pyproject = PYTHON_PACKAGE_ROOT / "pyproject.toml"
     if not pyproject.exists():
         pytest.skip("pyproject.toml not present (installed, not a checkout)")
     config = tomllib.loads(pyproject.read_text(encoding="utf-8"))
