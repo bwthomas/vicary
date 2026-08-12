@@ -95,7 +95,7 @@ tools:
 # would apply that package's `src` setting to files outside it, which reclassifies
 # `vicary` as third-party and demands a reshuffle of every import block here.
 tools-lint:
-    cd tools && ../python/.venv/bin/ruff check tests
+    cd tools && ../python/.venv/bin/ruff check tests coverage_board.py
     cd asset && ../python/.venv/bin/ruff check vicary_build tests
 
 # ---------------------------------------------------------------------------
@@ -213,4 +213,12 @@ _conformance-check:
       || { echo "conformance/primitives.json is missing — the ports would check their tokenisation against nothing"; exit 1; }
 
 # Everything CI runs, in CI's order.
-ci: lint test gates conformance parity
+# Which concern each front door tests, printed as one board.
+#
+# The three suites report different totals — granularity and scope, not depth —
+# and this is what makes that reconcilable without running all three and guessing.
+# `just tools` is what ENFORCES it; this only prints it.
+coverage:
+    @{{python}} tools/coverage_board.py
+
+ci: lint test gates conformance parity coverage

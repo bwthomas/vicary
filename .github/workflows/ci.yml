@@ -20,9 +20,14 @@
 # three are scored against, the gazetteer builder, and the generator behind
 # `conformance/*.json`. It used to run as two steps inside the `python` job purely
 # because it is written in Python, which made the Python front door look like it
-# had twice the coverage of the other two — 435 of its 773 collected tests were
-# tooling — and named Python as the culprit for breakages that were nothing to do
-# with it.
+# had twice the coverage of the other two — at the time of the split, 435 of its
+# 773 collected tests were tooling — and named Python as the culprit for breakages
+# that were nothing to do with it.
+#
+# Those two figures are historical and are NOT the current counts; `just coverage`
+# prints what is true now. The three front doors still report different totals
+# (granularity and scope, not depth), which is why the board prints concerns rather
+# than sums — see the docstring on `tools/tests/test_coverage_parity.py`.
 name: ci
 
 on:
@@ -118,7 +123,7 @@ jobs:
       - name: Vendor the asset
         run: python -m vicary_build vendor python/src/vicary/data
       - name: Lint
-        run: ruff check tools/tests asset/vicary_build asset/tests
+        run: ruff check tools/tests tools/coverage_board.py asset/vicary_build asset/tests
       # Two directories, one suite — `asset/tests` sits beside the installable
       # package it tests, the rest has no package to sit beside.
       - name: Tools tests
@@ -129,6 +134,12 @@ jobs:
       # while diverging. `just sync-conformance` is the fix.
       - name: Conformance spec is current
         run: pytest tools/tests/test_conformance.py -q
+      # Printed, not asserted — `Tools tests` above is what enforces the shape via
+      # test_coverage_parity.py. This puts the board in the log for the same reason
+      # the gate board is there: a number nobody can see is a number nobody checks,
+      # and the three suites' differing totals are exactly what this reconciles.
+      - name: Coverage by concern
+        run: python tools/coverage_board.py
 
   python-build:
     # A packaging break is invisible to the test suite and only shows up for
