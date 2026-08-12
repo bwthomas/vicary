@@ -95,8 +95,25 @@ tools:
 # would apply that package's `src` setting to files outside it, which reclassifies
 # `vicary` as third-party and demands a reshuffle of every import block here.
 tools-lint:
-    cd tools && ../python/.venv/bin/ruff check tests coverage_board.py
+    cd tools && ../python/.venv/bin/ruff check tests coverage_board.py version_sync.py
     cd asset && ../python/.venv/bin/ruff check vicary_build tests
+
+# ---------------------------------------------------------------------------
+# The version
+# ---------------------------------------------------------------------------
+
+# Set the repository version, or re-sync the five files that must restate it.
+#
+# One detector, one number — but the number cannot be READ from one place at
+# runtime, because every file that carries it is read somewhere the repository
+# root is not: an installed wheel, gem or npm tarball, or a build backend running
+# before any of our code does. So it is WRITTEN to five from one, here, and
+# `asset/tests/test_version.py` fails on any drift between them.
+#
+#   just version 0.3.0    # set VERSION and rewrite all five
+#   just version          # rewrite all five from the current VERSION
+version version="":
+    @{{python}} tools/version_sync.py {{version}}
 
 # ---------------------------------------------------------------------------
 # Across every front door

@@ -1,13 +1,22 @@
 """One detector, one number.
 
-Four files declare the version: the repository's ``VERSION``, and one manifest per
-front door. A gem 0.3.0 corresponding to nothing on PyPI cannot be reasoned about,
-and the parity claim is between *versions*, not between package names — so a drift
-between any two of these is a claim nobody can check.
+Six files declare the version: the repository's ``VERSION``, and five restatements
+that exist because each is read where the repository root is not — an installed
+wheel, gem or npm tarball, or a build backend running before any of our code does.
+A gem 0.3.0 corresponding to nothing on PyPI cannot be reasoned about, and the
+parity claim is between *versions*, not between package names — so a drift between
+any two of these is a claim nobody can check.
 
 Each release workflow already asserts that its tag equals its own package's
 version. That catches a mistyped tag; it cannot catch three packages agreeing with
 their own tags and disagreeing with each other. This does.
+
+``tools/version_sync.py`` (``just version``) is what WRITES the five from
+``VERSION``, so they are no longer five hand-edits. This deliberately does not
+import its table and re-run its matcher: a shared list means one wrong pattern
+writes a file and then agrees with itself about it. These are hand-written
+patterns against the same files, which is the only version of this that can catch
+the writer being wrong.
 """
 
 from __future__ import annotations
@@ -40,6 +49,24 @@ def test_the_npm_package_agrees() -> None:
         pytest.skip("no typescript front door in this tree")
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert payload["version"] == config.version()
+
+
+def test_the_typescript_module_agrees() -> None:
+    """The number npm publishes and the number the module exports are two files.
+
+    `typescript/test/asset.test.ts` checks this from the TypeScript side, and had
+    to: package.json, the root VERSION, the gem and the wheel once all said 0.2.0
+    while this file said something else. Checked from here too, because the
+    TypeScript suite does not run on a checkout with no node, and this is the
+    suite that owns "all six agree".
+    """
+    version_ts = REPO_ROOT / "typescript" / "src" / "version.ts"
+    if not version_ts.exists():
+        pytest.skip("no typescript front door in this tree")
+    found = re.search(
+        r'VERSION = "([^"]+)"', version_ts.read_text(encoding="utf-8")
+    )
+    assert found and found.group(1) == config.version()
 
 
 def test_the_gem_agrees() -> None:

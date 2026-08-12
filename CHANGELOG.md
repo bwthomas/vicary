@@ -1,5 +1,58 @@
 # Changelog
 
+## Unreleased
+
+### Every gate is measured on a bare checkout, so "eight of nine" is retired
+
+* **The surname table ships.** `conformance/census/` now carries US surname
+  frequencies — all 162,253 rows of the 2010 release, gzipped to 787 KB — so
+  bare-surname exposure is measured on any clone and in CI. It never had been:
+  the file came from census.gov, and census.gov answers its own documented URL
+  with a WAF rejection page under a **200** status, so the gate reported NOT
+  MEASURED everywhere but on one machine holding a hand-downloaded copy.
+* **Not a sample.** Only two columns are kept — the surname and its bearer count
+  — but every row is, so the measured rate is identical to the upstream's: 1.199%
+  of 265,667,228 bearers, 792 of 162,253 distinct surnames, in all three ports
+  and against both the shipped table and an operator's own file. Truncating the
+  tail would have shrunk the numerator and the denominator at once and quietly
+  redefined what the 1.25% bar means.
+* **The derivation is codified, not a one-off.** `tools/census_build.py` builds it
+  from a local Census copy, pins that copy's sha256 in `profile.json`, and every
+  port verifies the table's own digest on load — a truncated table is refused
+  rather than scored, because a short read reads as a *better* number.
+* **No published package grew.** `conformance/` ships in none of the three, as
+  before, and the wheel, gem and npm tarball were each checked for the file
+  rather than trusted to exclude it.
+* **The NOT MEASURED machinery stays and is still tested.** Each port now
+  measures the four gates that declare a requirement with their inputs withheld
+  *on purpose* and asserts they report NOT MEASURED by name. That case used to be
+  reached by the machine happening to lack a file, which meant the guard was
+  untested exactly where the data was present.
+* `VICARY_EVAL_CENSUS_CSV` still wins when set, for scoring against a newer
+  release.
+
+### One version to edit instead of six
+
+* **`just version 0.3.0` writes all five restatements** from the root `VERSION`.
+  The number cannot be *read* from one place at runtime — every file carrying it
+  is read where the repository root is not, an installed wheel, gem or npm
+  tarball, or a build backend running before any of our code does — so it is
+  written to five from one. `tools/version_sync.py` does it.
+* `asset/tests/test_version.py` already failed on drift and still does, with
+  `typescript/src/version.ts` added to what it checks. It deliberately does not
+  import the writer's table: a shared list means one wrong pattern writes a file
+  and then agrees with itself about it.
+
+### Fixed
+
+* `just py-build` died on a fresh clone with `No module named twine` — the `dev`
+  extra installed `build` but not the `twine` its own build recipe then runs.
+* `gem build` warned that `homepage_uri` and `source_code_uri` carried one URI,
+  which rubygems.org renders only the first of. Each front door now declares the
+  same three links — repository, changelog, issue tracker — with no key repeating
+  another's value. npm keeps its `repository` object, which is read structurally
+  for provenance and `directory` rather than rendered as a duplicate link.
+
 ## 0.2.2 — 2026-08-12
 
 ### The reference port measures the corpus it is the reference for
@@ -45,9 +98,7 @@
 * **Five of nine became eight of nine.** With no operator setup at all, a clone
   now measures held-out recall, KEEP precision, round-trip, unaccounted
   violations, asset entries **and the three corpus gates**. Only bare-surname
-  exposure still needs a file no package ships. (This reached TypeScript and Ruby
-  here and the reference port only in the fix above — see *The reference port
-  measures the corpus it is the reference for*.)
+  exposure still needs a file no package ships.
 * **`operator_default` still points at ASAP-AES**, so a machine with
   `VICARY_EVAL_CORPUS_TSV` configured keeps measuring the corpus it has always
   measured and does not change its answer because this landed.
