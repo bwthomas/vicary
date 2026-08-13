@@ -5,4 +5,4 @@
  * TypeScript 0.3.0 that corresponds to nothing on PyPI cannot be reasoned about,
  * and the parity claim is between *versions*, not between package names.
  */
-export const VERSION = "0.2.2";
+export const VERSION = "0.2.3";

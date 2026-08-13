@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.3 — 2026-08-12
 
 ### Every gate is measured on a bare checkout, so "eight of nine" is retired
 
