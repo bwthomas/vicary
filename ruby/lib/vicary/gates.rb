@@ -295,7 +295,8 @@ module Vicary
       # not gets NOT MEASURED rather than a load.
       def measure(spec, gate_spec, asset_entries: nil, bare_surname_exposure: nil,
                   held_out_recall_carrier: nil, over_fire_per_essay: nil,
-                  latency_p95_ms: nil, corpus_id: nil)
+                  latency_regression_pct: nil, latency_regression_detail: nil,
+                  corpus_id: nil)
         outcomes = []
         violations = []
         round_tripped = 0
@@ -372,12 +373,15 @@ module Vicary
                       "#{round3(over_fire_per_essay)} spans masked per essay of un-injected prose"
                     end,
           },
-          "latency_p95" => {
-            value: latency_p95_ms,
-            detail: if latency_p95_ms.nil?
-                      no_corpus
+          "latency_regression" => {
+            value: latency_regression_pct,
+            detail: if latency_regression_pct.nil?
+                      # The reason the comparison was declined, when there is
+                      # one. A silent skip here is the failure this gate exists
+                      # to avoid.
+                      latency_regression_detail || no_corpus
                     else
-                      "#{round3(latency_p95_ms)} ms at essay length, one-time asset load excluded"
+                      "#{round3(latency_regression_pct)}% against the last release's figure for this port"
                     end,
           },
         }

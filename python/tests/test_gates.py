@@ -32,7 +32,7 @@ import statistics
 import pytest
 
 from vicary import DEFAULT_NAME_DETECTION, config, gazetteer
-from vicary.eval import carrier, conformance, measured
+from vicary.eval import baseline, carrier, conformance, measured
 from vicary.eval import census as census_eval
 from vicary.eval import corpus as corpus_mod
 from vicary.eval.fixture import FIXTURE_VERSION
@@ -141,11 +141,14 @@ def over_fire_ceiling(corpus_id: str) -> float:
 #: moved a tier, and that is exactly what should fail here.
 CENSUS_BARE_SURNAME_CEILING = 1.25
 
-#: Both redaction passes sit serially on a host's request path, so this is spent
-#: from the host's latency budget. Measured p95 is ~3.4 ms on essay-length text;
-#: the bar has headroom because it should fail on a change of *kind* (a new
-#: per-token lookup that normalises) rather than on a noisy CI box.
-LATENCY_P95_MS_CEILING = 10.0
+#: How much slower than the last release this port may redact the corpus. Read
+#: from the baseline file rather than written here, so one number governs all
+#: three ports and a release updates it in one place. The absolute ceiling this
+#: replaced lived here as 10.0 and was a claim about the machine: it passed on a
+#: laptop and failed on the runner that had to enforce it.
+LATENCY_REGRESSION_PCT_CEILING = float(
+    (baseline.load() or {}).get("tolerance_pct", 8.0)
+)
 
 #: Invariant violations present at this fixture version, each one accounted for.
 #: Gated as an exact set rather than a count, so a *new* violation fails even
@@ -484,21 +487,35 @@ def test_bare_surname_census_exposure(census_exposure, record_gate) -> None:
     )
 
 
-def test_latency_p95(corpus_metrics, frame_metrics, record_gate) -> None:
-    """The redaction pass is serial on a host's request path.
+def test_latency_regression(corpus_metrics, frame_metrics, record_gate) -> None:
+    """Is this build slower than the last release, on hardware that can say?
 
     Measured on the **corpus** arm, because that is essay-length text; the frames
     arm redacts one sentence at a time and reads ~0.2 ms, which would make this
-    gate insensitive to the thing it is watching for. Deliberately loose: it
-    should fail on a change of *kind* — a new per-token lookup that normalises,
-    say — not on a busy CI machine.
+    gate insensitive to the thing it is watching for.
+
+    The gate is skipped — reported, never silently passed — when the run cannot
+    be compared against the baseline. That is the common case on a developer's
+    machine and it is the honest one: this laptop measures the same commit at
+    3.7 ms where the recorded runner measured 9.2, so a comparison would report
+    a 60% improvement that is entirely the hardware.
     """
-    value = corpus_metrics["latency_p95_ms"]
-    record_gate("latency p95", value, "<=", LATENCY_P95_MS_CEILING, " ms")
-    print(f"  (per-sentence p95 for comparison: "
+    measured = corpus_metrics["latency_pooled_median_ms"]
+    corpus_id, _ = corpus_mod.load_essays()
+    c = baseline.compare(measured, corpus_id)
+    print(f"  {baseline.render(c)}")
+    print(f"  (p95 across essays, ungated, for comparison: "
+          f"{corpus_metrics['latency_p95_ms']:.2f} ms; per-sentence p95 "
           f"{frame_metrics['latency_p95_ms']:.2f} ms)")
-    assert value <= LATENCY_P95_MS_CEILING, (
-        f"p95 {value:.1f} ms exceeds {LATENCY_P95_MS_CEILING} ms"
+    if not c.comparable:
+        pytest.skip(f"latency not compared: {c.reason}")
+    assert c.regression_pct is not None
+    record_gate("latency vs last release", c.regression_pct, "<=",
+                LATENCY_REGRESSION_PCT_CEILING, "%")
+    assert c.regression_pct <= LATENCY_REGRESSION_PCT_CEILING, (
+        f"{measured:.3f} ms is {c.regression_pct:+.2f}% against the last "
+        f"release's {c.baseline_ms:.3f} ms, over the "
+        f"{LATENCY_REGRESSION_PCT_CEILING:.0f}% bar"
     )
 
 
@@ -641,7 +658,7 @@ _ALL_GATES = {
     "unaccounted violations",
     "over-fire on prose",
     "bare-surname exposure",
-    "latency p95",
+    "latency vs last release",
     "asset entries",
 }
 
@@ -718,7 +735,7 @@ def test_every_published_bar_is_the_bar_this_port_asserts() -> None:
         "unaccounted violations": 0.0,
         "over-fire on prose": OVER_FIRE_SPANS_CEILING,
         "bare-surname exposure": CENSUS_BARE_SURNAME_CEILING,
-        "latency p95": LATENCY_P95_MS_CEILING,
+        "latency vs last release": LATENCY_REGRESSION_PCT_CEILING,
         "asset entries": 1.0,
     }
     gates = conformance.load_gates_document()["gates"]

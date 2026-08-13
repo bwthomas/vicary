@@ -82,11 +82,23 @@ export const KIND_OPERATOR_TSV = "operator_tsv";
  * the signature of a pause landing on the one sample that decides the answer.
  * A median of three per essay means a pause has to hit the same essay twice.
  *
- * Three rather than more because the cost is real — every repeat re-redacts the
- * whole corpus. The same constant lives in all three ports, because a gate two
- * ports estimate differently is not the same gate.
+ * Five rather than three because the gated number is now a regression bar with
+ * 8% of room, and the estimator has to reproduce itself to well inside that on
+ * unchanged code. Every repeat re-redacts the whole corpus, so this is not free;
+ * five is where the measured gain flattened. The same constant lives in all
+ * three ports, because a gate two ports estimate differently is not the same
+ * gate.
  */
-export const LATENCY_REPEATS = 3;
+export const LATENCY_REPEATS = 5;
+
+/** Median of a sample, taking the lower of the two middles at even length. */
+function medianOf(xs: number[]): number {
+  if (xs.length === 0) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  return s.length % 2 === 1
+    ? s[(s.length - 1) >> 1]!
+    : (s[s.length / 2 - 1]! + s[s.length / 2]!) / 2;
+}
 
 /** The essays file a shipped corpus keeps beside its profile. */
 const ESSAYS_FILENAME = "essays.json";
@@ -673,6 +685,8 @@ export interface CorpusMetrics {
   asapRewritesPerEssay: number;
   latencyP50Ms: number;
   latencyP95Ms: number;
+  /** Median of every essay x every repeat. What the regression gate reads. */
+  latencyPooledMedianMs: number;
 }
 
 /**
@@ -690,6 +704,7 @@ export function measureCorpus(
 ): CorpusMetrics {
   const outcomes: SpanOutcome[] = [];
   const latencies: number[] = [];
+  const pooled: number[] = [];
   let overFireSpans = 0;
   let asapRewrites = 0;
 
@@ -713,6 +728,10 @@ export function measureCorpus(
     }
     timings.sort((a, b) => a - b);
     latencies.push(timings[(timings.length - 1) >> 1]!);
+    // Every sample, not just the essay's collapsed value: the gated figure is
+    // the median of the POOLED samples, which is what reproduces itself to
+    // inside the regression bar. See LATENCY_REPEATS.
+    pooled.push(...timings);
 
     for (const frame of testCase.frames) {
       outcomes.push(...scoreSpans(frame, masked));
@@ -747,6 +766,7 @@ export function measureCorpus(
     asapRewritesPerEssay: cases.length === 0 ? 0 : asapRewrites / cases.length,
     latencyP50Ms: at(0.5),
     latencyP95Ms: at(0.95),
+    latencyPooledMedianMs: medianOf(pooled),
   };
 }
 

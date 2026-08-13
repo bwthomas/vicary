@@ -1057,6 +1057,21 @@ def build_gates_document() -> dict[str, Any]:
                       "an operator's own copy. Repository only: like the rest of "
                       "conformance/, it ships in no package, and the redaction "
                       "path never reads it.",
+            "latency_baseline": "What this port measured at the last release, "
+                                "from conformance/latency_baseline.json, PLUS a "
+                                "run whose hardware the baseline can be "
+                                "compared against. The second half is the "
+                                "unusual one: it is satisfied only when "
+                                "VICARY_LATENCY_PROFILE names the profile the "
+                                "baseline was recorded on and the language "
+                                "version matches, because the same commit reads "
+                                "3.7 ms on a laptop and 9.2 ms on the CI "
+                                "runner, and Python 3.11 read 12.30 ms where "
+                                "3.13 read 9.10. Both gaps dwarf the bar, so "
+                                "comparing across them would report the machine "
+                                "as a code change. Everywhere else the number is "
+                                "still measured and printed — only the verdict "
+                                "is withheld.",
         },
         "gates": [
             {
@@ -1151,23 +1166,30 @@ def build_gates_document() -> dict[str, Any]:
                        "by mistake. Watches every new single-token tier.",
             },
             {
-                "id": "latency_p95",
-                "label": "latency p95",
-                "unit": "ms",
+                "id": "latency_regression",
+                "label": "latency vs last release",
+                "unit": "%",
                 "op": "<=",
-                "bar": 10.0,
-                "requires": ["corpus"],
-                "why": "p95 across essays of each essay's median of three timed "
-                       "redactions, with the one-time asset load excluded. p95 "
-                       "across essays rather than p50, because a threshold read "
-                       "off a median reads rosy; a median WITHIN each essay "
-                       "because at n=20 the cross-essay p95 is the maximum, so "
-                       "one sample per essay made the gate answer \"did a pause "
-                       "land in any of twenty calls\" and flipped on unchanged "
-                       "code. The claim this bar protects is that redacting an "
-                       "essay costs single-digit milliseconds of warm CPU with "
-                       "no network — it is a claim about the length of the work, "
-                       "NOT a tail-latency claim about a deployed service.",
+                "bar": 8.0,
+                "requires": ["corpus", "latency_baseline"],
+                "why": "How much slower this port redacts the corpus than it "
+                       "did at the last release, per implementation. Relative "
+                       "because the absolute bar this replaces was a claim "
+                       "about the machine as much as the code: 10 ms passed on "
+                       "a laptop and failed on the runner enforcing it, and "
+                       "0.2.3 published to PyPI and npm while RubyGems refused "
+                       "the same commit. The measured figure is the median of "
+                       "every essay x every repeat pooled — 100 samples, asset "
+                       "load excluded — NOT a percentile: at n=20 essays a p95 "
+                       "IS the maximum, and a maximum moves on a scheduling "
+                       "pause rather than on code. That change is what makes "
+                       "the bar affordable; across 48 processes on two CI "
+                       "invocations the pooled median reproduced to CV 1.26% "
+                       "and drifted 0.15% between them, against 2.30% and "
+                       "2.52% for the p95. The gate declines to compare unless "
+                       "the run matches the profile the baseline was recorded "
+                       "on, because a machine difference reported as a code "
+                       "regression is worse than no gate at all.",
             },
             {
                 "id": "asset_entries",

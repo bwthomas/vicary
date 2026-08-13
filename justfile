@@ -95,7 +95,8 @@ tools:
 # would apply that package's `src` setting to files outside it, which reclassifies
 # `vicary` as third-party and demands a reshuffle of every import block here.
 tools-lint:
-    cd tools && ../python/.venv/bin/ruff check tests coverage_board.py version_sync.py
+    cd tools && ../python/.venv/bin/ruff check tests coverage_board.py version_sync.py \
+      latency_baseline_record.py
     cd asset && ../python/.venv/bin/ruff check vicary_build tests
 
 # ---------------------------------------------------------------------------
@@ -114,6 +115,34 @@ tools-lint:
 #   just version          # rewrite all five from the current VERSION
 version version="":
     @{{python}} tools/version_sync.py {{version}}
+
+# ---------------------------------------------------------------------------
+# The latency baseline
+# ---------------------------------------------------------------------------
+
+# What each port measured at the last release, which the latency gate compares
+# against. Recorded per implementation, NOT shared: the three ports are 2-3x
+# apart in absolute cost on identical hardware.
+#
+# The figures must come from a CI run on the profile the file names — GitHub's
+# ubuntu-latest, on the pinned language version per port. That is the only place
+# the gate compares against them, and a figure taken here would set a baseline
+# two to three times faster than the runner can reproduce, failing every release
+# afterwards on a regression that never happened. So: read them out of a green
+# CI run's gate reports (each prints `latency N ms`), then
+#
+#   just latency-baseline-show                      # what is recorded now
+#   just latency-baseline 0.3.0 9.213 1.048 11.302  # python, typescript, ruby
+#
+# READ THE DIFF. A baseline that moved a long way is either the improvement you
+# meant or the regression this gate exists to catch, and writing it here is what
+# stops the gate asking about the old number.
+latency-baseline version python_ms typescript_ms ruby_ms:
+    @{{python}} tools/latency_baseline_record.py --version {{version}} \
+      --python {{python_ms}} --typescript {{typescript_ms}} --ruby {{ruby_ms}}
+
+latency-baseline-show:
+    @{{python}} tools/latency_baseline_record.py --version unused --show
 
 # ---------------------------------------------------------------------------
 # Across every front door

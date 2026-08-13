@@ -330,7 +330,7 @@ def test_the_spec_says_which_gates_declare_a_data_requirement(
         "held-out recall (carrier)",
         "over-fire on prose",
         "bare-surname exposure",
-        "latency p95",
+        "latency vs last release",
     }
     declared = set(committed_gates["requirements"])
     for gate in committed_gates["gates"]:

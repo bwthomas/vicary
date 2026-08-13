@@ -114,8 +114,8 @@ class GatesTest < Minitest::Test
   def test_with_no_data_supplied_all_four_gates_needing_data_stay_not_measured
     unmeasured = self.class.report.measurements
                      .select { |m| m.passed.nil? }.map { |m| m.gate.id }.sort
-    assert_equal %w[bare_surname_exposure held_out_recall_carrier latency_p95
-                    over_fire_prose], unmeasured
+    assert_equal %w[bare_surname_exposure held_out_recall_carrier
+                    latency_regression over_fire_prose], unmeasured
     # Not measurable *because the data is absent*, not because the port declined.
     self.class.report.measurements.select { |m| m.passed.nil? }.each do |m|
       refute_empty m.gate.requires, m.gate.id
@@ -155,7 +155,8 @@ class GatesTest < Minitest::Test
     # silently hands values to the rest.
     still_unmeasured = self.class.census_report.measurements
                            .select { |m| m.passed.nil? }.map { |m| m.gate.id }.sort
-    assert_equal %w[held_out_recall_carrier latency_p95 over_fire_prose], still_unmeasured
+    assert_equal %w[held_out_recall_carrier latency_regression over_fire_prose],
+                 still_unmeasured
   end
 
   # -------------------------------------------------------------------------
@@ -227,14 +228,22 @@ class GatesTest < Minitest::Test
 
   def test_latency_is_this_ports_own_and_is_not_asserted_against_the_references
     skip_without_corpus
-    # The one corpus gate whose answer Python's number says nothing about. This
-    # port runs nearest the bar of the three, so the assertion is the bar itself
-    # rather than a figure — pinning it would make an ordinary CI machine fail a
-    # correctness suite for being busy.
+    # The one corpus gate whose answer Python's number says nothing about, so
+    # this port compares its OWN measurement against its OWN recorded baseline.
+    # Declined — not failed — on any machine the baseline cannot speak for,
+    # which is most of them. This port used to run nearest the absolute bar of
+    # the three and was the one that refused the 0.2.3 gem over it.
     m = self.class.corpus
-    assert_operator m.latency_p95_ms, :>, 0
-    assert_operator m.latency_p95_ms, :<=, 10.0,
-                    "latency p95 #{m.latency_p95_ms} ms exceeds the 10 ms bar"
+    assert_operator m.latency_pooled_median_ms, :>, 0
+    c = Vicary::LatencyBaseline.compare(
+      m.latency_pooled_median_ms, Vicary::Corpus.resolve_corpus_id
+    )
+    puts "  #{Vicary::LatencyBaseline.render(c)}"
+    skip(c.reason) unless c.comparable
+    assert c.holds?,
+           format("%.3f ms is %+.2f%% against the last release's %.3f ms, " \
+                  "over the %d%% bar",
+                  c.measured_ms, c.regression_pct, c.baseline_ms, c.tolerance_pct)
   end
 
   def test_an_asap_anonymization_token_is_told_from_ordinary_prose
@@ -619,7 +628,13 @@ class GatesTest < Minitest::Test
       bare_surname_exposure: exposure.rate,
       held_out_recall_carrier: corpus_metrics&.recall_held_out,
       over_fire_per_essay: corpus_metrics&.over_fire_spans_per_essay,
-      latency_p95_ms: corpus_metrics&.latency_p95_ms,
+      **(if corpus_metrics.nil?
+           {}
+         else
+           Vicary::LatencyBaseline.gate_fields(
+             corpus_metrics.latency_pooled_median_ms, corpus_id
+           )
+         end),
       corpus_id: corpus_id
     ) { |sentence, identity| Vicary.redact(sentence, identity) }
     puts

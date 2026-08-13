@@ -1,5 +1,63 @@
 # Changelog
 
+## 0.2.4 — 2026-08-13
+
+### The latency gate asks whether the code got slower, not whether the machine is fast
+
+* **The absolute 10 ms bar is retired.** It was a claim about the machine as much
+  as the code, and it split the 0.2.3 release across three registries on one
+  commit: `release-gem` runs the gates and refused at 15.3 ms, `release-npm`
+  runs them and landed at 9.75 ms so it published, and the PyPI workflow did not
+  run them at all so it published too. Which registry got the release was
+  decided by which workflow happened to look, not by anything about the build.
+* **In its place, a regression bar: ≤ +8% against what this port measured at the
+  last release.** Per implementation, never shared — the three ports are 2–4×
+  apart in absolute cost on identical hardware, so one number would be a bar for
+  whichever port set it. Recorded in `conformance/latency_baseline.json`, which
+  ships in no package.
+* **The gate refuses to compare rather than compare badly.** A baseline is only
+  meaningful against a re-measurement on like hardware: the same commit reads
+  ~3.7 ms on a laptop and ~9.2 ms on the CI runner, and Python 3.11 read 12.30 ms
+  where 3.13 read 9.10. Both gaps dwarf the bar. So the comparison happens only
+  when the run matches the recorded profile — runner, language version and
+  corpus — and reports NOT MEASURED by name everywhere else, with the reason
+  attached. The number is still measured and still printed; only the verdict is
+  withheld.
+* **The measured figure is now a pooled median, not a p95.** At n=20 essays a
+  p95 *is* the maximum, and a maximum moves on a scheduling pause rather than on
+  code. Pooling every essay × every repeat into one 100-sample median cost about
+  half the noise: across 48 processes spanning two CI invocations it reproduced
+  to CV 1.26% and drifted 0.15% between them, against 2.30% and 2.52% for the
+  p95. An unchanged build needs ~5.3% of headroom on the first and ~9.7% on the
+  second — so an 8% bar on the old statistic would have failed on code nobody
+  touched, which is the same defect in a new place.
+* **A calibration workload was tried and dropped**, and it is recorded here
+  because it looked obviously right: dividing by a machine-speed benchmark to
+  cancel hardware. It drifted 7.17% between the same two invocations while the
+  measurement drifted 0.15%, and its own CV was the worst of anything measured.
+  Normalising by it would have manufactured a regression out of nothing.
+* `LATENCY_REPEATS` is 5 rather than 3 in all three ports, which is where the
+  measured gain flattened.
+
+### Every release path runs the same gates
+
+* **`release.yml` now runs the gate suite before publishing**, on the interpreter
+  the baseline was recorded against. It never did, which is the direct cause of
+  PyPI shipping 0.2.3 while RubyGems refused it. All three registries now
+  publish on the same evidence.
+* CI sets `VICARY_LATENCY_PROFILE` on exactly one matrix entry per port — Python
+  3.13, Node 22, Ruby 3.3 — so the comparison is made once, where it means
+  something, and reported everywhere else.
+
+### Added
+
+* `conformance/latency_baseline.json`, and `just latency-baseline` /
+  `just latency-baseline-show` to read and write it.
+* A per-port suite for the comparison and, mostly, for its refusals —
+  `test_latency_baseline.py`, `latencyBaseline.test.ts`,
+  `latency_baseline_test.rb`. Each port decides for itself whether a run may be
+  compared, so each port tests its own decision.
+
 ## 0.2.3 — 2026-08-12
 
 ### Every gate is measured on a bare checkout, so "eight of nine" is retired

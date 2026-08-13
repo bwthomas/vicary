@@ -48,10 +48,13 @@ module Vicary
     # decides the answer. A median of three per essay means a pause has to hit the
     # same essay twice to move the number.
     #
-    # Three rather than more because the cost is real — every repeat re-redacts
-    # the whole corpus. The same constant lives in all three ports, because a gate
-    # two ports estimate differently is not the same gate.
-    LATENCY_REPEATS = 3
+    # Five rather than three because the gated number is now a regression bar
+    # with 8% of room, and the estimator has to reproduce itself to well inside
+    # that on unchanged code. Every repeat re-redacts the whole corpus, so this
+    # is not free; five is where the measured gain flattened. The same constant
+    # lives in all three ports, because a gate two ports estimate differently is
+    # not the same gate.
+    LATENCY_REPEATS = 5
 
     CARRIER_FILENAME = "carrier.json"
 
@@ -103,10 +106,22 @@ module Vicary
       :essays, :recall_held_out, :recall_held_out_passed, :recall_held_out_total,
       :over_fire_spans_per_essay, :over_fire_spans_total,
       :asap_rewrites_per_essay, :latency_p50_ms, :latency_p95_ms,
+      :latency_pooled_median_ms,
       keyword_init: true
     )
 
     class << self
+      # Mean of the two middle samples at even length, matching how the other
+      # two ports define it. Pooled n is 20 x 5, so the even branch is the one
+      # that runs.
+      def median_of(xs)
+        return 0.0 if xs.empty?
+
+        s = xs.sort
+        mid = s.size / 2
+        s.size.odd? ? s[mid] : (s[mid - 1] + s[mid]) / 2.0
+      end
+
       def asap_token?(region)
         ASAP_TOKEN_RE.match?(region.strip)
       end
@@ -424,6 +439,9 @@ module Vicary
       def measure(cases, identity)
         outcomes = []
         latencies = []
+        # Every essay's every sample. The gated figure is the median of THESE,
+        # not a percentile over the per-essay collapses in `latencies`.
+        pooled = []
         over_fire = 0
         rewrites = 0
 
@@ -444,6 +462,7 @@ module Vicary
             (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000.0
           end
           latencies << timings.sort[(LATENCY_REPEATS - 1) / 2]
+          pooled.concat(timings)
 
           kase.frames.each { |frame| outcomes.concat(Gates.score_spans(frame, masked)) }
 
@@ -472,7 +491,8 @@ module Vicary
           over_fire_spans_total: over_fire,
           asap_rewrites_per_essay: cases.empty? ? 0.0 : rewrites.to_f / cases.size,
           latency_p50_ms: at.call(0.5),
-          latency_p95_ms: at.call(0.95)
+          latency_p95_ms: at.call(0.95),
+          latency_pooled_median_ms: median_of(pooled)
         )
       end
 

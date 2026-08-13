@@ -40,6 +40,7 @@ import {
   type CorpusMetrics,
 } from "../src/corpus.js";
 import { load } from "../src/gazetteer.js";
+import { latencyGateFields } from "../src/latencyBaseline.js";
 import { measureGates, reportGates } from "../src/gates.js";
 import { redact, redactWithReport, restore } from "../src/redact.js";
 
@@ -109,7 +110,10 @@ const gateReport = measureGates(
       : {
           heldOutRecallCarrier: corpus.recallHeldOut,
           overFirePerEssay: corpus.overFireSpansPerEssay,
-          latencyP95Ms: corpus.latencyP95Ms,
+          ...latencyGateFields(
+            corpus.latencyPooledMedianMs,
+            resolveCorpusId(),
+          ),
           // Which corpus these came from, so the over-fire gate is held to that
           // corpus's bar rather than to ASAP-AES's on every corpus.
           corpusId: resolveCorpusId(),

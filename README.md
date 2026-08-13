@@ -465,7 +465,7 @@ exactly; the third is a property of the language, so each reports its own:
 |---|---|---|---|---|
 | held-out recall (carrier) | ≥ 100% | **100%** (29/29) | **100%** (29/29) | **100%** (29/29) |
 | over-firing on real prose | ≤ 0.6 spans/essay | **0.60** (15 spans) | **0.60** (15 spans) | **0.60** (15 spans) |
-| latency p95 (essay-length) | ≤ 10 ms | **4.0–4.2** | **2.1–2.6** | **8.8–9.9** |
+| latency vs last release | ≤ +8% | per port, per port's own baseline | ″ | ″ |
 
 **The envelope, because a rate without one is not a quotable number:** the first
 25 essays of ASAP-AES set 8, taken in file order so the sample is reproducible
@@ -482,14 +482,40 @@ Three things that envelope makes visible and a table of percentages does not.
 in the sample reads 0.64 and fails. It is deterministic across runs and identical
 in all three ports, so this is a knife-edge and not noise.
 
-**Ruby runs nearest the latency bar**, at roughly 4× Python and 4× that again
-from TypeScript. It passes at 8.8–9.9 ms against ≤ 10 ms, which is thin enough
-that the gate is a live constraint on that port rather than a formality.
+**The latency gate is relative, and it is relative because the absolute one was
+a claim about the machine.** It read ≤ 10 ms, and the three ports measured
+4.0–4.2, 2.1–2.6 and 8.8–9.9 ms against it — comfortable on a developer's
+machine, and not comfortable at all on a public runner, where the same commit
+measured 9.10 to 12.30 ms in Python and 11.0 to 17.0 in Ruby. That is what a
+10 ms bar was really testing. It split the 0.2.3 release across three
+registries: `release-gem` runs the gates and refused, `release-npm` runs them
+and happened to land at 9.75 ms, and the PyPI workflow did not run them at all,
+so two of three published a commit the third rejected.
+
+What replaced it asks whether *this build* is slower than *this port* was at the
+last release, by more than 8%. Per implementation, because the ports are 2–4×
+apart in absolute cost and one shared number would be a bar for whichever port
+set it. The comparison is refused outright unless the run matches the profile
+the baseline was recorded on — same runner, same language version, same corpus —
+and reports NOT MEASURED by name when it is, because a machine difference
+reported as a code regression is worse than no gate.
+
+**The measured figure is a pooled median, not a percentile.** At n=20 essays a
+p95 *is* the maximum, and a maximum moves on a scheduling pause rather than on
+code. Pooling every essay × every repeat into one 100-sample median was worth
+about half the noise: measured across 48 processes spanning two CI invocations,
+the pooled median reproduced to CV 1.26% and drifted 0.15% between invocations,
+against 2.30% and 2.52% for the p95 it replaced. An unchanged build needs ~5.3%
+of headroom on the first and ~9.7% on the second, which is the difference
+between an 8% bar that holds and one that fails on code nobody touched. A
+calibration workload was tried and dropped: it drifted 7.17% between the same
+two invocations while the measurement drifted 0.15%, so normalising by it would
+have manufactured a regression out of nothing.
 
 **The one-time asset load is excluded from latency, deliberately and in all three
 ports.** Loading 360,793 gazetteer entries costs ~84 ms in Python and ~207 ms in
-Ruby, and whichever essay runs first pays all of it; at n=25 that single sample
-lands at or above p95 and sets the gate's answer by itself. Including it made the
+Ruby, and whichever essay runs first pays all of it — one sample large enough to
+set the answer by itself. Including it made the
 same code report 3.1 ms or 4.0 ms depending only on whether something earlier in
 the process had touched the asset. The gate's claim is essay-length redaction
 latency, not process startup.

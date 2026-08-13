@@ -91,11 +91,13 @@ DEFAULT_PER_ESSAY: int = 3
 #: Taking a median of three per essay means a pause has to hit the same essay
 #: twice to move the number.
 #:
-#: Three rather than more because the cost is real — every repeat re-redacts the
-#: whole corpus — and three is the smallest odd count where one straggler cannot
-#: carry the median. The same constant lives in all three ports, because a gate
-#: two ports estimate differently is not the same gate.
-LATENCY_REPEATS: int = 3
+#: Five rather than three because the gated number is now a regression bar with
+#: 8% of room, and the estimator has to reproduce itself to well inside that on
+#: unchanged code. Every repeat re-redacts the whole corpus, so this is not free;
+#: five is where the measured gain flattened. The same constant lives in all
+#: three ports, because a gate two ports estimate differently is not the same
+#: gate.
+LATENCY_REPEATS: int = 5
 
 #: Words whose trailing period abbreviates rather than ends a sentence.
 #:
@@ -668,6 +670,13 @@ def run(cases: list[Case], mode: str, sidecar: str, *,
                 "source": source,
                 "fixture_version": FIXTURE_VERSION,
                 "latency_ms": round(elapsed, 1),
+                # Every sample, at full precision, because the gated figure is
+                # the median of the POOLED samples rather than a percentile over
+                # per-essay collapses. Collapsing here would throw away the 80%
+                # of the distribution that makes the pooled median steady, and
+                # `latency_ms` is additionally rounded to 0.1 ms — 1.8% of a
+                # 5.6 ms reading, which is a fifth of the regression bar.
+                "latency_samples_ms": [round(t, 6) for t in timings],
                 "char_units": result.char_units,
                 "intervened": result.intervened,
             })
@@ -803,6 +812,16 @@ def summarize(records: list[dict], mode: str, *, show_frames: bool = True) -> di
         v["kind"] for row in rows for v in row["violations"]
     )
     lat = sorted(r["latency_ms"] for r in rows)
+    # Pooled: every essay's every sample, not one collapsed value per essay.
+    # This is what the regression gate reads. Measured across 48 processes on
+    # two separate CI invocations it reproduces to CV 1.26% and drifted 0.15%
+    # between invocations, against 2.30% and 2.52% for the p95 below — which is
+    # the difference between an 8% bar that holds and one that fails on code
+    # nobody touched. Falls back to the collapsed value for a record written
+    # before the samples were kept, so an old sidecar still summarises.
+    pooled = sorted(
+        t for r in rows for t in (r.get("latency_samples_ms") or [r["latency_ms"]])
+    )
     units = [r["char_units"] for r in rows]
     fp_spans = [r["base_fp_spans"] for r in rows]
     fp_chars = [r["base_fp_chars"] for r in rows]
@@ -877,6 +896,7 @@ def summarize(records: list[dict], mode: str, *, show_frames: bool = True) -> di
         "violations_by_kind": dict(kinds),
         "latency_p50_ms": lat[len(lat) // 2],
         "latency_p95_ms": lat[min(int(len(lat) * 0.95), len(lat) - 1)],
+        "latency_pooled_median_ms": statistics.median(pooled),
         "char_units_mean": statistics.fmean(units),
         "over_fire_prose_spans_per_essay": statistics.fmean(fp_spans) if fp_spans else 0.0,
         "over_fire_prose_chars_per_essay": statistics.fmean(fp_chars) if fp_chars else 0.0,

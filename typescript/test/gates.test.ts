@@ -52,6 +52,11 @@ import {
   violationKey,
 } from "../src/gates.js";
 import { redact } from "../src/redact.js";
+import {
+  compare,
+  latencyGateFields,
+  render,
+} from "../src/latencyBaseline.js";
 
 const spec = loadSpec();
 const gates = loadGates();
@@ -123,7 +128,7 @@ test("with no data supplied, all four gates needing data stay NOT MEASURED", () 
   assert.deepEqual(unmeasured, [
     "bare_surname_exposure",
     "held_out_recall_carrier",
-    "latency_p95",
+    "latency_regression",
     "over_fire_prose",
   ]);
   // Not measurable *because the data is absent*, not because the port declined.
@@ -175,7 +180,7 @@ test(
       .sort();
     assert.deepEqual(stillUnmeasured, [
       "held_out_recall_carrier",
-      "latency_p95",
+      "latency_regression",
       "over_fire_prose",
     ]);
   },
@@ -259,13 +264,20 @@ test(
   "latency is this port's own, and is not asserted against the reference's",
   { skip: corpus === null ? noCorpus : false },
   () => {
-    // The one corpus gate whose answer Python's number says nothing about.
-    // Asserted against the bar alone — pinning it to a figure would make an
-    // ordinary CI machine fail a correctness suite for being busy.
-    assert.ok(corpus!.latencyP95Ms > 0);
+    // The one corpus gate whose answer Python's number says nothing about, so
+    // this port compares its OWN measurement against its OWN recorded baseline.
+    // Declined — not failed — on any machine the baseline cannot speak for,
+    // which is most of them: this is 2-3x faster on a laptop than on the runner
+    // the figure was recorded on.
+    assert.ok(corpus!.latencyPooledMedianMs > 0);
+    const c = compare(corpus!.latencyPooledMedianMs, resolveCorpusId());
+    process.stdout.write(`  ${render(c)}\n`);
+    if (!c.comparable) return;
     assert.ok(
-      corpus!.latencyP95Ms <= 10,
-      `latency p95 ${corpus!.latencyP95Ms} ms exceeds the 10 ms bar`,
+      c.holds,
+      `${c.measuredMs.toFixed(3)} ms is ${c.regressionPct!.toFixed(2)}% ` +
+        `against the last release's ${c.baselineMs!.toFixed(3)} ms, over the ` +
+        `${c.tolerancePct}% bar`,
     );
   },
 );
@@ -706,7 +718,10 @@ process.on("exit", () => {
         : {
             heldOutRecallCarrier: corpus.recallHeldOut,
             overFirePerEssay: corpus.overFireSpansPerEssay,
-            latencyP95Ms: corpus.latencyP95Ms,
+            ...latencyGateFields(
+            corpus.latencyPooledMedianMs,
+            resolveCorpusId(),
+          ),
             corpusId: resolveCorpusId(),
           }),
     },

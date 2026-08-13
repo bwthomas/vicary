@@ -85,7 +85,14 @@ class ConformanceTest < Minitest::Test
                    bare_surname_exposure: bare_surname_exposure,
                    held_out_recall_carrier: corpus_metrics&.recall_held_out,
                    over_fire_per_essay: corpus_metrics&.over_fire_spans_per_essay,
-                   latency_p95_ms: corpus_metrics&.latency_p95_ms,
+                   **(if corpus_metrics.nil?
+                        {}
+                      else
+                        Vicary::LatencyBaseline.gate_fields(
+                          corpus_metrics.latency_pooled_median_ms,
+                          Vicary::Corpus.resolve_corpus_id
+                        )
+                      end),
                    # Which corpus these came from, so the over-fire gate is held
                    # to that corpus's bar rather than to ASAP-AES's everywhere.
                    corpus_id: corpus_metrics.nil? ? nil : Vicary::Corpus.resolve_corpus_id

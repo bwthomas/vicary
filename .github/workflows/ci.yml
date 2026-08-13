@@ -98,7 +98,14 @@ jobs:
       # Separate step so a gate regression is distinguishable from a unit-test
       # failure at a glance in the checks list, and so the printed numbers land
       # in a log section of their own.
+      # The latency gate compares against a baseline recorded on THIS runner at
+      # the last release, so it is only entitled to an opinion on the matrix
+      # entry the baseline was recorded on. Elsewhere — the other interpreter
+      # here, and every developer laptop — it measures, prints, and reports NOT
+      # MEASURED rather than comparing across a gap several times the bar.
       - name: Gates
+        env:
+          VICARY_LATENCY_PROFILE: ${{ matrix.python-version == '3.13' && 'github-ubuntu-latest' || '' }}
         run: pytest -m gates -s
 
       - name: Asset integrity
@@ -211,7 +218,14 @@ jobs:
       - name: Vendor the asset
         run: npm run sync-assets
       - run: npx tsc -p tsconfig.json --noEmit
+      # The latency gate compares against a baseline recorded on THIS runner at
+      # the last release, so it is only entitled to an opinion on the matrix
+      # entry the baseline was recorded on. Elsewhere — the other interpreter
+      # here, and every developer laptop — it measures, prints, and reports NOT
+      # MEASURED rather than comparing across a gap several times the bar.
       - run: npm test
+        env:
+          VICARY_LATENCY_PROFILE: ${{ matrix.node-version == '22' && 'github-ubuntu-latest' || '' }}
       # Printed as its own step so the scoreboard is readable in the checks list
       # without expanding a test log. It reports 0 of 35 until the detector lands,
       # which is the honest number and the reason it is printed at all.
@@ -284,6 +298,13 @@ jobs:
           working-directory: ruby
       - name: Vendor the asset
         run: rake sync_assets
+      # The latency gate compares against a baseline recorded on THIS runner at
+      # the last release, so it is only entitled to an opinion on the matrix
+      # entry the baseline was recorded on. Elsewhere — the other interpreter
+      # here, and every developer laptop — it measures, prints, and reports NOT
+      # MEASURED rather than comparing across a gap several times the bar.
       - run: rake test
+        env:
+          VICARY_LATENCY_PROFILE: ${{ matrix.ruby-version == '3.3' && 'github-ubuntu-latest' || '' }}
       - name: Conformance scoreboard
         run: rake conformance

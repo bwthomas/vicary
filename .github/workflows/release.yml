@@ -102,8 +102,42 @@ jobs:
           name: dist
           path: python/dist/
 
+  # THE GATES, on the path that publishes. Their absence here is why 0.2.3 went
+  # to PyPI while RubyGems refused the same commit: `release-gem` runs `rake
+  # test`, `release-npm` runs `npm test`, and this workflow ran neither — so the
+  # one registry that checked was the only one that could refuse, and which
+  # registry got the release was decided by which workflow happened to look.
+  #
+  # Its own job, on the interpreter the latency baseline was recorded against,
+  # so the comparison is entitled to an opinion. The build job stays on 3.11
+  # because that is the floor `requires-python` promises and the wheel should be
+  # built by it.
+  gates:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m pip install -e ../asset
+
+      - name: Vendor the asset
+        run: python -m vicary_build vendor src/vicary/data
+
+      - name: Gates
+        env:
+          VICARY_LATENCY_PROFILE: github-ubuntu-latest
+        run: pytest -m gates -s
+
   publish:
-    needs: build
+    needs: [build, gates]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:

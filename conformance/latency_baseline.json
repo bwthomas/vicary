@@ -1,0 +1,32 @@
+{
+  "document_version": 1,
+  "why": "What each port's redaction cost at the last release, so the gate asks whether THIS change made it slower rather than whether the machine running it is fast. The absolute bar it replaces read 10 ms and passed on a laptop while failing on the CI runner that had to enforce it, which split a release across three registries.",
+  "tolerance_pct": 8.0,
+  "tolerance_why": "8% is the room a regression has to clear to be called one. It is not arbitrary and it is not free: on the estimator below an unchanged build reproduces itself to CV 1.26% across 48 processes spanning two CI invocations, so 8% is about six sigma of headroom. It would NOT hold on the p95 this replaced (CV 2.30%, drift 2.52% between invocations), which is why the statistic changed at the same time.",
+  "estimator": "median of every essay x every repeat, pooled — 20 essays x 5 repeats = 100 samples, with the one-time asset load excluded. NOT a percentile: at n=20 essays a p95 is the maximum, and a maximum moves on scheduling noise rather than on code.",
+  "profile": {
+    "id": "github-ubuntu-latest",
+    "why": "A baseline is only comparable to a re-measurement on like hardware. This one was recorded on GitHub's ubuntu-latest runner, and the gate refuses to compare against it anywhere else rather than reporting a machine difference as a code regression. A laptop measures the same commit at 3.7 ms where this runner measures 9.2 ms; against a stored 9.2 that laptop reads 60% FASTER, which is not evidence of anything.",
+    "language_versions": {
+      "python": "3.13",
+      "typescript": "22",
+      "ruby": "3.3"
+    },
+    "language_versions_why": "Pinned per port because matrix entries differ systematically, not randomly: on one commit CI measured Python 3.11 at 12.30 ms and 3.13 at 9.10 ms, and Ruby 3.1 at 15.9 ms against 3.3 at 11.0 ms. Those gaps are several times the tolerance, so a baseline recorded on one interpreter says nothing about another."
+  },
+  "corpus": "persuade-20",
+  "corpus_why": "Latency scales with essay length, so a baseline belongs to the corpus it was measured on. A run against a different corpus does not compare against this file.",
+  "recorded_for_version": null,
+  "implementations": {
+    "python": {
+      "pooled_median_ms": null
+    },
+    "typescript": {
+      "pooled_median_ms": null
+    },
+    "ruby": {
+      "pooled_median_ms": null
+    }
+  },
+  "implementations_why": "Per implementation, never pooled into one number: the three ports are 2-3x apart in absolute cost on identical hardware, and a shared figure would be a bar for whichever port happened to set it. Null means no baseline has been recorded yet — the gate reports NOT COMPARED rather than passing, because a gate with nothing to compare against is not a passing gate."
+}

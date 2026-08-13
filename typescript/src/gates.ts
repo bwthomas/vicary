@@ -425,7 +425,16 @@ export function measureGates(
     bareSurnameExposure?: number;
     heldOutRecallCarrier?: number;
     overFirePerEssay?: number;
-    latencyP95Ms?: number;
+    /**
+     * The regression against the last release, in percent, or undefined when
+     * this run could not be compared — a laptop, a different runtime version,
+     * a different corpus. Undefined reports NOT MEASURED by name rather than
+     * passing, which is the whole point: a comparison that cannot be made is
+     * not a comparison that succeeded.
+     */
+    latencyRegressionPct?: number;
+    /** Why the comparison was declined, printed so the skip is never silent. */
+    latencyRegressionDetail?: string;
     /** Which corpus the corpus-gate values came from, for the per-corpus bars. */
     corpusId?: string;
   } = {},
@@ -515,12 +524,13 @@ export function measureGates(
           ? "no corpus supplied by the caller"
           : `${round3(options.overFirePerEssay)} spans masked per essay of un-injected prose`,
     },
-    latency_p95: {
-      value: options.latencyP95Ms ?? null,
+    latency_regression: {
+      value: options.latencyRegressionPct ?? null,
       detail:
-        options.latencyP95Ms === undefined
-          ? "no corpus supplied by the caller"
-          : `${round3(options.latencyP95Ms)} ms at essay length, one-time asset load excluded`,
+        options.latencyRegressionPct === undefined
+          ? (options.latencyRegressionDetail ??
+            "no corpus supplied by the caller")
+          : `${round3(options.latencyRegressionPct)}% against the last release's figure for this port`,
     },
   };
 
