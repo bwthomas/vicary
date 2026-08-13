@@ -500,12 +500,35 @@ What replaced it does not compare across machines at all. `tools/latency_pair.py
 checks the **previous release** out of this repository's history and times it and
 this checkout alternately, on the machine running the gate, counterbalancing the
 order each round; the gate compares those two numbers and nothing else. Every
-property of the machine is common to both sides and cancels, leaving
-within-process noise of 0.7% (Python), 1.7% (Ruby) and 3.3% (TypeScript) — so 8%
-is about four times the noise rather than a third of it. Nothing is recorded
+property of the machine is common to both sides and cancels. Nothing is recorded
 between releases, nothing is pinned to a runner, and the gate works on a laptop:
 `just latency-pair ruby`. Without a pair it reports NOT MEASURED with the reason
 attached, because one side of a comparison is not a gate.
+
+**How much of the bar the noise uses, measured rather than inferred.** Each
+port's gate statistic was run repeatedly against a fixed head and tag, so its
+true value is constant and the spread is the noise:
+
+| port | σ of the gate statistic | 95% CI | 8% bar |
+|---|---|---|---|
+| Python | 0.60% | 0.44–0.93% | 13.3 σ |
+| Ruby | 0.46% | 0.34–0.72% | 17.2 σ |
+| TypeScript | 1.98% | 1.56–2.69% | 4.0 σ |
+
+Under the stored baseline, 8% was about *one third* of a sigma. Every mean is
+indistinguishable from zero, and 24 runner allocations drawing three CPU models
+say why: Ruby's **absolute** figure spreads 31.8% across those models — the axis
+that killed the stored baseline — while its **ratio** spreads 0.36 pp. With 14
+runner groups pooled, the between-runner variance component is not distinguishable
+from zero (F = 0.93 on df 13, 14). TypeScript inverts the pattern, and that is
+the reason it takes three times the rounds: at ~2 ms the JIT dominates the
+machine, so its absolute figure barely notices the CPU while its ratio is the
+noisiest of the three.
+
+What the bar does **not** catch is drift. +5% per release passes every time and
+compounds to +34% over six releases with nothing ever red. That is inherent to
+comparing against the last release, and deliberate: this gate is for the step
+change. The trend is a human's job.
 
 **The measured figure is a pooled median, not a percentile, taken after a full
 warmup pass.** At n=20 essays a p95 *is* the maximum, and a maximum moves on a

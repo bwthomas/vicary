@@ -65,10 +65,17 @@ export const IMPLEMENTATION = "typescript";
 /**
  * The bar, chosen rather than derived — 8% is what a reviewer is willing to call
  * a regression. What the noise decides is whether the bar is USABLE, and this is
- * the port that answers it: twelve pair runs across six CI runners against a
- * fixed head and tag put the gate statistic at sigma 1.71%, so 8% is 4.7 sigma
- * out. Under the stored baseline it was about a third of a sigma, which is how
- * that one red-lit `main` on unchanged code. See `tools/latency_pair.py`.
+ * the port that sets that limit: 28 pair runs across 14 CI runners against a
+ * fixed head and tag put the gate statistic at **sigma 1.98%** (95% CI
+ * 1.56-2.69%), so 8% is 4.0 sigma out — against 13.3 in Python and 17.2 in Ruby.
+ * Under the stored baseline it was about a third of a sigma, which is how that
+ * one red-lit `main` on unchanged code.
+ *
+ * This port is the noisiest on the ratio and the LEAST sensitive to the machine
+ * on the absolute — 0.8% across three CPU models, where Ruby spreads 31.8%. At
+ * ~2 ms the JIT dominates the machine, so more rounds buy more here than
+ * anywhere else, and a machine-speed calibrator actively hurt. See
+ * `tools/latency_pair.py`.
  *
  * It does not catch drift: +5% a release passes every time and compounds. That
  * is deliberate — this gate is for the step change, not the trend.

@@ -65,10 +65,13 @@ IMPLEMENTATION = "python"
 #: The bar, and it is a chosen one rather than a derived one — 8% is what a
 #: reviewer is willing to call a regression, not what the noise dictates. What
 #: the noise decides is whether the bar is *usable*, and under the pair it is:
-#: the gate statistic measures sigma 1.71% in the noisiest port (twelve runs,
-#: six CI runners, fixed head and tag), so 8% is 4.7 sigma out. It was about one
-#: third of a sigma under the stored baseline, which is why that one red-lit
-#: `main` on unchanged code. See the docstring on ``tools/latency_pair.py``.
+#: the gate statistic measures **sigma 0.60%** in this port (95% CI 0.44-0.93%,
+#: sixteen runs across eight CI runners, fixed head and tag), which puts 8% at
+#: 13.3 sigma. It is 4.0 sigma in TypeScript, the noisiest of the three, so the
+#: bar clears the noise everywhere. It was about one third of a sigma under the
+#: stored baseline, which is why that one red-lit `main` on unchanged code. The
+#: whole table, and the CPU-diversity check behind it, is in the docstring on
+#: ``tools/latency_pair.py``.
 #:
 #: What this bar does NOT catch is drift: +5% per release passes every time and
 #: compounds to +34% over six releases with nothing ever red. That is a property

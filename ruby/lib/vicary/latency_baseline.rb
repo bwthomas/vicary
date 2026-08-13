@@ -57,12 +57,17 @@ module Vicary
 
     # The bar, chosen rather than derived — 8% is what a reviewer is willing to
     # call a regression. What the noise decides is whether the bar is USABLE,
-    # and it is: measured in TypeScript, the noisiest port, the gate statistic
-    # holds sigma 1.71% over twelve runs on six CI runners, so 8% is 4.7 sigma
-    # out. It was about a third of a sigma under the stored baseline, which is
-    # how that one red-lit `main` on unchanged code — and how it refused this
-    # port's 0.2.3 while the other two took the same commit. See
-    # `tools/latency_pair.py`.
+    # and it is: the gate statistic holds **sigma 0.46%** in this port (95% CI
+    # 0.34-0.72%, sixteen runs across eight CI runners, fixed head and tag),
+    # putting 8% at 17.2 sigma — the widest margin of the three. It was about a
+    # third of a sigma under the stored baseline, which is how that one red-lit
+    # `main` on unchanged code, and how it refused this port's 0.2.3 while the
+    # other two took the same commit.
+    #
+    # This is also the port where the pairing earns the most. Across three CPU
+    # models its absolute figure spreads **31.8%** — the same axis, and nearly
+    # the same size, as the 67% that killed the stored baseline — while its ratio
+    # spreads 0.36 pp. Same runs, same data. See `tools/latency_pair.py`.
     #
     # It does not catch drift: +5% a release passes every time and compounds.
     # That is deliberate — this gate is for the step change, not the trend.

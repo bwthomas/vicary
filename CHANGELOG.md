@@ -21,15 +21,25 @@
   common to both sides and cancels. What is left is within-process noise — 0.7%
   in Python, 1.7% in Ruby, 3.3% in TypeScript — so the 8% bar is now several
   times the noise instead of a third of it.
-* **That cancellation is measured, not asserted.** Twelve pair runs across six CI
-  runners in TypeScript, the noisiest port, against a fixed head and tag: the
-  gate statistic holds **sigma 1.71%** (95% CI 1.21–2.91%) with a mean
-  indistinguishable from zero, putting the 8% bar **4.7 sigma** out. 82% of that
-  spread is *within* a runner, and the between-runner variance component
-  estimates **negative** — no runner effect survives the pairing, on the axis
-  where the stored baseline faced 21–67%. The caveat is recorded with the figure
-  in `tools/latency_pair.py`: those twelve runs drew two CPU models, where the
-  stored-baseline probe drew five.
+* **That cancellation is measured, not asserted, in all three ports.** Each
+  port's gate statistic was run repeatedly against a fixed head and tag, so the
+  true value is constant and the spread is the noise: **σ 0.60%** in Python
+  (95% CI 0.44–0.93), **0.46%** in Ruby (0.34–0.72) and **1.98%** in TypeScript
+  (1.56–2.69). That puts the 8% bar at 13.3, 17.2 and 4.0 sigma respectively,
+  where the stored baseline put it at about one *third* of a sigma. Every mean is
+  indistinguishable from zero. Ruby's pair turns out nearly four times tighter
+  than its single-process noise suggested, so the figures those bars were set
+  against were conservative in every port and optimistic in none.
+* **Machine cancellation holds against real CPU diversity.** 24 runner
+  allocations drew three models (EPYC 7763, EPYC 9V74, Xeon Platinum 8573C). From
+  the same runs: Ruby's **absolute** median spreads **31.8%** across them — the
+  same axis, and nearly the same size, as the 67% that killed the stored baseline
+  — while its **ratio** spreads **0.36 pp**. Python is 19.7% against 0.23 pp.
+  With 14 runner groups pooled the between-runner variance component is not
+  distinguishable from zero (F = 0.93 on df 13, 14). TypeScript inverts it, which
+  explains why the calibrator hurt that port: at ~2 ms the JIT dominates the
+  machine, so its absolute figure moves only 0.8% across models while its ratio
+  is the noisiest of the three.
 * **What the bar does not catch is drift.** +5% per release passes every time and
   compounds to +34% over six releases with nothing ever red. That is inherent to
   comparing against the last release, it is deliberate, and it is noted at each

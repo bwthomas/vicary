@@ -34,22 +34,43 @@ co-tenancy, cache pressure — is common to both and cancels in the ratio. What 
 left is within-process noise, which is 0.7% in Python, 1.7% in Ruby and 3.3% in
 TypeScript, and the median over several rounds is tighter than that.
 
-That cancellation was then measured rather than assumed, in the port where it
-matters most. Twelve TypeScript pair runs against a FIXED head and tag — six
-runners, twice each, the gate's own invocation with no extra rounds — put the
-gate statistic at **sigma 1.71%** (95% CI 1.21-2.91%), mean -0.44%, which is
-indistinguishable from zero. Splitting that spread by where it comes from is the
-part worth keeping: 82% of it is within-runner, and the between-runner variance
-component estimates **negative**, i.e. no runner effect survives the pairing at
-all. The stored baseline this replaces faced 21-67% on that same axis. Against
-an 8% bar, sigma 1.71% is a false red on clean code about once in 670,000 runs,
-and once in 337 at the pessimistic end of the confidence interval.
+That cancellation is measured, not assumed. Each port's gate statistic was run
+many times against a FIXED head and tag — its own CI invocation, no extra rounds
+— so the true value is constant and the spread IS the noise:
 
-The honest limit on that: ten of the twelve runs drew an EPYC 7763 and two an
-EPYC 9V74, so the no-runner-effect finding rests on two CPU models where the
-stored-baseline probe saw five. The pairing makes machine cancellation
-structural rather than empirical, and this is a check on it, not the reason to
-believe it.
+    port          sigma   95% CI        8% bar is   (inferred before)
+    Python        0.60%   0.44-0.93%    13.3 sigma  0.7%
+    Ruby          0.46%   0.34-0.72%    17.2 sigma  1.7%
+    TypeScript    1.98%   1.56-2.69%     4.0 sigma  3.3%
+
+n=16 per port, plus a first TypeScript probe pooled in for n=28 there. Every mean
+is indistinguishable from zero. Ruby is the surprise: its pair is nearly four
+times tighter than its single-process noise, because a median over five rounds
+and a ratio cancel more than the component figure suggests. So the inferred
+numbers were conservative in every port, never optimistic.
+
+**Machine cancellation, tested against real CPU diversity.** 24 runner
+allocations drew three models (EPYC 7763, EPYC 9V74, Xeon Platinum 8573C). The
+contrast that matters is within one dataset — the absolute medians against the
+ratio, from the same runs:
+
+    port          absolute spread across models    ratio spread
+    Ruby          31.8%                            0.36 pp
+    Python        19.7%                            0.23 pp
+    TypeScript     0.8%                            2.67 pp (n.s.)
+
+Ruby is the proof: the machine moves its absolute figure by a third — the same
+axis, and nearly the same size, as the 67% that killed the stored baseline — and
+moves its ratio by a third of a percentage point. TypeScript inverts it, and that
+is worth knowing too: at ~2 ms the JIT dominates the machine, so its absolute
+figure barely notices the CPU while its ratio is the noisiest of the three. Its
+noise was never machine noise, which is why the calibrator hurt it.
+
+On the between-runner term specifically: with 14 runner groups pooled, F = 0.93
+on df (13, 14) against a 2.51 critical value, and the variance component estimates
+negative. No runner effect survives the pairing. One 8-group probe put that
+component at +1.1% before pooling — a variance component on 8 groups is that
+unstable, which is the reason for the pooled figure rather than the first one.
 
 The previous release comes from this repository's own history rather than from a
 registry, so this runs on a bare checkout with no network. Its `asset/` and
@@ -82,8 +103,17 @@ IMPLEMENTATIONS = ("python", "typescript", "ruby")
 #: TypeScript, whose absolute figure is 2 ms and whose JIT does not settle
 #: identically twice. Rounds are the cheapest thing there is in that port — a
 #: TypeScript measurement costs about a third of a second — so it gets three
-#: times as many, which is what brings its verdict into the same band as the
-#: other two rather than leaving one port's gate three times looser.
+#: times as many.
+#:
+#: That does NOT equalise the three, and an earlier version of this comment
+#: claimed it did. Measured: the gate statistic lands at sigma 0.60% in Python
+#: and 0.46% in Ruby on five rounds, and 1.98% in TypeScript on fifteen. So
+#: TypeScript's gate really is three to four times looser than the other two,
+#: and the extra rounds narrow that gap rather than closing it. It is left there
+#: on purpose: 1.98% still puts the 8% bar 4.0 sigma out, which is a gate worth
+#: having, and closing the gap is not worth what it costs: sigma falls as
+#: 1/sqrt(rounds), so matching Ruby's 0.46% means about 19 times the rounds —
+#: 280-odd, up from fifteen — to sharpen a decision that is not close either way.
 DEFAULT_ROUNDS = {"python": 5, "typescript": 15, "ruby": 5}
 
 
