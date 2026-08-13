@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.5 — 2026-08-13
+
 ### The latency gate times the last release HERE, instead of trusting a number from another machine
 
 * **The stored baseline is gone.** 0.2.4 recorded what each port measured on
