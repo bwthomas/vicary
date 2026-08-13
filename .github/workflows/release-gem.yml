@@ -286,8 +286,14 @@ jobs:
               ;;
           esac
 
+      # Tag-gated as well as probe-gated, and the two are different claims. Probe
+      # mode is opt-in, so a dispatch that simply left it off went straight to
+      # `gem push`, protected only by RubyGems refusing a version it already
+      # serves — a coincidence rather than a guard, and one that stops holding the
+      # moment the version is bumped without a tag. A release comes from a tag or
+      # it does not happen.
       - name: Push the gem
-        if: ${{ !inputs.push_probe }}
+        if: ${{ !inputs.push_probe && startsWith(github.ref, 'refs/tags/v') }}
         run: gem push vicary-*.gem
 
       # `gem push` reporting success is the system describing itself. Ask the
@@ -297,7 +303,7 @@ jobs:
       # difference between "not published yet" and "I could not tell" is a tested
       # distinction rather than a `|| true` in a pipeline.
       - name: RubyGems must actually be serving the version we just pushed
-        if: ${{ !inputs.push_probe }}
+        if: ${{ !inputs.push_probe && startsWith(github.ref, 'refs/tags/v') }}
         run: |
           version=$(ruby -Ilib -e 'require "vicary/version"; print Vicary::VERSION')
           ruby scripts/registry_serves.rb --attempts 12 --interval 10 vicary "$version"

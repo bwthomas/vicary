@@ -147,8 +147,27 @@ jobs:
           VICARY_LATENCY_PAIR: ${{ runner.temp }}/pair.json
         run: pytest -m gates -s
 
+  # TAG-GATED, and it was not. This workflow answers `workflow_dispatch` as well
+  # as a tag push, and until this guard existed the only thing standing between a
+  # manual dispatch and a real PyPI upload was whether the version in `VERSION`
+  # happened to already exist on the index. That is not a guard, it is a
+  # coincidence: bump the version without tagging, dispatch to check something,
+  # and the release publishes itself.
+  #
+  # All three publish paths had this hole, not just this one. `release-npm` and
+  # `release-gem` gate their uploads on a probe input being OFF, which reads like
+  # a guard and is not one — a probe is opt-in, so a dispatch that simply leaves
+  # it off is the default path. Both now carry the tag condition too, and
+  # `tools/tests/test_release_paths.py` fails if any of the three loses it.
+  #
+  # What this port lacked on top of that is a probe mode, which made it the one
+  # path nobody could rehearse. The guard supplies the useful half: a dispatch now
+  # runs the build, the pair and the gates on the real publish path and stops
+  # short of the upload. It still does not exercise the PyPI credential exchange
+  # the way the other two exercise theirs — that gap is smaller, and open.
   publish:
     needs: [build, gates]
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     environment: pypi
     permissions:

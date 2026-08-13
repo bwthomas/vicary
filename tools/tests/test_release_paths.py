@@ -53,6 +53,23 @@ PUBLISH_PATHS = {
 #: the worst possible moment to discover it fails.
 CI_WORKFLOW = "ci.yml"
 
+#: The invocation each publish path uploads with, per workflow. Includes the
+#: ``run:``/``uses:`` prefix on purpose: these workflows discuss `npm publish` and
+#: `gem push` at length in their comments, and a bare command name matches the
+#: prose. A guard asserted against a comment is a guard asserted against nothing —
+#: the first draft of this test did exactly that and failed, which is the only
+#: reason it is written this way.
+UPLOAD_COMMANDS = {
+    "release.yml": "uses: pypa/gh-action-pypi-publish",
+    "release-npm.yml": "run: npm publish --provenance",
+    "release-gem.yml": "run: gem push vicary-",
+}
+
+#: What must appear in the guard on an upload. Textual on purpose: the assertion
+#: is about the workflow's own source, and a YAML parse of an ``if:`` expression
+#: would still leave the expression as a string to be matched.
+TAG_GUARD = "startsWith(github.ref, 'refs/tags/v')"
+
 
 def repo_root() -> Path:
     return Path(conformance.conformance_dir()).parent
@@ -157,3 +174,60 @@ def test_the_spec_the_gate_reads_carries_no_recorded_measurements() -> None:
         f"across machines"
     )
     assert float(doc["tolerance_pct"]) > 0
+
+
+@pytest.mark.parametrize("filename", sorted(PUBLISH_PATHS))
+def test_no_publish_path_can_upload_without_a_tag(filename: str) -> None:
+    """An upload happens because of a tag, or it does not happen.
+
+    All three of these workflows answer ``workflow_dispatch`` as well as a tag
+    push, and none of them used to require the tag before uploading. What stood
+    in the way was only that the version already existed on the registry: PyPI
+    rejects a duplicate file, ``npm publish`` errors on an existing version (and
+    this workflow asks the registry first), and RubyGems refuses a version it
+    already serves.
+
+    That is a coincidence, not a guard, and it expires exactly when it matters.
+    Bump ``VERSION``, do not tag it yet, dispatch one of these to check something
+    unrelated, and the release publishes itself — from whatever the default branch
+    happens to contain, with a real minted credential, at a moment nobody chose.
+    Two of the three had a probe input that skips uploading, but a probe is opt-in,
+    so leaving it off is the default path rather than a special case.
+
+    The tag is also the only thing tying an upload to a reviewed version: the
+    ``The tag must be the version`` step compares them, and it too is tag-gated,
+    so on a dispatch there is nothing checking that the version means anything.
+    """
+    needle = UPLOAD_COMMANDS[filename]
+    text = workflow_path(filename).read_text(encoding="utf-8")
+    jobs = jobs_of(workflow_path(filename))
+
+    assert needle in text, (
+        f"{filename} no longer contains {needle!r}; this test is asserting "
+        f"a guard on a command that has moved or been renamed, so it is "
+        f"asserting nothing — update UPLOAD_COMMANDS"
+    )
+
+    # A job-level tag guard covers every step inside it; otherwise every step that
+    # uploads has to carry the guard itself. Checked for ALL matching steps rather
+    # than returning on the first: two upload steps and one guard is the same
+    # exposure as no guard.
+    checked = 0
+    for job_name, body in jobs.items():
+        if needle not in body:
+            continue
+        if TAG_GUARD in body.split("steps:", 1)[0]:
+            checked += 1
+            continue
+        for block in body.split("      - "):
+            if needle not in block:
+                continue
+            checked += 1
+            assert TAG_GUARD in block, (
+                f"{filename}: the step in job {job_name!r} that runs "
+                f"{needle!r} is not gated on a tag, so a workflow_dispatch "
+                f"run can upload. Add {TAG_GUARD} to its `if:`, or gate the "
+                f"whole job on it.\n\n{block[:400]}"
+            )
+
+    assert checked, f"{filename}: found no job containing {needle!r}"

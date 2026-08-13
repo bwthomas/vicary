@@ -332,9 +332,14 @@ jobs:
       # Authentication is OIDC against the trusted publisher configured on the
       # package, which is why the npm version check above is a hard gate.
       #
-      # Skipped in probe mode: a probe that could publish is not a probe.
+      # Skipped in probe mode: a probe that could publish is not a probe. AND
+      # tag-gated, which is a separate claim: probe mode is opt-in, so a dispatch
+      # that simply leaves it off had nothing but the version-already-exists check
+      # between it and a real upload. That check is a coincidence, not a guard —
+      # bump the version without tagging and it stops holding. A release comes
+      # from a tag or it does not happen.
       - name: Publish
-        if: ${{ steps.already.outputs.skip == 'false' && !inputs.publish_probe }}
+        if: ${{ steps.already.outputs.skip == 'false' && !inputs.publish_probe && startsWith(github.ref, 'refs/tags/v') }}
         run: npm publish --provenance --access public
 
       # `npm publish` printing `+ @bwthomas/vicary@0.2.1` is the system under
@@ -345,7 +350,7 @@ jobs:
       # "could not tell" — only the second is a failure of the check rather than of
       # the publish, and both exit non-zero rather than passing.
       - name: The registry must actually serve what was published
-        if: ${{ steps.already.outputs.skip == 'false' && !inputs.publish_probe }}
+        if: ${{ steps.already.outputs.skip == 'false' && !inputs.publish_probe && startsWith(github.ref, 'refs/tags/v') }}
         run: |
           name=$(node -p "require('./package.json').name")
           version=$(node -p "require('./package.json').version")
