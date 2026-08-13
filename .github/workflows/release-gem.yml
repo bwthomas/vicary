@@ -130,7 +130,14 @@ jobs:
       - name: Vendor the asset
         run: rake sync_assets
 
+      # `VICARY_LATENCY_PROFILE` is what entitles the latency gate to an opinion,
+      # and without it `rake test` measured the number and reported NOT MEASURED —
+      # on the one publish path that had refused a release for being slow. This
+      # job already runs the 3.3 the baseline was recorded on, so the env var is
+      # the whole difference between measuring and comparing.
       - run: rake test
+        env:
+          VICARY_LATENCY_PROFILE: github-ubuntu-latest
 
       # The gate lives in `scripts/release_gate.rb` rather than in shell here,
       # because it reads the scoreboard object the harness returns instead of

@@ -52,7 +52,43 @@ permissions:
   contents: read
 
 jobs:
+  # THE GATES, on the interpreter the latency baseline was recorded against.
+  #
+  # `npm test` in the publish job below runs them too, but on Node 24 — the
+  # version this workflow needs for the OIDC exchange, and not the version the
+  # baseline was recorded on. So the latency gate there measures, prints, and
+  # reports NOT MEASURED, exactly as it does on a laptop. That is honest and it
+  # is not a gate: 0.2.4 published to npm having measured 3.616 ms, which would
+  # have been +18.5% against the recorded baseline had anything compared it.
+  #
+  # Its own job, pinned to Node 22, so the comparison is entitled to an opinion
+  # and the publish job keeps the runtime its credential needs.
+  gates:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: typescript
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: typescript/package-lock.json
+
+      - run: npm ci
+
+      - name: Vendor the asset
+        run: npm run sync-assets
+
+      - name: Gates
+        env:
+          VICARY_LATENCY_PROFILE: github-ubuntu-latest
+        run: npm test
+
   publish:
+    needs: [gates]
     runs-on: ubuntu-latest
     defaults:
       run:
