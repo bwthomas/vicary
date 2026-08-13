@@ -19,8 +19,21 @@
   times it and this checkout **alternately on the machine running the gate**,
   counterbalancing the order each round. Every property of that machine is
   common to both sides and cancels. What is left is within-process noise — 0.7%
-  in Python, 1.7% in Ruby, 3.3% in TypeScript — so the 8% bar is now about four
+  in Python, 1.7% in Ruby, 3.3% in TypeScript — so the 8% bar is now several
   times the noise instead of a third of it.
+* **That cancellation is measured, not asserted.** Twelve pair runs across six CI
+  runners in TypeScript, the noisiest port, against a fixed head and tag: the
+  gate statistic holds **sigma 1.71%** (95% CI 1.21–2.91%) with a mean
+  indistinguishable from zero, putting the 8% bar **4.7 sigma** out. 82% of that
+  spread is *within* a runner, and the between-runner variance component
+  estimates **negative** — no runner effect survives the pairing, on the axis
+  where the stored baseline faced 21–67%. The caveat is recorded with the figure
+  in `tools/latency_pair.py`: those twelve runs drew two CPU models, where the
+  stored-baseline probe drew five.
+* **What the bar does not catch is drift.** +5% per release passes every time and
+  compounds to +34% over six releases with nothing ever red. That is inherent to
+  comparing against the last release, it is deliberate, and it is noted at each
+  port's tolerance constant: this gate is for the step change, not the trend.
 * **The comparison is valid everywhere, including a laptop.** Nothing is pinned
   to a runner or a language version any more, because nothing is compared across
   machines. `just latency-pair ruby` makes the gate answerable on any machine;
