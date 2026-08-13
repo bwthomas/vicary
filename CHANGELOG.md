@@ -71,6 +71,34 @@
   holding the tolerance and the protocol and no measurements — and a test in each
   port fails if measurements reappear in it.
 
+### No release workflow can upload without a tag, and none of the three required one
+
+* **All three publish paths could upload on a `workflow_dispatch` run.** Each
+  answers manual dispatch as well as a `v*` tag, and none required the tag before
+  reaching a registry. `release.yml` had no guard at all on its publish job;
+  `release-npm` and `release-gem` gated their uploads on a probe input being
+  *off*, which reads like a guard and is not one, because a probe is opt-in and
+  leaving it off is the default. What actually stood in the way was that the
+  version already existed on the registry — a coincidence, and one that expires
+  the moment a version is bumped before it is tagged. All three now carry
+  `startsWith(github.ref, 'refs/tags/v')` on the step that uploads.
+* **Asserted per path, against the upload invocation itself** rather than a step
+  name, in `tools/tests/test_release_paths.py`. Each of the three assertions was
+  confirmed to fail when its own guard is removed, because a guard test that has
+  never failed is indistinguishable from one that matches nothing — the first
+  draft matched `npm publish` in a *comment* and passed for that reason.
+* **The publish paths are now exercised rather than only asserted.** With the
+  guard in place a dispatch runs the build, the pair and the gates on the real
+  path and stops short of the upload, so all three were run end to end: the pair
+  reached a verdict on every one (+0.10% Python, −0.10% Ruby, −0.03% TypeScript)
+  and every upload step reported `skipped`, with all three registries still
+  serving 0.2.4 afterwards. Before this, `test_release_paths.py` asserted the
+  wiring and nothing had ever run it.
+* Still open: this leaves PyPI the one path with no credential probe. `release-npm`
+  and `release-gem` can each rehearse their trusted-publishing exchange without
+  uploading; `release.yml` cannot, so its credential path is still first exercised
+  by a real release.
+
 ## 0.2.4 — 2026-08-13
 
 ### The latency gate asks whether the code got slower, not whether the machine is fast
