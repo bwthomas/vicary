@@ -17,8 +17,13 @@ and it answers in single-digit milliseconds.
 | front door | package | status |
 |---|---|---|
 | Python | [`vicary`](https://pypi.org/project/vicary/) on PyPI | **published**, 9 of 9 gates PASS — see [`python/`](python/) |
-| Ruby | [`vicary`](https://rubygems.org/gems/vicary) on RubyGems | **published**, **38 of 38**, 5 of 5 measurable gates PASS — see [`ruby/`](ruby/) |
-| TypeScript | [`@bwthomas/vicary`](https://www.npmjs.com/package/@bwthomas/vicary) on npm | **published**, **38 of 38**, 5 of 5 measurable gates PASS — scoped because npm refuses the bare `vicary` as too similar to `vary`; the appeal for it is open — see [`typescript/`](typescript/) |
+| Ruby | [`vicary`](https://rubygems.org/gems/vicary) on RubyGems | **published**, **38 of 38**, 9 of 9 gates PASS — see [`ruby/`](ruby/) |
+| TypeScript | [`@bwthomas/vicary`](https://www.npmjs.com/package/@bwthomas/vicary) on npm | **published**, **38 of 38**, 9 of 9 gates PASS — scoped because npm refuses the bare `vicary` as too similar to `vary`; the appeal for it is open — see [`typescript/`](typescript/) |
+
+All three ports measure the same nine gates now, and 9 of 9 is the CI figure — the
+one gate that needs more than a checkout is latency, which needs a pair record
+from the same machine. On a bare checkout without one, every port reports 8 of 9
+and prints `NOT MEASURED` with the reason for the ninth.
 
 That fraction is the number of masking-required fixture frames the port reproduces
 byte-for-byte, printed by every `npm test` / `rake test` run and ratcheted by it.

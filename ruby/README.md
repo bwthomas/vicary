@@ -47,15 +47,23 @@ zip reader and a binary read parsed as CSV yields zero rows — a *lower* exposu
 than the truth, and the wrong direction to fail in silently. The shipped table is
 gzip, which `zlib` reads, so that hazard does not arise on the default path.
 
-The last three need an essay corpus no package here ships, and this gem measures
-them once `VICARY_EVAL_CORPUS_TSV` points at one: 100% carrier recall (29/29
-held-out REDACT spans) and 0.60 over-fired spans per essay (15 across 25),
-identical to Python and TypeScript, plus its own latency p95 of 8.8–9.9 ms. **That
-last one is worth knowing about**: the bar is ≤ 10 ms, and this port runs nearest
-it of the three — roughly 4× Python — so the latency gate is a live constraint
-here rather than a formality. The carrier essays are built from offsets recorded
-in `conformance/carrier.json` rather than from a reimplementation of Python's
-RNG, and the suite asserts their sha256.
+Two of the last three read the corpus the repository now ships in
+`conformance/corpora/`, so they measure on a bare checkout with no environment
+set: 100% carrier recall and 8.150 over-fired spans per essay against a ≤ 8.15
+bar, identical to Python and TypeScript. `VICARY_EVAL_CORPUS_TSV` is an override
+for a different corpus, not a requirement.
+
+The ninth is latency, and **this port's absolute figure no longer constrains it**.
+The gate was a ≤ 10 ms bar, which this port ran nearest of the three; it is now a
+ratio against the last release timed on the same machine, held to ≤ +8%. That
+change matters most here: across three CPU models this port's absolute median
+spreads **31.8%**, the same axis that made the old bar a coin flip, while its
+ratio spreads 0.36 pp. Measured, the ratio holds σ 0.46% — the *widest* margin of
+the three ports, where the absolute figure gave it the narrowest.
+
+The carrier essays are built from offsets recorded in `conformance/carrier.json`
+rather than from a reimplementation of Python's RNG, and the suite asserts their
+sha256.
 
 The last two need the reference interpreter — run `just py-setup` from the
 repository root first.

@@ -57,14 +57,25 @@ yields zero rows — a *lower* exposure than the truth, and the wrong direction 
 fail in silently. The shipped table is gzip, which `node:zlib` reads, so that
 hazard does not arise on the default path.
 
-The remaining three — held-out recall (carrier), over-fire on prose, latency p95
-— need an essay corpus no package here ships, and this port measures them too
-once `VICARY_EVAL_CORPUS_TSV` points at one: 100% carrier recall (29/29 held-out
-REDACT spans), 0.60 over-fired spans per essay (15 across 25 essays) — both
-identical to Python and Ruby — and 2.1–2.6 ms latency p95, which is this port's
-own and the fastest of the three. Without a corpus they print `NOT MEASURED` per
-gate rather than being reduced out of the denominator: **eight of nine held is a
-different statement from nine of nine**, and a badge cannot tell them apart.
+Two of the remaining three — held-out recall (carrier) and over-fire on prose —
+read the corpus the repository now ships in `conformance/corpora/`, so they
+measure on a bare checkout with no environment set: 100% carrier recall and 8.150
+over-fired spans per essay against a ≤ 8.15 bar, both identical to Python and
+Ruby. `VICARY_EVAL_CORPUS_TSV` is an override for a different corpus, not a
+requirement. (That over-fire figure sits on the bar in all three ports, which is
+a knife-edge rather than noise — the root README says why.)
+
+The ninth is latency, and it is no longer a p95 or a millisecond bar. It is a
+ratio: this checkout against the **last release timed on the same machine**, held
+to ≤ +8%. So it needs a pair record rather than a corpus, and prints `NOT
+MEASURED` with the reason attached until it has one. This is the noisiest port on
+that ratio — σ 1.98%, against 0.60% in Python and 0.46% in Ruby, which is why it
+takes three times the rounds — and the least machine-sensitive on the absolute,
+because at ~2 ms the JIT dominates the CPU.
+
+Gates without their data print `NOT MEASURED` rather than dropping out of the
+denominator: **eight of nine held is a different statement from nine of nine**,
+and a badge cannot tell them apart.
 
 The carrier essays are built from offsets recorded in `conformance/carrier.json`
 rather than from a reimplementation of Python's RNG, and the suite asserts their
