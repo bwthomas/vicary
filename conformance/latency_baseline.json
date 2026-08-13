@@ -16,16 +16,16 @@
   },
   "corpus": "persuade-20",
   "corpus_why": "Latency scales with essay length, so a baseline belongs to the corpus it was measured on. A run against a different corpus does not compare against this file.",
-  "recorded_for_version": null,
+  "recorded_for_version": "0.2.4",
   "implementations": {
     "python": {
-      "pooled_median_ms": null
+      "pooled_median_ms": 9.232
     },
     "typescript": {
-      "pooled_median_ms": null
+      "pooled_median_ms": 3.052
     },
     "ruby": {
-      "pooled_median_ms": null
+      "pooled_median_ms": 10.481
     }
   },
   "implementations_why": "Per implementation, never pooled into one number: the three ports are 2-3x apart in absolute cost on identical hardware, and a shared figure would be a bar for whichever port happened to set it. Null means no baseline has been recorded yet — the gate reports NOT COMPARED rather than passing, because a gate with nothing to compare against is not a passing gate."
