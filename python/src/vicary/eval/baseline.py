@@ -62,6 +62,18 @@ PAIR_DOCUMENT_VERSION = 1
 
 IMPLEMENTATION = "python"
 
+#: The bar, and it is a chosen one rather than a derived one — 8% is what a
+#: reviewer is willing to call a regression, not what the noise dictates. What
+#: the noise decides is whether the bar is *usable*, and under the pair it is:
+#: the gate statistic measures sigma 1.71% in the noisiest port (twelve runs,
+#: six CI runners, fixed head and tag), so 8% is 4.7 sigma out. It was about one
+#: third of a sigma under the stored baseline, which is why that one red-lit
+#: `main` on unchanged code. See the docstring on ``tools/latency_pair.py``.
+#:
+#: What this bar does NOT catch is drift: +5% per release passes every time and
+#: compounds to +34% over six releases with nothing ever red. That is a property
+#: of comparing against the last release, it is deliberate, and noticing it is a
+#: human's job — this gate is for the step change, not the trend.
 DEFAULT_TOLERANCE_PCT = 8.0
 
 

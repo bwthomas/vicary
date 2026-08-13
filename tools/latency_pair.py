@@ -34,6 +34,23 @@ co-tenancy, cache pressure — is common to both and cancels in the ratio. What 
 left is within-process noise, which is 0.7% in Python, 1.7% in Ruby and 3.3% in
 TypeScript, and the median over several rounds is tighter than that.
 
+That cancellation was then measured rather than assumed, in the port where it
+matters most. Twelve TypeScript pair runs against a FIXED head and tag — six
+runners, twice each, the gate's own invocation with no extra rounds — put the
+gate statistic at **sigma 1.71%** (95% CI 1.21-2.91%), mean -0.44%, which is
+indistinguishable from zero. Splitting that spread by where it comes from is the
+part worth keeping: 82% of it is within-runner, and the between-runner variance
+component estimates **negative**, i.e. no runner effect survives the pairing at
+all. The stored baseline this replaces faced 21-67% on that same axis. Against
+an 8% bar, sigma 1.71% is a false red on clean code about once in 670,000 runs,
+and once in 337 at the pessimistic end of the confidence interval.
+
+The honest limit on that: ten of the twelve runs drew an EPYC 7763 and two an
+EPYC 9V74, so the no-runner-effect finding rests on two CPU models where the
+stored-baseline probe saw five. The pairing makes machine cancellation
+structural rather than empirical, and this is a check on it, not the reason to
+believe it.
+
 The previous release comes from this repository's own history rather than from a
 registry, so this runs on a bare checkout with no network. Its `asset/` and
 `conformance/` are overwritten with the current checkout's before it is built:

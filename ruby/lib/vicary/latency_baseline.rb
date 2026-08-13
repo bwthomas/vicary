@@ -55,6 +55,17 @@ module Vicary
 
     IMPLEMENTATION = "ruby"
 
+    # The bar, chosen rather than derived — 8% is what a reviewer is willing to
+    # call a regression. What the noise decides is whether the bar is USABLE,
+    # and it is: measured in TypeScript, the noisiest port, the gate statistic
+    # holds sigma 1.71% over twelve runs on six CI runners, so 8% is 4.7 sigma
+    # out. It was about a third of a sigma under the stored baseline, which is
+    # how that one red-lit `main` on unchanged code — and how it refused this
+    # port's 0.2.3 while the other two took the same commit. See
+    # `tools/latency_pair.py`.
+    #
+    # It does not catch drift: +5% a release passes every time and compounds.
+    # That is deliberate — this gate is for the step change, not the trend.
     DEFAULT_TOLERANCE_PCT = 8.0
 
     # The gate's answer, and — when it declines — why.

@@ -62,6 +62,17 @@ export const PAIR_DOCUMENT_VERSION = 1;
 
 export const IMPLEMENTATION = "typescript";
 
+/**
+ * The bar, chosen rather than derived — 8% is what a reviewer is willing to call
+ * a regression. What the noise decides is whether the bar is USABLE, and this is
+ * the port that answers it: twelve pair runs across six CI runners against a
+ * fixed head and tag put the gate statistic at sigma 1.71%, so 8% is 4.7 sigma
+ * out. Under the stored baseline it was about a third of a sigma, which is how
+ * that one red-lit `main` on unchanged code. See `tools/latency_pair.py`.
+ *
+ * It does not catch drift: +5% a release passes every time and compounds. That
+ * is deliberate — this gate is for the step change, not the trend.
+ */
 export const DEFAULT_TOLERANCE_PCT = 8.0;
 
 export interface Comparison {
