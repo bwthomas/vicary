@@ -101,7 +101,11 @@ jobs:
       contents: read
       id-token: write
     steps:
+      # Deep: the pair times the PREVIOUS RELEASE's code, checked out of this
+      # history. A shallow clone has no tags and nothing to compare against.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -130,14 +134,17 @@ jobs:
       - name: Vendor the asset
         run: rake sync_assets
 
-      # `VICARY_LATENCY_PROFILE` is what entitles the latency gate to an opinion,
-      # and without it `rake test` measured the number and reported NOT MEASURED —
-      # on the one publish path that had refused a release for being slow. This
-      # job already runs the 3.3 the baseline was recorded on, so the env var is
-      # the whole difference between measuring and comparing.
+      # The latency gate's other half. Without it `rake test` measured the number
+      # and reported NOT MEASURED — on the one publish path that had ever refused
+      # a release for being slow. The pair times the previous release HERE, on
+      # this runner, against this checkout; on a tag it compares against the
+      # release BEFORE this one, because the driver skips a tag pointing at HEAD.
+      - name: Latency pair
+        run: python3 ../tools/latency_pair.py --impl ruby --out "$RUNNER_TEMP/pair.json"
+
       - run: rake test
         env:
-          VICARY_LATENCY_PROFILE: github-ubuntu-latest
+          VICARY_LATENCY_PAIR: ${{ runner.temp }}/pair.json
 
       # The gate lives in `scripts/release_gate.rb` rather than in shell here,
       # because it reads the scoreboard object the harness returns instead of

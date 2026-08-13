@@ -641,16 +641,24 @@ def run(cases: list[Case], mode: str, sidecar: str, *,
                               relation_refusal=relation_refusal,
                               title_relation_refusal=title_relation_refusal)
     results: list[dict] = []
-    # Load the gazetteer before the clock starts. It is a one-time ~84 ms cost
-    # here and ~207 ms in Ruby, and whichever essay happens to be first pays all
-    # of it: at n=25 that single sample lands at or above p95 and sets the gate's
-    # answer by itself. The number the gate claims is essay-length redaction
-    # latency, not process startup, and leaving this in made the SAME code report
-    # 3.1 ms or 4.0 ms depending only on whether something earlier in the process
-    # had touched the asset. Excluded deliberately, and excluded identically in
-    # all three ports.
-    if cases:
-        redactor._apply(cases[0].base[:200], source=source)
+    # Warm up before the clock starts, over the WHOLE corpus rather than one
+    # 200-char call. Two costs are excluded, and the second one is why this grew.
+    #
+    # The gazetteer load is a one-time ~84 ms cost here and ~207 ms in Ruby, and
+    # whichever essay happens to be first pays all of it: at n=25 that single
+    # sample lands at or above p95 and sets the gate's answer by itself. Leaving
+    # it in made the SAME code report 3.1 ms or 4.0 ms depending only on whether
+    # something earlier in the process had touched the asset.
+    #
+    # The second is TypeScript's:
+    # V8 tiers the redaction path up over roughly its first four essays and runs
+    # them at about twice steady state, which made that port's estimator depend
+    # on when the JIT finished. This port barely moves under a full warmup and
+    # does it anyway — the three ports measure identically or the gate is three
+    # different gates.
+    for case in cases:
+        redactor._apply(case.text, source=source)
+        redactor._apply(case.base, source=source)
     with open(sidecar, "a", encoding="utf-8") as fh:
         for case in cases:
             if (arm, case.essay_id) in done:

@@ -229,10 +229,11 @@ class GatesTest < Minitest::Test
   def test_latency_is_this_ports_own_and_is_not_asserted_against_the_references
     skip_without_corpus
     # The one corpus gate whose answer Python's number says nothing about, so
-    # this port compares its OWN measurement against its OWN recorded baseline.
-    # Declined — not failed — on any machine the baseline cannot speak for,
-    # which is most of them. This port used to run nearest the absolute bar of
-    # the three and was the one that refused the 0.2.3 gem over it.
+    # this port reaches its own verdict from its own paired measurement.
+    # Declined — not failed — wherever no pair was taken, which is every machine
+    # that has not run `just latency-pair ruby`: one side of a comparison is not
+    # a gate. This port used to run nearest the absolute bar of the three and was
+    # the one that refused the 0.2.3 gem over it.
     m = self.class.corpus
     assert_operator m.latency_pooled_median_ms, :>, 0
     c = Vicary::LatencyBaseline.compare(
@@ -241,9 +242,10 @@ class GatesTest < Minitest::Test
     puts "  #{Vicary::LatencyBaseline.render(c)}"
     skip(c.reason) unless c.comparable
     assert c.holds?,
-           format("%.3f ms is %+.2f%% against the last release's %.3f ms, " \
-                  "over the %d%% bar",
-                  c.measured_ms, c.regression_pct, c.baseline_ms, c.tolerance_pct)
+           format("paired on this machine, %.3f ms against %s's %.3f ms is " \
+                  "%+.2f%%, over the %d%% bar",
+                  c.current_ms, c.against || "the last release", c.previous_ms,
+                  c.regression_pct, c.tolerance_pct)
   end
 
   def test_an_asap_anonymization_token_is_told_from_ordinary_prose

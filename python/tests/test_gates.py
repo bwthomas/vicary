@@ -494,11 +494,12 @@ def test_latency_regression(corpus_metrics, frame_metrics, record_gate) -> None:
     arm redacts one sentence at a time and reads ~0.2 ms, which would make this
     gate insensitive to the thing it is watching for.
 
-    The gate is skipped — reported, never silently passed — when the run cannot
-    be compared against the baseline. That is the common case on a developer's
-    machine and it is the honest one: this laptop measures the same commit at
-    3.7 ms where the recorded runner measured 9.2, so a comparison would report
-    a 60% improvement that is entirely the hardware.
+    The gate is skipped — reported, never silently passed — when there is no
+    paired measurement to compare against. That is the common case on a
+    developer's machine and it is the honest one: nothing here has timed the
+    previous release, and one side of a comparison is not a gate. `just
+    latency-pair python` takes the other side, here, and makes this gate
+    answerable on a laptop.
     """
     measured = corpus_metrics["latency_pooled_median_ms"]
     corpus_id, _ = corpus_mod.load_essays()
@@ -513,8 +514,9 @@ def test_latency_regression(corpus_metrics, frame_metrics, record_gate) -> None:
     record_gate("latency vs last release", c.regression_pct, "<=",
                 LATENCY_REGRESSION_PCT_CEILING, "%")
     assert c.regression_pct <= LATENCY_REGRESSION_PCT_CEILING, (
-        f"{measured:.3f} ms is {c.regression_pct:+.2f}% against the last "
-        f"release's {c.baseline_ms:.3f} ms, over the "
+        f"paired on this machine, {c.current_ms:.3f} ms against "
+        f"{c.against or 'the last release'}'s {c.previous_ms:.3f} ms is "
+        f"{c.regression_pct:+.2f}%, over the "
         f"{LATENCY_REGRESSION_PCT_CEILING:.0f}% bar"
     )
 

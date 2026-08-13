@@ -465,7 +465,7 @@ exactly; the third is a property of the language, so each reports its own:
 |---|---|---|---|---|
 | held-out recall (carrier) | ≥ 100% | **100%** (29/29) | **100%** (29/29) | **100%** (29/29) |
 | over-firing on real prose | ≤ 0.6 spans/essay | **0.60** (15 spans) | **0.60** (15 spans) | **0.60** (15 spans) |
-| latency vs last release | ≤ +8% | per port, per port's own baseline | ″ | ″ |
+| latency vs last release | ≤ +8% | per port, against the last release timed on the same machine | ″ | ″ |
 
 **The envelope, because a rate without one is not a quotable number:** the first
 25 essays of ASAP-AES set 8, taken in file order so the sample is reproducible
@@ -482,35 +482,39 @@ Three things that envelope makes visible and a table of percentages does not.
 in the sample reads 0.64 and fails. It is deterministic across runs and identical
 in all three ports, so this is a knife-edge and not noise.
 
-**The latency gate is relative, and it is relative because the absolute one was
-a claim about the machine.** It read ≤ 10 ms, and the three ports measured
-4.0–4.2, 2.1–2.6 and 8.8–9.9 ms against it — comfortable on a developer's
-machine, and not comfortable at all on a public runner, where the same commit
-measured 9.10 to 12.30 ms in Python and 11.0 to 17.0 in Ruby. That is what a
-10 ms bar was really testing. It split the 0.2.3 release across three
-registries: `release-gem` runs the gates and refused, `release-npm` runs them
-and happened to land at 9.75 ms, and the PyPI workflow did not run them at all,
-so two of three published a commit the third rejected.
+**The latency gate compares two measurements taken on the same machine, minutes
+apart.** It has been three things. It read ≤ 10 ms, which is a claim about the
+machine as much as the code, and it split the 0.2.3 release across three
+registries: `release-gem` runs the gates and refused, `release-npm` runs them and
+happened to land at 9.75 ms, and the PyPI workflow did not run them at all. It
+then became a stored per-release baseline, compared only on the runner profile it
+was recorded on — which failed for the same reason one level down, because
+`github-ubuntu-latest` is not a machine. Thirty-six processes across six of those
+runners, on identical code, spread **67% in Ruby** (6.53 ms on an Intel Xeon
+6973P-C against 10.63 ms on an EPYC 7763), 26% in Python and 21% in TypeScript.
+One probe run drew five CPU models from that one label, and two runners of the
+*same* model still differed by 26%. Against an 8% bar, that gate red-lit `main`
+on code nobody had touched.
 
-What replaced it asks whether *this build* is slower than *this port* was at the
-last release, by more than 8%. Per implementation, because the ports are 2–4×
-apart in absolute cost and one shared number would be a bar for whichever port
-set it. The comparison is refused outright unless the run matches the profile
-the baseline was recorded on — same runner, same language version, same corpus —
-and reports NOT MEASURED by name when it is, because a machine difference
-reported as a code regression is worse than no gate.
+What replaced it does not compare across machines at all. `tools/latency_pair.py`
+checks the **previous release** out of this repository's history and times it and
+this checkout alternately, on the machine running the gate, counterbalancing the
+order each round; the gate compares those two numbers and nothing else. Every
+property of the machine is common to both sides and cancels, leaving
+within-process noise of 0.7% (Python), 1.7% (Ruby) and 3.3% (TypeScript) — so 8%
+is about four times the noise rather than a third of it. Nothing is recorded
+between releases, nothing is pinned to a runner, and the gate works on a laptop:
+`just latency-pair ruby`. Without a pair it reports NOT MEASURED with the reason
+attached, because one side of a comparison is not a gate.
 
-**The measured figure is a pooled median, not a percentile.** At n=20 essays a
-p95 *is* the maximum, and a maximum moves on a scheduling pause rather than on
-code. Pooling every essay × every repeat into one 100-sample median was worth
-about half the noise: measured across 48 processes spanning two CI invocations,
-the pooled median reproduced to CV 1.26% and drifted 0.15% between invocations,
-against 2.30% and 2.52% for the p95 it replaced. An unchanged build needs ~5.3%
-of headroom on the first and ~9.7% on the second, which is the difference
-between an 8% bar that holds and one that fails on code nobody touched. A
-calibration workload was tried and dropped: it drifted 7.17% between the same
-two invocations while the measurement drifted 0.15%, so normalising by it would
-have manufactured a regression out of nothing.
+**The measured figure is a pooled median, not a percentile, taken after a full
+warmup pass.** At n=20 essays a p95 *is* the maximum, and a maximum moves on a
+scheduling pause rather than on code. The warmup is the whole corpus rather than
+one short call because TypeScript's first four essays run at about twice their
+steady-state cost while V8 tiers the redaction path up — a quarter of the pooled
+samples above steady state, and an estimator whose value depended on when the JIT
+finished. A machine-speed calibrator was tried and dropped: normalising by it
+helped Ruby, hurt TypeScript, and still left 18–25% spread between runners.
 
 **The one-time asset load is excluded from latency, deliberately and in all three
 ports.** Loading 360,793 gazetteer entries costs ~84 ms in Python and ~207 ms in

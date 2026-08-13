@@ -708,14 +708,26 @@ export function measureCorpus(
   let overFireSpans = 0;
   let asapRewrites = 0;
 
-  // Load the gazetteer before the clock starts. It is a one-time cost — ~84 ms
-  // in Python, ~207 ms in Ruby — and whichever essay happens to be first pays
-  // all of it: at n=25 that single sample lands at or above p95 and sets the
-  // gate's answer by itself. The number the gate claims is essay-length
-  // redaction latency, not process startup, and leaving this in made the same
-  // code report different figures depending only on whether something earlier
-  // in the process had touched the asset. Excluded in all three ports alike.
-  if (cases.length > 0) redact(cases[0]!.base.slice(0, 200), identity);
+  // Warm up before the clock starts, over the WHOLE corpus rather than one
+  // 200-char call. Two costs are being excluded, and the second one is why this
+  // grew.
+  //
+  // The gazetteer load is a one-time cost — ~84 ms in Python, ~207 ms in Ruby —
+  // and whichever essay happens to be first pays all of it, which at n=20 sets
+  // the gate's answer by itself.
+  //
+  // The second is this port's alone and was invisible until it was measured on
+  // the runner: V8 tiers the redaction path up over roughly the first four
+  // essays, which run at about TWICE their steady-state cost. That put a
+  // quarter of the pooled samples above steady state and made the estimator
+  // depend on when the JIT happened to finish — 3.3% between processes on one
+  // machine, against 0.7% in Python. A full pass costs ~45 ms here and buys
+  // that back. Python and Ruby barely move, and do it anyway: the three ports
+  // measure identically or the gate is three different gates.
+  for (const testCase of cases) {
+    redact(testCase.text, identity);
+    redact(testCase.base, identity);
+  }
 
   for (const testCase of cases) {
     // The median of LATENCY_REPEATS, not one sample — see that constant.

@@ -52,24 +52,29 @@ permissions:
   contents: read
 
 jobs:
-  # THE GATES, on the interpreter the latency baseline was recorded against.
+  # THE GATES, with the latency one able to reach a verdict.
   #
-  # `npm test` in the publish job below runs them too, but on Node 24 — the
-  # version this workflow needs for the OIDC exchange, and not the version the
-  # baseline was recorded on. So the latency gate there measures, prints, and
-  # reports NOT MEASURED, exactly as it does on a laptop. That is honest and it
-  # is not a gate: 0.2.4 published to npm having measured 3.616 ms, which would
-  # have been +18.5% against the recorded baseline had anything compared it.
+  # `npm test` in the publish job below runs them too, and its latency gate
+  # reports NOT MEASURED: nothing there has timed the previous release, and one
+  # side of a comparison is not a gate. That is how 0.2.4 published to npm having
+  # measured 3.616 ms — a figure that would have been +18.5% against the
+  # then-recorded baseline had anything compared it.
   #
-  # Its own job, pinned to Node 22, so the comparison is entitled to an opinion
-  # and the publish job keeps the runtime its credential needs.
+  # Its own job, so the publish job keeps the Node 24 its OIDC credential needs
+  # while the gates run on a build that has both sides of the comparison. The
+  # version no longer has to match anything recorded: the pair times the previous
+  # release on THIS runner, so whatever Node this job uses times both sides.
   gates:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: typescript
     steps:
+      # Deep: the pair times the PREVIOUS RELEASE's code, checked out of this
+      # history. A shallow clone has no tags and nothing to compare against.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -82,9 +87,21 @@ jobs:
       - name: Vendor the asset
         run: npm run sync-assets
 
+      # The pair times compiled output on both sides: this checkout's build, and
+      # the previous release compiled by this checkout's tsc against these
+      # node_modules. Neither side reaches the registry.
+      - name: Build
+        run: npm run build
+
+      # On a tag, this compares against the release BEFORE this one: the driver
+      # skips a tag that points at HEAD, because a release compared against
+      # itself reports 0% forever and passes every time.
+      - name: Latency pair
+        run: python3 ../tools/latency_pair.py --impl typescript --out "$RUNNER_TEMP/pair.json"
+
       - name: Gates
         env:
-          VICARY_LATENCY_PROFILE: github-ubuntu-latest
+          VICARY_LATENCY_PAIR: ${{ runner.temp }}/pair.json
         run: npm test
 
   publish:

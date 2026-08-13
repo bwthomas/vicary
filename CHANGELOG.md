@@ -1,5 +1,53 @@
 # Changelog
 
+## Unreleased
+
+### The latency gate times the last release HERE, instead of trusting a number from another machine
+
+* **The stored baseline is gone.** 0.2.4 recorded what each port measured on
+  `github-ubuntu-latest` and compared the next run against it. That profile is
+  not a machine. Thirty-six processes across six of GitHub's own ubuntu-latest
+  runners, on **identical code**, spread **67% in Ruby** (6.53 ms on an Intel
+  Xeon 6973P-C against 10.63 ms on an EPYC 7763), **26% in Python** and **21% in
+  TypeScript** — against an 8% bar. One probe run drew five different CPU models
+  from that single label, and two runners of the *same* model still differed by
+  26%. So the gate decided releases by which machine the job landed on: it
+  red-lit `main` on unchanged code at +8.33%, having already refused RubyGems
+  0.2.3 while PyPI and npm took the same commit.
+* **In its place, a paired measurement.** `tools/latency_pair.py` checks the
+  previous release out of this repository's own history into a worktree, and
+  times it and this checkout **alternately on the machine running the gate**,
+  counterbalancing the order each round. Every property of that machine is
+  common to both sides and cancels. What is left is within-process noise — 0.7%
+  in Python, 1.7% in Ruby, 3.3% in TypeScript — so the 8% bar is now about four
+  times the noise instead of a third of it.
+* **The comparison is valid everywhere, including a laptop.** Nothing is pinned
+  to a runner or a language version any more, because nothing is compared across
+  machines. `just latency-pair ruby` makes the gate answerable on any machine;
+  without a pair record it reports NOT MEASURED and says why, because one side of
+  a comparison is not a gate.
+* **Every publish path takes the pair.** `release.yml`, `release-npm.yml` and
+  `release-gem.yml` all run it and point the gate at what it wrote —
+  `tools/tests/test_release_paths.py` fails if one of them stops. npm 0.2.4
+  published having measured 3.616 ms and compared it against nothing, which is
+  the same green check as measuring nothing at all.
+* **Latency is measured after a full warmup pass over the corpus**, in all three
+  ports. TypeScript's first four essays ran at about **twice** their steady-state
+  cost while V8 tiered the redaction path up, which put a quarter of the pooled
+  samples above steady state and made the estimator depend on when the JIT
+  happened to finish. Python and Ruby barely move under it and do it anyway: three
+  ports that estimate differently are three different gates.
+* **Two cheaper repairs were measured and rejected**, and both are written down
+  in `tools/latency_pair.py` so they are not re-proposed. A machine-speed
+  calibrator (hash probing, and a regex loop, neither touching vicary code)
+  helped Ruby, *hurt* TypeScript, and left 18–25% residual spread. Warmup alone
+  only touches the within-runner term, which was never the dominant one.
+* Removed: `just latency-baseline` / `latency-baseline-show` and
+  `tools/latency_baseline_record.py`. There is nothing to record between releases
+  now. `conformance/latency_baseline.json` stays, at `document_version` 2,
+  holding the tolerance and the protocol and no measurements — and a test in each
+  port fails if measurements reappear in it.
+
 ## 0.2.4 — 2026-08-13
 
 ### The latency gate asks whether the code got slower, not whether the machine is fast

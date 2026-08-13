@@ -267,17 +267,18 @@ test(
     // The one corpus gate whose answer Python's number says nothing about, so
     // this port compares its OWN measurement against its OWN recorded baseline.
     // Declined — not failed — on any machine the baseline cannot speak for,
-    // which is most of them: this is 2-3x faster on a laptop than on the runner
-    // the figure was recorded on.
+    // which is most of them: nothing on a laptop has timed the previous release,
+    // and one side of a comparison is not a gate. `just latency-pair typescript`
+    // takes the other side, here, and makes this answerable anywhere.
     assert.ok(corpus!.latencyPooledMedianMs > 0);
     const c = compare(corpus!.latencyPooledMedianMs, resolveCorpusId());
     process.stdout.write(`  ${render(c)}\n`);
     if (!c.comparable) return;
     assert.ok(
       c.holds,
-      `${c.measuredMs.toFixed(3)} ms is ${c.regressionPct!.toFixed(2)}% ` +
-        `against the last release's ${c.baselineMs!.toFixed(3)} ms, over the ` +
-        `${c.tolerancePct}% bar`,
+      `paired on this machine, ${c.currentMs!.toFixed(3)} ms against ` +
+        `${c.against ?? "the last release"}'s ${c.previousMs!.toFixed(3)} ms ` +
+        `is ${c.regressionPct!.toFixed(2)}%, over the ${c.tolerancePct}% bar`,
     );
   },
 );

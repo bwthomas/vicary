@@ -96,7 +96,7 @@ tools:
 # `vicary` as third-party and demands a reshuffle of every import block here.
 tools-lint:
     cd tools && ../python/.venv/bin/ruff check tests coverage_board.py version_sync.py \
-      latency_baseline_record.py
+      latency_pair.py latency_measure.py
     cd asset && ../python/.venv/bin/ruff check vicary_build tests
 
 # ---------------------------------------------------------------------------
@@ -117,32 +117,31 @@ version version="":
     @{{python}} tools/version_sync.py {{version}}
 
 # ---------------------------------------------------------------------------
-# The latency baseline
+# The latency gate's other half
 # ---------------------------------------------------------------------------
 
-# What each port measured at the last release, which the latency gate compares
-# against. Recorded per implementation, NOT shared: the three ports are 2-3x
-# apart in absolute cost on identical hardware.
+# Measure the previous release and this checkout on THIS machine, and write the
+# record the latency gate reads.
 #
-# The figures must come from a CI run on the profile the file names — GitHub's
-# ubuntu-latest, on the pinned language version per port. That is the only place
-# the gate compares against them, and a figure taken here would set a baseline
-# two to three times faster than the runner can reproduce, failing every release
-# afterwards on a regression that never happened. So: read them out of a green
-# CI run's gate reports (each prints `latency N ms`), then
+# Nothing is stored between releases any more. The gate's comparison point is the
+# previous release's CODE, checked out of this repository's own history into a
+# worktree, timed here, minutes before this checkout is timed here. That is the
+# only arrangement that answers "did this change make it slower" on hardware
+# nobody controls: identical code spread 67% across six of GitHub's own
+# ubuntu-latest runners in Ruby, and a stored number cannot tell that apart from
+# a regression.
 #
-#   just latency-baseline-show                      # what is recorded now
-#   just latency-baseline 0.3.0 9.213 1.048 11.302  # python, typescript, ruby
+#   just latency-pair ruby           # writes /tmp/vicary-latency-pair-ruby.json
+#   VICARY_LATENCY_PAIR=/tmp/vicary-latency-pair-ruby.json just rb-gates
 #
-# READ THE DIFF. A baseline that moved a long way is either the improvement you
-# meant or the regression this gate exists to catch, and writing it here is what
-# stops the gate asking about the old number.
-latency-baseline version python_ms typescript_ms ruby_ms:
-    @{{python}} tools/latency_baseline_record.py --version {{version}} \
-      --python {{python_ms}} --typescript {{typescript_ms}} --ruby {{ruby_ms}}
-
-latency-baseline-show:
-    @{{python}} tools/latency_baseline_record.py --version unused --show
+# It takes a minute per port and needs the port set up the way its tests need it
+# — `npm ci` in typescript/, the venv in python/ — because it builds the previous
+# release with this checkout's toolchain rather than downloading one.
+#
+# Time the last release and this checkout here, and write the gate's record.
+latency-pair impl out="":
+    @{{python}} tools/latency_pair.py --impl {{impl}} \
+      --out {{ if out == "" { "/tmp/vicary-latency-pair-" + impl + ".json" } else { out } }}
 
 # ---------------------------------------------------------------------------
 # Across every front door

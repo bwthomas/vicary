@@ -6,28 +6,52 @@ require "pathname"
 module Vicary
   # Is this build slower than the last release, and is that a fair question here?
   #
-  # The latency gate used to hold an absolute number — 10 ms — which is a claim
-  # about the machine as much as about the code. It passed on a laptop and failed
-  # on the CI runner enforcing it, so v0.2.3 published to PyPI and npm and was
-  # refused by RubyGems on the same commit. This gem is the one that caught it.
+  # The gate has asked this three ways. The first two are worth keeping in view,
+  # because each looked correct until it decided a release.
   #
-  # What replaced it asks a relative question: is this port slower than it was at
-  # the last release, by more than the tolerance. That only means something
-  # between measurements taken on comparable hardware, so this module's real work
-  # is REFUSING to compare when they are not — a machine difference reported as a
-  # code regression is worse than no gate, because it trains the reader to ignore
-  # it.
+  # **An absolute bar — 10 ms.** A claim about the machine as much as about the
+  # code. It passed on a laptop and failed on the CI runner enforcing it, so
+  # v0.2.3 published to PyPI and npm and was refused by RubyGems on the same
+  # commit. This gem is the one that caught it.
   #
-  # This port reaches its own verdict from the shared file. It does not read
+  # **A stored baseline** — record each release's number and compare the next run
+  # against it, refusing unless the run claims the profile the baseline was
+  # recorded on. Better, and still wrong, for a reason no estimator fixes: the
+  # profile `github-ubuntu-latest` is not a machine. Thirty-six processes across
+  # six runners per port, on identical code, spread 67% in THIS port — 6.53 ms on
+  # an Intel Xeon 6973P-C against 10.63 ms on an EPYC 7763 — 26% in Python and
+  # 21% in TypeScript, against an 8% bar. One probe run drew five CPU models from
+  # that one label, and two runners of the same model still differed by 26%.
+  #
+  # **A pair, measured here.** The previous release's code and this checkout,
+  # measured on the SAME machine, interleaved and counterbalanced, by
+  # `tools/latency_pair.py`. Every property of the machine is common to both
+  # sides and cancels; what is left is within-process noise, 1.7% in this port.
+  #
+  # Which leaves this module the job it has always had: REFUSING to compare when
+  # the two sides would not be like for like. What changed is that the refusals
+  # are about the pair record — is there one, is it this port's, was it measured
+  # on these essays, was it measured for this commit — rather than about the
+  # profile of a machine somewhere else.
+  #
+  # This port reaches its own verdict from the shared record. It does not read
   # Python's answer.
   module LatencyBaseline
-    BASELINE_FILENAME = "latency_baseline.json"
+    # The tolerance and the protocol, in the repository. Not a measurement:
+    # nothing is recorded at release time any more, because the comparison point
+    # is the previous release's *code*, which the repository already has.
+    SPEC_FILENAME = "latency_baseline.json"
 
-    # Set by CI on the one matrix entry whose language version matches the
-    # recorded profile. Absent everywhere else on purpose: a developer's laptop
-    # measures the same commit two to three times faster than the runner, and
-    # comparing that against a runner baseline reports a phantom improvement.
-    PROFILE_ENV_VAR = "VICARY_LATENCY_PROFILE"
+    # Where `tools/latency_pair.py` left the paired measurement. Set by CI in the
+    # same job, seconds before the gate runs. Absent on a laptop unless the
+    # harness was run there by hand, and that absence is a refusal to compare
+    # rather than a pass — measuring one side of a comparison is not a gate.
+    PAIR_ENV_VAR = "VICARY_LATENCY_PAIR"
+
+    # What this reader understands. A record from a future shape is refused
+    # rather than half-read: a partly-understood record still yields a number,
+    # and a number is exactly what must not be invented here.
+    PAIR_DOCUMENT_VERSION = 1
 
     IMPLEMENTATION = "ruby"
 
@@ -35,8 +59,8 @@ module Vicary
 
     # The gate's answer, and — when it declines — why.
     Comparison = Struct.new(
-      :measured_ms, :baseline_ms, :regression_pct, :tolerance_pct,
-      :comparable, :reason,
+      :measured_ms, :previous_ms, :current_ms, :regression_pct, :tolerance_pct,
+      :against, :comparable, :reason,
       keyword_init: true
     ) do
       def holds?
@@ -47,97 +71,114 @@ module Vicary
     end
 
     class << self
-      def baseline_path(dir = nil)
+      def spec_path(dir = nil)
         root = dir || Conformance.directory
         return nil if root.nil?
 
-        path = Pathname.new(root).join(BASELINE_FILENAME)
+        path = Pathname.new(root).join(SPEC_FILENAME)
         path.exist? ? path : nil
       end
 
       def load(dir = nil)
-        path = baseline_path(dir)
+        path = spec_path(dir)
         return nil if path.nil?
 
         JSON.parse(path.read)
       end
 
-      # `major.minor` of the running Ruby, matching how the profile records it.
-      def language_version
-        RUBY_VERSION.split(".").first(2).join(".")
+      # The paired measurement, or why there is none to read.
+      #
+      # An unreadable file and an absent one stay distinguishable: the first is a
+      # broken harness and the second is an ordinary laptop, and they should not
+      # report the same thing.
+      def load_pair(path = nil)
+        given = (path || ENV[PAIR_ENV_VAR] || "").strip
+        if given.empty?
+          return [nil,
+                  "#{PAIR_ENV_VAR} is unset, so no paired measurement was taken on " \
+                  "this machine; the gate compares this build against the last " \
+                  "release measured HERE, and one side of a comparison is not a gate"]
+        end
+        return [nil, "#{PAIR_ENV_VAR}=#{given.inspect} does not exist"] unless File.exist?(given)
+
+        begin
+          [JSON.parse(File.read(given)), nil]
+        rescue StandardError => e
+          [nil, "the pair record at #{given} could not be read: #{e.message}"]
+        end
       end
 
-      # Compare +measured_ms+ against the recorded baseline for this port.
+      # Compare the pair measured on this machine, for this port.
       #
-      # Every reason below is a refusal to compare, not a failure to measure: the
-      # number was measured either way and is reported either way. What is
-      # withheld is the verdict, because the two sides would not be like for like.
+      # +measured_ms+ is this process's own figure. It is reported either way and
+      # it is never the verdict: the verdict comes from the two numbers in the
+      # pair record, taken back to back on one machine. Mixing this process's
+      # measurement with the pair's other side would reintroduce exactly the
+      # machine difference the pair exists to cancel.
       def compare(measured_ms, corpus_id, dir: nil, implementation: IMPLEMENTATION,
-                  observed_language_version: nil, profile_env: nil)
-        doc = load(dir)
-        tolerance = (doc && doc["tolerance_pct"] || DEFAULT_TOLERANCE_PCT).to_f
-        lang = observed_language_version || language_version
+                  pair_path: nil, building_sha: nil)
+        doc = load(dir) || {}
+        tolerance = (doc["tolerance_pct"] || DEFAULT_TOLERANCE_PCT).to_f
 
-        declined = lambda do |reason, baseline_ms = nil|
-          Comparison.new(measured_ms: measured_ms, baseline_ms: baseline_ms,
-                         regression_pct: nil, tolerance_pct: tolerance,
+        declined = lambda do |reason|
+          Comparison.new(measured_ms: measured_ms, previous_ms: nil, current_ms: nil,
+                         regression_pct: nil, tolerance_pct: tolerance, against: nil,
                          comparable: false, reason: reason)
         end
 
-        return declined.call("no #{BASELINE_FILENAME} in this checkout") if doc.nil?
+        record, why = load_pair(pair_path)
+        return declined.call(why || "no paired measurement") if record.nil?
 
-        profile = doc["profile"] || {}
-        want_profile = profile["id"]
-        have_profile = (profile_env || ENV[PROFILE_ENV_VAR] || "").strip
-        if have_profile.empty?
+        unless record["document_version"] == PAIR_DOCUMENT_VERSION
           return declined.call(
-            "#{PROFILE_ENV_VAR} is unset, so this machine does not claim to be " \
-            "#{want_profile.inspect}; the baseline was recorded there"
+            "the pair record is document_version #{record['document_version']} " \
+            "and this reader knows #{PAIR_DOCUMENT_VERSION}"
           )
         end
-        unless have_profile == want_profile
+        unless record["implementation"] == implementation
           return declined.call(
-            "#{PROFILE_ENV_VAR}=#{have_profile.inspect} but the baseline was " \
-            "recorded on #{want_profile.inspect}"
+            "the pair record measures #{record['implementation'].inspect}, " \
+            "not #{implementation.inspect}"
           )
         end
-
-        want_lang = (profile["language_versions"] || {})[implementation]
-        if !want_lang.nil? && want_lang.to_s != lang
+        unless record["corpus"] == corpus_id
           return declined.call(
-            "#{implementation} #{lang} is not the #{want_lang} the baseline was " \
-            "recorded on; interpreter versions differ by more than the bar"
+            "the pair was measured on corpus #{record['corpus'].inspect} and this " \
+            "run is #{corpus_id.inspect}; latency scales with essay length"
           )
         end
 
-        want_corpus = doc["corpus"]
-        if !want_corpus.nil? && want_corpus != corpus_id
+        # Only where there is something to check against. `GITHUB_SHA` names the
+        # commit the job is building, so a record left over from an earlier
+        # commit is caught here rather than being read as this build's verdict.
+        # Locally there is no such witness and no such risk: the harness is run
+        # by hand, minutes before, on the tree in front of you.
+        building = (building_sha || ENV["GITHUB_SHA"] || "").strip
+        head = record["head_sha"].to_s
+        if !building.empty? && !head.empty? && building != head
           return declined.call(
-            "corpus #{corpus_id.inspect} is not the #{want_corpus.inspect} the " \
-            "baseline was recorded on; latency scales with essay length"
+            "the pair was measured for commit #{head[0, 12]} and this job is " \
+            "building #{building[0, 12]}; the record is stale"
           )
         end
 
-        entry = (doc["implementations"] || {})[implementation] || {}
-        recorded = entry["pooled_median_ms"]
-        if recorded.nil?
-          return declined.call(
-            "no baseline recorded for #{implementation} yet — the next release " \
-            "records one"
-          )
+        previous = record["previous_ms"]
+        current = record["current_ms"]
+        unless previous.is_a?(Numeric) && current.is_a?(Numeric)
+          return declined.call("the pair record carries no pair of measurements")
         end
-
-        recorded = recorded.to_f
-        if recorded <= 0
+        if previous <= 0
           return declined.call(
-            "recorded baseline for #{implementation} is not positive", recorded
+            "the previous release measured #{previous} ms, which is not positive"
           )
         end
 
         Comparison.new(
-          measured_ms: measured_ms, baseline_ms: recorded,
-          regression_pct: (measured_ms / recorded - 1.0) * 100.0,
-          tolerance_pct: tolerance, comparable: true, reason: nil
+          measured_ms: measured_ms, previous_ms: previous.to_f,
+          current_ms: current.to_f,
+          regression_pct: (current.to_f / previous.to_f - 1.0) * 100.0,
+          tolerance_pct: tolerance, against: (record["against"] || {})["ref"],
+          comparable: true, reason: nil
         )
       end
 
@@ -149,9 +190,10 @@ module Vicary
         end
 
         sign = c.regression_pct >= 0 ? "+" : ""
-        format("latency %.3f ms vs %.3f ms at the last release — %s%.2f%% " \
-               "against a %d%% bar",
-               c.measured_ms, c.baseline_ms, sign, c.regression_pct, c.tolerance_pct)
+        format("latency %.3f ms here; paired on this machine, %.3f ms against " \
+               "%s's %.3f ms — %s%.2f%% against a %d%% bar",
+               c.measured_ms, c.current_ms, c.against || "the last release",
+               c.previous_ms, sign, c.regression_pct, c.tolerance_pct)
       end
 
       # The keyword arguments Gates.measure wants. Returns the *detail* rather

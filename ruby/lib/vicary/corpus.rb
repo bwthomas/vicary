@@ -445,13 +445,23 @@ module Vicary
         over_fire = 0
         rewrites = 0
 
-        # Load the gazetteer before the clock starts. It is a one-time ~207 ms
-        # cost in this port, and whichever essay happens to be first pays all of
-        # it: at n=25 that single sample lands at or above p95 and sets the
-        # gate's answer by itself — 14.3 ms cold against 7.6 ms warm, on a 10 ms
-        # bar. The number the gate claims is essay-length redaction latency, not
-        # process startup. Excluded in all three ports alike.
-        yield(cases.first.base[0, 200], identity) unless cases.empty?
+        # Warm up before the clock starts, over the WHOLE corpus rather than one
+        # 200-char call. Two costs are being excluded, and the second one is why
+        # this grew.
+        #
+        # The gazetteer load is a one-time ~207 ms cost in this port, and
+        # whichever essay happens to be first pays all of it — 14.3 ms cold
+        # against 7.6 ms warm.
+        #
+        # The second belongs to TypeScript, where V8 tiers the redaction path up
+        # over roughly the first four essays and runs them at about twice their
+        # steady-state cost. This port barely moves under a full warmup and does
+        # it anyway: the three ports measure identically or the gate is three
+        # different gates.
+        cases.each do |kase|
+          yield(kase.text, identity)
+          yield(kase.base, identity)
+        end
 
         cases.each do |kase|
           # The median of LATENCY_REPEATS, not one sample — see that constant.

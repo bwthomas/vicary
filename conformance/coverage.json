@@ -81,7 +81,7 @@
       "ruby": null
     },
     "latency_baseline": {
-      "why": "The latency regression comparison and — mostly — its refusals. Each port decides for itself whether a run may be compared against the recorded baseline, so each port tests its own decision: a port that silently compared a laptop against a runner figure would report a large phantom improvement, and one that silently declined would report a regression as a pass. Both failures are invisible from the other two ports.",
+      "why": "The latency regression comparison and — mostly — its refusals. Each port decides for itself whether a paired measurement may be compared, so each port tests its own decision: a port that silently read another port's record would compare figures 2-3x apart in absolute cost, and one that silently declined would report a regression as a pass. Both failures are invisible from the other two ports.",
       "python": "tests/test_latency_baseline.py",
       "typescript": "test/latencyBaseline.test.ts",
       "ruby": "test/latency_baseline_test.rb"

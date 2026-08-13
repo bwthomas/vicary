@@ -118,7 +118,12 @@ jobs:
       run:
         working-directory: python
     steps:
+      # Deep, because the latency gate's other half is the PREVIOUS RELEASE's
+      # code: the pair below checks it out of this history and times it here,
+      # against this checkout, on one machine. A shallow clone has no tags.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -131,9 +136,15 @@ jobs:
       - name: Vendor the asset
         run: python -m vicary_build vendor src/vicary/data
 
+      # On a tag, the pair compares against the release BEFORE this one: the
+      # driver skips a tag that points at HEAD, because a release compared
+      # against itself reports 0% forever and passes every time.
+      - name: Latency pair
+        run: python ../tools/latency_pair.py --impl python --out "$RUNNER_TEMP/pair.json"
+
       - name: Gates
         env:
-          VICARY_LATENCY_PROFILE: github-ubuntu-latest
+          VICARY_LATENCY_PAIR: ${{ runner.temp }}/pair.json
         run: pytest -m gates -s
 
   publish:

@@ -65,7 +65,12 @@ jobs:
         python-version: ["3.11", "3.13"]
 
     steps:
+      # Deep, because the latency gate's other half is the PREVIOUS RELEASE's
+      # code: `tools/latency_pair.py` checks it out of this history into a
+      # worktree and times it here. A shallow clone has no tags and no v0.2.4.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -95,17 +100,27 @@ jobs:
       - name: Unit tests
         run: pytest -m "not gates" -q
 
+      # The latency gate's other half, measured HERE: the previous release and
+      # this checkout, timed alternately on this runner. Both sides face the
+      # same machine, so the machine cancels — which is the whole design, and
+      # the reason nothing is recorded between releases any more.
+      #
+      # One matrix entry rather than all of them, and now for COST rather than
+      # for validity: the pair is sound on any runner and any interpreter,
+      # because it never compares across machines. It just takes half a minute,
+      # and the question it answers is about the code, which does not differ
+      # between matrix entries.
+      - name: Latency pair
+        if: matrix.python-version == '3.13'
+        run: python ../tools/latency_pair.py --impl python --out "$RUNNER_TEMP/pair.json"
+
       # Separate step so a gate regression is distinguishable from a unit-test
       # failure at a glance in the checks list, and so the printed numbers land
-      # in a log section of their own.
-      # The latency gate compares against a baseline recorded on THIS runner at
-      # the last release, so it is only entitled to an opinion on the matrix
-      # entry the baseline was recorded on. Elsewhere — the other interpreter
-      # here, and every developer laptop — it measures, prints, and reports NOT
-      # MEASURED rather than comparing across a gap several times the bar.
+      # in a log section of their own. Without the pair the latency gate
+      # measures, prints, and reports NOT MEASURED with the reason attached.
       - name: Gates
         env:
-          VICARY_LATENCY_PROFILE: ${{ matrix.python-version == '3.13' && 'github-ubuntu-latest' || '' }}
+          VICARY_LATENCY_PAIR: ${{ matrix.python-version == '3.13' && format('{0}/pair.json', runner.temp) || '' }}
         run: pytest -m gates -s
 
       - name: Asset integrity
@@ -204,7 +219,11 @@ jobs:
         # Intl behaviour change between versions rather than a dependency.
         node-version: ["20", "22"]
     steps:
+      # Deep: the pair below times the PREVIOUS RELEASE's code, checked out of
+      # this history. A shallow clone has no tags and nothing to compare against.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -218,14 +237,27 @@ jobs:
       - name: Vendor the asset
         run: npm run sync-assets
       - run: npx tsc -p tsconfig.json --noEmit
-      # The latency gate compares against a baseline recorded on THIS runner at
-      # the last release, so it is only entitled to an opinion on the matrix
-      # entry the baseline was recorded on. Elsewhere — the other interpreter
-      # here, and every developer laptop — it measures, prints, and reports NOT
-      # MEASURED rather than comparing across a gap several times the bar.
+      # `--noEmit` above type-checks and writes nothing; the pair times compiled
+      # output, so it needs a real build of this side. The previous release is
+      # compiled by this checkout's tsc against these node_modules, so neither
+      # side reaches the registry.
+      - name: Build
+        if: matrix.node-version == '22'
+        run: npm run build
+      # The latency gate's other half, measured HERE: the previous release and
+      # this checkout, timed alternately on this runner. Both sides face the same
+      # machine, so the machine cancels. This port takes three times as many
+      # rounds as the others because its per-process noise is three times theirs
+      # — 2 ms measurements and a JIT that does not settle identically twice.
+      #
+      # One matrix entry rather than both, and for COST rather than validity: the
+      # pair never compares across machines, so it is sound anywhere.
+      - name: Latency pair
+        if: matrix.node-version == '22'
+        run: python3 ../tools/latency_pair.py --impl typescript --out "$RUNNER_TEMP/pair.json"
       - run: npm test
         env:
-          VICARY_LATENCY_PROFILE: ${{ matrix.node-version == '22' && 'github-ubuntu-latest' || '' }}
+          VICARY_LATENCY_PAIR: ${{ matrix.node-version == '22' && format('{0}/pair.json', runner.temp) || '' }}
       # Printed as its own step so the scoreboard is readable in the checks list
       # without expanding a test log. It reports 0 of 35 until the detector lands,
       # which is the honest number and the reason it is printed at all.
@@ -291,20 +323,28 @@ jobs:
       matrix:
         ruby-version: ["3.1", "3.3"]
     steps:
+      # Deep: the pair below times the PREVIOUS RELEASE's code, checked out of
+      # this history. A shallow clone has no tags and nothing to compare against.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby-version }}
           working-directory: ruby
       - name: Vendor the asset
         run: rake sync_assets
-      # The latency gate compares against a baseline recorded on THIS runner at
-      # the last release, so it is only entitled to an opinion on the matrix
-      # entry the baseline was recorded on. Elsewhere — the other interpreter
-      # here, and every developer laptop — it measures, prints, and reports NOT
-      # MEASURED rather than comparing across a gap several times the bar.
+      # The latency gate's other half, measured HERE: the previous release and
+      # this checkout, timed alternately on this runner. Both sides face the same
+      # machine, so the machine cancels — which matters most in this port, where
+      # identical code spread 67% across six of GitHub's own runners.
+      #
+      # One matrix entry rather than both, and for COST rather than validity.
+      - name: Latency pair
+        if: matrix.ruby-version == '3.3'
+        run: python3 ../tools/latency_pair.py --impl ruby --out "$RUNNER_TEMP/pair.json"
       - run: rake test
         env:
-          VICARY_LATENCY_PROFILE: ${{ matrix.ruby-version == '3.3' && 'github-ubuntu-latest' || '' }}
+          VICARY_LATENCY_PAIR: ${{ matrix.ruby-version == '3.3' && format('{0}/pair.json', runner.temp) || '' }}
       - name: Conformance scoreboard
         run: rake conformance
