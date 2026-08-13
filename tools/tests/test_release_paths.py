@@ -231,3 +231,43 @@ def test_no_publish_path_can_upload_without_a_tag(filename: str) -> None:
             )
 
     assert checked, f"{filename}: found no job containing {needle!r}"
+
+
+@pytest.mark.parametrize("filename", sorted(PUBLISH_PATHS))
+def test_every_publish_path_can_rehearse_its_credential(filename: str) -> None:
+    """A trust chain first exercised by a real release is a trust chain nobody has tested.
+
+    Every one of these paths authenticates by trusted publishing (OIDC), and the
+    claims are matched against the repository, the workflow *filename* and the
+    environment. So a misregistered publisher is invisible to every other check
+    here — the artifact can be perfect, the gates green, and the upload still
+    refused with `invalid-publisher` at the last step of a release.
+
+    ``release-npm`` and ``release-gem`` each carried a probe for that reason and
+    ``release.yml`` did not, which made PyPI the one registry whose credential
+    would first be exercised by a release rather than by a rehearsal. This asserts
+    the capability exists on all three, not that it works — only running it proves
+    that, which is what the probe is for.
+
+    The probe input has to be a dispatch input rather than a hardcoded flag: it
+    must be settable without editing the file, because editing the file is the
+    thing whose effect on the OIDC claims is being rehearsed.
+    """
+    text = workflow_path(filename).read_text(encoding="utf-8")
+    header = text.split("\njobs:\n", 1)[0]
+
+    assert "workflow_dispatch:" in header, (
+        f"{filename} cannot be dispatched manually, so its credential path can "
+        f"only ever be exercised by a real release"
+    )
+    probes = [name for name in ("publish_probe", "push_probe") if f"{name}:" in header]
+    assert probes, (
+        f"{filename} declares no probe input, so the only way to find out whether "
+        f"its trusted publisher is registered correctly is to publish. Add a "
+        f"boolean dispatch input that mints the credential and stops."
+    )
+    assert "type: boolean" in header, (
+        f"{filename}'s probe input {probes} is not declared boolean, so `if:` "
+        f"comparisons against it are string comparisons and the guard is not "
+        f"what it looks like"
+    )

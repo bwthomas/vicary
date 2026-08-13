@@ -23,6 +23,14 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      publish_probe:
+        description: >-
+          Prove the trusted-publishing credential without publishing: mint the
+          OIDC token and exchange it with PyPI for an upload credential. Never
+          uploads a distribution. Leave this off for a real release.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -161,10 +169,9 @@ jobs:
   # `tools/tests/test_release_paths.py` fails if any of the three loses it.
   #
   # What this port lacked on top of that is a probe mode, which made it the one
-  # path nobody could rehearse. The guard supplies the useful half: a dispatch now
-  # runs the build, the pair and the gates on the real publish path and stops
-  # short of the upload. It still does not exercise the PyPI credential exchange
-  # the way the other two exercise theirs — that gap is smaller, and open.
+  # path nobody could rehearse. The guard supplies half of it — a dispatch runs
+  # the build, the pair and the gates on the real publish path and stops short of
+  # the upload — and the `credential_probe` job below supplies the other half.
   publish:
     needs: [build, gates]
     if: startsWith(github.ref, 'refs/tags/v')
@@ -178,3 +185,111 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  # THE CREDENTIAL PROBE — the trust chain, exercised without uploading.
+  #
+  # Everything above proves the artifact: the wheel carries the asset, installs
+  # into a clean interpreter, redacts a sentence, and clears the gates. None of it
+  # touches the one link that is unique to release day — that PyPI will actually
+  # hand this workflow an upload credential. Until this job existed, the first run
+  # to find out whether the trusted publisher was registered against the right
+  # repository, workflow filename and environment would have been a real release,
+  # which is the worst moment to learn the answer. `release-npm` and `release-gem`
+  # each had a probe for exactly this reason; this path did not.
+  #
+  # It does NOT use `gh-action-pypi-publish` in any dry-run mode, for the reason
+  # the npm probe spells out about `npm publish --dry-run`: a mode that skips the
+  # upload generally skips the exchange too, so it passes whether or not the
+  # credential works — the one thing a probe may not do. Instead it makes the two
+  # calls the action makes, where a refusal is a hard failure this step can see:
+  # ask GitHub for an ID token with PyPI's audience, then POST it to PyPI's
+  # mint-token endpoint. A 200 carrying a token proves the whole chain.
+  #
+  # ENVIRONMENT AND FILENAME ARE LOAD-BEARING, and that is the point of running
+  # the probe here rather than in a scratch workflow. PyPI matches the OIDC claims
+  # against a publisher registered for repository `bwthomas/vicary`, workflow
+  # `release.yml` and environment `pypi`. A probe that ran anywhere else would
+  # prove something about a trust relationship nobody uses.
+  #
+  # It cannot publish by accident: it never builds or sends a distribution, it
+  # does not run `twine`, and the minted credential is masked and discarded with
+  # the job. The `publish` job above is tag-gated, so a dispatch cannot reach it.
+  credential_probe:
+    if: ${{ inputs.publish_probe }}
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Say what this run is
+        run: |
+          echo "CREDENTIAL PROBE — nothing will be uploaded. This job proves PyPI"
+          echo "will mint an upload credential for this workflow, and then stops."
+
+      - name: Prove the trusted-publishing credential without publishing
+        run: |
+          set -euo pipefail
+
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] || [ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+            echo "no OIDC request credentials in the environment — the job is missing"
+            echo "id-token: write, which is the permission PyPI's exchange needs."
+            exit 1
+          fi
+
+          # Asked for rather than hardcoded, the way the action does it: the
+          # audience is PyPI's to choose, and a stale constant here would fail as
+          # though the publisher were misconfigured.
+          audience=$(curl -sS --fail-with-body https://pypi.org/_/oidc/audience \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["audience"])')
+          test -n "$audience" || { echo "PyPI did not name an audience"; exit 1; }
+          echo "PyPI names its audience: $audience"
+
+          id_token=$(curl -sS --fail-with-body \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            -H "Accept: application/json" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${audience}" \
+            | python3 -c 'import json,sys; v=json.load(sys.stdin).get("value") or sys.exit("no value in id-token response"); sys.stdout.write(v)')
+          test -n "$id_token" || { echo "could not mint a GitHub ID token"; exit 1; }
+          # Mask before it can reach a log through any later command's echo.
+          echo "::add-mask::$id_token"
+          echo "minted a GitHub ID token for audience $audience"
+
+          # The exchange. Status and body captured separately so a refusal reports
+          # PyPI's own reason rather than a bare exit code — the difference between
+          # "the publisher is not registered" and "we sent a malformed token" is
+          # the whole diagnostic value of this step.
+          response=$(curl -sS -w '\n%{http_code}' -X POST \
+            -H 'Content-Type: application/json' \
+            -d "{\"token\": \"${id_token}\"}" \
+            https://pypi.org/_/oidc/mint-token)
+          http_status=$(printf '%s' "$response" | tail -n1)
+          body=$(printf '%s' "$response" | sed '$d')
+
+          if [ "$http_status" != "200" ]; then
+            echo "PyPI refused to mint an upload credential (HTTP $http_status)."
+            echo "--- PyPI said ---"
+            printf '%s\n' "$body"
+            echo "-----------------"
+            echo
+            echo "invalid-publisher means no trusted publisher matches this run's"
+            echo "claims: check repository, workflow filename (release.yml) and"
+            echo "environment (pypi) on PyPI's Publishing page. invalid-payload"
+            echo "means the token this step sent was malformed, which is a bug here"
+            echo "rather than a misconfiguration there."
+            exit 1
+          fi
+
+          # Masked, then checked for shape only. The token is a real upload
+          # credential for this project — short-lived, but real — so nothing about
+          # it beyond its length is printed.
+          token=$(printf '%s' "$body" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("token",""))')
+          test -n "$token" || { echo "200 from PyPI but no token in the body"; exit 1; }
+          echo "::add-mask::$token"
+          case "$token" in
+            pypi-*) : ;;
+            *) echo "PyPI returned a credential that is not shaped like an upload token"; exit 1 ;;
+          esac
+          echo "PyPI minted an upload credential for this workflow: ${#token} characters, prefix pypi-"
+          echo
+          echo "The trust chain holds: repository, workflow file and environment all"
+          echo "match the publisher PyPI has registered. Nothing was uploaded."
