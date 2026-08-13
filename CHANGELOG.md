@@ -94,10 +94,23 @@
   and every upload step reported `skipped`, with all three registries still
   serving 0.2.4 afterwards. Before this, `test_release_paths.py` asserted the
   wiring and nothing had ever run it.
-* Still open: this leaves PyPI the one path with no credential probe. `release-npm`
-  and `release-gem` can each rehearse their trusted-publishing exchange without
-  uploading; `release.yml` cannot, so its credential path is still first exercised
-  by a real release.
+* **PyPI can rehearse its credential too, which it could not before.**
+  `release.yml` gains a `publish_probe` dispatch input and a job that asks GitHub
+  for an ID token with PyPI's own declared audience, exchanges it at
+  `/_/oidc/mint-token`, and stops. It runs in the `pypi` environment from this
+  same file because the repository, workflow *filename* and environment are
+  exactly what PyPI matches the OIDC claims against — a probe run anywhere else
+  would prove something about a trust relationship nobody uses. It does not use a
+  dry-run mode, for the reason the npm probe already documents: a mode that skips
+  the upload generally skips the exchange, so it passes whether or not the
+  credential works.
+* First run of it: PyPI minted a 285-character upload credential, and the
+  `publish` job skipped on the same run. That exchange had never once executed —
+  every previous path to it either published or was skipped — so the trust chain
+  is now proven rather than assumed, and PyPI still serves 0.2.4.
+* `tools/tests/test_release_paths.py` now also asserts every publish path declares
+  a boolean probe input, so the asymmetry that left this one unrehearsed cannot
+  reopen quietly.
 
 ## 0.2.4 — 2026-08-13
 
