@@ -33,6 +33,7 @@ number and never can drift.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from dataclasses import dataclass
@@ -91,26 +92,72 @@ DECLARATIONS: tuple[Declaration, ...] = (
         "read from the installed gem, which ships no VERSION file",
         required=False,
     ),
-    # The lock file restates it TWICE, at two indentation depths, and npm
-    # rewrites both on any `npm install`. Two declarations rather than one
-    # variable-width pattern because Python lookbehind is fixed-width, and
-    # anchoring on the exact indentation is what keeps these from matching a
-    # dependency's version somewhere else in a 400-line file.
-    Declaration(
-        "typescript/package-lock.json",
-        re.compile(r'(?<=^  "version": ")([^"]+)(?=",$)', re.M),
-        "read by npm ci, which fails the install when it disagrees with "
-        "package.json",
-        required=False,
-    ),
-    Declaration(
-        "typescript/package-lock.json",
-        re.compile(r'(?<=^      "version": ")([^"]+)(?=",$)', re.M),
-        "the lock's own record of the root package, which npm rewrites in "
-        "place and which drifted through two releases unnoticed",
-        required=False,
-    ),
 )
+
+#: The lock file, which is JSON and is therefore NOT in the table above.
+#:
+#: It restates the version twice — at the top level and again under
+#: ``packages[""]`` — and both are what ``npm ci`` compares against
+#: ``package.json`` before it will install anything.
+#:
+#: Handled by parsing rather than by a pattern, and that is the whole lesson of
+#: how this landed. The first attempt added two regex Declarations anchored on
+#: indentation (``^      "version": "``), on the reasoning that the depth made
+#: them specific. It does not: every DEPENDENCY's version sits at that same
+#: depth, ``sub`` rewrites every match, and the 0.2.6 tag shipped a lock
+#: claiming ``typescript@0.2.6`` and ``@types/node@0.2.6``. `just ci` was green
+#: — nothing in it runs ``npm ci`` — and the paired test checked only the two
+#: keys the change intended to move, so neither half could see the damage. A
+#: structured file gets a structured edit.
+LOCK_PATH = "typescript/package-lock.json"
+
+
+def _lock_versions(payload: dict) -> list[str]:
+    """The lock's two statements of the ROOT package's version, in order."""
+    found = []
+    if "version" in payload:
+        found.append(payload["version"])
+    root = (payload.get("packages") or {}).get("")
+    if isinstance(root, dict) and "version" in root:
+        found.append(root["version"])
+    return found
+
+
+def _sync_lock(version: str) -> list[str]:
+    """Set both root-package versions, leaving every dependency untouched."""
+    path = REPO_ROOT / LOCK_PATH
+    if not path.exists():
+        return []
+    text = path.read_text(encoding="utf-8")
+    payload = json.loads(text)
+    before = _lock_versions(payload)
+    if not before:
+        raise ValueError(
+            f"{LOCK_PATH} states no root version this can find — a silent skip "
+            "here is a file that stops being synced and stops being checked at "
+            "once."
+        )
+    if all(v == version for v in before):
+        return []
+    payload["version"] = version
+    if isinstance(payload.get("packages", {}).get(""), dict):
+        payload["packages"][""]["version"] = version
+    # npm writes two-space indent and a trailing newline; matching it keeps a
+    # sync from showing up as a whole-file reformat in the release diff.
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return [f"{LOCK_PATH}  {'/'.join(before)} -> {version}"]
+
+
+def _check_lock(version: str) -> list[str]:
+    path = REPO_ROOT / LOCK_PATH
+    if not path.exists():
+        return []
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return [
+        f"{LOCK_PATH}  declares {declared}, not {version}"
+        for declared in _lock_versions(payload)
+        if declared != version
+    ]
 
 
 def read_version() -> str:
@@ -151,6 +198,7 @@ def sync(version: str) -> list[str]:
         text = path.read_text(encoding="utf-8")
         path.write_text(declaration.pattern.sub(version, text), encoding="utf-8")
         changed.append(f"{declaration.path}  {declared} -> {version}")
+    changed.extend(_sync_lock(version))
     return changed
 
 
@@ -161,6 +209,7 @@ def check(version: str) -> list[str]:
         _, declared = _declared(declaration)
         if declared is not None and declared != version:
             drifted.append(f"{declaration.path}  declares {declared}, not {version}")
+    drifted.extend(_check_lock(version))
     return drifted
 
 

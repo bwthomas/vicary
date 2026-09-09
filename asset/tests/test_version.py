@@ -69,6 +69,38 @@ def test_the_npm_lock_agrees_in_both_places() -> None:
     assert payload["packages"][""]["version"] == config.version()
 
 
+def test_no_dependency_in_the_lock_wears_the_repository_version() -> None:
+    """A sync must move the root package's version and nothing else.
+
+    This is the test that was missing when the 0.2.6 tag shipped a lock
+    declaring ``typescript@0.2.6`` and ``@types/node@0.2.6``: the first attempt
+    at syncing the lock used a regex anchored on indentation, every dependency's
+    version sits at that same depth, and ``sub`` rewrote them all. ``npm ci``
+    refused the install — which is the only reason anyone found out, because
+    `just ci` does not run it and the two assertions above check only the keys
+    the change meant to move.
+
+    Phrased as "no dependency may equal our version" rather than as a fixed
+    expected list, so it keeps working across dependency upgrades. It would
+    false-positive only if a dependency genuinely released our exact version
+    number, which is worth the one-line explanation it would then need.
+    """
+    lock_path = REPO_ROOT / "typescript" / "package-lock.json"
+    if not lock_path.exists():
+        pytest.skip("no typescript front door in this tree")
+    payload = json.loads(lock_path.read_text(encoding="utf-8"))
+    wearing = [
+        name for name, entry in (payload.get("packages") or {}).items()
+        if name and isinstance(entry, dict)
+        and entry.get("version") == config.version()
+    ]
+    assert not wearing, (
+        f"these lock entries declare the repository's own version "
+        f"{config.version()}, so a version sync overwrote dependency "
+        f"versions: {wearing}"
+    )
+
+
 def test_the_typescript_module_agrees() -> None:
     """The number npm publishes and the number the module exports are two files.
 

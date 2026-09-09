@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## 0.2.7 — 2026-09-09
+
+### The version sync edits the lock file as JSON, because it is one
+
+* **0.2.6 published to PyPI and RubyGems and FAILED on npm.** Cutting 0.2.6
+  taught `tools/version_sync.py` about `typescript/package-lock.json`, which
+  restates the version twice and had drifted through three releases. The
+  teaching was wrong: two regex declarations anchored on indentation
+  (`^      "version": "`), on the reasoning that the depth made them specific.
+  Every *dependency's* version sits at that same depth and `re.sub` rewrites
+  every match, so the tag shipped a lock claiming `typescript@0.2.6`,
+  `@types/node@0.2.6` and `undici-types@0.2.6`. `npm ci` refused the install.
+* **Now parsed, not matched.** Two keys set through `json.loads`, every
+  dependency untouched, and the file rewritten at npm's own two-space indent so
+  a sync is not a whole-file reformat in the release diff.
+* **Two guards, because neither existing half could see it.** `just ci` never
+  runs `npm ci`, and the paired test asserted only the two keys the change meant
+  to move — so a change that moved those two keys *and* three others was green
+  locally. `asset/tests/test_version.py` now also asserts that **no lock entry
+  wears the repository's own version**, which catches the clobber generically
+  rather than by listing today's dependencies.
+* 0.2.6 is a usable release on PyPI and RubyGems and does not exist on npm. This
+  version is where the three agree again.
+
 ## 0.2.6 — 2026-09-09
 
 ### An offset can be translated between the redacted and the original text, in all three ports
