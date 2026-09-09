@@ -60,11 +60,15 @@ from vicary.redaction import (
     NAMES_IDENTITY,
     NAMES_LOWERCASE,
     RedactionResult,
+    RedactionSpan,
     Redactor,
     build_redactor_if_enabled,
+    derive_spans,
     name_detection,
     redaction_enabled,
     redaction_mode,
+    to_original,
+    to_redacted,
 )
 
 __all__ = [
@@ -79,11 +83,15 @@ __all__ = [
     "NAMES_IDENTITY",
     "NAMES_LOWERCASE",
     "RedactionResult",
+    "RedactionSpan",
     "Redactor",
     "StudentIdentity",
     "__version__",
     "build_redactor_if_enabled",
     "name_detection",
     "redaction_enabled",
+    "derive_spans",
     "redaction_mode",
+    "to_original",
+    "to_redacted",
 ]
