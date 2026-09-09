@@ -2,6 +2,40 @@
 
 ## Unreleased
 
+### An offset can be translated between the redacted and the original text, in all three ports
+
+* **`derive_spans` / `to_original` / `to_redacted`, plus a whole-document
+  `original()`.** A host holding masked text and a restore map could not say
+  where any replacement came from, so it could not place a highlight on the
+  composition the student actually holds: `{NAME_1}` is not the width of the
+  name it replaced, and every offset after the first replacement is displaced by
+  the cumulative delta. Measured on a 56-paper corpus, redaction fired on 43
+  essays and **not one** recorded offset pair on those 43 landed on the original.
+* **Nothing in the masker was instrumented.** The public result was already
+  dropping the `restore_map` the local classifier computes for its own
+  `restore`; carrying it across the boundary is the whole change, because the
+  finished text still contains every placeholder, so one left-to-right walk
+  accumulating the running delta recovers the original offsets. Round-trip is
+  exact on all 43 of 43 intervened essays.
+* **An absent or partial map yields no spans rather than wrong ones.** The
+  Guardrail arm returns masked bytes and no map; a caller can handle "no spans"
+  and cannot detect a wrong offset, so a map covering some placeholders and not
+  others is refused wholesale.
+* **`conformance/spans.json` — a third spec layer, and the ports check
+  themselves against it.** `frames.json` pins what is masked and
+  `primitives.json` pins which rule decided it; neither constrains where a
+  replacement came from, so a port could reproduce every byte of both and still
+  send a highlight to the wrong word. 53 cases: 38 real masker outputs from the
+  fixture frames, plus 15 hand-built degenerates including the two where the
+  contract is to refuse.
+* **The spec carries text above the BMP, because one port can diverge there and
+  the other two cannot.** JavaScript offsets count UTF-16 code units where
+  Python and Ruby count characters, so a transliterated port is exactly right on
+  ASCII and one-per-astral-character wrong above it — and an offset is the one
+  output that crosses the language boundary. `spans.ts` therefore works in code
+  points; a code-unit implementation fails exactly the three astral cases and
+  no others, which is what makes them a check rather than decoration.
+
 ## 0.2.5 — 2026-08-13
 
 ### The latency gate times the last release HERE, instead of trusting a number from another machine

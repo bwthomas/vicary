@@ -23,7 +23,20 @@ Vicary.redact("My cousin Terrence Okonkwo came over that summer.", identity)
 
 masked, n, restore_map = Vicary.redact_with_report(essay, identity)
 Vicary.restore(masked, restore_map) == essay   # => true
+
+# Where each replacement came from, for a host that draws on the essay: a
+# placeholder is not the width of the name it replaced, so an offset measured
+# against `masked` is displaced against the composition the student holds.
+spans = Vicary::Spans.derive(masked, restore_map)
+Vicary::Spans.to_original(offset, spans)   # masked coordinates -> the student's
+Vicary::Spans.to_redacted(offset, spans)   # and back
+Vicary::Spans.original(masked, restore_map) == essay   # => true
 ```
+
+An offset landing inside a placeholder resolves to the start of the span it
+replaced. A map that is absent, or that covers only some of the placeholders in
+the text, yields **no** spans and translates as the identity — a caller can
+handle "no spans" and cannot detect a wrong offset.
 
 ## Checking it
 
@@ -33,7 +46,7 @@ Three layers, because each catches what the one above it cannot.
 |---|---|
 | `rake conformance` | the scoreboard against the 54 frames — the final bar, and a coarse first one |
 | `rake gates` | the nine gates, all nine measured from what the repository ships |
-| `rake test` | the unit suites, including `primitives_test.rb`: forty-odd primitives over the shared corpus, which says *which brick* is crooked |
+| `rake test` | the unit suites, including `primitives_test.rb` (forty-odd primitives over the shared corpus, which says *which brick* is crooked) and `spans_test.rb` (the offset arithmetic over the shared `spans.json`) |
 | `rake parity` | gazetteer verdicts, name by name, against the Python reference |
 | `rake redaction_parity` | masked bytes against the Python reference, on prose no fixture contains |
 

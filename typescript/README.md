@@ -36,6 +36,26 @@ strings, so omitting them measures a different system and misses the easiest
 spans in any composition. `redactWithReport` returns the same bytes plus the
 `restoreMap` that `restore` reads to put the originals back.
 
+For a host that draws on the essay, reversing the text is not enough: a
+placeholder is not the width of the name it replaced, so an offset measured
+against the masked copy is displaced against the composition the student holds.
+`deriveSpans` gives each replacement in both coordinate systems, and
+`toOriginal` / `toRedacted` translate between them; `originalText` reconstructs
+the whole composition.
+
+```ts
+const { text, restoreMap } = redactWithReport(essay, identity);
+const spans = deriveSpans(text, restoreMap);
+highlight(essay.slice(toOriginal(start, spans), toOriginal(end, spans)));
+```
+
+Two things to know. An offset inside a placeholder resolves to the start of the
+span it replaced, and an absent or partial map yields no spans and translates as
+the identity — a caller can handle "no spans" and cannot detect a wrong offset.
+**These offsets are code points, not UTF-16 code units**, so they agree with the
+Python and Ruby ports character for character above the BMP as well as below it;
+`conformance/spans.json` carries astral cases that fail a transliteration.
+
 **The gates.** Of the nine in [`conformance/gates.json`](../conformance), this
 port measures the five that need no operator-supplied data, and all five hold:
 

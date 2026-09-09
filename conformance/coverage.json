@@ -26,6 +26,12 @@
       "typescript": "test/redact.test.ts",
       "ruby": "test/redact_test.rb"
     },
+    "span_map": {
+      "why": "Offset translation between redacted and original coordinates — span derivation from the restore map, the two half-open translations, and the contract to refuse when the map is absent or partial. Distinct from `redact`, which covers the restore map itself: that says what a placeholder stands for, this says where it came from, and a host drawing a highlight over a student's own essay needs the second.",
+      "python": "tests/test_span_map.py",
+      "typescript": "test/spans.test.ts",
+      "ruby": "test/spans_test.rb"
+    },
     "gazetteer": {
       "why": "The notability index as the detector reads it: the fold, tier precedence, the title prefix walk, and the demonym tier's KEEP.",
       "python": null,

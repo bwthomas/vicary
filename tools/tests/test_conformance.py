@@ -339,3 +339,74 @@ def test_the_spec_says_which_gates_declare_a_data_requirement(
             f"{gate['label']} requires {sorted(unknown)}, which the document "
             f"does not describe — a port cannot tell an operator what to supply"
         )
+
+
+def test_the_committed_spans_file_is_a_current_export(
+    conformance_directory: Path,
+) -> None:
+    on_disk = (conformance_directory / conformance.SPANS_FILENAME).read_text("utf-8")
+    fresh = conformance.dumps(conformance.build_spans_document())
+    assert on_disk == fresh, (
+        "conformance/spans.json is stale — the span derivation or one of the two "
+        "translations changed and the file the ports check their offset "
+        "arithmetic against did not. Regenerate with `just sync-conformance` and "
+        "READ THE DIFF: a one-character shift here is a highlight landing on the "
+        "wrong word in a student's essay, and no other document in this "
+        "directory would notice."
+    )
+
+
+def test_every_span_case_reconstructs_its_original(
+    conformance_directory: Path,
+) -> None:
+    """The recorded ``original`` is what applying the map to ``masked`` produces.
+
+    Checked against a from-scratch restoration rather than against
+    ``RedactionResult.original`` so this is not the generator asserting on
+    itself: a bug in the span walk that corrupted both fields identically would
+    survive a comparison between them.
+    """
+    document = conformance.load_spans_document(
+        conformance_directory / conformance.SPANS_FILENAME
+    )
+    for case in document["cases"]:
+        expected = case["masked"]
+        if case["spans"]:
+            for placeholder, original in sorted(
+                case["restore_map"].items(), key=lambda kv: -len(kv[0])
+            ):
+                expected = expected.replace(placeholder, original)
+        assert case["original"] == expected, case["case_id"]
+
+
+def test_the_two_translations_are_inverse_at_every_span_boundary(
+    conformance_directory: Path,
+) -> None:
+    """``to_redacted(to_original(x)) == x`` on the offsets where both are total.
+
+    Only at boundaries. Inside a placeholder the round trip is deliberately
+    lossy — the interior has no counterpart to return to — so asserting it
+    everywhere would be asserting the convention is wrong.
+    """
+    document = conformance.load_spans_document(
+        conformance_directory / conformance.SPANS_FILENAME
+    )
+    checked = 0
+    for case in document["cases"]:
+        forward = dict(tuple(pair) for pair in case["to_original"])
+        backward = dict(tuple(pair) for pair in case["to_redacted"])
+        edges = {span["new_start"] for span in case["spans"]}
+        edges |= {span["new_end"] for span in case["spans"]}
+        edges |= {0, len(case["masked"])}
+        for offset in sorted(edges):
+            if offset not in forward:
+                continue
+            translated = forward[offset]
+            if translated not in backward:
+                continue
+            assert backward[translated] == offset, (case["case_id"], offset)
+            checked += 1
+    assert checked > 100, (
+        f"only {checked} boundary round trips available — the probe offsets "
+        "stopped covering span edges, so this test is passing on nothing"
+    )

@@ -15,7 +15,7 @@ frame without running ``just sync-conformance`` fails the build. Generating the
 file rather than moving the literals into it is the safer half of the same idea —
 a generator cannot mistranscribe.
 
-**Two layers, and they check different things.**
+**Three layers, and they check different things.**
 
 *Expectations* are semantic: this literal, of this entity type, must be masked or
 must survive. They are what the fixture already asserted, and a port satisfying
@@ -30,6 +30,13 @@ disagreement there breaks restoration across a service boundary, which is the on
 property a cloud redaction API could not offer and the reason any of this exists.
 So it is pinned as bytes, not described.
 
+*Span translation* is arithmetic: given the masked bytes and the restore map,
+where did each replacement come from, and what is a given offset in the other
+coordinate system? Neither layer above constrains it — both are about WHAT is
+masked and what it is called, and a port can reproduce every byte of both while
+being unable to tell a host where to draw a highlight on the student's own
+essay. It lives in ``conformance/spans.json``; see :func:`build_spans_document`.
+
 Golden output is a snapshot of current behaviour, which means a legitimate
 improvement to the detector will fail conformance until the snapshot is
 regenerated. That is the intended cost: regenerating is one command and a diff a
@@ -40,6 +47,7 @@ detect the divergence it exists to detect.
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from dataclasses import fields
 from pathlib import Path
 from typing import Any
@@ -1211,6 +1219,215 @@ def build_gates_document() -> dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# The span layer — can a port put an offset back in the student's coordinates?
+# ---------------------------------------------------------------------------
+#
+# `frames.json` pins the masked bytes and `golden.mapping` pins the restoration
+# pairs, and between them they still say nothing about WHERE anything sits. That
+# is the gap this document closes, and it is not a cosmetic one: a host that
+# renders a highlight over a student's own essay is working in original
+# coordinates, the detector produced its spans in masked coordinates, and
+# `{NAME_1}` is not the width of the name it replaced. Every offset after the
+# first replacement is displaced by the cumulative delta.
+#
+# So the arithmetic that undoes that displacement is a third thing a port has to
+# reproduce, alongside the bytes and the numbering — and unlike those two it is
+# pure: given the masked text and the restore map, the answer is a walk with an
+# accumulator and no gazetteer, no oracle and no asset in sight. A port can pass
+# this document before it can mask anything, which is why the cases here are
+# generated from the fixture frames AND from a table of hand-built degenerates
+# that no essay would produce.
+#
+# **Why it is a separate file rather than a section of `frames.json`.** The
+# degenerate cases have no frame — "a placeholder the map does not cover" is not
+# a sentence, it is a state a caller can be handed by a mode that produces no map
+# at all. Filing them under a frame would mean inventing a frame, and an invented
+# frame is transcription wearing ground truth's clothes.
+
+SPANS_FILENAME = "spans.json"
+
+#: Masked text and restore map for the states no essay produces, each named for
+#: the rule it pins. These are the cases that decide whether two ports agree
+#: about *declining*, which is the half of the contract a real frame cannot
+#: exercise: a frame always has a complete map, so a frame can never say what
+#: happens without one.
+SPAN_EDGE_CASES: dict[str, tuple[str, dict[str, str]]] = {
+    # No map at all — the Guardrail mode's state. The honest answer is no spans
+    # and identity translation, NOT "nothing was masked": the text plainly
+    # contains a placeholder and we cannot say how wide the name behind it was.
+    "no_map": ("I sat next to {NAME_1} in class.", {}),
+    # A map that covers one placeholder and not the other. Refused wholesale
+    # rather than answered for the half it can place, because a caller can
+    # handle "no spans" and cannot detect a wrong offset.
+    "partial_map": (
+        "{NAME_1} and {NAME_2} walked home.",
+        {"{NAME_1}": "Marguerite"},
+    ),
+    # A map with nothing to apply it to. Yields no spans and must not raise.
+    "map_without_placeholders": ("Nobody in this sentence.", {"{NAME_1}": "Ada"}),
+    "empty_text": ("", {"{NAME_1}": "Ada"}),
+    # The same person twice. TWO spans off ONE map entry, and the second span's
+    # original offset depends on the first's delta — the case that catches an
+    # implementation keyed on map entries instead of on occurrences in the text.
+    "repeated_placeholder": (
+        "{NAME_1} told me what {NAME_1} thought.",
+        {"{NAME_1}": "Deshawn"},
+    ),
+    # Nothing between two placeholders, so the second's new_start equals the
+    # first's new_end. Catches an off-by-one in the walk that a gap would hide.
+    "adjacent_placeholders": (
+        "{NAME_1}{NAME_2} sat together.",
+        {"{NAME_1}": "Bo", "{NAME_2}": "Jo"},
+    ),
+    "placeholder_at_start": ("{NAME_1} spoke first.", {"{NAME_1}": "Ada"}),
+    "placeholder_at_end": ("The last word was {NAME_1}", {"{NAME_1}": "Ada"}),
+    "whole_text_is_placeholder": ("{NAME_1}", {"{NAME_1}": "Ada Lovelace"}),
+    # A placeholder WIDER than what it replaced, so the running delta is
+    # positive and original offsets run BEHIND masked ones. Every real frame
+    # has some of each; a port that assumed one sign would pass a corpus and
+    # fail here.
+    "placeholder_wider_than_original": ("{NAME_1} won.", {"{NAME_1}": "Bo"}),
+    # Above the Basic Multilingual Plane, and the reason these are here rather
+    # than in a port's own suite: an offset is the one output that crosses the
+    # language boundary — our pipeline computes spans in Python and renders the
+    # highlight in a browser. JavaScript's `.length` and a regex `index` count
+    # UTF-16 code units, so a transliterated port is exactly right on ASCII and
+    # one-per-astral-character wrong above the BMP. Every other case in this
+    # table is ASCII, which means without these the spec could not catch the one
+    # divergence this layer is most likely to have. Same class of defect as the
+    # ASCII-only `\b` the primitives layer was built to catch.
+    "astral_before_placeholder": ("\U0001f389 {NAME_1} won.", {"{NAME_1}": "Bo"}),
+    "astral_between_placeholders": (
+        "{NAME_1} \U0001f389 {NAME_2} tied.",
+        {"{NAME_1}": "Bo", "{NAME_2}": "Jo"},
+    ),
+    "astral_inside_the_original": (
+        "Signed, {NAME_1}",
+        {"{NAME_1}": "Bo \U0001f984 Jo"},
+    ),
+    # BMP but multi-byte — the case that separates a code-POINT bug from a
+    # BYTE-offset bug. A port indexing UTF-8 bytes is wrong here and right on
+    # the astral cases above only by accident.
+    "accented_before_placeholder": ("Café with {NAME_1}.", {"{NAME_1}": "Bo"}),
+    "mixed_entity_types": (
+        "Call {PHONE_1} or write {EMAIL_1} at {SCHOOL_1}.",
+        {
+            "{PHONE_1}": "555-867-5309",
+            "{EMAIL_1}": "a@b.example",
+            "{SCHOOL_1}": "P.S. 118",
+        },
+    ),
+}
+
+
+def _span_probe_offsets(bound: int, edges: Sequence[tuple[int, int]]) -> list[int]:
+    """Every offset worth asking about, given the text length and the spans.
+
+    Boundaries plus one either side of each, because the two translations are
+    half-open and every disagreement between two implementations of a half-open
+    interval lives within one character of an edge. Interiors are included
+    because an offset INSIDE a placeholder is the one input with no faithful
+    answer — it has no counterpart in the other coordinate system — and the two
+    functions resolve it by a stated convention rather than by arithmetic, so a
+    port could get every boundary right and still disagree here.
+    """
+    wanted = {0, bound}
+    for start, end in edges:
+        wanted.update((start - 1, start, start + 1, (start + end) // 2,
+                       end - 1, end, end + 1))
+    return sorted(o for o in wanted if 0 <= o <= bound)
+
+
+def _span_case(case_id: str, masked: str, restore_map: dict[str, str]
+               ) -> dict[str, Any]:
+    """One case, answered by the reference for every question a port must answer."""
+    from vicary.redaction import RedactionResult, derive_spans
+    from vicary.redaction import to_original as _to_original
+    from vicary.redaction import to_redacted as _to_redacted
+
+    spans = derive_spans(masked, restore_map)
+    result = RedactionResult(text=masked, intervened=bool(spans), char_units=0,
+                             restore_map=restore_map)
+    original = result.original()
+    return {
+        "case_id": case_id,
+        "masked": masked,
+        "restore_map": dict(restore_map),
+        # The reconstruction, recorded even though it is derivable from the two
+        # fields above: a port whose spans are right and whose slicing is wrong
+        # produces correct spans and garbled text, and only this field says so.
+        "original": original,
+        "spans": [
+            {
+                "orig_start": span.orig_start,
+                "orig_end": span.orig_end,
+                "new_start": span.new_start,
+                "new_end": span.new_end,
+            }
+            for span in spans
+        ],
+        "to_original": [
+            [offset, _to_original(offset, spans)]
+            for offset in _span_probe_offsets(
+                len(masked), [(s.new_start, s.new_end) for s in spans]
+            )
+        ],
+        "to_redacted": [
+            [offset, _to_redacted(offset, spans)]
+            for offset in _span_probe_offsets(
+                len(original), [(s.orig_start, s.orig_end) for s in spans]
+            )
+        ],
+    }
+
+
+def build_spans_document() -> dict[str, Any]:
+    """The offset-translation contract as data: cases in, answers out.
+
+    Two sources, deliberately. The fixture frames give real masker output —
+    multi-pass, mixed entity types, deltas of both signs — and
+    :data:`SPAN_EDGE_CASES` gives the states a frame cannot reach, including the
+    two where the contract is to *refuse*. Frames that redacted nothing are
+    skipped: a case with no placeholders is already covered once by
+    ``map_without_placeholders`` and adding thirty of them would pad the file
+    without constraining anything.
+    """
+    from vicary.eval.recall import build_redactor
+
+    redactor = build_redactor(REFERENCE_ARM, None)
+    cases = [
+        _span_case(f"edge:{name}", masked, restore_map)
+        for name, (masked, restore_map) in SPAN_EDGE_CASES.items()
+    ]
+    for frame in fx.ALL_FRAMES:
+        applied = redactor._apply(frame.sentence, source="INPUT")
+        if not applied.restore_map:
+            continue
+        cases.append(
+            _span_case(f"frame:{frame.frame_id}", applied.text,
+                       dict(applied.restore_map))
+        )
+    return {
+        "document_version": DOCUMENT_VERSION,
+        "fixture_version": fx.FIXTURE_VERSION,
+        "reference_arm": REFERENCE_ARM,
+        # Stated in the document because a port reading it needs to know that
+        # an offset landing inside a placeholder is answered by convention. Both
+        # conventions collapse the placeholder's interior onto its own leading
+        # edge in the OTHER coordinate system, which is the only choice that
+        # keeps the two functions inverse at every boundary.
+        "conventions": {
+            "to_original": "an offset inside a placeholder maps to the start of "
+                           "the span the placeholder replaced",
+            "to_redacted": "an offset inside a replaced span maps to the start "
+                           "of its placeholder",
+            "absent_or_partial_map": "no spans, and both translations are the "
+                                     "identity",
+        },
+        "cases": cases,
+    }
+
 def dumps(document: dict[str, Any]) -> str:
     """Canonical serialisation: sorted keys, two-space indent, trailing newline.
 
@@ -1294,6 +1511,24 @@ def load_gates_document(path: Path | None = None) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def load_spans_document(path: Path | None = None) -> dict[str, Any]:
+    """Read ``conformance/spans.json``. Raises when it is absent.
+
+    Absent is an error rather than an empty document for the reason
+    ``_conformance-check`` exists: a port that finds no spec and reports success
+    has checked its offset arithmetic against nothing.
+    """
+    if path is None:
+        directory = conformance_dir()
+        if directory is None:
+            raise FileNotFoundError(
+                "no conformance/ directory above this module — the spec lives in "
+                "the repository, not in an installed distribution"
+            )
+        path = directory / SPANS_FILENAME
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
 # ---------------------------------------------------------------------------
 # CLI — `python -m vicary.eval.conformance --write`
 # ---------------------------------------------------------------------------
@@ -1317,6 +1552,7 @@ def main(argv: list[str] | None = None) -> int:
     frames_doc = dumps(build_frames_document())
     gates_doc = dumps(build_gates_document())
     primitives_doc = dumps(build_primitives_document())
+    spans_doc = dumps(build_spans_document())
 
     if not args.write:
         print(frames_doc, end="")
@@ -1330,9 +1566,11 @@ def main(argv: list[str] | None = None) -> int:
     (directory / FRAMES_FILENAME).write_text(frames_doc, encoding="utf-8")
     (directory / GATES_FILENAME).write_text(gates_doc, encoding="utf-8")
     (directory / PRIMITIVES_FILENAME).write_text(primitives_doc, encoding="utf-8")
+    (directory / SPANS_FILENAME).write_text(spans_doc, encoding="utf-8")
     print(f"wrote {directory / FRAMES_FILENAME}")
     print(f"wrote {directory / GATES_FILENAME}")
     print(f"wrote {directory / PRIMITIVES_FILENAME}")
+    print(f"wrote {directory / SPANS_FILENAME}")
     return 0
 
 

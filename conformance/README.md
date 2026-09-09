@@ -1,16 +1,17 @@
 # conformance — the spec all three front doors run against
 
-Three files, generated from the Python implementation and consumed by every port:
+Four files, generated from the Python implementation and consumed by every port:
 
 | file | what it is |
 |---|---|
 | `frames.json` | the 51 fixture frames, the student identity the detector is told, and the **golden output** the reference arm produces for each frame |
 | `gates.json` | the nine gates: what is measured, the bar, and which gates declare a data requirement |
 | `primitives.json` | the tokenisation and capitalisation answers underneath a frame: 18 primitives over 27 texts and 12 token lists |
+| `spans.json` | the offset-translation answers: where each replacement came from, and what a given offset is in the other coordinate system, over 53 cases |
 
-Regenerate with `just sync-conformance`. Never hand-edit them: all three are
+Regenerate with `just sync-conformance`. Never hand-edit them: all four are
 compared byte-for-byte against a fresh export by
-`python/tests/test_conformance.py`, so an edit that is not a regeneration fails
+`tools/tests/test_conformance.py`, so an edit that is not a regeneration fails
 the build — which is the point.
 
 Plus two directories of **measurement inputs** — data the gates are scored
@@ -28,6 +29,35 @@ a local upstream, pin its digest, and are run by hand when that upstream changes
 **Nothing in this directory ships in any package.** The wheel, the gem and the npm
 tarball all exclude it, and the CI build jobs check the built artifacts rather than
 the config. A published copy would imply the installed one is authoritative.
+
+## Why there is a spans layer as well
+
+`frames.json` says WHAT is masked and `primitives.json` says which rule decided
+it. Neither says WHERE a replacement came from — and a port can reproduce every
+byte of both while sending a highlight to the wrong word in a student's essay,
+because `{NAME_1}` is not the width of the name it replaced and every offset
+after the first replacement is displaced by the cumulative delta. Measured on a
+56-paper corpus: redaction fired on 43 essays and not one recorded offset pair on
+those 43 landed on the original text.
+
+The arithmetic that undoes that is pure — masked text plus restore map in,
+answers out, no gazetteer and no asset — so a port can pass this file before it
+can mask anything. 53 cases: 38 real masker outputs from the fixture frames,
+plus 15 hand-built degenerates no essay produces, including the two where the
+contract is to **refuse** (`edge:no_map`, `edge:partial_map`). Those two cannot
+be expressed as a frame, which is why this is a separate file rather than a
+section of `frames.json`: a frame always has a complete map, so a frame can
+never say what happens without one.
+
+**Four of the cases carry text above the Basic Multilingual Plane, and they are
+the reason the file earns its keep.** JavaScript offsets count UTF-16 code units
+where Python and Ruby count characters, so a transliterated port is exactly
+right on ASCII and one-per-astral-character wrong above it — and an offset is
+the one output that crosses the language boundary, since a pipeline may compute
+spans in one language and render the highlight in another. Verified rather than
+asserted: a code-unit implementation fails exactly the three astral cases and no
+others. The remaining accented case separates a code-point bug from a
+byte-offset bug, which no current port has and a future one might.
 
 ## Why there is a primitives layer as well as a frames layer
 

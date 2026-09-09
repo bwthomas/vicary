@@ -119,3 +119,77 @@ def test_clean_text_yields_an_empty_map_and_identity_translation():
     assert not clean.intervened
     assert clean.spans() == ()
     assert clean.to_original(7) == 7
+
+
+# ---------------------------------------------------------------------------
+# The shared spec. Everything above names one behaviour; this runs the same
+# cases the other two ports run, out of the same file, so "Python is the
+# reference" is a check rather than an assumption. The reference generating a
+# spec it does not then read back is how a reference drifts from its own export.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def span_spec():
+    from vicary.eval import conformance
+
+    try:
+        return conformance.load_spans_document()
+    except FileNotFoundError:  # pragma: no cover - installed-wheel path
+        pytest.skip("conformance/ is a repository artifact, not a packaged one")
+
+
+def test_the_shared_spec_covers_more_than_the_edge_table(span_spec):
+    # Vacuity guard. Every loop below is over `cases`, so an empty or truncated
+    # document would print the same green as full agreement.
+    assert len(span_spec["cases"]) >= 20, (
+        f"spans.json has only {len(span_spec['cases'])} cases — fewer than the "
+        "edge table alone, so the fixture frames stopped contributing"
+    )
+
+
+def test_every_shared_case_derives_the_recorded_spans(span_spec):
+    for case in span_spec["cases"]:
+        spans = derive_spans(case["masked"], case["restore_map"])
+        assert [
+            {
+                "orig_start": s.orig_start,
+                "orig_end": s.orig_end,
+                "new_start": s.new_start,
+                "new_end": s.new_end,
+            }
+            for s in spans
+        ] == case["spans"], case["case_id"]
+
+
+def test_every_shared_probe_translates_as_recorded(span_spec):
+    for case in span_spec["cases"]:
+        spans = derive_spans(case["masked"], case["restore_map"])
+        for offset, expected in case["to_original"]:
+            assert to_original(offset, spans) == expected, (
+                case["case_id"], "to_original", offset
+            )
+        for offset, expected in case["to_redacted"]:
+            assert to_redacted(offset, spans) == expected, (
+                case["case_id"], "to_redacted", offset
+            )
+
+
+def test_the_astral_cases_are_present_and_are_the_ports_divergence(span_spec):
+    """The spec must keep carrying text above the BMP.
+
+    Not a tautology about the file: it is the assertion that stops the one
+    divergence this layer can have from going untested. Every other case is
+    ASCII, and on ASCII a JavaScript port indexing UTF-16 code units agrees with
+    Python exactly — so with these cases gone the TypeScript suite would be green
+    on a transliteration that puts every span after an emoji two characters off.
+    Measured: a code-unit implementation fails exactly these three and no others.
+    """
+    astral = [
+        case for case in span_spec["cases"]
+        if any(ord(ch) > 0xFFFF for ch in case["masked"] + case["original"])
+    ]
+    assert len(astral) >= 3, (
+        "spans.json lost its astral cases — the TypeScript port's code-unit "
+        "divergence is now untested in every suite that reads this file"
+    )

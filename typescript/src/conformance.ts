@@ -132,6 +132,30 @@ function requireVersion(version: unknown, file: string): void {
   }
 }
 
+/** One `spans.json` case: masked text plus every answer a port must reproduce. */
+export interface SpanCase {
+  readonly case_id: string;
+  readonly masked: string;
+  readonly restore_map: Record<string, string>;
+  readonly original: string;
+  readonly spans: ReadonlyArray<{
+    readonly orig_start: number;
+    readonly orig_end: number;
+    readonly new_start: number;
+    readonly new_end: number;
+  }>;
+  readonly to_original: ReadonlyArray<readonly [number, number]>;
+  readonly to_redacted: ReadonlyArray<readonly [number, number]>;
+}
+
+/** `conformance/spans.json` as read. */
+export interface SpanSpec {
+  readonly document_version: number;
+  readonly reference_arm: string;
+  readonly conventions: Record<string, string>;
+  readonly cases: readonly SpanCase[];
+}
+
 /** Load `conformance/frames.json`, applying the documented field defaults. */
 export function loadSpec(directory?: string): Spec {
   const dir = directory ?? conformanceDir();
@@ -286,6 +310,22 @@ export function loadPrimitives(directory?: string): Primitives {
     constants: raw.constants as Record<string, number>,
     cases: raw.cases as Record<string, Record<string, unknown>>,
   };
+}
+
+/**
+ * Load `conformance/spans.json` — the offset-translation spec.
+ *
+ * A third layer, checking a third thing. `frames.json` says what is masked and
+ * `primitives.json` says which rule decided it; neither constrains WHERE a
+ * replacement came from, and a port can reproduce every byte of both while
+ * being unable to tell a host where to draw a highlight on the student's own
+ * essay.
+ */
+export function loadSpans(directory?: string): SpanSpec {
+  const dir = directory ?? conformanceDir();
+  const raw = JSON.parse(readFileSync(join(dir, "spans.json"), "utf8"));
+  requireVersion(raw.document_version, "spans.json");
+  return raw as SpanSpec;
 }
 
 /** Load `conformance/gates.json`. */

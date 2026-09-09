@@ -155,6 +155,32 @@ module Vicary
         raw
       end
 
+      # The offset-translation spec — {Vicary::Spans}' cases and their answers.
+      #
+      # A third layer, checking a third thing. `frames.json` says what is masked
+      # and `primitives.json` says which rule decided it; neither constrains
+      # WHERE a replacement came from, and a port can reproduce every byte of
+      # both while being unable to tell a host where to draw a highlight on the
+      # student's own essay.
+      #
+      # Absent is an error rather than an empty document, for the same reason
+      # `just _conformance-check` refuses to run without a spec: a port that
+      # finds no cases and reports success has checked its arithmetic against
+      # nothing.
+      def load_spans(dir = nil)
+        dir = Pathname.new(dir || directory)
+        path = dir.join("spans.json")
+        unless path.file?
+          raise SpecError,
+                "no spans.json at #{path}. The ports would check their offset " \
+                "translation against nothing."
+        end
+
+        raw = JSON.parse(path.read)
+        require_version(raw["document_version"], "spans.json")
+        raw
+      end
+
       # Score an implementation against every frame.
       #
       # The block receives (sentence, identity) — the same input every Python arm

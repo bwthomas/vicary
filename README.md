@@ -140,6 +140,28 @@ wiring it in changes nothing until you configure it. Redaction is reversible:
 `result.restore_map` maps each placeholder back to the span it replaced, for a
 host that needs to show a student their own words.
 
+Reversing the *text* is not enough for a host that draws on the essay, because a
+placeholder is not the width of the name it replaced — so every offset measured
+against the masked copy is displaced, against the student's real composition, by
+the cumulative delta of every prior replacement. `result.spans()` gives each
+replacement in both coordinate systems, and `result.to_original(offset)` /
+`result.to_redacted(offset)` translate between them:
+
+```python
+result = redactor.redact_inbound(essay_text)
+quote = my_pipeline.locate(result.text)                # masked coordinates
+start = result.to_original(quote.start)                # the student's essay
+end = result.to_original(quote.end)
+highlight(essay_text[start:end])                       # their own words
+```
+
+An offset landing inside a placeholder resolves to the start of the span it
+replaced. A mode that produces no map — `guardrail` returns masked bytes and
+nothing else — yields no spans and translates as the identity, which is the
+honest answer rather than a plausible wrong one; a partial map is refused for the
+same reason, since a caller can handle "no spans" and cannot detect a wrong
+offset.
+
 The ports expose the same detector behind each language's ordinary shape —
 [`ruby/README.md`](ruby/README.md) and
 [`typescript/README.md`](typescript/README.md) show theirs. The output bytes are

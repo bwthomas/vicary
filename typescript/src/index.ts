@@ -78,4 +78,14 @@ export {
 } from "./redact.js";
 export type { Oracles, RedactOptions, RedactionResult } from "./redact.js";
 
+export {
+  PLACEHOLDER,
+  deriveSpans,
+  originalText,
+  spanDelta,
+  toOriginal,
+  toRedacted,
+} from "./spans.js";
+export type { RedactionSpan } from "./spans.js";
+
 export { VERSION } from "./version.js";

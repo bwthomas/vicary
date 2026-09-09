@@ -262,6 +262,8 @@ _conformance-check:
       || { echo "conformance/frames.json is missing — there is no spec to run"; exit 1; }
     @test -f conformance/primitives.json \
       || { echo "conformance/primitives.json is missing — the ports would check their tokenisation against nothing"; exit 1; }
+    @test -f conformance/spans.json \
+      || { echo "conformance/spans.json is missing — the ports would check their offset translation against nothing"; exit 1; }
 
 # Everything CI runs, in CI's order.
 # Which concern each front door tests, printed as one board.
