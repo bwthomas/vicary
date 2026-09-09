@@ -1,8 +1,9 @@
 """One detector, one number.
 
-Six files declare the version: the repository's ``VERSION``, and five restatements
-that exist because each is read where the repository root is not — an installed
-wheel, gem or npm tarball, or a build backend running before any of our code does.
+Seven files declare the version: the repository's ``VERSION``, and six
+restatements that exist because each is read where the repository root is not —
+an installed wheel, gem or npm tarball, a build backend running before any of our
+code does, or an ``npm ci`` that refuses a lock disagreeing with its manifest.
 A gem 0.3.0 corresponding to nothing on PyPI cannot be reasoned about, and the
 parity claim is between *versions*, not between package names — so a drift between
 any two of these is a claim nobody can check.
@@ -11,8 +12,8 @@ Each release workflow already asserts that its tag equals its own package's
 version. That catches a mistyped tag; it cannot catch three packages agreeing with
 their own tags and disagreeing with each other. This does.
 
-``tools/version_sync.py`` (``just version``) is what WRITES the five from
-``VERSION``, so they are no longer five hand-edits. This deliberately does not
+``tools/version_sync.py`` (``just version``) is what WRITES the six from
+``VERSION``, so they are no longer six hand-edits. This deliberately does not
 import its table and re-run its matcher: a shared list means one wrong pattern
 writes a file and then agrees with itself about it. These are hand-written
 patterns against the same files, which is the only version of this that can catch
@@ -49,6 +50,23 @@ def test_the_npm_package_agrees() -> None:
         pytest.skip("no typescript front door in this tree")
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert payload["version"] == config.version()
+
+
+def test_the_npm_lock_agrees_in_both_places() -> None:
+    """The lock restates it twice, and ``npm ci`` refuses an install that drifts.
+
+    Added at 0.2.6 because it had drifted twice by then and nothing here said
+    so: 0.2.5 corrected a lock reading **0.2.1**, three releases behind, and the
+    correction fixed the value without adding this test — so it drifted again at
+    the very next cut. Both positions are checked because npm writes both and a
+    partial rewrite is the failure that looks fixed from the top of the file.
+    """
+    lock_path = REPO_ROOT / "typescript" / "package-lock.json"
+    if not lock_path.exists():
+        pytest.skip("no typescript front door in this tree")
+    payload = json.loads(lock_path.read_text(encoding="utf-8"))
+    assert payload["version"] == config.version()
+    assert payload["packages"][""]["version"] == config.version()
 
 
 def test_the_typescript_module_agrees() -> None:

@@ -1,6 +1,6 @@
 """Write the repository's version into every file that has to restate it.
 
-One detector, one number — but five files must carry that number literally,
+One detector, one number — but six files must carry that number literally,
 because each is read in a place the repository root is not present:
 
 * ``python/src/vicary/_version.py`` and ``ruby/lib/vicary/version.rb`` and
@@ -9,15 +9,20 @@ because each is read in a place the repository root is not present:
   be answered by a file that shipped in no wheel, gem or tarball.
 * ``typescript/package.json`` and ``asset/pyproject.toml`` are read by build
   backends before any of our code runs, and both want a static string.
+* ``typescript/package-lock.json`` restates it twice, and ``npm ci`` fails the
+  install when the lock disagrees with ``package.json``. It was NOT in this list
+  until 0.2.6 and it drifted for exactly that reason — 0.2.5 had to correct a
+  lock that had read 0.2.1 through two releases, which fixed the value and left
+  the mechanism that let it happen. This is the mechanism.
 
 So the number cannot be *read* from one place at runtime; it can only be
-*written* to five from one place at release time. That is what this does.
+*written* to all of them from one place at release time. That is what this does.
 ``asset/tests/test_version.py`` is the other half — it fails when any of them
 drifts, which is what makes hand-editing one file and forgetting another a
 failing build rather than a published mismatch.
 
-    just version 0.3.0     # set VERSION, then rewrite all five
-    just version           # rewrite all five from the current VERSION
+    just version 0.3.0     # set VERSION, then rewrite every declaration
+    just version           # rewrite them all from the current VERSION
     python tools/version_sync.py --check
 
 ``python/pyproject.toml`` is deliberately absent from the list: it declares
@@ -37,7 +42,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 #: A release version, and nothing looser. A tag is cut from this string, three
 #: registries reject what they disagree with, and `0.3` or `0.3.0-dev` would each
-#: be accepted by some subset of the five files below and rejected by the rest.
+#: be accepted by some subset of the declarations below and rejected by the rest.
 VERSION_PATTERN = re.compile(r"\d+\.\d+\.\d+")
 
 
@@ -84,6 +89,25 @@ DECLARATIONS: tuple[Declaration, ...] = (
         "ruby/lib/vicary/version.rb",
         re.compile(r'(?<=^  VERSION = ")([^"]+)(?="$)', re.M),
         "read from the installed gem, which ships no VERSION file",
+        required=False,
+    ),
+    # The lock file restates it TWICE, at two indentation depths, and npm
+    # rewrites both on any `npm install`. Two declarations rather than one
+    # variable-width pattern because Python lookbehind is fixed-width, and
+    # anchoring on the exact indentation is what keeps these from matching a
+    # dependency's version somewhere else in a 400-line file.
+    Declaration(
+        "typescript/package-lock.json",
+        re.compile(r'(?<=^  "version": ")([^"]+)(?=",$)', re.M),
+        "read by npm ci, which fails the install when it disagrees with "
+        "package.json",
+        required=False,
+    ),
+    Declaration(
+        "typescript/package-lock.json",
+        re.compile(r'(?<=^      "version": ")([^"]+)(?=",$)', re.M),
+        "the lock's own record of the root package, which npm rewrites in "
+        "place and which drifted through two releases unnoticed",
         required=False,
     ),
 )
