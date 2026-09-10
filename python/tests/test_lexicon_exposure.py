@@ -17,13 +17,21 @@ WORDS = "/usr/share/dict/words"
 @pytest.fixture(scope="module")
 def word_list_path(tmp_path_factory) -> str:
     """The system list if this box has one, else a stand-in carrying the same
-    trap: ordinary words plus capitalised proper names."""
+    trap: ordinary words plus capitalised proper names.
+
+    The stand-in must mirror the real list's CASING, not just its membership.
+    ``/usr/share/dict/words`` carries ``English`` and no lowercase ``english`` —
+    that asymmetry is the whole subject of the first test — so a stand-in
+    carrying both makes the test unpassable. It shipped carrying both and no
+    developer box noticed, because macOS has the system list and a GitHub
+    ubuntu runner does not: green here, red there, on the first CI run.
+    """
     import os
     if os.path.exists(WORDS):
         return WORDS
     path = tmp_path_factory.mktemp("lex") / "words"
     path.write_text("\n".join([
-        "cold", "space", "field", "english", "boy", "boys",
+        "cold", "space", "field", "boy", "boys",
         "English", "Halloween", "Martinez", "Nguyen", "Moore", "William",
     ]), encoding="utf-8")
     return str(path)
