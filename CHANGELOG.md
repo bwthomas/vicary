@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 0.2.12 — 2026-09-10
+
+### PyPI catches up, and the count that stranded it is read rather than typed
+
+**0.2.11 published to RubyGems and npm and failed at PyPI**, which is the
+split-across-registries failure the release workflows were written to prevent.
+The wheel smoke asserted `len(_STOP_WORDS) == 421`; the build gained an
+inflection step, the list became 794, and the literal went stale silently. No
+other suite could have caught it — `just ci` does not build a wheel, install it
+into a clean interpreter and import it, so that step exists only on the publish
+path.
+
+* **The expected size now comes from the manifest the wheel carries.** Stronger
+  than the literal it replaces: it asserts the bytes that loaded are the bytes
+  the manifest describes, and it cannot go stale when the asset changes.
+* **A guard against the next one.** `test_release_paths.py` refuses any publish
+  path — and CI — that checks a shipped size against a number typed into the
+  workflow. Verified red against the literal it was written for.
+* PyPI's history therefore reads 0.2.8 -> 0.2.12; RubyGems and npm carry 0.2.11
+  as well. Nothing in 0.2.11 is withdrawn — this release contains it.
+
 ## 0.2.11 — 2026-09-10
 
 ### The release path takes the latency pair, and 0.2.10 could not

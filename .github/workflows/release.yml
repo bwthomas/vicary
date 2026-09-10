@@ -104,8 +104,22 @@ jobs:
           # The stoplist is loaded at import and is now package data rather than a
           # literal, so an install that carries the gazetteer and not the lexicon
           # raises here — which is the point of loading it at import.
+          #
+          # The expected count comes from the manifest the wheel carries, not from
+          # a number typed here. A literal was typed here, it said 421, and the
+          # build inflection took the list to 794 — so this step failed the 0.2.11
+          # release AFTER RubyGems and npm had published it, which is the
+          # split-across-registries failure the rest of this file exists to
+          # prevent. Reading the manifest also makes the check stronger than the
+          # literal was: it asserts the bytes that loaded are the bytes the
+          # manifest describes.
           /tmp/smoke/bin/python -c "\
-          from vicary.name_candidates import _STOP_WORDS; assert len(_STOP_WORDS) == 421, len(_STOP_WORDS)"
+          import json, pathlib, vicary; \
+          from vicary.name_candidates import _STOP_WORDS; \
+          manifest = pathlib.Path(vicary.__file__).parent / 'data' / 'MANIFEST.json'; \
+          declared = sum(entry['entries'] for entry in json.loads(manifest.read_text())['assets'].values() if 'entries' in entry); \
+          assert declared > 0, 'the manifest declares no word-list entries'; \
+          assert len(_STOP_WORDS) == declared, (len(_STOP_WORDS), declared)"
 
       - uses: actions/upload-artifact@v4
         with:

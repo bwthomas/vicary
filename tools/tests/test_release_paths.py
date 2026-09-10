@@ -271,3 +271,31 @@ def test_every_publish_path_can_rehearse_its_credential(filename: str) -> None:
         f"comparisons against it are string comparisons and the guard is not "
         f"what it looks like"
     )
+
+
+#: A size the asset already declares, typed into a workflow instead of read out
+#: of the manifest the package ships.
+#:
+#: `assert len(_STOP_WORDS) == 421` was one. The build gained an inflection step,
+#: the list went to 794, and the wheel smoke that carried the literal failed the
+#: 0.2.11 release — AFTER RubyGems and npm had already published it from the same
+#: tag. That is the split-across-registries failure the rest of this file exists
+#: to prevent, arriving through a step no other suite runs: `just ci` does not
+#: build a wheel, install it and import it, so nothing outside the publish path
+#: could have caught it.
+_TYPED_ASSET_SIZE = re.compile(r"len\(\s*_?[A-Za-z_]+\s*\)\s*==\s*\d")
+
+
+def test_no_publish_path_checks_an_asset_size_against_a_typed_number() -> None:
+    """Derive it from the manifest that ships beside the data, or not at all."""
+    for name in (*PUBLISH_PATHS, CI_WORKFLOW):
+        path = repo_root() / ".github" / "workflows" / name
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if line.strip().startswith("#"):
+                continue
+            assert not _TYPED_ASSET_SIZE.search(line), (
+                f"{name}:{number} checks a shipped size against a number typed "
+                f"into the workflow:\n  {line.strip()}\n"
+                "Read it from vicary/data/MANIFEST.json instead — the literal "
+                "goes stale silently and only the publish path finds out."
+            )
