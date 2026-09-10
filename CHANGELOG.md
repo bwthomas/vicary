@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+## 0.2.11 — 2026-09-10
+
+### The release path takes the latency pair, and 0.2.10 could not
+
+**0.2.10 was tagged and never published.** All three release workflows and CI
+went red on the tag, on two failures a developer box could not produce, so no
+registry carries 0.2.10 and this release carries its contents.
+
+* **The pair no longer hands the previous release an asset it cannot read.**
+  `tools/latency_pair.py` copies this checkout's `asset/` into the previous
+  release's worktree so both sides time the same inputs. The 0.2.10 split gave
+  the payload a format floor — `min_package_version: 0.2.10` on both stop-word
+  files — and a 0.2.8 reader handed those raises `lexicon "stop_words" missing`
+  before it times an essay. The manifest already declared the boundary; nothing
+  read it. Now the pair does: below the floor the previous release keeps its own
+  asset and says so on stdout, and the corpus is shared either way, so the essays
+  being timed stay byte-identical. Measured on this machine against v0.2.8 —
+  Python +1.26%, Ruby +4.68%, TypeScript +5.57%, all inside the 8% bar.
+* **Python vendors from the worktree's builder, like the other two ports.** Ruby
+  and TypeScript run `rake sync_assets` and `sync-assets.mjs` out of the tree
+  being prepared; Python ran whichever `vicary_build` the developer's venv had
+  installed, which is always this checkout's. Identical while the asset is
+  shared, and wrong the moment it is not.
+* **The word-list stand-in mirrors the system list's casing.**
+  `test_case_folding_alone_admits_real_surnames` is about `English` being present
+  where `english` is not, and the stand-in used where `/usr/share/dict/words` is
+  absent carried both — unpassable by construction. macOS ships the system list
+  and a GitHub ubuntu runner does not, so it was green on every developer box and
+  red on the first CI run that saw it.
+
 ## 0.2.10 — 2026-09-10
 
 ### A tenth gate, because the ninth could not see the failure that mattered
