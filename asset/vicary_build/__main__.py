@@ -17,10 +17,17 @@ import argparse
 import sys
 from pathlib import Path
 
-from vicary_build import config, gazetteer, manifest, vendor
+from vicary_build import config, lexicon, manifest, reference, vendor
+
+# `gazetteer` is imported per-command, not here. It loads the stoplist at module
+# scope, so importing it up front makes every verb — including the one whose job
+# is to rewrite that file and its declared count — fail to start whenever the
+# count is stale. Which is precisely when somebody reaches for `lexicon`.
 
 
 def _cmd_fetch(args: argparse.Namespace) -> int:
+    from vicary_build import gazetteer
+
     forwarded: list[str] = []
     if args.stats:
         forwarded.append("--stats")
@@ -42,11 +49,39 @@ def _cmd_fetch(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 0
+    # Before the manifest, because a rebuilt `given` tier changes which plurals
+    # the lexicon may emit, and a manifest that checksummed the pre-rebuild word
+    # list would describe a file this command is about to change.
+    rc = _cmd_lexicon(args)
+    if rc:
+        return rc
     written = manifest.write(
         rebuilt={gazetteer.ASSET_NAME},
         sources=(gazetteer.SPARQL_ENDPOINT, gazetteer.CENSUS_SURNAMES_URL),
     )
     print(f"manifest rewritten: {written}")
+    return 0
+
+
+def _cmd_lexicon(args: argparse.Namespace) -> int:
+    """Rebuild the generated inflection region of every authored word list.
+
+    Separate from `fetch` as well as called by it. A lexicon regenerates from two
+    tracked reference tables and touches no network, so somebody who has just
+    added a stop word can run this in a second — where making it fetch-only would
+    put a ~30-query SPARQL rebuild between them and a one-word edit, and the
+    predictable result is a hand-edited generated block.
+    """
+    try:
+        veto = reference.veto()
+    except reference.ReferenceError as exc:
+        print(exc, file=sys.stderr)
+        return 2
+    for name in lexicon.names():
+        path, changed = lexicon.rewrite(name, veto=veto)
+        entries = len(lexicon.load(name))
+        state = "rewritten" if changed else "unchanged"
+        print(f"{path.name} {state} — {entries} distinct words", file=sys.stderr)
     return 0
 
 
@@ -90,6 +125,13 @@ def main(argv: list[str] | None = None) -> int:
              "(delete it after changing a query)",
     )
     fetch.set_defaults(func=_cmd_fetch)
+
+    inflect = sub.add_parser(
+        "lexicon",
+        help="rebuild each word list's generated inflections from the "
+             "tracked census and given-name tables",
+    )
+    inflect.set_defaults(func=_cmd_lexicon)
 
     refresh = sub.add_parser(
         "manifest", help="re-checksum the tracked payload without rebuilding it"

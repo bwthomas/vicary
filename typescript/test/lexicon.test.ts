@@ -7,7 +7,7 @@
  * does that for the two Python readers, and this file holds the third to the same
  * numbers, against the same shipped bytes.
  *
- * The count is checked twice on purpose: once against the literal 471, and once
+ * The count is checked twice on purpose: once against the literal 794, and once
  * against the manifest's own `entries` field. The literal catches a truncated
  * vendored file; the manifest cross-check catches the case the literal cannot —
  * an asset cut that changed the list, where a hand-updated constant in one
@@ -37,9 +37,9 @@ function probe(body: string, name = "probe"): Set<string> {
   return parseLexicon(name, body, "probe.txt");
 }
 
-test("the shipped stoplist parses to its declared 471 words", () => {
+test("the shipped stoplist parses to its declared 794 words", () => {
   const words = load("stop_words");
-  assert.equal(words.size, 471);
+  assert.equal(words.size, 794);
   // Spot-checks at the two ends of the file, so a truncated read fails here and
   // not only on the count. Same two words the Python suite checks.
   assert.ok(words.has("the"));

@@ -60,6 +60,15 @@ asset-stats:
 
 # Vendor the tracked payload into every front door present. This is what makes
 # "all three load the same bytes" true rather than intended.
+# Regenerate the inflection region of every authored word list, from the census
+# and given-name tables this repository already tracks. No network. Run it after
+# adding a stop word, then `asset-manifest` and `asset-sync`.
+asset-lexicon:
+    cd python && .venv/bin/python -m vicary_build lexicon
+
+asset-manifest:
+    cd python && .venv/bin/python -m vicary_build manifest
+
 asset-sync:
     @just asset-sync-python
     @if [ -f typescript/package.json ]; then cd typescript && npm run sync-assets; \

@@ -1,10 +1,10 @@
 #!lexicon 1
-#!list stop_words 471
+#!list stop_words 794
 # Ordinary words that must never become name candidates.
 #
 # Language-neutral on purpose. This list is the only thing standing between
 # candidate generation and "mask every capitalised word", so all three front doors
-# have to work from the same 421 words — a stoplist transliterated by hand into a
+# have to work from the same words — a stoplist transliterated by hand into a
 # second language is a second detector wearing the first one's name, and the
 # difference shows up as prose corruption in one language and not the others,
 # which no parity check on masked output would catch.
@@ -15,7 +15,8 @@
 #
 # Format: `#!` lines are directives, `#` lines are comments, and every other line
 # contributes whitespace-separated words. The count on the `#!list` directive is
-# the number of DISTINCT words after case-folding, and each front door asserts it
+# the number of DISTINCT words after case-folding — authored and generated
+# together, since a reader loads one file — and each front door asserts it
 # against what it parsed. That is not ceremony: a short read here silently makes
 # the redactor MORE aggressive, which looks privacy-safe and passes any check that
 # only asks whether something was masked.
@@ -23,19 +24,24 @@
 # A word appearing twice is not an error — the groupings below are thematic and
 # overlap ("else", "may", "us"), and enforcing uniqueness in the source would make
 # the list harder to read for no benefit.
+#
+# Write the SINGULAR only. Plurals are generated into the region at the bottom by
+# `python -m vicary_build lexicon`, which is also what stops one from being added
+# without being priced: the generator drops any form an American bears as a
+# surname, and a hand-written plural is not priced by anything.
   a an the this that these those there here it its it's
   i me my mine myself we us our ours ourselves you your yours
   he him his she her hers they them their theirs who whom whose which what
   and or but so because although though however therefore thus hence yet
   if then else when while until since before after during once whenever
   for from to into onto out off over under above below between among across
-  through around about against along beside besides beyond within without
+  through around about against along beside beyond within without
   at by in on up down near next last first second third finally
   is am are was were be been being have has had having do does did doing
-  can could will would shall should may might must let lets
+  can could will would shall should may might must let
   not no nor none nothing never always sometimes often usually rarely
   all any both each every few many more most much several some such
-  another other others same different new old good bad better best worst
+  another other same different new old good bad better best worst
   great big small long short high low young happy sad hard easy
   one two three four five six seven eight nine ten hundred thousand million
   also even just only really very too still again ever else quite rather
@@ -45,12 +51,10 @@
   find found keep kept leave left put set start started stop stopped
   remember remembered learn learned teach taught write wrote read
   everyone everybody someone somebody anyone anybody nobody everything
-  something anything people person thing things time times day days
-  year years week weeks month months hour hours minute minutes
-  school schools class classes teacher teachers student students friend
-  friends family families home house mom dad mother father parent parents
-  brother sister sisters brothers grandma grandpa
-  life world way ways place places part parts kind sort lot lots
+  something anything people person thing time day year week month hour minute
+  school class teacher student friend family home house mom dad mother father
+  parent brother sister grandma grandpa
+  life world way place part kind sort lot
   yes yeah ok okay maybe perhaps well now today tomorrow yesterday
   january february march april may june july august september october
   november december monday tuesday wednesday thursday friday saturday sunday
@@ -61,6 +65,13 @@
   sitting standing growing learning moving trying using
   back away together alone everywhere somewhere anywhere nowhere
   right wrong true false sure certain important special favorite
+
+# Plurals the generated region below cannot carry. Each is also an American
+# surname, so the census veto drops it — and a stop word that quietly stops
+# existing is a recall regression with no diff to read. Written out by hand for
+# that reason, not as a leftover: check
+# `test_the_built_list_still_carries_every_word_it_used_to` before touching one.
+  brothers days friends schools times ways weeks years
 
 # Named categories that are proper nouns but identify nobody: holidays and
 # observances, languages, nationalities and ethnic groups, religions and their
@@ -88,7 +99,58 @@
   kwanzaa valentines
   english spanish french chinese japanese korean italian russian arabic
   hindi portuguese vietnamese greek polish irish scottish
-  hispanic latino asian african american americans european mexican
+  hispanic latino asian african american european mexican
   canadian indian native jewish muslim catholic protestant buddhist
-  hindu nazi nazis
+  hindu nazi
   god bible koran torah allah
+
+# >>> generated inflections — written by `python -m vicary_build lexicon`
+# Bare plurals of the words above, so a capitalised `Sets` or `Parties` is
+# vetoed by the same lookup its singular is. Hand-written pairs used to do this
+# and only for the 35 somebody thought of.
+#
+# Two subtractions are applied here and neither is optional. A form borne as an
+# American surname is dropped, because a stop word puts every family bearing it
+# beyond the redactor (`may` would claim `Mays`, `will` would claim `Wills`).
+# A form that is a common given name is dropped for a sharper reason: a stop
+# word wins over the given-name tier, so `we` -> `wes` would stop redacting a
+# child called Wes. Plurals still written out by hand above are the ones a
+# subtraction removes from here — they are load-bearing, not leftovers.
+#
+# Regenerate with `python -m vicary_build lexicon`; do not edit below by hand.
+  abouts aboves acrosses africans afters agains againsts aints allahs alones
+  alongs alsos althoughs alwayses americans amongs ands anies anothers ans
+  anybodies anyones anythings anywheres aprils arabics arounds ases asians
+  askeds asks ats augusts aways bads becauses beens befores beings belows bes
+  besides bests betweens beyonds bigs boths buddhists buts calleds calls cames
+  canadians cans cants catholics certains chineses christmases classes coulds
+  dads decembers didnts dids differents diwalis doeses doings donts drs
+  durings easies eids eights eithers elses englishes etcs europeans everies
+  everybodies everyones everythings everywheres falses families fathers
+  favorites februaries feels fews finallies finds firsts fours frenches
+  fridays froms gaves gets gives gods gos gots grandmas grandpas greats greeks
+  growings hads halloweens hanukkahs happies hases havings helpeds hences
+  highs hims hindis hindus hises hispanics hours houses howevers hundreds ids
+  ifs ills importants indians ins insteads intos irishes ises isnts italians
+  januaries japaneses jewishes julies justs keeps kepts knews knows korans
+  koreans kwanzaas lasts latinos learneds learnings learns leaves lefts lets
+  lifes lookeds lookings looks lots makes marches maybes mexicans mights
+  millions minutes moms mondays months mosts mothers movings mses muches
+  muslims musts myselfs natives nazis neededs neithers nexts nobodies nos
+  nothings nots novembers nowheres nows octobers offs oftens okays onces
+  onlies ons ontos others ourselveses outs parents parts passovers perhapses
+  places playings pluses pms polishes portugueses protestants puts quites
+  ramadans rarelies rathers reads reallies remembereds remembers rights
+  runnings russians sads saids saturdays saws says scottishes seconds
+  septembers sets sevens severals shalls shes shoulds sinces sisters sittings
+  sixes somebodies someones somethings sometimeses somewheres sorts spanishes
+  specials standings starteds stoppeds students suches sundays sures talkings
+  taughts teachers teaches tells tens thanksgivings thans thems thens
+  therefores thes theses things thinkings thinks thirds thises thoses thoughs
+  thoughts thousands threes throughs thursdays thuses todays togethers tolds
+  tomorrows toos torahs trieds tries trues tryings tuesdays tvs twos unders
+  unlesses untils ups usas uses usings usuallies valentineses veries versuses
+  vietnameses walkings wanteds wants wases wednesdays wents weres whenevers
+  whens whethers whiches whoms whos whoses withins withouts wonts workeds
+  worsts woulds writes wrongs wrotes yeahs yeses yesterdays yets yous
+# <<< end generated inflections

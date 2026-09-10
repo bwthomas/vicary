@@ -30,6 +30,12 @@ DATA_DIR: Path = REPO_ROOT / "asset" / "data"
 #: mirrored by an in-language literal in each front door that a test pins.
 LEXICON_DIR: Path = REPO_ROOT / "asset" / "lexicon"
 
+#: Reference tables the build reads but never ships: the US Census surname table
+#: the repository already carries for the exposure gate. Read from the checkout
+#: rather than from an operator's own copy, because what it gates is a *tracked,
+#: generated* word list and two machines must regenerate the same bytes.
+CENSUS_DIR: Path = REPO_ROOT / "conformance" / "census"
+
 #: Local copy of the SSA baby-names archive (``names.zip``), the source of the
 #: ``given`` tier.
 #:

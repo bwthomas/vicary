@@ -145,11 +145,18 @@ CENSUS_BARE_SURNAME_CEILING = 1.25
 #:
 #: A separate ceiling because it is a separate hole, and it was open for the
 #: list's whole life. `bare-surname exposure` scores the GAZETTEER's tiers; it
-#: reads 1.20% with a 421-word stoplist and 1.20% with a 471-word one, so it
+#: reads 1.20% with a 421-word stoplist and 1.20% with a 794-word one, so it
 #: cannot see a stoplist widening at all. Measured 2026-09-10, the shipped list
 #: already claimed ~0.43% before anything was added to it — `young`, `long`,
 #: `white`, `brown`, `small` and `best` are all common surnames — and nothing in
 #: CI had ever said so.
+#:
+#: This is also the gate the build's plural generation is priced against, and the
+#: reason it generates against a veto rather than blanket. Folding every stop
+#: word's plural in unguarded reads 0.648% — over this bar — by claiming 115 more
+#: surnames and 291,488 more bearers (`Mays`, `Downs`, `Wills`, `Peoples`).
+#: Dropping any form the census reports as borne costs nothing: 0.497% before the
+#: fold and 0.497% after, to three figures.
 #:
 #: A stop word is a stronger KEEP than a gazetteer tier: it stops a token being
 #: a name candidate at all, ahead of the given-name tier. So the number belongs

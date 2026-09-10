@@ -2,6 +2,46 @@
 
 ## Unreleased
 
+## 0.2.9 — 2026-09-10
+
+### Inflection belongs to the detector, not to a list of pairs somebody remembered
+
+* **Plurals are generated, not hand-written.** The stoplist carried 35
+  singular/plural pairs typed by hand, and a capitalised plural nobody had
+  thought of was a name candidate: `Sets`, `Parties` and `Buddies` all reach the
+  detector on the NWP corpus. `python -m vicary_build lexicon` (`just
+  asset-lexicon`) now emits each stop word's bare plural into a generated region
+  of `asset/lexicon/stop_words.txt`, by the three regular English rules —
+  consonant-`y` takes `ies`, a sibilant takes `es`, everything else takes `s`.
+  471 words become 794. **Author singulars only.**
+* **Two subtractions, both load-bearing.** A generated form an American bears as
+  a census surname is dropped: unguarded, the fold claims 115 more surnames and
+  291,488 more bearers — `Mays`, `Downs`, `Wills`, `Peoples` — and pushes
+  `stoplist surname exposure` from 0.497% to 0.648%, over the 0.60% bar
+  committed the same day. Guarded it costs **+0.000%**, and the shipped list
+  still reads 0.497%. A form that is a common given name is dropped for a
+  sharper reason: a stop word wins over the given-name tier, so `we` -> `wes`
+  would have stopped the redactor ever masking a child called Wes.
+* **Build-time, so the runtime stays a set lookup.** The alternative was folding
+  the plural at match time, which is three implementations that have to agree
+  and needs the census table on the request path to be safe. All three ports
+  inherit the behaviour from the vendored asset with **no logic change** —
+  conformance and parity confirm it rather than assume it.
+* **Inflection is now folded in exactly one place per side.** Possessives stay
+  in `_is_stop` / `isStop` / `stop?`, which already strips a trailing clitic
+  before the lookup, so `Nazi's` has always been a stop word. Plurals are the
+  asset's job. Nothing folds both.
+* **A hand-written plural the veto refuses to generate stays hand-written.**
+  `brothers`, `days`, `friends`, `schools`, `times`, `ways`, `weeks` and `years`
+  are all American surnames, so the generator drops them and the authored list
+  keeps them. Eighteen pairs the build now covers were removed, and
+  `test_the_built_list_still_carries_every_word_it_used_to` is what makes that
+  removal safe rather than hopeful: nothing the list carried before is gone.
+* **The generated region has a freshness gate.** `python -m vicary_build
+  lexicon` is idempotent, and CI recomposes the file and compares bytes — a
+  singular added without regenerating fails there rather than silently leaving
+  its plural a name candidate.
+
 ## 0.2.8 — 2026-09-10
 
 ### A batched pass returns the way back for each field, in all three ports

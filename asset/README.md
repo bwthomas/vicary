@@ -10,8 +10,9 @@ asset/
   data/                    built artifacts — TRACKED, canonical
     notability.txt.gz      the folded gazetteer, seven tiers
     MANIFEST.json          sha256, byte count, tier counts, format, cut date
-  lexicon/                 authored word lists — TRACKED, language-neutral
-    stop_words.txt         421 words that must never become name candidates
+  lexicon/                 word lists — TRACKED, language-neutral
+    stop_words.txt         794 words that must never become name candidates,
+                           authored singulars plus a generated plural region
   vicary_build/            the fetch mechanism (Python, stdlib only)
   tests/                   its own suite, run by `just asset-test`
 ```
@@ -35,7 +36,7 @@ It was, as `vicary.build`, until it was lifted out. Three costs, all real:
   on one of its own consumers is not shared, whatever directory it sits in.
 
 The stoplist is now `lexicon/stop_words.txt`, read by the builder and by all three
-detectors. It is data for the same reason the gazetteer is: a 421-word list
+detectors. It is data for the same reason the gazetteer is: a word list
 transliterated by hand into a second language diverges silently, and the divergence
 shows up as prose corruption in one language and not the others — which no parity
 check on *masked output* would catch, because a stop word going missing changes
@@ -46,6 +47,7 @@ what gets masked in essays nobody put in a fixture.
 ```sh
 just asset-stats          # what a rebuild would produce; writes nothing
 just asset-fetch          # rebuild from upstreams, rewrite the manifest
+just asset-lexicon        # regenerate the word lists' inflection regions
 just asset-sync           # vendor the tracked payload into every front door
 just asset-test           # this directory's own tests
 ```
@@ -62,6 +64,26 @@ unchanged tier counts, or the reverse, is the interesting case. And the tier cou
 are asserted against the *loaded* gazetteer by a unit test rather than trusted from
 the build log — a build that wrote to a path nothing reads has already happened
 here once, and it printed a pass.
+
+## The stoplist is half generated
+
+Everything below the `# >>> generated inflections` line in `lexicon/stop_words.txt`
+is written by `just asset-lexicon`. **Author singulars only**; the bare plural is
+emitted for you, which is what stopped `Sets` and `Parties` from being name
+candidates that no hand-written pair happened to cover.
+
+Two subtractions run at generation time and both are load-bearing. A form borne
+as an American surname is dropped — unguarded, the fold claims `Mays`, `Downs`,
+`Wills` and `Peoples`, and pushes `stoplist surname exposure` from 0.497% to
+0.648%, over its 0.60% bar. A form that is a common given name is dropped for a
+sharper reason: a stop word wins over the given-name tier, so `we` -> `wes` would
+stop the redactor ever masking a child called Wes. Both tables are read from the
+checkout (`conformance/census/`, `asset/data/notability.txt.gz`), never from an
+operator's own copy, because two machines have to regenerate the same bytes.
+
+A plural still written out by hand *above* the line is one a subtraction removes
+from below it. Those are load-bearing, not leftovers;
+`test_the_built_list_still_carries_every_word_it_used_to` is what says so.
 
 ## The two guards worth knowing before you change anything
 

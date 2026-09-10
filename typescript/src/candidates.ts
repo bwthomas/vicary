@@ -403,7 +403,16 @@ export function withoutClitic(word: string): string {
   return word;
 }
 
-/** Whether `token` is an ordinary word that must never become a candidate. */
+/**
+ * Whether `token` is an ordinary word that must never become a candidate.
+ *
+ * The one place inflection is folded at runtime, and it folds exactly one
+ * thing: a trailing clitic, so `Nazi's` is looked up as `nazi`. Plurals are NOT
+ * folded here — they are written into the asset by
+ * `python -m vicary_build lexicon`, which drops any form an American bears as a
+ * surname before emitting it, so all three front doors inherit the behaviour
+ * from the same bytes instead of implementing it three times.
+ */
 export function isStop(token: string): boolean {
   const word = withoutClitic(strip(token.toLowerCase(), ".,"));
   return STOP_WORDS.has(strip(word, "'’"));

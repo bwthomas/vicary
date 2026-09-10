@@ -21,13 +21,13 @@
       }
     },
     "stop_words.txt": {
-      "bytes": 5840,
-      "entries": 471,
+      "bytes": 10000,
+      "entries": 794,
       "format": 1,
       "min_package_version": "0.2.0",
-      "sha256": "f01b77358a5ae06c5b1d55ed2cb1b5d788ab98fb0a15de1cf2d9263de248bd8c"
+      "sha256": "dd5f7508f388e00f15db5227f3ddb664113bfc391a3cccaa88b7a917a53a196e"
     }
   },
   "manifest_version": 1,
-  "written_by": "vicary 0.2.0"
+  "written_by": "vicary 0.2.9"
 }

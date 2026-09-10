@@ -371,6 +371,17 @@ def _without_clitic(word: str) -> str:
 
 
 def _is_stop(token: str) -> bool:
+    """Whether ``token`` is an ordinary word that must never become a candidate.
+
+    The one place inflection is folded at runtime, and it folds exactly one
+    thing: a trailing clitic, so ``Nazi's`` is looked up as ``nazi``. Plurals are
+    NOT folded here — they are written into the asset by
+    ``python -m vicary_build lexicon``, which drops any form an American bears as
+    a surname before emitting it. That split is deliberate. A runtime fold would
+    have to be implemented three times and would need the census table on the
+    request path to be safe; a build-time expansion is a pure set lookup that all
+    three front doors inherit from the same bytes.
+    """
     word = _without_clitic(token.lower().strip(".,"))
     return word.strip("'’") in _STOP_WORDS
 

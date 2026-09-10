@@ -645,6 +645,13 @@ module Vicary
       end
 
       # Whether `token` is an ordinary word that must never become a candidate.
+      #
+      # The one place inflection is folded at runtime, and it folds exactly one
+      # thing: a trailing clitic, so `Nazi's` is looked up as `nazi`. Plurals are
+      # NOT folded here — they are written into the asset by
+      # `python -m vicary_build lexicon`, which drops any form an American bears
+      # as a surname before emitting it, so all three front doors inherit the
+      # behaviour from the same bytes instead of implementing it three times.
       def stop?(token)
         word = without_clitic(strip(token.downcase, ".,"))
         stop_words.include?(strip(word, "'’"))
