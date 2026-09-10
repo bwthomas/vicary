@@ -2,6 +2,53 @@
 
 ## Unreleased
 
+## 0.2.8 — 2026-09-10
+
+### A batched pass returns the way back for each field, in all three ports
+
+* **Masking several fields at once was irreversible in the way that matters.**
+  `Redactor.redact_outbound_batch` joined the fields, ran one pass and returned
+  only the masked strings, so a host could not tell which placeholder belonged
+  to which field nor what any of them stood for. A host that wanted to put a
+  word back had to fall back to per-field calls and pay the per-call billing the
+  batch exists to avoid — the cheap path was also the lossy one. It now returns
+  an `OutboundBatch` carrying `restore_maps`, one per input field, positionally
+  aligned.
+* **The joined document's numbering is preserved.** A field's map is the entries
+  whose placeholder survived into that field, split by occurrence rather than
+  re-derived — re-running detection per field would renumber, and renumbering is
+  the one thing this must not do. So one entity keeps one placeholder across
+  every field it appears in, which is what lets a reader match a name in one
+  field to the same name in another. A caller must not assume a field's map
+  starts at `{NAME_1}`.
+* **It unpacks as the historical three-tuple.** `texts, char_units, batched =
+  redact_outbound_batch(...)` still works, deliberately: the library has three
+  ports and an unknown number of hosts, and a silent arity change would fail at
+  the call site rather than at the import.
+* **`redact_batch_with_report` / `redactBatchWithReport` in Ruby and
+  TypeScript.** The ports had no multi-field call at all, so the capability the
+  Python change added had no port-side equivalent. They now carry the same
+  contract at the detector layer — `BATCH_SEPARATOR`, one joined pass, per-field
+  maps split by occurrence, and the same per-field fallback with `batched =
+  false` when the round trip does not hold.
+* **Parity is a build result, not a claim.** Six `batch_probes` in
+  `conformance/probes.json` — cross-field numbering, an empty field holding its
+  slot, the single-non-empty-field branch, the separator-in-the-text fallback,
+  multiline fields across the join, and a heading that becomes the first line of
+  a joined document rather than of its own. Both ports diff masked bytes, the
+  per-field maps AND the round-trip flag against a **fresh** Python `Redactor`;
+  fresh matters, because the reference carries notable keeps forward from an
+  inbound pass and a used redactor would be answering a question a
+  direction-agnostic port cannot be asked. A port could reproduce every byte
+  while mis-assigning the maps, and the maps are what a restore reads.
+* **What a host does with it, measured.** The grader's Stage-5 feedback shipped
+  `{NAME_n}` into 21 `reasoning` and 8 `actionable_suggestion` items across 15
+  of 56 papers, with the correctly-restored quote sitting directly above
+  carrying the same word in plain text. The prose could not be restored from the
+  inbound map, because the two passes number independently: on one paper inbound
+  read `Cold` where outbound read `Fall`, so the obvious fix writes the wrong
+  word into a student's feedback. These maps are the ones that make it right.
+
 ## 0.2.7 — 2026-09-09
 
 ### The version sync edits the lock file as JSON, because it is one
