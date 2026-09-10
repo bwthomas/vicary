@@ -13,6 +13,7 @@ import re
 
 import pytest
 
+from vicary import name_candidates as nc
 from vicary.eval.fixture import (
     RECALL_FRAMES,
     Frame,
@@ -1535,3 +1536,95 @@ def test_the_possessive_fold_takes_one_tail_and_only_a_real_one() -> None:
     # uncorroborated — the guard's whole purpose survives the change.
     assert not corroborated(["Words"], written, no_oracle)
     assert not corroborated(["Terrences"], written, no_oracle)
+
+
+# ---------------------------------------------------------------------------
+# The mid-sentence corroboration arm — built, measured, and OFF because of what
+# the measurement found. See `suppressed_as_a_stray_mid_sentence_capital`.
+# ---------------------------------------------------------------------------
+
+
+def _spans(text: str, **kwargs) -> set[str]:
+    from vicary import gazetteer
+
+    return {c.text for c in nc.find_candidates(
+        text, given_name=gazetteer.is_common_given_name, **kwargs)}
+
+
+def test_the_mid_sentence_arm_is_off_unless_a_caller_asks() -> None:
+    """The default is the shipped behaviour, and the flag is the whole opt-in.
+
+    Pinned as a test rather than left to the signature because the two entry
+    points each carry their own default, and a change to one of them is a change
+    to masked output for every host that never heard of this flag.
+    """
+    import inspect
+
+    for fn in (nc.find_candidates, nc.mask_candidates):
+        assert inspect.signature(fn).parameters[
+            "mid_sentence_corroboration"].default is False
+
+
+def test_a_stray_capital_on_a_stop_word_is_what_the_gate_reads() -> None:
+    """A capital on a word that cannot be a name is the only unambiguous tell."""
+    assert nc.capitalises_ordinary_words(
+        "i went to the Store with my friend and Then we left.")
+    assert not nc.capitalises_ordinary_words(
+        "I went to the store with my friend and then we left.")
+
+
+def test_the_arm_suppresses_a_lone_mid_sentence_capital_no_tier_knows() -> None:
+    """What the arm is for: a capital the writer chose, in a document whose
+    capitals have already been shown to mean nothing."""
+    text = ("i like to build Things at home and Then i show my class. "
+            "we went to the Nantahala last summer.")
+    assert "Nantahala" in _spans(text)
+    assert "Nantahala" not in _spans(text, mid_sentence_corroboration=True)
+
+
+def test_a_name_no_tier_knows_is_the_failure_mode() -> None:
+    """The equity exposure, stated as a test rather than a caveat.
+
+    Three of the 18 true catches this arm leaves intact on the NWP corpus —
+    `Amy`, `Barry`, `Whitney` — survive on the given-name tier and nothing else.
+    Given-name coverage is systematically thinner for less common and non-Anglo
+    names, so a surname mentioned once mid-sentence is the population this arm
+    is most likely to leak, and it is not a random sample of children.
+    """
+    text = ("i went outside and Then it rained. "
+            "we all waited for Okonkwo by the door.")
+    assert "Okonkwo" in _spans(text)
+    assert "Okonkwo" not in _spans(text, mid_sentence_corroboration=True)
+    # A relation in the local context is the channel that saves the same name,
+    # and it is the only one that does not need a tier to have heard of it.
+    related = ("i went outside and Then it rained. "
+               "my friend Okonkwo came over that day.")
+    assert "Okonkwo" in _spans(related, mid_sentence_corroboration=True)
+
+
+def test_a_month_is_a_stop_word_and_a_proper_noun_which_is_the_open_defect(
+) -> None:
+    """**Why this arm ships off.** The gate reads correct English as sloppiness.
+
+    The stoplist carries months, weekdays, holidays, languages, nationalities
+    and religions on purpose — they are proper nouns that identify nobody, and
+    `English` was being masked in an English-language learner's essay about
+    learning English. Every one of them is *correctly* capitalised, so a
+    document writing "in July" trips `capitalises_ordinary_words` while having
+    shown nothing at all about its writer.
+
+    Measured cost, on vicary's own fixture: `Alvarez` in "We stayed with the
+    Alvarez family in July." leaks — all-span recall 50/50 -> 49/50, and two
+    conformance frames change masked bytes. Held-out recall stays 100%, so the
+    ship gate the arm was written against does not catch this; the golden bytes
+    do.
+
+    The fix is to split the lexicon: the stray-capital signal must read only
+    words that are *never* capitalised in correct English. That is a second
+    lexicon emitted by the same build, not a hand-written exclusion list — the
+    hand-written list is what `just asset-lexicon` was built to retire.
+    """
+    text = "We stayed with the Alvarez family in July."
+    assert "Alvarez" in _spans(text)
+    # The defect, pinned so the day it stops being true is a failing test.
+    assert "Alvarez" not in _spans(text, mid_sentence_corroboration=True)

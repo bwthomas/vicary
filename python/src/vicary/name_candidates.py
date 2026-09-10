@@ -1017,6 +1017,109 @@ def corroborated(
     return False
 
 
+#: How many ordinary words a document must capitalise mid-sentence before its
+#: capitals stop counting as testimony. One is enough, and the reason it is not
+#: a rate: a stop word is *never* a name, so a capital on one is never
+#: orthographic and never ambiguous. It is the least deniable evidence a
+#: document can give that its writer capitalises for reasons other than naming,
+#: and a writer who does it once has shown the habit exists.
+_STRAY_CAPITALS_MIN: int = 1
+
+
+def capitalises_ordinary_words(
+    text: str, headings: tuple[tuple[int, int], ...] = ()
+) -> bool:
+    """Whether this document capitalises words that cannot be names.
+
+    Counts mid-sentence capitals landing on the stoplist. A stop word is never a
+    name, so unlike :func:`capitalisation_habit`'s ``marks_proper_nouns`` — which
+    counts every mid-sentence capital and therefore counts the names too — this
+    cannot be satisfied by a document that simply names a lot of people.
+
+    Headings are excluded for the same reason they are excluded everywhere else:
+    title case capitalises every word in one, so a stop word inside a heading is
+    orthographic and says nothing about the writer. Measured on the 56-paper NWP
+    corpus, counting them recovers one more false positive and one more public
+    entity — and does it by reading title case as a habit, which it is not.
+    """
+    return sum(
+        1
+        for m in _MID_SENTENCE_CAP.finditer(text)
+        if _is_stop(m.group(1))
+        and not any(m.start(1) < h_end and m.end(1) > h_start
+                    for h_start, h_end in headings)
+    ) >= _STRAY_CAPITALS_MIN
+
+
+def suppressed_as_a_stray_mid_sentence_capital(
+    tokens: list[str],
+    start: int,
+    end: int,
+    text: str,
+    starts: frozenset[int],
+    is_given: GivenNameOracle,
+) -> bool:
+    """The mid-sentence guard: drop a lone capital a sloppy capitaliser chose.
+
+    The mirror of :func:`suppressed_as_an_unevidenced_capital`, and it exists
+    because that rule guards the smaller hole. A sentence-initial capital is
+    orthographically required, so it proves nothing — that is the rule already
+    here, and on the NWP corpus it is **4 of 66** false-positive spans. A
+    *mid-sentence* capital is currently taken as sufficient evidence on its own
+    (:func:`_capital_is_the_only_evidence` returns False for one), and that is
+    **41 of 66**. The existing rule guards the smallest bucket and trusts the
+    largest, which is sound for competent prose and backwards for the writing
+    this library is pointed at.
+
+    So a mid-sentence capital stops being self-sufficient, but **only in a
+    document that has shown its capitals are unreliable** — see
+    :func:`capitalises_ordinary_words`, whose evidence is a capital on a word
+    that cannot be a name. In every other document nothing changes.
+
+    Two channels can still keep the span, and the document's own capitalisation
+    is deliberately not one of them: ``written_as_a_capital`` *is* the
+    mid-sentence capital, so consulting it here would be the span vouching for
+    itself. What is left is evidence from outside the document —
+
+    * the given-name tier, and
+    * a first-person relation in the local context ("my friend Cade"), which is
+      testimony that the token names a person whatever its case.
+
+    ...and notability is deliberately absent, which is a choice rather than an
+    omission. This function runs during candidate *generation*, before any
+    notability oracle exists, and it only ever fires on a single-token span — so
+    a public figure it drops is one the notability gate would have KEPT anyway,
+    and the masked text is identical either way. Nothing that consumes a kept
+    span is reachable from here: :func:`corroborated_surnames` and
+    :func:`established_name_tokens` both key on multi-token full names, and both
+    build their candidates without a given-name oracle, which is what
+    :func:`find_candidates` gates this rule on. Measured over the NWP corpus,
+    adding a notability channel changes nothing at all — the same 19 false
+    positives recovered, the same one public entity, the same zero PII.
+
+    **The measured weakness, which is an equity exposure and not just a coverage
+    one.** Of the 18 true catches this leaves intact on that corpus, three —
+    ``Amy``, ``Barry``, ``Whitney`` — survive on the given-name tier alone.
+    Given-name coverage is systematically thinner for less common and non-Anglo
+    names, so the population this rule is most likely to leak is not a random
+    sample of children. ``test_a_name_no_tier_knows_is_the_failure_mode`` states
+    that in a test rather than a comment.
+    """
+    if len(tokens) != 1:
+        return False
+    # A sentence-initial capital belongs to the other rule, which already
+    # consults a channel this one must not.
+    if any(s <= start <= s + 2 for s in starts):
+        return False
+    stripped = tokens[0].lower().strip(".,'’")
+    if is_given(stripped):
+        return False
+    folded = _without_clitic(stripped)
+    if folded != stripped and is_given(folded):
+        return False
+    return not names_someone_in_the_writers_life(text, start, end)
+
+
 def suppressed_as_an_unevidenced_capital(
     tokens: list[str],
     start: int,
@@ -1246,6 +1349,7 @@ def find_candidates(
     settlement: SettlementOracle | None = None,
     headings_are_orthographic: bool = True,
     title_relation_refusal: bool = True,
+    mid_sentence_corroboration: bool = False,
 ) -> list[Candidate]:
     """Every name-shaped span, before any notability decision.
 
@@ -1270,6 +1374,13 @@ def find_candidates(
         headings_are_orthographic: Treat a section heading's capitals as required
             by title case rather than chosen by the writer. On by default; the flag
             exists so the arm stays measurable against its control.
+        mid_sentence_corroboration: Require evidence beyond the capital for a
+            lone mid-sentence capital, in a document that capitalises ordinary
+            words. See :func:`suppressed_as_a_stray_mid_sentence_capital`.
+            **OFF by default, and the reason is a measured leak** — read that
+            function's docstring before turning it on. Needs ``given_name`` for
+            the same reason the sentence-initial rule does: requiring a second
+            signal is only sound where there is a second signal to require.
     """
     blocked = [m.span() for m in _PROTECTED.finditer(text)]
     starts = _sentence_starts(text)
@@ -1304,6 +1415,13 @@ def find_candidates(
         return any(start < b_end and end > b_start for b_start, b_end in blocked)
 
     written_as_a_capital = _mid_sentence_capitals(text, starts, headings)
+    # A property of the whole document, read once, for the same reason `habit`
+    # is: two call sites computing it separately could disagree.
+    stray_capitals = (
+        mid_sentence_corroboration
+        and given_name is not None
+        and capitalises_ordinary_words(text, headings)
+    )
 
     out: list[Candidate] = []
     for match in _CANDIDATE_RE.finditer(text):
@@ -1332,6 +1450,15 @@ def find_candidates(
                 run, start, starts, emphasis, headings,
                 written_as_a_capital, given_name,
             ):
+                continue
+            # ...and the other half of the same question, for the capital the
+            # rule above reads as evidence. Only in a document that has shown
+            # its capitals are worth less than that.
+            if (stray_capitals and given_name is not None
+                    and suppressed_as_a_stray_mid_sentence_capital(
+                        run, start, start + len(joined), text, starts,
+                        given_name,
+                    )):
                 continue
             # A *trailing* apostrophe is the closing quote, not part of the name.
             # The candidate pattern treats `'` as a name character so O'Brien
@@ -1860,6 +1987,7 @@ def mask_candidates(
     relation_refusal: bool = True,
     title_relation_refusal: bool = True,
     headings_are_orthographic: bool = True,
+    mid_sentence_corroboration: bool = False,
 ) -> tuple[str, int]:
     """Mask every candidate the notability filter does not keep.
 
@@ -1897,6 +2025,11 @@ def mask_candidates(
             :func:`names_someone_the_writer_knows`. Needs ``notability_tier``:
             the boolean oracle cannot say which tier vouched for a name, and
             overriding every tier would redact "my hero Abraham Lincoln".
+        mid_sentence_corroboration: Forwarded to :func:`find_candidates`. A
+            measurement control rather than a host knob — it is deliberately not
+            exposed on :class:`~vicary.redaction.Redactor`, because a flag that
+            changes masked output and can be set per host is a way for two hosts
+            to redact the same essay differently.
 
     Returns:
         ``(masked_text, spans_masked)``.
@@ -1907,6 +2040,7 @@ def mask_candidates(
         settlement=settlement,
         headings_are_orthographic=headings_are_orthographic,
         title_relation_refusal=title_relation_refusal,
+        mid_sentence_corroboration=mid_sentence_corroboration,
     )
     established: frozenset[str] = frozenset()
     if corroborate and notable is not None:
