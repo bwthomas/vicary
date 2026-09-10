@@ -158,18 +158,75 @@ def previous_release(root: Path) -> tuple[str, str]:
     raise SystemExit(1)
 
 
+def _version_tuple(text: str) -> tuple[int, ...]:
+    """``"0.2.10"`` -> ``(0, 2, 10)``. Anything unparseable sorts lowest."""
+    parts: list[int] = []
+    for piece in text.strip().split("."):
+        digits = "".join(c for c in piece if c.isdigit())
+        if not digits:
+            break
+        parts.append(int(digits))
+    return tuple(parts)
+
+
+def _asset_is_readable_by(root: Path, version: str) -> tuple[bool, str]:
+    """Whether a release at `version` can read THIS checkout's asset payload.
+
+    The manifest already answers this: every entry carries a
+    ``min_package_version``, which is the format contract between the payload and
+    the code that reads it. Sharing an asset across that line hands old code a
+    payload it was never written for.
+    """
+    manifest = root / "asset" / "data" / "MANIFEST.json"
+    if not manifest.exists():
+        return True, ""
+    entries = json.loads(manifest.read_text()).get("assets", {})
+    have = _version_tuple(version)
+    gating = sorted(
+        name for name, entry in entries.items()
+        if _version_tuple(str(entry.get("min_package_version", "0"))) > have
+    )
+    if not gating:
+        return True, ""
+    return False, ", ".join(gating)
+
+
 def worktree(root: Path, ref: str, dest: Path) -> None:
     check(["git", "worktree", "add", "--detach", str(dest), ref], root, f"checking out {ref}")
-    # The gazetteer and the corpus are inputs, not code. Both sides measure the
-    # current ones, so a change to either cannot masquerade as a code
-    # regression — and, more to the point, so that the essays being timed are
-    # byte-identical on both sides. The measure scripts print a digest of the
-    # corpus text and the driver refuses to compare if they disagree.
-    for shared in ("asset", "conformance"):
-        target = dest / shared
+    # The corpus is an input, not code, and both sides must time the SAME essays:
+    # the measure scripts print a digest of the corpus text and the driver refuses
+    # to compare if they disagree. So it is always this checkout's.
+    #
+    # The gazetteer and the word lists are inputs too, and the same reasoning
+    # normally applies — a change to either must not be able to masquerade as a
+    # code regression. But the payload is versioned, and the previous release may
+    # predate its current format. `min_package_version` in the manifest is exactly
+    # that line: 0.2.10 split `stop_words.txt` into two files, so a 0.2.8 reader
+    # handed this checkout's asset raises `lexicon "stop_words" missing` and the
+    # pair dies before it measures anything — which is how a green `just ci` on a
+    # developer box shipped a red CI on the release tag. Below the line the
+    # previous release reads its OWN asset, and the difference is named on stdout
+    # rather than left to be inferred from a number.
+    target = dest / "conformance"
+    if target.exists():
+        shutil.rmtree(target)
+    shutil.copytree(root / "conformance", target)
+
+    version = (dest / "VERSION").read_text().strip() if (dest / "VERSION").exists() else "0"
+    readable, gating = _asset_is_readable_by(root, version)
+    if readable:
+        target = dest / "asset"
         if target.exists():
             shutil.rmtree(target)
-        shutil.copytree(root / shared, target)
+        shutil.copytree(root / "asset", target)
+    else:
+        print(
+            f"{ref} ({version}) predates this checkout's asset format — "
+            f"{gating} declares a higher min_package_version — so it is timed "
+            f"against its own asset. The corpus is still shared, so the essays "
+            f"are identical; the word lists are not.",
+            flush=True,
+        )
 
 
 def prepare(impl: str, root: Path, tree: Path) -> None:
@@ -177,9 +234,24 @@ def prepare(impl: str, root: Path, tree: Path) -> None:
     if impl == "python":
         # Stdlib-only, so nothing is installed: the measure script is pointed at
         # this source tree. Only the data asset has to be materialised.
+        #
+        # From the WORKTREE's own builder, which is what the other two ports have
+        # always done — they run `rake sync_assets` and `sync-assets.mjs` out of
+        # the tree being prepared, while this one ran the builder installed in the
+        # developer's venv, i.e. always this checkout's. That is invisible while
+        # the asset is shared (`worktree` copies this checkout's asset in, so the
+        # two are the same code and the same payload) and wrong the moment it is
+        # not: below the format floor the tree keeps its own asset, and this
+        # checkout's builder vendored a payload the previous release cannot read.
+        # PYTHONPATH rather than a cwd change because `vicary_build` is installed
+        # editable in the venv, so only an earlier sys.path entry displaces it.
+        env = dict(os.environ)
+        env["PYTHONPATH"] = os.pathsep.join(
+            [str(tree / "asset"), env.get("PYTHONPATH", "")]
+        ).rstrip(os.pathsep)
         check([sys.executable, "-m", "vicary_build", "vendor",
                str(tree / "python" / "src" / "vicary" / "data")],
-              tree, "vendoring the asset for the previous release")
+              tree, "vendoring the asset for the previous release", env=env)
     elif impl == "ruby":
         check(["rake", "sync_assets"], tree / "ruby",
               "vendoring the asset for the previous release")
