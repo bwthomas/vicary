@@ -109,6 +109,7 @@ const gateReport = measureGates(
       ? {}
       : {
           heldOutRecallCarrier: corpus.recallHeldOut,
+          allSpanRecallCarrier: corpus.recallAll,
           overFirePerEssay: corpus.overFireSpansPerEssay,
           ...latencyGateFields(
             corpus.latencyPooledMedianMs,
@@ -148,10 +149,10 @@ test("the spec carries the identity the detector is told about", () => {
 // `requires` says what a gate depends on, not whether it is reachable — both
 // requirements are satisfied from the repository now, and the declaration is
 // what lets a port report NOT MEASURED by name if that stops being true.
-test("the nine gates load, with four declaring a data requirement", () => {
-  assert.equal(gates.gates.length, 9);
+test("the ten gates load, with five declaring a data requirement", () => {
+  assert.equal(gates.gates.length, 10);
   const needsData = gates.gates.filter((g) => g.requires.length > 0);
-  assert.equal(needsData.length, 4);
+  assert.equal(needsData.length, 5);
   for (const gate of needsData) {
     for (const requirement of gate.requires) {
       assert.ok(

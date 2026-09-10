@@ -1148,6 +1148,21 @@ def build_gates_document() -> dict[str, Any]:
                        "carrier essay leaked; eight passes hid one leak.",
             },
             {
+                "id": "all_span_recall_carrier",
+                "label": "all-span recall (carrier)",
+                "unit": "%",
+                "op": ">=",
+                "bar": 100.0,
+                "requires": ["corpus"],
+                "why": "Held-out recall is blind to a span the detector was "
+                       "SHOWN. A suppression rule can drop a visible name, leave "
+                       "held-out recall at 100%, and pass every other gate — "
+                       "`mid_sentence_corroboration` did, dropping `Alvarez`, "
+                       "and only the golden bytes caught it, because a fixture "
+                       "sentence happened to contain a month. This is that "
+                       "failing case as a gate rather than as a lesson.",
+            },
+            {
                 "id": "keep_precision",
                 "label": "KEEP precision",
                 "unit": "%",

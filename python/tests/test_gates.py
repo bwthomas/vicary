@@ -356,6 +356,32 @@ def test_held_out_recall_in_a_carrier_essay(corpus_metrics, record_gate) -> None
     )
 
 
+def test_all_span_recall_in_a_carrier_essay(corpus_metrics, record_gate) -> None:
+    """Every span the fixture says to mask, not only the ones held back.
+
+    **The gate above cannot see this one's failure.** Held-out recall scores the
+    spans the detector was never shown; this scores all of them, including the
+    ones a suppression rule is allowed to touch. A rule that drops a *visible*
+    name leaves held-out recall at 100% and moves this, which is precisely what
+    `mid_sentence_corroboration` did in 0.2.9: it suppressed `Alvarez` in "We
+    stayed with the Alvarez family in July.", all eight gates printed PASS, and
+    the only thing that objected was a golden byte diff that existed by luck —
+    the fixture happens to contain a sentence with a month in it.
+
+    So the ship gate that arm was written against was blind to the failure that
+    kept it from shipping. This is that failing case kept as a gate.
+    """
+    value = corpus_metrics["recall_all"]
+    record_gate("all-span recall (carrier)", value, ">=", HELD_OUT_RECALL_FLOOR, "%")
+    assert value is not None, "no spans were scored"
+    assert value >= HELD_OUT_RECALL_FLOOR, (
+        f"all-span recall in a carrier essay {value:.1f}% is below "
+        f"{HELD_OUT_RECALL_FLOOR}%: a name the fixture says to mask reached the "
+        "output. Held-out recall cannot see this — the span was one the detector "
+        "was shown."
+    )
+
+
 def test_keep_precision(frame_metrics, record_gate) -> None:
     """Every KEEP span survives intact — public figures, cited authors, titles."""
     value = frame_metrics["precision_all"]
@@ -703,6 +729,7 @@ def test_the_gate_report_says_what_it_could_not_measure(gate_results) -> None:
 _ALL_GATES = {
     "held-out recall",
     "held-out recall (carrier)",
+    "all-span recall (carrier)",
     "KEEP precision",
     "round-trip",
     "unaccounted violations",
@@ -780,6 +807,7 @@ def test_every_published_bar_is_the_bar_this_port_asserts() -> None:
     asserted = {
         "held-out recall": HELD_OUT_RECALL_FLOOR,
         "held-out recall (carrier)": HELD_OUT_RECALL_FLOOR,
+        "all-span recall (carrier)": HELD_OUT_RECALL_FLOOR,
         "KEEP precision": KEEP_PRECISION_FLOOR,
         "round-trip": ROUND_TRIP_FLOOR,
         "unaccounted violations": 0.0,

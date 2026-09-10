@@ -317,9 +317,9 @@ def committed_gates(conformance_directory: Path) -> dict:
 def test_the_spec_says_which_gates_declare_a_data_requirement(
     committed_gates: dict,
 ) -> None:
-    """Four of nine declare a `requires`, and both requirements are now satisfied
+    """Five of ten declare a `requires`, and both requirements are now satisfied
     from the repository — `persuade-20` for the corpus, `conformance/census/` for
-    the surname table — so a bare checkout reaches all nine.
+    the surname table — so a bare checkout reaches all ten.
 
     The declaration still has to be carried, and named. A port that drops the
     distinction cannot report NOT MEASURED for the next gate whose data goes out
@@ -332,6 +332,7 @@ def test_the_spec_says_which_gates_declare_a_data_requirement(
     }
     assert needs_data == {
         "held-out recall (carrier)",
+        "all-span recall (carrier)",
         "over-fire on prose",
         "bare-surname exposure",
         "latency vs last release",

@@ -523,6 +523,12 @@ export interface ReferenceMeasurements {
   recallHeldOutPassed: number;
   recallHeldOutTotal: number;
   recallHeldOutPct: number;
+  /** Every REDACT span, not only the held-out ones — the visible ones a
+   * suppression rule is allowed to touch are exactly what held-out recall
+   * cannot see. */
+  recallAllPassed: number;
+  recallAllTotal: number;
+  recallAllPct: number;
   overFireSpansTotal: number;
   overFireSpansPerEssay: number;
   asapRewritesPerEssay: number;
@@ -565,6 +571,9 @@ export function loadReferenceMeasurements(
     recallHeldOutPassed: gates["recall_held_out_passed"]!,
     recallHeldOutTotal: gates["recall_held_out_total"]!,
     recallHeldOutPct: gates["recall_held_out_pct"]!,
+    recallAllPassed: gates["recall_all_passed"]!,
+    recallAllTotal: gates["recall_all_total"]!,
+    recallAllPct: gates["recall_all_pct"]!,
     overFireSpansTotal: gates["over_fire_spans_total"]!,
     overFireSpansPerEssay: gates["over_fire_spans_per_essay"]!,
     asapRewritesPerEssay: gates["asap_rewrites_per_essay"]!,
@@ -678,6 +687,12 @@ export interface CorpusMetrics {
   recallHeldOut: number;
   recallHeldOutPassed: number;
   recallHeldOutTotal: number;
+  /** Every REDACT span masked, as a percentage. Held-out recall is blind to a
+   * span the detector was SHOWN, and a suppression rule that drops one leaves
+   * held-out recall at 100%. */
+  recallAll: number;
+  recallAllPassed: number;
+  recallAllTotal: number;
   /** Spans this port masked in prose nobody planted anything in, per essay. */
   overFireSpansPerEssay: number;
   overFireSpansTotal: number;
@@ -760,6 +775,8 @@ export function measureCorpus(
     (o) => o.heldOut && o.verdict !== "keep",
   );
   const passed = heldOutRedact.filter((o) => o.passed).length;
+  const allRedact = outcomes.filter((o) => o.verdict !== "keep");
+  const allPassed = allRedact.filter((o) => o.passed).length;
   const sorted = [...latencies].sort((a, b) => a - b);
   const at = (q: number): number =>
     sorted.length === 0
@@ -772,6 +789,10 @@ export function measureCorpus(
       heldOutRedact.length === 0 ? 0 : (100.0 * passed) / heldOutRedact.length,
     recallHeldOutPassed: passed,
     recallHeldOutTotal: heldOutRedact.length,
+    recallAll:
+      allRedact.length === 0 ? 0 : (100.0 * allPassed) / allRedact.length,
+    recallAllPassed: allPassed,
+    recallAllTotal: allRedact.length,
     overFireSpansPerEssay:
       cases.length === 0 ? 0 : overFireSpans / cases.length,
     overFireSpansTotal: overFireSpans,

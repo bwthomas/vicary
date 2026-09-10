@@ -111,10 +111,10 @@ class GatesTest < Minitest::Test
     assert_equal 360_793, measurement("asset_entries").value
   end
 
-  def test_with_no_data_supplied_all_four_gates_needing_data_stay_not_measured
+  def test_with_no_data_supplied_all_five_gates_needing_data_stay_not_measured
     unmeasured = self.class.report.measurements
                      .select { |m| m.passed.nil? }.map { |m| m.gate.id }.sort
-    assert_equal %w[bare_surname_exposure held_out_recall_carrier
+    assert_equal %w[all_span_recall_carrier bare_surname_exposure held_out_recall_carrier
                     latency_regression over_fire_prose], unmeasured
     # Not measurable *because the data is absent*, not because the port declined.
     self.class.report.measurements.select { |m| m.passed.nil? }.each do |m|
@@ -155,7 +155,8 @@ class GatesTest < Minitest::Test
     # silently hands values to the rest.
     still_unmeasured = self.class.census_report.measurements
                            .select { |m| m.passed.nil? }.map { |m| m.gate.id }.sort
-    assert_equal %w[held_out_recall_carrier latency_regression over_fire_prose],
+    assert_equal %w[all_span_recall_carrier held_out_recall_carrier latency_regression
+                    over_fire_prose],
                  still_unmeasured
   end
 
@@ -588,13 +589,13 @@ class GatesTest < Minitest::Test
   # The rendered block
   # -------------------------------------------------------------------------
 
-  def test_the_rendered_block_says_five_of_five_and_names_the_four_it_cannot
+  def test_the_rendered_block_says_five_of_five_and_names_the_five_it_cannot
     block = Vicary::Gates.report(self.class.report)
-    assert_match(/5 of 5 measured gates hold; 4 are NOT MEASURED/, block)
+    assert_match(/5 of 5 measured gates hold; 5 are NOT MEASURED/, block)
     # Gate ROWS, not occurrences: the summary line says "NOT MEASURED" too, so a
-    # bare count of the string is 5 and agrees with nothing.
+    # bare count of the string is 6 and agrees with nothing.
     rows = block.lines.grep(/^    NOT MEASURED /)
-    assert_equal 4, rows.size
+    assert_equal 5, rows.size
     assert_equal 5, block.lines.grep(/^    (PASS|FAIL) /).size
     assert_match(/NEEDS corpus/, block)
     assert_match(/NEEDS census/, block)
@@ -608,7 +609,7 @@ class GatesTest < Minitest::Test
     end
     bare = Vicary::Conformance.report(board, Vicary::Conformance.load_gates)
     assert_match(/the caller measured no gate/, bare)
-    assert_equal 9, bare.scan("NOT MEASURED").size
+    assert_equal 10, bare.scan("NOT MEASURED").size
   end
 
   # Print the board, whatever this run could reach.
@@ -629,6 +630,7 @@ class GatesTest < Minitest::Test
       asset_entries: Vicary::Gazetteer.load.entry_count,
       bare_surname_exposure: exposure.rate,
       held_out_recall_carrier: corpus_metrics&.recall_held_out,
+      all_span_recall_carrier: corpus_metrics&.recall_all,
       over_fire_per_essay: corpus_metrics&.over_fire_spans_per_essay,
       **(if corpus_metrics.nil?
            {}

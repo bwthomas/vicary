@@ -424,6 +424,7 @@ export function measureGates(
     assetEntries?: number;
     bareSurnameExposure?: number;
     heldOutRecallCarrier?: number;
+    allSpanRecallCarrier?: number;
     overFirePerEssay?: number;
     /**
      * The regression against the last release, in percent, or undefined when
@@ -516,6 +517,13 @@ export function measureGates(
         options.heldOutRecallCarrier === undefined
           ? "no corpus supplied by the caller"
           : `${round3(options.heldOutRecallCarrier)}% of held-out REDACT spans in carrier essays`,
+    },
+    all_span_recall_carrier: {
+      value: options.allSpanRecallCarrier ?? null,
+      detail:
+        options.allSpanRecallCarrier === undefined
+          ? "no corpus supplied by the caller"
+          : `${round3(options.allSpanRecallCarrier)}% of ALL REDACT spans in carrier essays`,
     },
     over_fire_prose: {
       value: options.overFirePerEssay ?? null,

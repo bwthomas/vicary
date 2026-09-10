@@ -104,6 +104,10 @@ module Vicary
 
     Metrics = Struct.new(
       :essays, :recall_held_out, :recall_held_out_passed, :recall_held_out_total,
+      # Every REDACT span, not only the held-out ones. Held-out recall is blind
+      # to a span the detector was SHOWN, and a suppression rule that drops one
+      # leaves held-out recall at 100%.
+      :recall_all, :recall_all_passed, :recall_all_total,
       :over_fire_spans_per_essay, :over_fire_spans_total,
       :asap_rewrites_per_essay, :latency_p50_ms, :latency_p95_ms,
       :latency_pooled_median_ms,
@@ -485,6 +489,8 @@ module Vicary
 
         held_out = outcomes.select { |o| o.held_out && o.verdict != "keep" }
         passed = held_out.count(&:passed)
+        all_redact = outcomes.reject { |o| o.verdict == "keep" }
+        all_passed = all_redact.count(&:passed)
         sorted = latencies.sort
         at = lambda do |q|
           next 0.0 if sorted.empty?
@@ -497,6 +503,9 @@ module Vicary
           recall_held_out: held_out.empty? ? 0.0 : 100.0 * passed / held_out.size,
           recall_held_out_passed: passed,
           recall_held_out_total: held_out.size,
+          recall_all: all_redact.empty? ? 0.0 : 100.0 * all_passed / all_redact.size,
+          recall_all_passed: all_passed,
+          recall_all_total: all_redact.size,
           over_fire_spans_per_essay: cases.empty? ? 0.0 : over_fire.to_f / cases.size,
           over_fire_spans_total: over_fire,
           asap_rewrites_per_essay: cases.empty? ? 0.0 : rewrites.to_f / cases.size,

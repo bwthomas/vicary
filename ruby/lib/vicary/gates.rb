@@ -294,7 +294,8 @@ module Vicary
       # a caller that wants those gates supplies the number, and one that does
       # not gets NOT MEASURED rather than a load.
       def measure(spec, gate_spec, asset_entries: nil, bare_surname_exposure: nil,
-                  held_out_recall_carrier: nil, over_fire_per_essay: nil,
+                  held_out_recall_carrier: nil, all_span_recall_carrier: nil,
+                  over_fire_per_essay: nil,
                   latency_regression_pct: nil, latency_regression_detail: nil,
                   corpus_id: nil)
         outcomes = []
@@ -363,6 +364,14 @@ module Vicary
                       no_corpus
                     else
                       "#{round3(held_out_recall_carrier)}% of held-out REDACT spans in carrier essays"
+                    end,
+          },
+          "all_span_recall_carrier" => {
+            value: all_span_recall_carrier,
+            detail: if all_span_recall_carrier.nil?
+                      no_corpus
+                    else
+                      "#{round3(all_span_recall_carrier)}% of ALL REDACT spans in carrier essays"
                     end,
           },
           "over_fire_prose" => {

@@ -128,6 +128,17 @@ def measure(corpus_id: str | None = None
         if span["held_out"] and span["verdict"] == "redact"
     ]
     passed = sum(1 for span in held_out if span["passed"])
+    # Every span the fixture says must be masked, not only the held-out ones.
+    # The two differ by the spans the detector was *shown* — and a rule that
+    # suppresses a visible span moves this while leaving held-out recall at 100%.
+    # That is not hypothetical: `mid_sentence_corroboration` did exactly that,
+    # dropped `Alvarez`, and every published gate said PASS. The golden bytes
+    # caught it, and only because a fixture sentence happened to contain a month.
+    all_spans = [
+        span for row in rows for span in row["spans"]
+        if span["verdict"] == "redact"
+    ]
+    all_passed = sum(1 for span in all_spans if span["passed"])
     over_fire_total = sum(row["base_fp_spans"] for row in rows)
     asap_rewrites = sum(row.get("base_asap_rewrites", 0) for row in rows)
 
@@ -144,6 +155,10 @@ def measure(corpus_id: str | None = None
         "recall_held_out_total": len(held_out),
         "recall_held_out_pct": (
             100.0 * passed / len(held_out) if held_out else 0.0),
+        "recall_all_passed": all_passed,
+        "recall_all_total": len(all_spans),
+        "recall_all_pct": (
+            100.0 * all_passed / len(all_spans) if all_spans else 0.0),
         "over_fire_spans_total": over_fire_total,
         "over_fire_spans_per_essay": over_fire_total / len(rows),
         "asap_rewrites_per_essay": asap_rewrites / len(rows),

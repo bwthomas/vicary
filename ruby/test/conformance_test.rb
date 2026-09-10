@@ -84,6 +84,7 @@ class ConformanceTest < Minitest::Test
       spec, gates, asset_entries: Vicary::Gazetteer.load.entry_count,
                    bare_surname_exposure: bare_surname_exposure,
                    held_out_recall_carrier: corpus_metrics&.recall_held_out,
+                   all_span_recall_carrier: corpus_metrics&.recall_all,
                    over_fire_per_essay: corpus_metrics&.over_fire_spans_per_essay,
                    **(if corpus_metrics.nil?
                         {}
@@ -123,11 +124,11 @@ class ConformanceTest < Minitest::Test
     assert_equal "Westfield High School", identity.school_name
   end
 
-  def test_the_nine_gates_load_with_four_declaring_data_no_package_ships
+  def test_the_ten_gates_load_with_five_declaring_data_no_package_ships
     gates = self.class.gates
-    assert_equal 9, gates.gates.size
+    assert_equal 10, gates.gates.size
     needs_data = gates.gates.reject { |g| g.requires.empty? }
-    assert_equal 4, needs_data.size
+    assert_equal 5, needs_data.size
     needs_data.each do |gate|
       gate.requires.each do |requirement|
         assert_includes gates.requirements, requirement,

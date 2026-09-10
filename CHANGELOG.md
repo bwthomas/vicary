@@ -4,6 +4,21 @@
 
 ## 0.2.10 — 2026-09-10
 
+### A tenth gate, because the ninth could not see the failure that mattered
+
+* **`all-span recall (carrier)` — every span the fixture says to mask, not only
+  the held-out ones.** Held-out recall scores spans the detector was never shown;
+  a suppression rule is only ever allowed to touch the *visible* ones, so it can
+  drop a real name and leave held-out recall at 100%. That is not a hypothetical:
+  `mid_sentence_corroboration` dropped `Alvarez` in 0.2.9, all nine gates printed
+  PASS, and the only objection came from a golden byte diff that existed by luck
+  — the fixture happens to contain a sentence with a month in it.
+* **Verified red.** Point the signal back at the whole stoplist and the new gate
+  reads 98.00% FAIL while held-out recall still reads 100% PASS. That gap is the
+  whole reason the gate exists.
+* All three ports measure it, and it declares `corpus` like its sibling, so a
+  bare checkout reaches ten of ten.
+
 ### The stoplist is two lists, because one list was answering two questions
 
 * **`stop_words.txt` splits into `stop_words_never_capitalised.txt` (499) and

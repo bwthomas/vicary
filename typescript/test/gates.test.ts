@@ -120,12 +120,13 @@ test("the measured values match the Python gate report", () => {
   assert.equal(measurement("asset_entries").value, 360793);
 });
 
-test("with no data supplied, all four gates needing data stay NOT MEASURED", () => {
+test("with no data supplied, all five gates needing data stay NOT MEASURED", () => {
   const unmeasured = report.measurements
     .filter((m) => m.passed === null)
     .map((m) => m.gate.id)
     .sort();
   assert.deepEqual(unmeasured, [
+    "all_span_recall_carrier",
     "bare_surname_exposure",
     "held_out_recall_carrier",
     "latency_regression",
@@ -179,6 +180,7 @@ test(
       .map((m) => m.gate.id)
       .sort();
     assert.deepEqual(stillUnmeasured, [
+      "all_span_recall_carrier",
       "held_out_recall_carrier",
       "latency_regression",
       "over_fire_prose",
@@ -718,6 +720,7 @@ process.on("exit", () => {
         ? {}
         : {
             heldOutRecallCarrier: corpus.recallHeldOut,
+            allSpanRecallCarrier: corpus.recallAll,
             overFirePerEssay: corpus.overFireSpansPerEssay,
             ...latencyGateFields(
             corpus.latencyPooledMedianMs,
