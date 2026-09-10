@@ -29,8 +29,8 @@
       "corpus_gates": {
         "asap_rewrites_per_essay": 0.0,
         "essays": 20,
-        "over_fire_spans_per_essay": 7.4,
-        "over_fire_spans_total": 148,
+        "over_fire_spans_per_essay": 6.7,
+        "over_fire_spans_total": 134,
         "recall_all_passed": 50,
         "recall_all_pct": 100.0,
         "recall_all_total": 50,

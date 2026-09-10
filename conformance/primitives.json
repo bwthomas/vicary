@@ -3709,14 +3709,7 @@
           "NAME"
         ]
       ],
-      "wrapped": [
-        [
-          60,
-          64,
-          "Ohio",
-          "NAME"
-        ]
-      ]
+      "wrapped": []
     },
     "find_candidates_permissive_given": {
       "accented": [
@@ -6600,8 +6593,8 @@
         3
       ],
       "wrapped": [
-        "The INternet as we know it today first\nappeared in a lab in {NAME_1}.",
-        1
+        "The INternet as we know it today first\nappeared in a lab in Ohio.",
+        0
       ]
     },
     "mask_candidates_unnumbered": {
@@ -6762,8 +6755,8 @@
         3
       ],
       "wrapped": [
-        "The INternet as we know it today first\nappeared in a lab in {NAME}.",
-        1
+        "The INternet as we know it today first\nappeared in a lab in Ohio.",
+        0
       ]
     },
     "mask_candidates_with_keeps": {
@@ -6924,8 +6917,8 @@
         2
       ],
       "wrapped": [
-        "The INternet as we know it today first\nappeared in a lab in {NAME_1}.",
-        1
+        "The INternet as we know it today first\nappeared in a lab in Ohio.",
+        0
       ]
     },
     "mask_candidates_without_notability": {
@@ -7086,8 +7079,8 @@
         4
       ],
       "wrapped": [
-        "The INternet as we know it today first\nappeared in a lab in {NAME_1}.",
-        1
+        "The INternet as we know it today first\nappeared in a lab in Ohio.",
+        0
       ]
     },
     "masks_with_settlement": {

@@ -22,6 +22,11 @@ import { test } from "node:test";
 
 import {
   ALLCAPS_RUN,
+  capitalisesInsideAWord,
+  capitalisesOrdinaryWords,
+  hasInteriorCapital,
+  suppressedAsAWordTheWriterAlsoWritesLowerCase,
+  writtenInLowerCase,
   OVERRIDABLE_TIERS,
   ANY_TOKEN,
   CANDIDATE_RE,
@@ -1047,4 +1052,73 @@ test("Python's word boundary, not JavaScript's, on both sides of a cue", () => {
   // agree there and the case above is isolating the Unicode difference.
   const ascii = "roomy cousin Terrence came over that summer and never left.";
   assert.equal(namesSomeoneTheWriterKnows(ascii, 13, 21), false);
+});
+
+// ---------------------------------------------------------------------------
+// The writer's own lower case, and the capital inside a word
+// ---------------------------------------------------------------------------
+//
+// Same cases as `python/tests/test_name_candidates.py` and
+// `ruby/test/candidates_test.rb`, value for value.
+
+test("an interior capital is orthographic noise", () => {
+  for (const word of ["ChoaCh", "PoSitive", "grandParints", "surPise", "dePenDs"]) {
+    assert.equal(hasInteriorCapital(word), true, word);
+  }
+});
+
+test("a name shape is not an interior capital", () => {
+  // `dePenDs` above is the price of the particle exemption being exactly one
+  // capital wide rather than unlimited.
+  for (const word of [
+    "BILL", "PRINCIPLES", "O'Brien", "Jean-Luc", "McDonald", "MacArthur",
+    "DeShawn", "DiCaprio", "LaGrange", "VanHalen", "T", "Terrence", "summer",
+  ]) {
+    assert.equal(hasInteriorCapital(word), false, word);
+  }
+});
+
+test("the ordinary-words gate has a second channel needing no list", () => {
+  const listless = "We read about the INternet in class and it was fun to learn.";
+  assert.equal(capitalisesInsideAWord(listless), true);
+  assert.equal(capitalisesOrdinaryWords(listless), true);
+});
+
+test("the interior channel counts headings, and says why", () => {
+  // Title case capitalises every word in a heading, which is why a heading's
+  // capitals are discounted everywhere else. It does not put a capital in the
+  // MIDDLE of a word, so that argument does not transfer here.
+  const text = "SPecial Horses\n\nThe horses ran across the field and we watched.";
+  const headings = headingSpans(text);
+  assert.ok(headings.length > 0);
+  assert.equal(capitalisesOrdinaryWords(text, headings), true);
+});
+
+test("written-in-lower-case reads equality, not similarity", () => {
+  const words = writtenInLowerCase("We had two summers at the lake before that.");
+  assert.equal(words.has("summers"), true);
+  assert.equal(words.has("summer"), false);
+});
+
+test("a word the writer also writes lower case is not a name", () => {
+  const never = () => false;
+  assert.equal(
+    suppressedAsAWordTheWriterAlsoWritesLowerCase(["Space"], new Set(["space"]), never),
+    true,
+  );
+  // Multi-token spans carry a shape beyond the capital, so they are exempt.
+  assert.equal(
+    suppressedAsAWordTheWriterAlsoWritesLowerCase(["Space", "Jam"], new Set(["space"]), never),
+    false,
+  );
+});
+
+test("the given-name tier still rescues a word written lower case", () => {
+  // The named failure mode — a writer who also writes their friend's name in
+  // lower case — and the channel that closes it.
+  const always = () => true;
+  assert.equal(
+    suppressedAsAWordTheWriterAlsoWritesLowerCase(["Bill"], new Set(["bill"]), always),
+    false,
+  );
 });

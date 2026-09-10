@@ -284,6 +284,27 @@ _SENTENCE_BREAK = re.compile(
 #: exclusive claim on anything it can see.
 _LOWER_TOKEN = re.compile(r"\b[a-z][a-z'’-]*")
 
+#: Word-initial particles that legitimately carry an interior capital, so an
+#: interior capital on one of them is a name shape rather than orthographic
+#: noise. Closed and small, which is the whole of this signal's safety argument:
+#: `McDonald`, `MacArthur`, `DeShawn`, `DiCaprio`, `LaGrange`, `VanHalen`.
+#:
+#: The exemption is paid for in misses and the price is named here rather than
+#: discovered later — `LaTer` and `DeCide` are indistinguishable from `LaGrange`
+#: and `DeShawn` by orthography alone. It allows the particle exactly ONE
+#: capital, at the position right after it, so a second interior capital still
+#: fires; `dePenDs` is caught that way.
+_INTERIOR_CAPITAL_PREFIXES: tuple[str, ...] = (
+    "mc", "mac", "de", "di", "la", "le", "van", "von", "du", "da", "del",
+    "san", "st",
+)
+
+#: Splits a word into the pieces an apostrophe or hyphen makes. `O'Brien` and
+#: `Jean-Luc` are two initial capitals rather than one interior capital, and
+#: without this split both read as orthographic noise — which would veto two of
+#: the commonest surname shapes there are.
+_PIECE = re.compile(r"[^'’\-‐-―]+")
+
 #: Tokens a lowercase span must reach before it is emitted at all. Set to 2
 #: deliberately, and it is the single decision that makes this route affordable —
 #: see :func:`_find_lowercase_candidates`.
@@ -1059,6 +1080,80 @@ def corroborated(
 _STRAY_CAPITALS_MIN: int = 1
 
 
+def has_interior_capital(word: str) -> bool:
+    """A capital in a non-initial position that no name form explains.
+
+    Four exemptions, and each one is a real name shape rather than a hedge:
+
+    * **All-caps pieces.** `BILL` and `PRINCIPLES` are a writer who stopped
+      using case, which is a different defect with a different rule — and one
+      :func:`_mid_sentence_capitals` already excludes for the same reason.
+    * **Apostrophes and hyphens split.** `O'Brien` and `Jean-Luc` are two
+      initial capitals; see :data:`_PIECE`.
+    * **Particles.** See :data:`_INTERIOR_CAPITAL_PREFIXES`.
+    * **Single characters.** `T.V` splits to `T` and `V`; an initial has no
+      interior.
+
+    What survives is `ChoaCh`, `PoSitive`, `grandParints`, `surPise` —
+    orthographic noise, and unlike a mid-sentence capital it cannot be confused
+    with correct English, because correct English has no such form.
+    """
+    for piece in _PIECE.findall(word):
+        if len(piece) < 2 or not piece.isalpha() or piece.isupper():
+            continue
+        lowered = piece.lower()
+        start = 1
+        for prefix in _INTERIOR_CAPITAL_PREFIXES:
+            if (lowered.startswith(prefix) and len(piece) > len(prefix)
+                    and piece[len(prefix)].isupper()):
+                start = max(start, len(prefix) + 1)
+        if any(c.isupper() for c in piece[start:]):
+            return True
+    return False
+
+
+def _capitalises_inside_a_word(text: str) -> bool:
+    """Whether this document puts a capital in the middle of a word.
+
+    The second channel of :func:`capitalises_ordinary_words`, and the one that
+    needs no list at all.
+
+    **Headings are NOT excluded here, and that is a departure with a reason.**
+    Everywhere else a heading's capitals are discounted because title case put
+    them there, so they are orthographic and say nothing about the writer. Title
+    case does not put a capital in the *middle* of a word, so the argument does
+    not transfer — and excluding headings anyway costs signal that is measured
+    rather than hypothetical: on the 56-paper NWP corpus 14 papers carry an
+    interior capital and 2 of them (`SPecial`, `AFter`) carry it only inside a
+    heading.
+    """
+    return any(has_interior_capital(m.group(0))
+               for m in _WORD_TOKEN.finditer(text))
+
+
+def written_in_lower_case(text: str) -> frozenset[str]:
+    """Lower-cased forms of every word this document writes with a lower-case
+    initial.
+
+    The mirror of :func:`_mid_sentence_capitals`: the same scan read for the
+    opposite testimony. That function records the words a document capitalises
+    where orthography would not have, and reads them as evidence those words are
+    names; this records the words the writer themself also wrote as words.
+
+    Case-insensitively **equal**, not merely similar — no plural fold, no edit
+    distance, no stem. The evidence is the writer's own hand on the same
+    letters, which is what keeps the rule free of any imported collision: it
+    consults no list, so it cannot inherit one's mistakes.
+    """
+    out: set[str] = set()
+    for match in _WORD_TOKEN.finditer(text):
+        token = match.group(0)
+        if not token[0].islower():
+            continue
+        out.add(token.lower().strip("'’"))
+    return frozenset(out)
+
+
 def capitalises_ordinary_words(
     text: str, headings: tuple[tuple[int, int], ...] = ()
 ) -> bool:
@@ -1089,14 +1184,28 @@ def capitalises_ordinary_words(
     corpus, counting them recovers one more false positive and one more public
     entity — and does it by reading title case as a habit, which it is not. That
     is the same mistake as the July one, one level down.
+
+    **Two channels.** The stray-capital channel above needs a
+    mid-sentence capital to land on a hand-curated list, so it can only ever
+    speak about words someone thought to curate. The second channel —
+    :func:`_capitalises_inside_a_word` — needs no list, because a capital in
+    the middle of a word is not a shape English produces under any rule.
+
+    Measured on the 56-paper NWP corpus: the curated channel fires on 10
+    papers, the interior channel on 12 (14 counting headings, which it does
+    count — see that function), they overlap on 7, and **5 papers are reached
+    by the interior channel alone.** That is a 50% increase in the population
+    this gate can speak about, bought from no list.
     """
-    return sum(
+    if sum(
         1
         for m in _MID_SENTENCE_CAP.finditer(text)
         if _is_never_capitalised(m.group(1))
         and not any(m.start(1) < h_end and m.end(1) > h_start
                     for h_start, h_end in headings)
-    ) >= _STRAY_CAPITALS_MIN
+    ) >= _STRAY_CAPITALS_MIN:
+        return True
+    return _capitalises_inside_a_word(text)
 
 
 def suppressed_as_a_stray_mid_sentence_capital(
@@ -1166,6 +1275,52 @@ def suppressed_as_a_stray_mid_sentence_capital(
     if folded != stripped and is_given(folded):
         return False
     return not names_someone_in_the_writers_life(text, start, end)
+
+
+def suppressed_as_a_word_the_writer_also_writes_lower_case(
+    tokens: list[str],
+    lower_cased: frozenset[str] | set[str],
+    is_given: GivenNameOracle,
+) -> bool:
+    """Drop a lone capital on a word this same document also writes lower-case.
+
+    The third of the capital-discounting rules, and the only one that needs
+    neither a position nor a list. :func:`suppressed_as_an_unevidenced_capital`
+    asks whether orthography required the capital;
+    :func:`suppressed_as_a_stray_mid_sentence_capital` asks whether the writer
+    is a sloppy capitaliser in general. This asks the narrowest question of the
+    three and the one with the best evidence behind it: *did the writer, in this
+    document, write this exact word as a word?* If they did, a capital
+    elsewhere on the same letters is not testimony about a name — whatever
+    :func:`_mid_sentence_capitals` would otherwise have read into it.
+
+    **The given-name tier still rescues**, exactly as it does in
+    :func:`corroborated`, and it is the reason this is safe to run outside the
+    stray-capital gate. `Bill` in a document that also writes "bill" survives on
+    the tier; `Summer`, `Space`, `Love` and `Fight` do not, because no tier
+    knows them and the writer already told us they are words.
+
+    Measured on the 56-paper NWP corpus as a post-hoc arm over the recorded
+    spans: **+7 false positives recovered, 0 public entities, 0 PII lost**, and
+    it is the only free arm that moves papers-damaged-for-nothing on its own
+    (23 → 20). It consults no table, so it cannot import a collision from one.
+
+    Its failure mode is named rather than discovered: a writer who also writes
+    their friend's name in lower case, where that name is on no tier. Zero
+    instances in 56 papers bounds that at a few percent of papers by rule of
+    three, not at zero — which is why :func:`find_candidates` carries a flag to
+    turn it off, and why it does not run at all on a document whose absence of a
+    capital means nothing (see :meth:`CapitalisationHabit.marks_proper_nouns`).
+    """
+    if len(tokens) != 1:
+        return False
+    stripped = tokens[0].lower().strip(".,'’")
+    if stripped not in lower_cased:
+        return False
+    if is_given(stripped):
+        return False
+    folded = _without_clitic(stripped)
+    return not (folded != stripped and is_given(folded))
 
 
 def suppressed_as_an_unevidenced_capital(
@@ -1398,6 +1553,7 @@ def find_candidates(
     headings_are_orthographic: bool = True,
     title_relation_refusal: bool = True,
     mid_sentence_corroboration: bool = True,
+    case_variance: bool = True,
 ) -> list[Candidate]:
     """Every name-shaped span, before any notability decision.
 
@@ -1431,6 +1587,13 @@ def find_candidates(
             ``given_name`` for the same reason the sentence-initial rule does:
             requiring a second signal is only sound where there is a second
             signal to require.
+        case_variance: Discount a capital on a word the same document also
+            writes with a lower-case initial. See
+            :func:`suppressed_as_a_word_the_writer_also_writes_lower_case`. ON
+            by default; the flag exists so the arm stays measurable against its
+            control, and because the rule reads an *absence* of a capital as
+            evidence — which is exactly the reading that is unsound for a
+            writer who drops capitals, so it is also gated on the habit.
     """
     blocked = [m.span() for m in _PROTECTED.finditer(text)]
     starts = _sentence_starts(text)
@@ -1472,6 +1635,16 @@ def find_candidates(
         and given_name is not None
         and capitalises_ordinary_words(text, headings)
     )
+    # The mirror of `written_as_a_capital`, read once for the same reason. Empty
+    # unless the writer marks proper nouns at all: this rule reads the ABSENCE
+    # of a capital as testimony, and `CapitalisationHabit` says in as many words
+    # that an absence means nothing in a LOWERCASE or SILENT document. Running
+    # it there would suppress every capital the writer did manage.
+    lower_cased = (
+        written_in_lower_case(text)
+        if case_variance and given_name is not None and habit.marks_proper_nouns
+        else frozenset()
+    )
 
     out: list[Candidate] = []
     for match in _CANDIDATE_RE.finditer(text):
@@ -1492,6 +1665,14 @@ def find_candidates(
                 continue
             start = match.start() + offset
             if _protected(start, start + len(joined)):
+                continue
+            # Cheapest of the three capital-discounting rules and the only
+            # one that reads neither position nor list, so it goes first.
+            if lower_cased and given_name is not None and (
+                suppressed_as_a_word_the_writer_also_writes_lower_case(
+                    run, lower_cased, given_name,
+                )
+            ):
                 continue
             # Requiring a second signal is only sound when there is a second
             # signal to require, which is why this is reached only where an

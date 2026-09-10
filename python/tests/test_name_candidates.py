@@ -1673,3 +1673,111 @@ def test_the_two_lexicons_partition_the_stoplist() -> None:
     # Folded the same way `_is_stop` folds, or the two lookups disagree on a
     # possessive and only one of them is consulted for the signal.
     assert _is_never_capitalised("She's")
+
+
+# ---------------------------------------------------------------------------
+# The writer's own lower case, and the capital inside a word
+# ---------------------------------------------------------------------------
+
+def test_a_word_the_writer_also_writes_lower_case_is_not_a_name() -> None:
+    """The document's own testimony against its own capital.
+
+    `_mid_sentence_capitals` reads a capital the writer chose as evidence a word
+    is a name. This is the mirror: the writer also wrote the same letters as a
+    word, so the capital is not testimony about anything.
+    """
+    text = ("Last year my class went to Chicago with Mrs Delgado. "
+            "We ran out of space in the old classroom back then. "
+            "Now we have Space for everyone to sit down.")
+    assert "Space" in _spans(text, case_variance=False)
+    assert "Space" not in _spans(text, case_variance=True)
+
+
+def test_the_given_name_tier_still_rescues_a_word_written_lower_case() -> None:
+    """The named failure mode, and the channel that closes it.
+
+    A writer who also writes their friend's name in lower case is exactly what
+    this rule could leak, so the given-name tier vetoes the veto — the same
+    rescue :func:`corroborated` gives, for the same reason.
+    """
+    text = ("i asked bill about the trip and he said yes. "
+            "we saw Bill again at the corner that night.")
+    assert "Bill" in _spans(text, case_variance=True)
+    # `Summer` is the same shape and the same rescue — which is why it is still
+    # a false positive on the NWP corpus after this arm ships, and why the
+    # post-hoc arm's 7 recovered spans became 3 live.
+    seasonal = ("My favorite season is summer because of the pool. "
+                "we go swimming every Summer at the lake.")
+    assert "Summer" in _spans(seasonal, case_variance=True)
+
+
+def test_case_variance_is_silent_where_a_missing_capital_means_nothing() -> None:
+    """A writer who drops capitals has not testified by dropping one.
+
+    The rule reads an ABSENCE of a capital as evidence, which
+    :class:`CapitalisationHabit` says in as many words is unsound for a
+    ``LOWERCASE`` or ``SILENT`` document. Without the habit gate the single
+    capital such a writer did manage is the one thing this suppresses.
+    """
+    text = ("i went to okonkwo house yesterday. we played outside all day. "
+            "then Okonkwo mom drove me home again.")
+    assert nc.capitalisation_habit(text) is nc.CapitalisationHabit.LOWERCASE
+    assert "Okonkwo" in _spans(text, case_variance=True)
+
+
+def test_case_variance_reads_equality_and_not_similarity() -> None:
+    """No fold, no edit distance, no stem — which is what keeps it free.
+
+    A rule that matched "summers" against "Summer" would be importing a
+    collision it cannot see, and the whole argument for this arm is that its
+    evidence comes from the writer rather than from a list.
+    """
+    text = ("We had two summers at the lake before that. "
+            "Every Summer we drive out there.")
+    assert "Summer" in _spans(text, case_variance=True)
+
+
+@pytest.mark.parametrize("word", ["ChoaCh", "PoSitive", "grandParints",
+                                  "surPise", "dePenDs"])
+def test_an_interior_capital_is_orthographic_noise(word: str) -> None:
+    assert nc.has_interior_capital(word)
+
+
+@pytest.mark.parametrize("word", ["BILL", "PRINCIPLES", "O'Brien", "Jean-Luc",
+                                  "McDonald", "MacArthur", "DeShawn",
+                                  "DiCaprio", "LaGrange", "VanHalen", "T",
+                                  "Terrence", "summer"])
+def test_a_name_shape_is_not_an_interior_capital(word: str) -> None:
+    """Every exemption is a real name shape, not a hedge. See the docstring.
+
+    `dePenDs` is the price of the particle exemption being one capital wide
+    rather than unlimited, and it is asserted in the sibling test above.
+    """
+    assert not nc.has_interior_capital(word)
+
+
+def test_the_ordinary_words_gate_has_a_second_channel_needing_no_list() -> None:
+    """A capital inside a word is not a shape English produces under any rule.
+
+    The curated channel can only speak about words someone thought to curate.
+    Measured on the 56-paper NWP corpus the two channels overlap on 7 papers and
+    the interior channel reaches 5 that the list cannot.
+    """
+    listless = "We read about the INternet in class and it was fun to learn."
+    assert not any(nc._is_never_capitalised(m.group(1))
+                   for m in nc._MID_SENTENCE_CAP.finditer(listless))
+    assert nc.capitalises_ordinary_words(listless)
+
+
+def test_the_interior_channel_counts_headings_and_says_why() -> None:
+    """The one place a heading is not discounted, and the reason it is not.
+
+    Title case capitalises every word in a heading, which is why a heading's
+    capitals are orthographic everywhere else. Title case does not put a capital
+    in the MIDDLE of a word, so that argument does not transfer — and excluding
+    headings costs 2 of the 14 papers this fires on in the NWP corpus.
+    """
+    text = "SPecial Horses\n\nThe horses ran across the field and we watched."
+    headings = nc._heading_spans(text)
+    assert headings
+    assert nc.capitalises_ordinary_words(text, headings)

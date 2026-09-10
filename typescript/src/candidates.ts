@@ -182,6 +182,32 @@ export const ALLCAPS_RUN = 3;
 export const WORD_TOKEN = /[A-Za-z][A-Za-z'’-]*/g;
 
 /**
+ * Word-initial particles that legitimately carry an interior capital, so an
+ * interior capital on one of them is a name shape rather than orthographic
+ * noise. Closed and small, which is the whole of this signal's safety
+ * argument: `McDonald`, `MacArthur`, `DeShawn`, `DiCaprio`, `LaGrange`,
+ * `VanHalen`.
+ *
+ * The exemption is paid for in misses and the price is named here rather than
+ * discovered later — `LaTer` and `DeCide` are indistinguishable from
+ * `LaGrange` and `DeShawn` by orthography alone. It allows the particle
+ * exactly ONE capital, at the position right after it, so a second interior
+ * capital still fires; `dePenDs` is caught that way.
+ */
+export const INTERIOR_CAPITAL_PREFIXES = [
+  "mc", "mac", "de", "di", "la", "le", "van", "von", "du", "da", "del",
+  "san", "st",
+] as const;
+
+/**
+ * Splits a word into the pieces an apostrophe or hyphen makes. `O'Brien` and
+ * `Jean-Luc` are two initial capitals rather than one interior capital, and
+ * without this split both read as orthographic noise — which would veto two of
+ * the commonest surname shapes there are.
+ */
+export const PIECE = /[^'’\-‐-―]+/g;
+
+/**
  * Where a sentence begins: start of text, after terminal punctuation and any
  * closing quote, after a line break, or immediately inside an *opening* quote. A
  * capital in one of these positions is required by orthography, so it is evidence
@@ -1245,7 +1271,87 @@ export function capitalisesOrdinaryWords(
     if (overlaps(headings, match.index, match.index + match[0].length)) continue;
     count += 1;
   }
-  return count >= STRAY_CAPITALS_MIN;
+  if (count >= STRAY_CAPITALS_MIN) return true;
+  return capitalisesInsideAWord(text);
+}
+
+/**
+ * A capital in a non-initial position that no name form explains.
+ *
+ * Four exemptions, and each one is a real name shape rather than a hedge:
+ * all-caps pieces (`BILL` is a writer who stopped using case, a different
+ * defect with a different rule), apostrophes and hyphens split (`O'Brien` and
+ * `Jean-Luc` are two initial capitals — see {@link PIECE}), particles (see
+ * {@link INTERIOR_CAPITAL_PREFIXES}), and single characters (`T.V` splits to
+ * `T` and `V`; an initial has no interior).
+ *
+ * What survives is `ChoaCh`, `PoSitive`, `grandParints`, `surPise` —
+ * orthographic noise, and unlike a mid-sentence capital it cannot be confused
+ * with correct English, because correct English has no such form.
+ */
+export function hasInteriorCapital(word: string): boolean {
+  for (const match of word.matchAll(PIECE)) {
+    const piece = match[0];
+    if (piece.length < 2 || !/^[A-Za-z]+$/.test(piece) || isUpper(piece)) continue;
+    const lowered = piece.toLowerCase();
+    let start = 1;
+    for (const prefix of INTERIOR_CAPITAL_PREFIXES) {
+      if (
+        lowered.startsWith(prefix) &&
+        piece.length > prefix.length &&
+        /[A-Z]/.test(piece[prefix.length]!)
+      ) {
+        start = Math.max(start, prefix.length + 1);
+      }
+    }
+    if (/[A-Z]/.test(piece.slice(start))) return true;
+  }
+  return false;
+}
+
+/**
+ * Whether this document puts a capital in the middle of a word.
+ *
+ * The second channel of {@link capitalisesOrdinaryWords}, and the one that
+ * needs no list at all.
+ *
+ * **Headings are NOT excluded here, and that is a departure with a reason.**
+ * Everywhere else a heading's capitals are discounted because title case put
+ * them there. Title case does not put a capital in the *middle* of a word, so
+ * the argument does not transfer — and excluding headings anyway costs signal
+ * that is measured rather than hypothetical: on the 56-paper NWP corpus 14
+ * papers carry an interior capital and 2 of them (`SPecial`, `AFter`) carry it
+ * only inside a heading.
+ */
+export function capitalisesInsideAWord(text: string): boolean {
+  for (const match of text.matchAll(WORD_TOKEN)) {
+    if (hasInteriorCapital(match[0])) return true;
+  }
+  return false;
+}
+
+/**
+ * Lower-cased forms of every word this document writes with a lower-case
+ * initial.
+ *
+ * The mirror of {@link midSentenceCapitals}: the same scan read for the
+ * opposite testimony. That function records the words a document capitalises
+ * where orthography would not have and reads them as evidence those words are
+ * names; this records the words the writer themself also wrote as words.
+ *
+ * Case-insensitively *equal*, not merely similar — no plural fold, no edit
+ * distance, no stem. The evidence is the writer's own hand on the same
+ * letters, which is what keeps the rule free of any imported collision: it
+ * consults no list, so it cannot inherit one's mistakes.
+ */
+export function writtenInLowerCase(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const match of text.matchAll(WORD_TOKEN)) {
+    const token = match[0];
+    if (!/[a-z]/.test(token[0]!)) continue;
+    out.add(strip(token.toLowerCase(), "'’"));
+  }
+  return out;
 }
 
 /**
@@ -1291,6 +1397,40 @@ export function suppressedAsAStrayMidSentenceCapital(
   const folded = withoutClitic(stripped);
   if (folded !== stripped && isGiven(folded)) return false;
   return !namesSomeoneInTheWritersLife(text, start, end);
+}
+
+/**
+ * Drop a lone capital on a word this same document also writes lower-case.
+ *
+ * The third of the capital-discounting rules, and the only one that needs
+ * neither a position nor a list. {@link suppressedAsAnUnevidencedCapital} asks
+ * whether orthography required the capital;
+ * {@link suppressedAsAStrayMidSentenceCapital} asks whether the writer is a
+ * sloppy capitaliser in general. This asks the narrowest question of the three
+ * and the one with the best evidence behind it: did the writer, in this
+ * document, write this exact word as a word? If they did, a capital elsewhere
+ * on the same letters is not testimony about a name.
+ *
+ * The given-name tier still rescues, exactly as it does in
+ * {@link corroborated}, and it is the reason this is safe to run outside the
+ * stray-capital gate. `Bill` in a document that also writes "bill" survives on
+ * the tier; `Summer`, `Space`, `Love` and `Fight` do not.
+ *
+ * Measured on the 56-paper NWP corpus as a post-hoc arm over the recorded
+ * spans: +7 false positives recovered, 0 public entities, 0 PII lost, and it is
+ * the only free arm that moves papers-damaged-for-nothing on its own (23 → 20).
+ */
+export function suppressedAsAWordTheWriterAlsoWritesLowerCase(
+  tokens: readonly string[],
+  lowerCased: ReadonlySet<string>,
+  isGiven: GivenNameOracle,
+): boolean {
+  if (tokens.length !== 1) return false;
+  const stripped = strip(tokens[0]!.toLowerCase(), ".,'’");
+  if (!lowerCased.has(stripped)) return false;
+  if (isGiven(stripped)) return false;
+  const folded = withoutClitic(stripped);
+  return !(folded !== stripped && isGiven(folded));
 }
 
 export function suppressedAsAnUnevidencedCapital(
@@ -1963,6 +2103,14 @@ export interface CandidateOptions {
    * reason the sentence-initial rule does: requiring a second signal is only
    * sound where there is a second signal to require. */
   readonly midSentenceCorroboration?: boolean;
+  /** Discount a capital on a word the same document also writes with a
+   * lower-case initial. See
+   * {@link suppressedAsAWordTheWriterAlsoWritesLowerCase}. On by default; the
+   * flag exists so the arm stays measurable against its control, and because
+   * the rule reads an *absence* of a capital as evidence — which is exactly the
+   * reading that is unsound for a writer who drops capitals, so it is also
+   * gated on the habit. */
+  readonly caseVariance?: boolean;
 }
 
 /**
@@ -1983,6 +2131,7 @@ export function findCandidates(
     headingsAreOrthographic = true,
     titleRelationRefusal = true,
     midSentenceCorroboration = true,
+    caseVariance = true,
   } = options;
 
   const blocked: Span[] = [...text.matchAll(PROTECTED)].map(
@@ -2028,6 +2177,15 @@ export function findCandidates(
     midSentenceCorroboration &&
     givenName !== undefined &&
     capitalisesOrdinaryWords(text, headings);
+  // The mirror of `writtenAsACapital`, read once for the same reason. Empty
+  // unless the writer marks proper nouns at all: this rule reads the ABSENCE of
+  // a capital as testimony, and the habit states in as many words that an
+  // absence means nothing in a LOWERCASE or SILENT document. Running it there
+  // would suppress every capital the writer did manage.
+  const lowerCased =
+    caseVariance && givenName !== undefined && marksProperNouns(habit)
+      ? writtenInLowerCase(text)
+      : new Set<string>();
 
   const out: Candidate[] = [];
   for (const match of text.matchAll(CANDIDATE_RE)) {
@@ -2045,6 +2203,15 @@ export function findCandidates(
       if (offset < 0) continue;
       const start = match.index + offset;
       if (isProtected(start, start + joined.length)) continue;
+      // Cheapest of the three capital-discounting rules and the only one that
+      // reads neither position nor list, so it goes first.
+      if (
+        lowerCased.size > 0 &&
+        givenName !== undefined &&
+        suppressedAsAWordTheWriterAlsoWritesLowerCase(run, lowerCased, givenName)
+      ) {
+        continue;
+      }
       // Requiring a second signal is only sound when there is a second signal to
       // require, which is why this is reached only where an oracle exists — see
       // {@link suppressedAsAnUnevidencedCapital}.

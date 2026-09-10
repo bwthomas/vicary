@@ -2,6 +2,57 @@
 
 ## Unreleased
 
+### Two free channels of the writer's own orthography
+
+Neither consults a list, so neither can inherit a list's mistakes, and neither
+adds a byte to the shipped asset. Measured live on the 56-paper NWP corpus
+against this checkout's predecessor, and separately from each other:
+
+| arm | spans | PII | public | fp | precision | papers damaged for nothing |
+|---|---|---|---|---|---|---|
+| before | 99 | 18 | 29 | 52 | 18.2% | 23/56 |
+| case variance alone | 96 | 18 | 29 | 49 | 18.8% | 21/56 |
+| interior capital alone | 96 | 18 | 28 | 50 | 18.8% | 22/56 |
+| **both** | **93** | **18** | **28** | **47** | **19.4%** | **20/56** |
+
+**Zero PII lost, in every arm and in every grade band** — LOWER_ELEMENTARY 8,
+UPPER_ELEMENTARY 3, MIDDLE_SCHOOL 4, HIGH_SCHOOL 3, unchanged throughout. The
+two arms are additive and do not overlap. Per-band precision: LE 26.7% -> 27.6%,
+UE 15.8% -> 15.8%, MS 14.8% -> 16.7%, HS 13.0% -> 14.3%.
+
+* **`suppressed_as_a_word_the_writer_also_writes_lower_case` — the mirror of
+  `mid_sentence_capitals`.** That scan reads a capital the writer chose as
+  testimony a word is a name; this reads the same document for the opposite
+  testimony. Case-insensitive **equality** only — no fold, no edit distance, no
+  stem — which is what keeps the evidence the writer's own hand rather than an
+  imported collision. Two guards, both deliberate: the given-name tier rescues
+  (so `Bill` in a document that also writes "bill" survives, and `Summer`
+  likewise stays a false positive), and it does not run at all on a document
+  whose absence of a capital means nothing, per
+  `CapitalisationHabit.marks_proper_nouns`. The guards cost 1.3 points of
+  precision on NWP (19.4% against 20.7% unguarded) and are kept because 0 PII
+  lost across 56 papers bounds that failure mode at a few percent of papers, not
+  at zero. `find_candidates(case_variance=False)` restores the control.
+* **`capitalises_ordinary_words` grew a second channel that needs no list.** The
+  existing channel needs a mid-sentence capital to land on a hand-curated
+  never-capitalised list, so it can only speak about words someone thought to
+  curate. `capitalises_inside_a_word` needs no list, because a capital in the
+  middle of a word is not a shape English produces under any rule. On the NWP
+  corpus the curated channel fires on 10 papers, the interior channel on 12, they
+  overlap on 7, and **5 papers are reached by the interior channel alone.**
+  Headings are counted here and discounted everywhere else, because title case
+  does not put a capital in the middle of a word — the exclusion would cost 2 of
+  the 14 papers that carry one.
+* **Interior capitals are a document signal, never a token veto.** `ChoaCh
+  Garcia` is a true catch whose first token carries one; a token-scoped veto
+  measures +1 false positive and **-1 PII**. That arm exists in the harness to
+  make the loss visible and is not installed here.
+* **The over-fire gate gained 0.700 spans/essay of headroom it did not have.**
+  The 20-essay corpus gate moves 7.400 -> 6.700 against a 7.4 bar it was sitting
+  exactly on, and case variance buys all of it. Every rescue channel that was
+  rejected for costing 0.100-0.200 of over-fire was rejected against the old
+  budget and is now unpriced.
+
 ## 0.2.12 — 2026-09-10
 
 ### PyPI catches up, and the count that stranded it is read rather than typed

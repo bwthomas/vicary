@@ -882,3 +882,71 @@ class CandidatesTest < Minitest::Test
     refute C.names_someone_the_writer_knows?(ascii, 13, 21)
   end
 end
+
+# ---------------------------------------------------------------------------
+# The writer's own lower case, and the capital inside a word
+# ---------------------------------------------------------------------------
+#
+# Same cases as `python/tests/test_name_candidates.py` and
+# `typescript/test/candidates.test.ts`, value for value.
+class CaseVarianceTest < Minitest::Test
+  C = Vicary::Candidates
+
+  def test_interior_capital_is_orthographic_noise
+    %w[ChoaCh PoSitive grandParints surPise dePenDs].each do |word|
+      assert C.interior_capital?(word), word
+    end
+  end
+
+  def test_a_name_shape_is_not_an_interior_capital
+    # `dePenDs` above is the price of the particle exemption being exactly one
+    # capital wide rather than unlimited.
+    ["BILL", "PRINCIPLES", "O'Brien", "Jean-Luc", "McDonald", "MacArthur",
+     "DeShawn", "DiCaprio", "LaGrange", "VanHalen", "T", "Terrence",
+     "summer"].each do |word|
+      refute C.interior_capital?(word), word
+    end
+  end
+
+  def test_the_ordinary_words_gate_has_a_second_channel_needing_no_list
+    listless = "We read about the INternet in class and it was fun to learn."
+    assert C.capitalises_inside_a_word?(listless)
+    assert C.capitalises_ordinary_words?(listless)
+  end
+
+  def test_the_interior_channel_counts_headings_and_says_why
+    # Title case capitalises every word in a heading, which is why a heading's
+    # capitals are discounted everywhere else. It does not put a capital in the
+    # MIDDLE of a word, so that argument does not transfer here.
+    text = "SPecial Horses\n\nThe horses ran across the field and we watched."
+    headings = C.heading_spans(text)
+    refute_empty headings
+    assert C.capitalises_ordinary_words?(text, headings)
+  end
+
+  def test_written_in_lower_case_reads_equality_and_not_similarity
+    words = C.written_in_lower_case("We had two summers at the lake before that.")
+    assert_includes words, "summers"
+    refute_includes words, "summer"
+  end
+
+  def test_a_word_the_writer_also_writes_lower_case_is_not_a_name
+    never = ->(_t) { false }
+    assert C.suppressed_as_a_word_the_writer_also_writes_lower_case?(
+      ["Space"], Set.new(["space"]), never
+    )
+    # Multi-token spans carry a shape beyond the capital, so they are exempt.
+    refute C.suppressed_as_a_word_the_writer_also_writes_lower_case?(
+      %w[Space Jam], Set.new(["space"]), never
+    )
+  end
+
+  def test_the_given_name_tier_still_rescues_a_word_written_lower_case
+    # The named failure mode — a writer who also writes their friend's name in
+    # lower case — and the channel that closes it.
+    always = ->(_t) { true }
+    refute C.suppressed_as_a_word_the_writer_also_writes_lower_case?(
+      ["Bill"], Set.new(["bill"]), always
+    )
+  end
+end

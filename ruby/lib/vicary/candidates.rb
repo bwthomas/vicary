@@ -167,6 +167,25 @@ module Vicary
     # Any word token, used to find all-caps runs and mid-sentence capitals.
     WORD_TOKEN = /[A-Za-z][A-Za-z'’-]*/
 
+    # Word-initial particles that legitimately carry an interior capital, so an
+    # interior capital on one of them is a name shape rather than orthographic
+    # noise. Closed and small, which is the whole of this signal's safety
+    # argument: `McDonald`, `MacArthur`, `DeShawn`, `DiCaprio`, `LaGrange`,
+    # `VanHalen`.
+    #
+    # The exemption is paid for in misses and the price is named here rather
+    # than discovered later — `LaTer` and `DeCide` are indistinguishable from
+    # `LaGrange` and `DeShawn` by orthography alone. It allows the particle
+    # exactly ONE capital, at the position right after it, so a second interior
+    # capital still fires; `dePenDs` is caught that way.
+    INTERIOR_CAPITAL_PREFIXES = %w[mc mac de di la le van von du da del san st].freeze
+
+    # Splits a word into the pieces an apostrophe or hyphen makes. `O'Brien` and
+    # `Jean-Luc` are two initial capitals rather than one interior capital, and
+    # without this split both read as orthographic noise — which would veto two
+    # of the commonest surname shapes there are.
+    PIECE = /[^'’\-‐-―]+/
+
     # Where a sentence begins: start of text, after terminal punctuation and any
     # closing quote, after a line break, or immediately inside an *opening*
     # quote. A capital in one of these positions is required by orthography, so
@@ -1121,6 +1140,37 @@ module Vicary
         false
       end
 
+      # Drop a lone capital on a word this same document also writes lower-case.
+      #
+      # The third of the capital-discounting rules, and the only one that needs
+      # neither a position nor a list. {.suppressed_as_an_unevidenced_capital?}
+      # asks whether orthography required the capital;
+      # {.suppressed_as_a_stray_mid_sentence_capital?} asks whether the writer
+      # is a sloppy capitaliser in general. This asks the narrowest question of
+      # the three and the one with the best evidence behind it: did the writer,
+      # in this document, write this exact word as a word? If they did, a
+      # capital elsewhere on the same letters is not testimony about a name.
+      #
+      # The given-name tier still rescues, exactly as it does in
+      # {.corroborated?}, and it is the reason this is safe to run outside the
+      # stray-capital gate. `Bill` in a document that also writes "bill"
+      # survives on the tier; `Summer`, `Space`, `Love` and `Fight` do not.
+      #
+      # Measured on the 56-paper NWP corpus as a post-hoc arm over the recorded
+      # spans: +7 false positives recovered, 0 public entities, 0 PII lost, and
+      # it is the only free arm that moves papers-damaged-for-nothing on its own
+      # (23 -> 20).
+      def suppressed_as_a_word_the_writer_also_writes_lower_case?(tokens, lower_cased, is_given)
+        return false unless tokens.length == 1
+
+        stripped = strip(tokens[0].downcase, ".,'’")
+        return false unless lower_cased.include?(stripped)
+        return false if is_given.call(stripped)
+
+        folded = without_clitic(stripped)
+        !(folded != stripped && is_given.call(folded))
+      end
+
       # The sentence-initial guard: drop a span whose only evidence is a capital
       # that orthography required, unless a second channel vouches for it.
       #
@@ -1166,6 +1216,17 @@ module Vicary
       # therefore counts the names too, this cannot be satisfied by a document
       # that simply names a lot of people. Headings are excluded because title
       # case capitalises every word in one.
+      #
+      # Two channels. The stray-capital channel needs a
+      # mid-sentence capital to land on a hand-curated list, so it can only ever
+      # speak about words someone thought to curate. The second channel —
+      # {.capitalises_inside_a_word?} — needs no list, because a capital in the
+      # middle of a word is not a shape English produces under any rule.
+      #
+      # Measured on the 56-paper NWP corpus: the curated channel fires on 10
+      # papers, the interior channel on 12 (14 counting headings, which it does
+      # count), they overlap on 7, and 5 papers are reached by the interior
+      # channel alone.
       def capitalises_ordinary_words?(text, headings = [])
         count = 0
         each_match(text, MID_SENTENCE_CAP) do |m|
@@ -1178,7 +1239,78 @@ module Vicary
 
           count += 1
         end
-        count >= STRAY_CAPITALS_MIN
+        return true if count >= STRAY_CAPITALS_MIN
+
+        capitalises_inside_a_word?(text)
+      end
+
+      # A capital in a non-initial position that no name form explains.
+      #
+      # Four exemptions, and each one is a real name shape rather than a hedge:
+      # all-caps pieces (`BILL` is a writer who stopped using case, a different
+      # defect with a different rule), apostrophes and hyphens split (`O'Brien`
+      # and `Jean-Luc` are two initial capitals — see {PIECE}), particles (see
+      # {INTERIOR_CAPITAL_PREFIXES}), and single characters (`T.V` splits to `T`
+      # and `V`; an initial has no interior).
+      #
+      # What survives is `ChoaCh`, `PoSitive`, `grandParints`, `surPise` —
+      # orthographic noise, and unlike a mid-sentence capital it cannot be
+      # confused with correct English, because correct English has no such form.
+      def interior_capital?(word)
+        word.scan(PIECE).each do |piece|
+          next if piece.length < 2 || !piece.match?(/\A[A-Za-z]+\z/) || upper?(piece)
+
+          lowered = piece.downcase
+          start = 1
+          INTERIOR_CAPITAL_PREFIXES.each do |prefix|
+            next unless lowered.start_with?(prefix) && piece.length > prefix.length &&
+                        piece[prefix.length].match?(/[A-Z]/)
+
+            start = [start, prefix.length + 1].max
+          end
+          return true if piece[start..].to_s.match?(/[A-Z]/)
+        end
+        false
+      end
+
+      # Whether this document puts a capital in the middle of a word.
+      #
+      # Headings are NOT excluded here, and that is a departure with a reason.
+      # Everywhere else a heading's capitals are discounted because title case
+      # put them there. Title case does not put a capital in the *middle* of a
+      # word, so the argument does not transfer — and excluding headings anyway
+      # costs signal that is measured rather than hypothetical: on the 56-paper
+      # NWP corpus 14 papers carry an interior capital and 2 of them (`SPecial`,
+      # `AFter`) carry it only inside a heading.
+      def capitalises_inside_a_word?(text)
+        each_match(text, WORD_TOKEN) do |m|
+          return true if interior_capital?(m[0])
+        end
+        false
+      end
+
+      # Lower-cased forms of every word this document writes with a lower-case
+      # initial.
+      #
+      # The mirror of {.mid_sentence_capitals}: the same scan read for the
+      # opposite testimony. That method records the words a document capitalises
+      # where orthography would not have and reads them as evidence those words
+      # are names; this records the words the writer themself also wrote as
+      # words.
+      #
+      # Case-insensitively *equal*, not merely similar — no plural fold, no edit
+      # distance, no stem. The evidence is the writer's own hand on the same
+      # letters, which is what keeps the rule free of any imported collision: it
+      # consults no list, so it cannot inherit one's mistakes.
+      def written_in_lower_case(text)
+        out = Set.new
+        each_match(text, WORD_TOKEN) do |m|
+          token = m[0]
+          next unless token[0].match?(/[a-z]/)
+
+          out << strip(token.downcase, "'’")
+        end
+        out
       end
 
       # The mid-sentence guard: drop a lone capital a sloppy capitaliser chose.
@@ -1706,6 +1838,7 @@ module Vicary
         headings_are_orthographic = options.fetch(:headings_are_orthographic, true)
         title_relation_refusal = options.fetch(:title_relation_refusal, true)
         mid_sentence_corroboration = options.fetch(:mid_sentence_corroboration, true)
+        case_variance = options.fetch(:case_variance, true)
 
         blocked = each_match(text, PROTECTED).map { |m| [m.begin(0), m.begin(0) + m[0].length] }
         starts = sentence_starts(text)
@@ -1744,6 +1877,16 @@ module Vicary
         # `habit` is: two call sites computing it separately could disagree.
         stray_capitals = mid_sentence_corroboration && !given_name.nil? &&
                          capitalises_ordinary_words?(text, headings)
+        # The mirror of `written_as_a_capital`, read once for the same reason.
+        # Empty unless the writer marks proper nouns at all: this rule reads the
+        # ABSENCE of a capital as testimony, and the habit states in as many
+        # words that an absence means nothing in a LOWERCASE or SILENT document.
+        # Running it there would suppress every capital the writer did manage.
+        lower_cased = if case_variance && !given_name.nil? && marks_proper_nouns?(habit)
+                        written_in_lower_case(text)
+                      else
+                        Set.new
+                      end
 
         out = []
         each_match(text, CANDIDATE_RE) do |m|
@@ -1763,6 +1906,15 @@ module Vicary
 
             start = m.begin(0) + offset
             next if is_protected.call(start, start + joined.length)
+
+            # Cheapest of the three capital-discounting rules and the only one
+            # that reads neither position nor list, so it goes first.
+            if !lower_cased.empty? && !given_name.nil? &&
+               suppressed_as_a_word_the_writer_also_writes_lower_case?(run, lower_cased,
+                                                                       given_name)
+              next
+            end
+
             # Requiring a second signal is only sound when there is a second
             # signal to require, which is why this is reached only where an
             # oracle exists.
