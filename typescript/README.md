@@ -47,6 +47,13 @@ the whole composition.
 const { text, restoreMap } = redactWithReport(essay, identity);
 const spans = deriveSpans(text, restoreMap);
 highlight(essay.slice(toOriginal(start, spans), toOriginal(end, spans)));
+
+// Several fields, one pass, and one restore map per field. Numbering is the
+// JOINED document's, so one person keeps one placeholder across every field —
+// masking field by field renumbers and hands `{NAME_1}` to two people.
+const { texts, restoreMaps, batched } = redactBatchWithReport(fields, identity);
+// `batched === false` means the join did not round-trip and each field was
+// passed separately, so cross-field placeholder identity does NOT hold.
 ```
 
 Two things to know. An offset inside a placeholder resolves to the start of the

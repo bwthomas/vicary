@@ -179,4 +179,94 @@ class RedactTest < Minitest::Test
     assert_equal 0, n_masked
     assert_equal 0, restore_map.size
   end
+
+  # -------------------------------------------------------------------------
+  # The batched pass. Counterpart of `typescript/test/redact.test.ts`, case for
+  # case, and of the Python reference's `redact_outbound_batch`, whose contract
+  # `scripts/redaction_parity.rb` diffs these bytes against.
+  # -------------------------------------------------------------------------
+
+  def test_batch_numbers_across_fields_rather_than_within_them
+    # The property the joined pass exists for: one entity, one placeholder, in
+    # every field it appears in. Per-field passes would restart the counter and
+    # hand `{NAME_1}` to two different people.
+    texts = ["Terrence and Samantha both helped.", "Ask Terrence again."]
+    masked, n, maps, batched = Vicary.redact_batch_with_report(texts, IDENTITY)
+
+    assert batched
+    assert_equal 3, n
+    assert_equal "{NAME_1} and {NAME_2} both helped.", masked[0]
+    assert_equal "Ask {NAME_1} again.", masked[1]
+    assert_equal "Terrence", maps[0]["{NAME_1}"]
+    assert_equal "Terrence", maps[1]["{NAME_1}"],
+                 "the same person must carry the same placeholder in both fields"
+  end
+
+  def test_batch_returns_one_map_per_field_positionally
+    texts = ["Terrence helped.", "", "Nothing to mask here."]
+    masked, _n, maps, _batched = Vicary.redact_batch_with_report(texts, IDENTITY)
+
+    assert_equal texts.length, maps.length
+    assert_equal "", masked[1]
+    assert_empty maps[1], "an empty field gets an empty map, not a missing one"
+    assert_empty maps[2], "a field nothing was masked in gets an empty map"
+  end
+
+  def test_batch_of_one_nonempty_field_still_reports_its_map
+    masked, n, maps, batched = Vicary.redact_batch_with_report(["", "Terrence helped."], IDENTITY)
+
+    assert batched
+    assert_equal 1, n
+    assert_equal "{NAME_1} helped.", masked[1]
+    assert_equal "Terrence", maps[1]["{NAME_1}"]
+    assert_empty maps[0]
+  end
+
+  def test_batch_of_nothing_is_not_an_error
+    assert_equal [[], 0, [], true], Vicary.redact_batch_with_report([], IDENTITY)
+
+    masked, n, maps, batched = Vicary.redact_batch_with_report(["", ""], IDENTITY)
+    assert_equal ["", ""], masked
+    assert_equal 0, n
+    assert_equal [{}, {}], maps
+    assert batched
+  end
+
+  def test_batch_falls_back_per_field_when_the_separator_is_in_the_text
+    # A field carrying the separator splits into more parts than went in. The
+    # answer is per-field passes and `batched == false` — never a mis-aligned
+    # list, because one field's suggestion pasted into another's is worse than a
+    # slower call. Cross-field numbering does not survive it, which is the
+    # reason the flag is returned rather than swallowed.
+    texts = ["Terrence helped#{Vicary::BATCH_SEPARATOR}and left.", "Samantha too."]
+    masked, n, maps, batched = Vicary.redact_batch_with_report(texts, IDENTITY)
+
+    refute batched, "the round trip did not hold, so the caller has to be told"
+    assert_equal 2, n
+    assert_includes masked[0], "{NAME_1}"
+    assert_equal "Terrence", maps[0]["{NAME_1}"]
+    assert_equal "Samantha", maps[1]["{NAME_1}"],
+                 "per-field numbering on the fallback path, as documented"
+  end
+
+  def test_splitting_a_joined_map_reads_occurrence_and_not_order
+    map = { "{NAME_1}" => "Terrence", "{NAME_2}" => "Samantha" }
+    parts = ["{NAME_2} first.", "{NAME_1} second.", "neither."]
+
+    assert_equal [
+      { "{NAME_2}" => "Samantha" },
+      { "{NAME_1}" => "Terrence" },
+      {},
+    ], Vicary.split_joined_restore_map(map, parts)
+  end
+
+  def test_batch_masked_bytes_equal_the_single_pass_over_the_joined_document
+    # The batch must be the joined pass and nothing else: any extra
+    # normalisation here would be a second detector nobody is measuring.
+    texts = ["Terrence and Samantha both helped.", "Ask Terrence again."]
+    joined = texts.join(Vicary::BATCH_SEPARATOR)
+    masked, = Vicary.redact_batch_with_report(texts, IDENTITY)
+
+    assert_equal Vicary.redact(joined, IDENTITY), masked.join(Vicary::BATCH_SEPARATOR)
+  end
 end

@@ -90,6 +90,18 @@ export const DEFAULT_NAME_DETECTION = NAMES_LOWERCASE;
 
 export const NAME_DETECTION_ENV_VAR = "VICARY_NAME_DETECTION";
 
+/**
+ * Separator for a batched pass, byte-identical to the Python reference's
+ * `BATCH_SEPARATOR`. Chosen to be something a writing-coach model will not emit
+ * and a PII policy will not touch: no words, no digits, no name-shaped or
+ * address-shaped substrings for an entity detector to bite on, and distinctive
+ * enough that a stray single character cannot fake it. A round-trip check runs
+ * anyway — see {@link redactBatchWithReport} — because a separator that
+ * "should" survive is exactly the kind of assumption that silently mis-aligns
+ * fields.
+ */
+export const BATCH_SEPARATOR = "\n\u241E\u241E\u241E\n";
+
 const IDENTITY_ALIASES = new Set([
   "identity",
   "off",
@@ -268,6 +280,115 @@ export function redactWithReport(
   }
 
   return { text: masked, nMasked: n, restoreMap: minter.assigned };
+}
+
+/** One batched pass: the masked fields, the count, the way back, and whether
+ * the join survived. */
+export interface BatchReport {
+  texts: string[];
+  nMasked: number;
+  /** Positionally aligned with the input `texts` — one map per field, empty for
+   * a field that was empty or that nothing was masked in. */
+  restoreMaps: Map<string, string>[];
+  /** False when the round trip failed and each field was passed separately, in
+   * which case cross-field placeholder identity does NOT hold. */
+  batched: boolean;
+}
+
+/**
+ * Split a joined document's restore map into one map per part.
+ *
+ * By OCCURRENCE, not by re-deriving: the placeholders are unique strings over
+ * the joined document, so a part's map is exactly the entries whose placeholder
+ * survived into that part. Re-running detection per part would renumber, and
+ * renumbering is the one thing this must not do.
+ */
+export function splitJoinedRestoreMap(
+  restoreMap: Map<string, string>,
+  parts: string[],
+): Map<string, string>[] {
+  return parts.map(
+    (part) =>
+      new Map(
+        [...restoreMap].filter(([placeholder]) => part.includes(placeholder)),
+      ),
+  );
+}
+
+/**
+ * Redact several fields in ONE pass, and return the way back for each.
+ *
+ * Numbering is the JOINED document's, not each field's, so the same entity
+ * carries the same placeholder across fields — which is the property that lets
+ * a reader match a name in one field to the same name in another. A caller must
+ * therefore not assume a field's map starts at `{NAME_1}`.
+ *
+ * **Why a host wants this.** Masking field by field is irreversible in the way
+ * that matters: a caller holding only the masked strings cannot tell which
+ * placeholder belongs to which field, nor what any of them stood for, so it
+ * cannot put back the words its reader is already entitled to see. It also
+ * renumbers, so one entity gets a different token per field.
+ *
+ * **Where it can go wrong, and what happens then.** The join/split round trip
+ * is the risk: masking changes lengths, so offsets cannot be trusted, and the
+ * split relies on {@link BATCH_SEPARATOR} surviving the pass intact. If the
+ * masked document does not split back into exactly as many parts as went in,
+ * this **falls back to per-field passes and says so** (`batched === false`)
+ * rather than returning a mis-aligned list — one field's suggestion pasted into
+ * another's is a worse outcome than a slower call. Cross-field placeholder
+ * identity does not survive that fallback, which is stated rather than papered
+ * over: a caller correlating names across fields would otherwise be silently
+ * wrong on exactly those inputs.
+ */
+export function redactBatchWithReport(
+  texts: string[],
+  identity: Identity,
+  options: RedactOptions = {},
+): BatchReport {
+  if (texts.length === 0) return { texts: [], nMasked: 0, restoreMaps: [], batched: true };
+
+  const emptyMaps = (): Map<string, string>[] =>
+    texts.map(() => new Map<string, string>());
+  const nonempty = texts.flatMap((t, i) => (t ? [i] : []));
+  if (nonempty.length === 0) {
+    return { texts: [...texts], nMasked: 0, restoreMaps: emptyMaps(), batched: true };
+  }
+
+  if (nonempty.length === 1) {
+    const only = nonempty[0]!;
+    const single = redactWithReport(texts[only]!, identity, options);
+    const out = [...texts];
+    out[only] = single.text;
+    const maps = emptyMaps();
+    maps[only] = single.restoreMap;
+    return { texts: out, nMasked: single.nMasked, restoreMaps: maps, batched: true };
+  }
+
+  const joined = nonempty.map((i) => texts[i]!).join(BATCH_SEPARATOR);
+  const pass = redactWithReport(joined, identity, options);
+  const parts = pass.text.split(BATCH_SEPARATOR);
+
+  if (parts.length !== nonempty.length) {
+    const out = [...texts];
+    const maps = emptyMaps();
+    let total = 0;
+    for (const i of nonempty) {
+      const field = redactWithReport(texts[i]!, identity, options);
+      out[i] = field.text;
+      maps[i] = field.restoreMap;
+      total += field.nMasked;
+    }
+    return { texts: out, nMasked: total, restoreMaps: maps, batched: false };
+  }
+
+  const out = [...texts];
+  const maps = emptyMaps();
+  const split = splitJoinedRestoreMap(pass.restoreMap, parts);
+  nonempty.forEach((i, k) => {
+    out[i] = parts[k]!;
+    maps[i] = split[k]!;
+  });
+  return { texts: out, nMasked: pass.nMasked, restoreMaps: maps, batched: true };
 }
 
 /**

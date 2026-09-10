@@ -63,6 +63,7 @@ export type { Identity } from "./conformance.js";
 export { PlaceholderMinter } from "./minter.js";
 
 export {
+  BATCH_SEPARATOR,
   DEFAULT_NAME_DETECTION,
   DETECTS_NAMES,
   NAMES_GAZETTEER,
@@ -73,10 +74,17 @@ export {
   gazetteerOracles,
   nameDetection,
   redact,
+  redactBatchWithReport,
   redactWithReport,
   restore,
+  splitJoinedRestoreMap,
 } from "./redact.js";
-export type { Oracles, RedactOptions, RedactionResult } from "./redact.js";
+export type {
+  BatchReport,
+  Oracles,
+  RedactOptions,
+  RedactionResult,
+} from "./redact.js";
 
 export {
   PLACEHOLDER,

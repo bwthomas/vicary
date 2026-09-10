@@ -32,6 +32,15 @@ module Vicary
 
   NAME_DETECTION_ENV_VAR = "VICARY_NAME_DETECTION"
 
+  # Separator for a batched pass, byte-identical to the Python reference's
+  # `BATCH_SEPARATOR`. Chosen to be something a writing-coach model will not
+  # emit and a PII policy will not touch: no words, no digits, no name-shaped or
+  # address-shaped substrings for an entity detector to bite on, and distinctive
+  # enough that a stray single character cannot fake it. A round-trip check runs
+  # anyway — see {redact_batch_with_report} — because a separator that "should"
+  # survive is exactly the kind of assumption that silently mis-aligns fields.
+  BATCH_SEPARATOR = "\n\u241E\u241E\u241E\n"
+
   IDENTITY_ALIASES = Set.new(%w[identity off none 0 false no]).freeze
   GAZETTEER_ALIASES = Set.new(%w[gazetteer on 1 true yes names]).freeze
   LOWERCASE_ALIASES = Set.new(%w[gazetteer-lowercase gazetteer_lowercase lowercase full max]).freeze
@@ -154,6 +163,90 @@ module Vicary
       end
 
       [masked, n, minter.assigned]
+    end
+
+    # Split a joined document's restore map into one map per part.
+    #
+    # By OCCURRENCE, not by re-deriving: the placeholders are unique strings
+    # over the joined document, so a part's map is exactly the entries whose
+    # placeholder survived into that part. Re-running detection per part would
+    # renumber, and renumbering is the one thing this must not do.
+    def split_joined_restore_map(restore_map, parts)
+      parts.map do |part|
+        restore_map.select { |placeholder, _original| part.include?(placeholder) }
+      end
+    end
+
+    # Redact several fields in ONE pass, and return the way back for each.
+    #
+    # Numbering is the JOINED document's, not each field's, so the same entity
+    # carries the same placeholder across fields — which is the property that
+    # lets a reader match a name in one field to the same name in another. A
+    # caller must therefore not assume a field's map starts at `{NAME_1}`.
+    #
+    # **Why a host wants this.** Masking field by field is irreversible in the
+    # way that matters: a caller holding only the masked strings cannot tell
+    # which placeholder belongs to which field, nor what any of them stood for,
+    # so it cannot put back the words its reader is already entitled to see.
+    # It also renumbers, so one entity gets a different token per field.
+    #
+    # **Where it can go wrong, and what happens then.** The join/split round
+    # trip is the risk: masking changes lengths, so offsets cannot be trusted,
+    # and the split relies on {BATCH_SEPARATOR} surviving the pass intact. If
+    # the masked document does not split back into exactly as many parts as
+    # went in, this **falls back to per-field passes and says so**
+    # (`batched == false`) rather than returning a mis-aligned list — one
+    # field's suggestion pasted into another's is a worse outcome than a slower
+    # call. Cross-field placeholder identity does not survive that fallback,
+    # which is stated rather than papered over: a caller correlating names
+    # across fields would otherwise be silently wrong on exactly those inputs.
+    #
+    # Returns `[masked_texts, n_masked, restore_maps, batched]`. `restore_maps`
+    # is positionally aligned with `texts` — one map per field, empty for a
+    # field that was empty or that nothing was masked in.
+    def redact_batch_with_report(texts, identity, options = {})
+      texts = texts.to_a
+      return [[], 0, [], true] if texts.empty?
+
+      empty_maps = texts.map { {} }
+      nonempty = texts.each_index.reject { |i| texts[i].nil? || texts[i].empty? }
+      return [texts.dup, 0, empty_maps, true] if nonempty.empty?
+
+      if nonempty.length == 1
+        only = nonempty.first
+        masked, n, map = redact_with_report(texts[only], identity, options)
+        out = texts.dup
+        out[only] = masked
+        maps = empty_maps.dup
+        maps[only] = map
+        return [out, n, maps, true]
+      end
+
+      joined = nonempty.map { |i| texts[i] }.join(BATCH_SEPARATOR)
+      masked, n, map = redact_with_report(joined, identity, options)
+      parts = masked.split(BATCH_SEPARATOR, -1)
+
+      if parts.length != nonempty.length
+        out = texts.dup
+        maps = empty_maps.dup
+        total = 0
+        nonempty.each do |i|
+          field_masked, field_n, field_map = redact_with_report(texts[i], identity, options)
+          out[i] = field_masked
+          maps[i] = field_map
+          total += field_n
+        end
+        return [out, total, maps, false]
+      end
+
+      out = texts.dup
+      maps = empty_maps.dup
+      split = split_joined_restore_map(map, parts)
+      nonempty.each_with_index do |i, k|
+        out[i] = parts[k]
+        maps[i] = split[k]
+      end
+      [out, n, maps, true]
     end
 
     # Redact personal names and structured PII from `text`.

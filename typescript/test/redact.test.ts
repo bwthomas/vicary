@@ -18,9 +18,12 @@ import {
   NAMES_LOWERCASE,
   gazetteerOracles,
   nameDetection,
+  BATCH_SEPARATOR,
   redact,
+  redactBatchWithReport,
   redactWithReport,
   restore,
+  splitJoinedRestoreMap,
 } from "../src/redact.js";
 
 const IDENTITY = {
@@ -183,4 +186,107 @@ test("empty text is returned unchanged with an empty report", () => {
   assert.equal(report.text, "");
   assert.equal(report.nMasked, 0);
   assert.equal(report.restoreMap.size, 0);
+});
+
+// ---------------------------------------------------------------------------
+// The batched pass. Counterpart of `ruby/test/redact_test.rb`, case for case,
+// and of the Python reference's `redact_outbound_batch`, whose contract
+// `scripts/redaction-parity.mjs` diffs these bytes against.
+// ---------------------------------------------------------------------------
+
+test("the batch numbers across fields rather than within them", () => {
+  // The property the joined pass exists for: one entity, one placeholder, in
+  // every field it appears in. Per-field passes would restart the counter and
+  // hand `{NAME_1}` to two different people.
+  const texts = ["Terrence and Samantha both helped.", "Ask Terrence again."];
+  const r = redactBatchWithReport(texts, IDENTITY);
+
+  assert.equal(r.batched, true);
+  assert.equal(r.nMasked, 3);
+  assert.equal(r.texts[0], "{NAME_1} and {NAME_2} both helped.");
+  assert.equal(r.texts[1], "Ask {NAME_1} again.");
+  assert.equal(r.restoreMaps[0]!.get("{NAME_1}"), "Terrence");
+  assert.equal(
+    r.restoreMaps[1]!.get("{NAME_1}"),
+    "Terrence",
+    "the same person must carry the same placeholder in both fields",
+  );
+});
+
+test("the batch returns one map per field, positionally", () => {
+  const texts = ["Terrence helped.", "", "Nothing to mask here."];
+  const r = redactBatchWithReport(texts, IDENTITY);
+
+  assert.equal(r.restoreMaps.length, texts.length);
+  assert.equal(r.texts[1], "");
+  assert.equal(r.restoreMaps[1]!.size, 0, "an empty field gets an empty map, not a missing one");
+  assert.equal(r.restoreMaps[2]!.size, 0, "a field nothing was masked in gets an empty map");
+});
+
+test("a batch of one non-empty field still reports its map", () => {
+  const r = redactBatchWithReport(["", "Terrence helped."], IDENTITY);
+
+  assert.equal(r.batched, true);
+  assert.equal(r.nMasked, 1);
+  assert.equal(r.texts[1], "{NAME_1} helped.");
+  assert.equal(r.restoreMaps[1]!.get("{NAME_1}"), "Terrence");
+  assert.equal(r.restoreMaps[0]!.size, 0);
+});
+
+test("a batch of nothing is not an error", () => {
+  const empty = redactBatchWithReport([], IDENTITY);
+  assert.deepEqual(empty.texts, []);
+  assert.equal(empty.nMasked, 0);
+  assert.deepEqual(empty.restoreMaps, []);
+  assert.equal(empty.batched, true);
+
+  const blanks = redactBatchWithReport(["", ""], IDENTITY);
+  assert.deepEqual(blanks.texts, ["", ""]);
+  assert.equal(blanks.nMasked, 0);
+  assert.equal(blanks.restoreMaps.length, 2);
+  assert.equal(blanks.batched, true);
+});
+
+test("the batch falls back per field when the separator is in the text", () => {
+  // A field carrying the separator splits into more parts than went in. The
+  // answer is per-field passes and `batched === false` — never a mis-aligned
+  // list, because one field's suggestion pasted into another's is worse than a
+  // slower call. Cross-field numbering does not survive it, which is the reason
+  // the flag is returned rather than swallowed.
+  const texts = [`Terrence helped${BATCH_SEPARATOR}and left.`, "Samantha too."];
+  const r = redactBatchWithReport(texts, IDENTITY);
+
+  assert.equal(r.batched, false, "the round trip did not hold, so the caller has to be told");
+  assert.equal(r.nMasked, 2);
+  assert.ok(r.texts[0]!.includes("{NAME_1}"));
+  assert.equal(r.restoreMaps[0]!.get("{NAME_1}"), "Terrence");
+  assert.equal(
+    r.restoreMaps[1]!.get("{NAME_1}"),
+    "Samantha",
+    "per-field numbering on the fallback path, as documented",
+  );
+});
+
+test("splitting a joined map reads occurrence and not order", () => {
+  const map = new Map([
+    ["{NAME_1}", "Terrence"],
+    ["{NAME_2}", "Samantha"],
+  ]);
+  const split = splitJoinedRestoreMap(map, ["{NAME_2} first.", "{NAME_1} second.", "neither."]);
+
+  assert.deepEqual([...split[0]!], [["{NAME_2}", "Samantha"]]);
+  assert.deepEqual([...split[1]!], [["{NAME_1}", "Terrence"]]);
+  assert.equal(split[2]!.size, 0);
+});
+
+test("the batch's masked bytes equal one pass over the joined document", () => {
+  // The batch must be the joined pass and nothing else: any extra
+  // normalisation here would be a second detector nobody is measuring.
+  const texts = ["Terrence and Samantha both helped.", "Ask Terrence again."];
+  const r = redactBatchWithReport(texts, IDENTITY);
+
+  assert.equal(
+    r.texts.join(BATCH_SEPARATOR),
+    redact(texts.join(BATCH_SEPARATOR), IDENTITY),
+  );
 });

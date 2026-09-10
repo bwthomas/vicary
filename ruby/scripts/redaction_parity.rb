@@ -70,6 +70,15 @@ DEFAULT_PROBES = SPEC["redaction_probes"]
                  .to_h { |probe| [probe["id"], probe["text"]] }
                  .freeze
 
+# The batched pass, from the same shared spec. Each entry is a LIST of fields
+# masked in one pass, and what is compared is the whole answer — masked bytes,
+# the per-field restore maps, and whether the join round-tripped — because a
+# port could reproduce the bytes while mis-assigning the maps, and a caller
+# putting a word back reads the maps.
+BATCH_PROBES = (SPEC["batch_probes"] || [])
+               .to_h { |probe| [probe["id"], probe["texts"]] }
+               .freeze
+
 def probes(argv)
   return DEFAULT_PROBES if argv.empty?
 
@@ -114,17 +123,86 @@ def python_output(texts)
   JSON.parse(out)
 end
 
+def ruby_batch_output(batches)
+  batches.transform_values do |fields|
+    masked, _n, maps, batched = Vicary.redact_batch_with_report(fields, IDENTITY)
+    { "texts" => masked, "maps" => maps, "batched" => batched }
+  end
+end
+
+def python_batch_output(batches)
+  return {} if batches.empty?
+
+  script = <<~PY
+    import json, sys
+    from types import SimpleNamespace
+    from vicary.eval.recall import build_redactor
+
+    identity = SimpleNamespace(**#{SPEC['identity'].to_json})
+    batches = json.load(sys.stdin)
+    out = {}
+    for name, fields in batches.items():
+        # A FRESH redactor per batch. The reference carries notable keeps
+        # forward from an inbound pass, and a reused one would be answering a
+        # question a direction-agnostic port cannot be asked.
+        batch = build_redactor(#{SPEC['arm'].inspect}, identity).redact_outbound_batch(fields)
+        out[name] = {
+            "texts": batch.texts,
+            "maps": [dict(m) for m in batch.restore_maps],
+            "batched": batch.batched,
+        }
+    print(json.dumps(out, ensure_ascii=False))
+  PY
+
+  out, err, status = Open3.capture3(PYTHON.to_s, "-c", script,
+                                    stdin_data: JSON.generate(batches),
+                                    chdir: ROOT.join("python").to_s)
+  unless status.success?
+    warn "the reference implementation failed on the batch probes:\n#{err}"
+    exit 2
+  end
+  JSON.parse(out)
+end
+
 texts = probes(ARGV)
 mine = ruby_output(texts)
 reference = python_output(texts)
 
 divergent = texts.keys.reject { |name| mine[name] == reference[name] }
 
-if divergent.empty?
+batches = ARGV.empty? ? BATCH_PROBES : {}
+batch_mine = ruby_batch_output(batches)
+batch_reference = python_batch_output(batches)
+batch_divergent = batches.keys.reject { |name| batch_mine[name] == batch_reference[name] }
+
+if divergent.empty? && batch_divergent.empty?
   puts "#{texts.size} probes, no divergence from the Python reference."
   puts "(masked bytes identical, placeholder numbering included, on prose the"
   puts " conformance frames and the primitives corpus do not contain)"
+  unless batches.empty?
+    puts "#{batches.size} batch probes, no divergence either."
+    puts "(masked bytes, per-field restore maps and the round-trip flag all"
+    puts " identical, which is what a host putting a word back depends on)"
+  end
   exit 0
+end
+
+unless batch_divergent.empty?
+  warn "#{batch_divergent.length} of #{batches.size} BATCH probes diverge:"
+  warn ""
+  batch_divergent.each do |name|
+    warn "  #{name}"
+    warn "    input:     #{batches[name].inspect}"
+    warn "    reference: #{batch_reference[name].inspect}"
+    warn "    this port: #{batch_mine[name].inspect}"
+    warn ""
+  end
+end
+
+if divergent.empty?
+  warn "The single-text probes are all green, which is the point: masked bytes"
+  warn "can agree while the per-field maps a restore reads do not."
+  exit 1
 end
 
 warn "#{divergent.length} of #{texts.size} probes diverge from the reference:"

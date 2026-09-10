@@ -31,6 +31,13 @@ spans = Vicary::Spans.derive(masked, restore_map)
 Vicary::Spans.to_original(offset, spans)   # masked coordinates -> the student's
 Vicary::Spans.to_redacted(offset, spans)   # and back
 Vicary::Spans.original(masked, restore_map) == essay   # => true
+
+# Several fields, one pass, and one restore map per field. Numbering is the
+# JOINED document's, so one person keeps one placeholder across every field —
+# masking field by field renumbers and hands `{NAME_1}` to two people.
+masked, n, maps, batched = Vicary.redact_batch_with_report(fields, identity)
+# `batched == false` means the join did not round-trip and each field was
+# passed separately, so cross-field placeholder identity does NOT hold.
 ```
 
 An offset landing inside a placeholder resolves to the start of the span it

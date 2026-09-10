@@ -168,6 +168,23 @@ The ports expose the same detector behind each language's ordinary shape —
 identical across all three, placeholder numbering included, and that is gated
 rather than asserted.
 
+**Several fields, one pass, and the way back for each.** `redact_batch_with_report`
+(Ruby), `redactBatchWithReport` (TypeScript) and `Redactor.redact_outbound_batch`
+(Python) mask a list of fields as one joined document and return **one restore map
+per field**, positionally aligned. Numbering is the joined document's, so one
+entity carries one placeholder across every field it appears in — which is what
+lets a reader match a name in one field to the same name in another, and why a
+caller must not assume a field's map starts at `{NAME_1}`. Masking field by field
+instead renumbers, and returns strings a host cannot undo. The join relies on
+`BATCH_SEPARATOR` surviving the pass; when it does not, every port falls back to
+per-field passes and **says so** rather than returning a mis-aligned list, because
+one field's text pasted into another's is worse than a slower call. Cross-field
+identity does not survive that fallback, which the flag exists to tell you.
+`conformance/probes.json` carries six `batch_probes` and both ports diff the masked
+bytes, the per-field maps and the flag against the Python reference — a port can
+reproduce every byte while mis-assigning the maps, and the maps are what a restore
+reads.
+
 ### Modes
 
 | mode | what it does | cost |

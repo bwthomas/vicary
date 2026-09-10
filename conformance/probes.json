@@ -182,5 +182,57 @@
       "name": "São Paulo",
       "why": "NFKD"
     }
+  ],
+  "batch_note": "The batched pass — several fields masked in ONE pass, joined by BATCH_SEPARATOR, with the joined document's numbering and one restore map per field. Compared against a FRESH Python Redactor's redact_outbound_batch: fresh matters, because the reference carries notable keeps forward from an inbound pass and a used redactor would be answering a different question than a direction-agnostic port can. Each case fixes the seam it covers, exactly as redaction_probes does.",
+  "batch_probes": [
+    {
+      "id": "cross-field-numbering",
+      "why": "One entity, one placeholder, in every field it appears in. Per-field passes renumber and hand {NAME_1} to two different people.",
+      "texts": [
+        "Terrence and Samantha both helped.",
+        "Ask Terrence again."
+      ]
+    },
+    {
+      "id": "empty-field-holds-its-slot",
+      "why": "An empty field keeps its position and gets an empty map, not a missing one — a shifted list mis-assigns every field after it.",
+      "texts": [
+        "Terrence helped.",
+        "",
+        "Nothing to mask here."
+      ]
+    },
+    {
+      "id": "single-nonempty-field",
+      "why": "One non-empty field takes the single-pass branch rather than the join; its map still has to land at its own index.",
+      "texts": [
+        "",
+        "Terrence helped."
+      ]
+    },
+    {
+      "id": "separator-in-the-text",
+      "why": "The round trip fails and every port must fall back per field and SAY so, with per-field numbering, rather than return a mis-aligned list.",
+      "texts": [
+        "Terrence helped\n␞␞␞\nand left.",
+        "Samantha too."
+      ]
+    },
+    {
+      "id": "multiline-fields-across-the-join",
+      "why": "Several rules only diverge across a newline, and the join introduces newlines the single-text probes never place at a field boundary.",
+      "texts": [
+        "My teacher Mrs. Alvarez said\nTerrence should try again.",
+        "I live at 12345\nand my friend Samantha does too."
+      ]
+    },
+    {
+      "id": "heading-then-body-per-field",
+      "why": "Headings are orthographic capitals; whether that survives being the first line of a JOINED document rather than of its own is exactly the seam.",
+      "texts": [
+        "Why I Like Fall\n\nFall is the best.",
+        "Terrence agrees with me."
+      ]
+    }
   ]
 }
