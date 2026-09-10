@@ -74,7 +74,7 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -590,6 +590,35 @@ class RedactionResult:
         return "".join(out)
 
 
+@dataclass(frozen=True)
+class OutboundBatch:
+    """One outbound batch pass: the masked fields, the bill, and the way back.
+
+    Unpacks as the ``(texts, char_units, batched)`` triple this method returned
+    before ``restore_maps`` existed, so every caller written against the old
+    signature keeps working unchanged. That compatibility is deliberate and is
+    why this is not simply a four-tuple: the library has three ports and an
+    unknown number of hosts, and a silent arity change would fail at the call
+    site rather than at the import.
+
+    ``restore_maps`` is positionally aligned with the input ``texts`` — one map
+    per field, empty for a field that was empty or that nothing was masked in.
+    """
+
+    texts: list[str]
+    char_units: int
+    batched: bool
+    restore_maps: tuple[Mapping[str, str], ...] = ()
+
+    def __iter__(self) -> Iterator[Any]:
+        """The historical three-tuple, and only those three.
+
+        Yielding four would break `a, b, c = ...`, which is the whole point of
+        the compatibility. A caller that wants the maps reads the attribute.
+        """
+        return iter((self.texts, self.char_units, self.batched))
+
+
 class Redactor:
     """Filters/redacts PII through a Bedrock Guardrail in both directions.
 
@@ -885,13 +914,27 @@ class Redactor:
         """Scrub PII a model may have echoed before returning it to a caller."""
         return self._apply(text, source="OUTPUT", outbound=True)
 
-    def redact_outbound_batch(
-        self, texts: Sequence[str]
-    ) -> tuple[list[str], int, bool]:
+    def redact_outbound_batch(self, texts: Sequence[str]) -> OutboundBatch:
         """Scrub several fields in ONE ``ApplyGuardrail`` call.
 
-        Returns ``(masked_texts, char_units, batched)``, positionally aligned with
+        Returns an :class:`OutboundBatch`, which unpacks as the historical
+        ``(masked_texts, char_units, batched)`` triple and additionally carries
+        ``restore_maps`` — one per input field, positionally aligned with
         ``texts``.
+
+        **The per-field maps are why a caller can show a reader their own
+        prose.** Without them this method masked irreversibly: the joined pass
+        produces one map over the joined text, and a caller holding only the
+        masked strings cannot tell which placeholder belongs to which field, nor
+        what any of them stood for. A host that wants to put the words back had
+        to fall back to per-field calls and pay the billing this method exists
+        to avoid, so the cheap path was also the lossy one. Splitting the joined
+        map by placeholder occurrence costs nothing and removes that trade.
+
+        Numbering is the JOINED document's, not each field's, so the same entity
+        carries the same placeholder across fields — which is the property that
+        lets a reader match a name in one field to the same name in another.
+        A caller must therefore not assume a field's map starts at ``{NAME_1}``.
 
         **Why this exists — it is a pure billing fix, measured.** ``ApplyGuardrail``
         bills ``ceil(len/1000)`` text units, so **every short field rounds up to a
@@ -912,15 +955,18 @@ class Redactor:
         units for that essay only.
         """
         if not texts:
-            return [], 0, True
+            return OutboundBatch([], 0, True, ())
+        empty_maps: list[Mapping[str, str]] = [{} for _ in texts]
         nonempty = [i for i, t in enumerate(texts) if t]
         if not nonempty:
-            return list(texts), 0, True
+            return OutboundBatch(list(texts), 0, True, tuple(empty_maps))
         if len(nonempty) == 1:
             only = self._apply(texts[nonempty[0]], source="OUTPUT")
             out = list(texts)
             out[nonempty[0]] = only.text
-            return out, only.char_units, True
+            maps = list(empty_maps)
+            maps[nonempty[0]] = only.restore_map
+            return OutboundBatch(out, only.char_units, True, tuple(maps))
 
         joined = BATCH_SEPARATOR.join(texts[i] for i in nonempty)
         result = self._apply(joined, source="OUTPUT")
@@ -934,17 +980,35 @@ class Redactor:
                 len(nonempty), len(parts),
             )
             out = list(texts)
+            maps = list(empty_maps)
             units = result.char_units      # the batch call was already billed
             for i in nonempty:
                 single = self._apply(texts[i], source="OUTPUT")
                 out[i] = single.text
+                maps[i] = single.restore_map
                 units += single.char_units
-            return out, units, False
+            # Per-field numbering on this path, because each field was its own
+            # pass. Cross-field placeholder identity is a property of the joined
+            # call and does not survive the fallback — which is stated rather
+            # than papered over, since a caller correlating names across fields
+            # would otherwise be silently wrong on the essays that fell back.
+            return OutboundBatch(out, units, False, tuple(maps))
 
         out = list(texts)
+        maps = list(empty_maps)
         for i, part in zip(nonempty, parts, strict=True):  # equal by the guard above
             out[i] = part
-        return out, result.char_units, True
+            # Split by occurrence rather than by re-deriving: the placeholders
+            # are unique strings over the joined document, so a field's map is
+            # exactly the entries whose placeholder survived into that field.
+            # Re-running detection per field would renumber, and renumbering is
+            # the one thing this must not do.
+            maps[i] = {
+                placeholder: original
+                for placeholder, original in result.restore_map.items()
+                if placeholder in part
+            }
+        return OutboundBatch(out, result.char_units, True, tuple(maps))
 
 
 def _extract_masked_text(response: dict[str, Any], *, fallback: str) -> str:
