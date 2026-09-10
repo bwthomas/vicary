@@ -242,8 +242,8 @@ It is vendored into each published package, deliberately, rather than fetched at
 build time: "no network, no per-request cost" is the claim, and a build-time
 fetch puts a fetch back in the story.
 
-The 794-word stoplist that decides what becomes a name candidate at all is shared
-on the same terms, for a sharper reason: a word list transliterated by hand into a
+The 794-word stoplist that decides what becomes a name candidate at all — two
+files, whose union is the veto — is shared on the same terms, for a sharper reason: a word list transliterated by hand into a
 second language diverges silently, and the divergence shows up as prose corruption
 in one language and not the others — which no parity check on *masked output* would
 catch, because a missing stop word changes what gets masked in essays nobody put in

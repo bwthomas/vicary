@@ -151,7 +151,8 @@ test("the asset check names every file it needs, and passes only on all of them"
   // asset check.
   assert.deepEqual(packContents.missingAssets(["assets/notability.txt.gz"]), [
     "assets/MANIFEST.json",
-    "assets/stop_words.txt",
+    "assets/stop_words_never_capitalised.txt",
+    "assets/stop_words_sometimes_capitalised.txt",
   ]);
 });
 

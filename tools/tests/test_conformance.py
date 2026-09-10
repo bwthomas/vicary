@@ -132,7 +132,11 @@ def test_every_primitive_case_covers_the_whole_corpus() -> None:
     }
 
     for section, cases in document["cases"].items():
-        if section == "is_stop":
+        if section in ("is_stop", "is_never_capitalised"):
+            # Two questions over one token group: the veto, and the narrower one
+            # that decides whether a capital on the token is testimony about the
+            # writer. A port that answered only the first would still have to
+            # split the lexicon somewhere, and this is where a wrong split shows.
             assert set(cases) == set(document["stop_tokens"]), section
         elif section in over_lists:
             assert set(cases) == lists, section

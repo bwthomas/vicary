@@ -221,7 +221,20 @@ _LANDMARK_SUFFIXES: frozenset[str] = frozenset(
 #: words and a hand-transliterated stoplist diverges silently — see
 #: :mod:`vicary.lexicon`. Loaded at import so an incomplete install fails on
 #: import rather than on the first essay.
-_STOP_WORDS: frozenset[str] = lexicon.load("stop_words")
+#:
+#: **The union of two files, and every veto must use the union.** The split is
+#: not thematic: :data:`_NEVER_CAPITALISED` holds the words a mid-sentence
+#: capital is a *mistake* on, and :data:`_SOMETIMES_CAPITALISED` the ones
+#: correct English capitalises inside a proper name ("Lincoln School"), in a
+#: date ("in July") or as a nationality. Only one consumer needs that
+#: distinction — :func:`capitalises_ordinary_words`, which reads a capital as
+#: testimony about the writer — and reading it off the whole stoplist is what
+#: made a document saying "in July" look like a sloppy capitaliser. Nothing
+#: about candidate generation changes: the union here is word-for-word the list
+#: that shipped as one file.
+_NEVER_CAPITALISED: frozenset[str] = lexicon.load(lexicon.NEVER_CAPITALISED)
+_SOMETIMES_CAPITALISED: frozenset[str] = lexicon.load(lexicon.SOMETIMES_CAPITALISED)
+_STOP_WORDS: frozenset[str] = lexicon.stop_words()
 
 #: Contraction and possessive tails. ``[A-Z][A-Za-z'’]*`` matches "I'm" as one
 #: token, so without stripping these the stoplist never sees the word — "I'm"
@@ -382,8 +395,26 @@ def _is_stop(token: str) -> bool:
     request path to be safe; a build-time expansion is a pure set lookup that all
     three front doors inherit from the same bytes.
     """
-    word = _without_clitic(token.lower().strip(".,"))
-    return word.strip("'’") in _STOP_WORDS
+    return _fold(token) in _STOP_WORDS
+
+
+def _fold(token: str) -> str:
+    """``token`` as the stoplists are keyed: lower-cased, clitic and edge
+    punctuation off. Extracted so the two lookups cannot fold differently."""
+    return _without_clitic(token.lower().strip(".,")).strip("'’")
+
+
+def _is_never_capitalised(token: str) -> bool:
+    """Whether a capital on ``token`` mid-sentence is a mistake rather than a
+    construction.
+
+    The narrow half of the stoplist — see :data:`_NEVER_CAPITALISED`. This is
+    the question :func:`capitalises_ordinary_words` needs and :func:`_is_stop`
+    does not answer: every word here is a stop word, but a stop word may be a
+    month, a nationality or the noun in "Lincoln School", and English
+    capitalises all three correctly.
+    """
+    return _fold(token) in _NEVER_CAPITALISED
 
 
 #: What a span can be. A span carries *every* tag its evidence supports, because
@@ -1019,10 +1050,12 @@ def corroborated(
 
 #: How many ordinary words a document must capitalise mid-sentence before its
 #: capitals stop counting as testimony. One is enough, and the reason it is not
-#: a rate: a stop word is *never* a name, so a capital on one is never
-#: orthographic and never ambiguous. It is the least deniable evidence a
-#: document can give that its writer capitalises for reasons other than naming,
-#: and a writer who does it once has shown the habit exists.
+#: a rate: a word on :data:`_NEVER_CAPITALISED` is not a name AND is not a word
+#: English capitalises, so a capital on one is neither orthographic nor
+#: ambiguous. It is the least deniable evidence a document can give that its
+#: writer capitalises for reasons other than naming, and a writer who does it
+#: once has shown the habit exists. A floor of one is only defensible while the
+#: list stays that clean, which is what the sibling file is for.
 _STRAY_CAPITALS_MIN: int = 1
 
 
@@ -1031,21 +1064,36 @@ def capitalises_ordinary_words(
 ) -> bool:
     """Whether this document capitalises words that cannot be names.
 
-    Counts mid-sentence capitals landing on the stoplist. A stop word is never a
-    name, so unlike :func:`capitalisation_habit`'s ``marks_proper_nouns`` — which
-    counts every mid-sentence capital and therefore counts the names too — this
-    cannot be satisfied by a document that simply names a lot of people.
+    Counts mid-sentence capitals landing on the **never-capitalised** half of
+    the stoplist (:data:`_NEVER_CAPITALISED`), which is a narrower question than
+    :func:`_is_stop` answers and the reason that list is a file of its own.
+
+    It used to read the whole stoplist, and that was wrong in a way no threshold
+    fixes. The stoplist carries months, weekdays, honorifics, nationalities,
+    religions and ordinary nouns — `English` is on it because a 34-word paper by
+    an English-language learner had the word masked — and **every one of those is
+    correctly capitalised**. A document writing "in July" tripped this having
+    told us nothing, which suppressed `Alvarez` in *"We stayed with the Alvarez
+    family in July."* On the 56-paper NWP corpus the whole-stoplist reading fired
+    on 23 of 56 papers and the evidence included `July`, `Friday`, `Christmas`,
+    `Americans`, `Dad` and `School` — the last on four papers, every one of them
+    a school's name.
+
+    Unlike :func:`capitalisation_habit`'s ``marks_proper_nouns`` — which counts
+    every mid-sentence capital and therefore counts the names too — this cannot
+    be satisfied by a document that simply names a lot of people.
 
     Headings are excluded for the same reason they are excluded everywhere else:
     title case capitalises every word in one, so a stop word inside a heading is
     orthographic and says nothing about the writer. Measured on the 56-paper NWP
     corpus, counting them recovers one more false positive and one more public
-    entity — and does it by reading title case as a habit, which it is not.
+    entity — and does it by reading title case as a habit, which it is not. That
+    is the same mistake as the July one, one level down.
     """
     return sum(
         1
         for m in _MID_SENTENCE_CAP.finditer(text)
-        if _is_stop(m.group(1))
+        if _is_never_capitalised(m.group(1))
         and not any(m.start(1) < h_end and m.end(1) > h_start
                     for h_start, h_end in headings)
     ) >= _STRAY_CAPITALS_MIN
@@ -1349,7 +1397,7 @@ def find_candidates(
     settlement: SettlementOracle | None = None,
     headings_are_orthographic: bool = True,
     title_relation_refusal: bool = True,
-    mid_sentence_corroboration: bool = False,
+    mid_sentence_corroboration: bool = True,
 ) -> list[Candidate]:
     """Every name-shaped span, before any notability decision.
 
@@ -1376,11 +1424,13 @@ def find_candidates(
             exists so the arm stays measurable against its control.
         mid_sentence_corroboration: Require evidence beyond the capital for a
             lone mid-sentence capital, in a document that capitalises ordinary
-            words. See :func:`suppressed_as_a_stray_mid_sentence_capital`.
-            **OFF by default, and the reason is a measured leak** — read that
-            function's docstring before turning it on. Needs ``given_name`` for
-            the same reason the sentence-initial rule does: requiring a second
-            signal is only sound where there is a second signal to require.
+            words. See :func:`suppressed_as_a_stray_mid_sentence_capital`. ON by
+            default since 0.2.10, when the lexicon split closed the leak that
+            had kept it off — the gate it depends on used to read "in July" as
+            proof of a sloppy capitaliser and suppressed `Alvarez`. Needs
+            ``given_name`` for the same reason the sentence-initial rule does:
+            requiring a second signal is only sound where there is a second
+            signal to require.
     """
     blocked = [m.span() for m in _PROTECTED.finditer(text)]
     starts = _sentence_starts(text)
@@ -1987,7 +2037,7 @@ def mask_candidates(
     relation_refusal: bool = True,
     title_relation_refusal: bool = True,
     headings_are_orthographic: bool = True,
-    mid_sentence_corroboration: bool = False,
+    mid_sentence_corroboration: bool = True,
 ) -> tuple[str, int]:
     """Mask every candidate the notability filter does not keep.
 

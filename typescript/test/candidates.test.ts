@@ -84,6 +84,7 @@ function plain(spans: Span[]): [number, number][] {
 // ---------------------------------------------------------------------------
 
 test("the stoplist is the shipped 794 words, not a transliteration", () => {
+  // Both halves, unioned. See `lexicon.test.ts` for the partition itself.
   assert.equal(STOP_WORDS.size, 794);
 });
 

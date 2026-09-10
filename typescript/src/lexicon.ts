@@ -50,6 +50,19 @@ export const LEXICON_FORMAT = 1;
 export const SUFFIX = ".txt";
 
 /**
+ * The two files whose union is the stoplist. Named here rather than at each call
+ * site because the *veto* needs both and exactly one consumer needs one — a
+ * document-level signal that reads a mid-sentence capital as testimony about the
+ * writer, and that must not read "in July" that way. A call site free to load one
+ * half is free to narrow the veto by accident, which makes the redactor more
+ * aggressive: privacy-safe to look at, prose-corrupting in fact, and invisible to
+ * any check that only asks whether something was masked.
+ */
+export const NEVER_CAPITALISED = "stop_words_never_capitalised";
+export const SOMETIMES_CAPITALISED = "stop_words_sometimes_capitalised";
+export const STOP_WORD_LISTS = [NEVER_CAPITALISED, SOMETIMES_CAPITALISED] as const;
+
+/**
  * A lexicon is absent, unreadable, or not the shape this reader understands.
  *
  * Its own type rather than a bare `Error` for the same reason `GazetteerAssetError`

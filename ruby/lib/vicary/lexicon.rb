@@ -46,6 +46,25 @@ module Vicary
     # Filename suffix. Named so a second list costs a file rather than a refactor.
     SUFFIX = ".txt"
 
+    # The two files whose union is the stoplist. Named here rather than at each
+    # call site because the *veto* needs both and exactly one consumer needs one
+    # — a document-level signal that reads a mid-sentence capital as testimony
+    # about the writer, and that must not read "in July" that way. A call site
+    # free to load one half is free to narrow the veto by accident, which makes
+    # the redactor more aggressive: privacy-safe to look at, prose-corrupting in
+    # fact, and invisible to any check that only asks whether something was
+    # masked.
+    NEVER_CAPITALISED = "stop_words_never_capitalised"
+    SOMETIMES_CAPITALISED = "stop_words_sometimes_capitalised"
+    STOP_WORD_LISTS = [NEVER_CAPITALISED, SOMETIMES_CAPITALISED].freeze
+
+    # Every word that must never become a name candidate: both halves, unioned.
+    # Word for word the list that shipped as a single `stop_words.txt` through
+    # 0.2.9.
+    def self.stop_words
+      STOP_WORD_LISTS.map { |name| load(name) }.reduce(:|)
+    end
+
     # A lexicon is absent, unreadable, or not the shape this reader understands.
     #
     # Its own class rather than a bare RuntimeError for the same reason

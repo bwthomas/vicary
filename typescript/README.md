@@ -86,8 +86,8 @@ hazard does not arise on the default path.
 
 Two of the remaining three — held-out recall (carrier) and over-fire on prose —
 read the corpus the repository now ships in `conformance/corpora/`, so they
-measure on a bare checkout with no environment set: 100% carrier recall and 8.150
-over-fired spans per essay against a ≤ 8.15 bar, both identical to Python and
+measure on a bare checkout with no environment set: 100% carrier recall and 7.400
+over-fired spans per essay against a ≤ 7.40 bar, both identical to Python and
 Ruby. `VICARY_EVAL_CORPUS_TSV` is an override for a different corpus, not a
 requirement. (That over-fire figure sits on the bar in all three ports, which is
 a knife-edge rather than noise — the root README says why.)

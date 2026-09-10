@@ -16,12 +16,28 @@ from vicary_build import config, lexicon, reference
 
 
 def test_the_shipped_stoplist_parses() -> None:
-    words = lexicon.load("stop_words")
+    """Two files, one veto. The union is what any candidate rule must ask.
+
+    The split is orthographic, not thematic: one half is the words a mid-sentence
+    capital is a *mistake* on, the other the words English capitalises inside a
+    proper name, in a date or as a nationality. Only the sloppy-capitaliser
+    signal needs the distinction; it exists because reading the whole stoplist
+    for that question counted "in July" as evidence.
+    """
+    never = lexicon.load(lexicon.NEVER_CAPITALISED)
+    sometimes = lexicon.load(lexicon.SOMETIMES_CAPITALISED)
+    assert len(never) == 499
+    assert len(sometimes) == 295
+    # 499 + 295 is the 794 that shipped as one file through 0.2.9, word for word.
+    words = lexicon.stop_words()
     assert len(words) == 794
-    # Spot-checks at the two ends of the file, so a truncated read fails here and
-    # not only on the count.
-    assert "the" in words
-    assert "favorite" in words
+    # Disjoint, or a word English capitalises is back in the signal — which is
+    # the defect the split closes.
+    assert not (never & sometimes)
+    # Spot-checks at the two ends of each file, so a truncated read fails here
+    # and not only on the count.
+    assert {"the", "using"} <= never
+    assert {"july", "school", "allah"} <= sometimes
     # Case-folded on read, so a reader never has to remember to fold.
     assert all(word == word.lower() for word in words)
 
@@ -37,7 +53,10 @@ def test_both_readers_agree_on_the_shipped_stoplist() -> None:
     from vicary import lexicon as runtime_lexicon
 
     assert runtime_lexicon.LEXICON_FORMAT == lexicon.LEXICON_FORMAT
-    assert runtime_lexicon.load("stop_words") == lexicon.load("stop_words")
+    assert runtime_lexicon.STOP_WORD_LISTS == lexicon.STOP_WORD_LISTS
+    for name in lexicon.STOP_WORD_LISTS:
+        assert runtime_lexicon.load(name) == lexicon.load(name)
+    assert runtime_lexicon.stop_words() == lexicon.stop_words()
 
 
 def test_the_generated_region_is_what_a_regeneration_would_write() -> None:
@@ -49,13 +68,14 @@ def test_the_generated_region_is_what_a_regeneration_would_write() -> None:
     candidate — so the check is byte equality against a recompose, not a spot
     check on a word somebody thought of.
     """
-    target = lexicon.lexicon_path("stop_words")
-    composed = lexicon.compose("stop_words", veto=reference.veto())
-    assert composed == target.read_text(encoding="utf-8"), (
-        "asset/lexicon/stop_words.txt is not what `python -m vicary_build "
-        "lexicon` would write. Run it, then `python -m vicary_build manifest` "
-        "and `just asset-sync`."
-    )
+    for name in lexicon.names():
+        target = lexicon.lexicon_path(name)
+        composed = lexicon.compose(name, veto=reference.veto())
+        assert composed == target.read_text(encoding="utf-8"), (
+            f"asset/lexicon/{name}.txt is not what `python -m vicary_build "
+            "lexicon` would write. Run it, then `python -m vicary_build manifest` "
+            "and `just asset-sync`."
+        )
 
 
 def test_the_built_list_still_carries_every_word_it_used_to() -> None:
@@ -67,7 +87,7 @@ def test_the_built_list_still_carries_every_word_it_used_to() -> None:
     turns "we think the generator covers it" into something that fails loudly the
     day it stops being true.
     """
-    words = lexicon.load("stop_words")
+    words = lexicon.stop_words()
     for removed in _REMOVED_HANDWRITTEN_PLURALS:
         assert removed in words, (
             f"{removed!r} was a hand-written stop word, removed because the "
@@ -108,7 +128,7 @@ def test_a_plural_is_generated_and_a_borne_surname_is_not() -> None:
     a stop word beats the given-name tier, so emitting it would stop redacting a
     child called Wes for good.
     """
-    words = lexicon.load("stop_words")
+    words = lexicon.stop_words()
     assert "sets" in words
     assert "parties" not in words  # `party` is not a stop word; nothing to fold
     for borne in ("mays", "downs", "wills", "peoples"):
@@ -122,7 +142,7 @@ def test_a_plural_of_a_plural_is_not_a_word() -> None:
     Cheap to get wrong and cheap to check. A generated file a reader stops
     trusting is one they start hand-editing.
     """
-    words = lexicon.load("stop_words")
+    words = lexicon.stop_words()
     for junk in ("dayses", "brotherses", "itses", "yearses"):
         assert junk not in words
 
@@ -162,7 +182,7 @@ def test_regenerating_is_idempotent(tmp_path: Path) -> None:
 
 def test_every_lexicon_in_the_directory_is_discovered() -> None:
     """The sync step vendors what this returns, so a new file must appear here."""
-    assert lexicon.names() == ["stop_words"]
+    assert lexicon.names() == sorted(lexicon.STOP_WORD_LISTS)
     assert set(lexicon.names()) == {
         path.stem for path in config.LEXICON_DIR.glob("*.txt")
     }

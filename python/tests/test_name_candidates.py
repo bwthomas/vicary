@@ -23,13 +23,16 @@ from vicary.eval.fixture import (
 from vicary.local_classifier import LocalNameClassifier
 from vicary.name_candidates import (
     _PRECEDENCE,
+    _STOP_WORDS,
     CapitalisationHabit,
     _capital_is_the_only_evidence,
     _emphasis_spans,
     _heading_spans,
+    _is_never_capitalised,
     _mid_sentence_capitals,
     _sentence_starts,
     capitalisation_habit,
+    capitalises_ordinary_words,
     classify_tags,
     corroborated,
     find_candidates,
@@ -1551,18 +1554,20 @@ def _spans(text: str, **kwargs) -> set[str]:
         text, given_name=gazetteer.is_common_given_name, **kwargs)}
 
 
-def test_the_mid_sentence_arm_is_off_unless_a_caller_asks() -> None:
-    """The default is the shipped behaviour, and the flag is the whole opt-in.
+def test_the_mid_sentence_arm_is_on_and_both_entry_points_agree() -> None:
+    """The default IS the shipped behaviour, and the two doors must not differ.
 
     Pinned as a test rather than left to the signature because the two entry
     points each carry their own default, and a change to one of them is a change
-    to masked output for every host that never heard of this flag.
+    to masked output for every host that never heard of this flag. It shipped off
+    through 0.2.9 and on from 0.2.10, when the lexicon split closed the leak —
+    either way the assertion is that the flag has one value, not two.
     """
     import inspect
 
     for fn in (nc.find_candidates, nc.mask_candidates):
         assert inspect.signature(fn).parameters[
-            "mid_sentence_corroboration"].default is False
+            "mid_sentence_corroboration"].default is True
 
 
 def test_a_stray_capital_on_a_stop_word_is_what_the_gate_reads() -> None:
@@ -1578,7 +1583,7 @@ def test_the_arm_suppresses_a_lone_mid_sentence_capital_no_tier_knows() -> None:
     capitals have already been shown to mean nothing."""
     text = ("i like to build Things at home and Then i show my class. "
             "we went to the Nantahala last summer.")
-    assert "Nantahala" in _spans(text)
+    assert "Nantahala" in _spans(text, mid_sentence_corroboration=False)
     assert "Nantahala" not in _spans(text, mid_sentence_corroboration=True)
 
 
@@ -1593,7 +1598,7 @@ def test_a_name_no_tier_knows_is_the_failure_mode() -> None:
     """
     text = ("i went outside and Then it rained. "
             "we all waited for Okonkwo by the door.")
-    assert "Okonkwo" in _spans(text)
+    assert "Okonkwo" in _spans(text, mid_sentence_corroboration=False)
     assert "Okonkwo" not in _spans(text, mid_sentence_corroboration=True)
     # A relation in the local context is the channel that saves the same name,
     # and it is the only one that does not need a tier to have heard of it.
@@ -1602,29 +1607,69 @@ def test_a_name_no_tier_knows_is_the_failure_mode() -> None:
     assert "Okonkwo" in _spans(related, mid_sentence_corroboration=True)
 
 
-def test_a_month_is_a_stop_word_and_a_proper_noun_which_is_the_open_defect(
-) -> None:
-    """**Why this arm ships off.** The gate reads correct English as sloppiness.
+def test_a_month_is_a_stop_word_and_no_longer_evidence_about_the_writer() -> None:
+    """The leak that kept this arm switched off, now closed at the lexicon.
 
     The stoplist carries months, weekdays, holidays, languages, nationalities
     and religions on purpose — they are proper nouns that identify nobody, and
     `English` was being masked in an English-language learner's essay about
     learning English. Every one of them is *correctly* capitalised, so a
-    document writing "in July" trips `capitalises_ordinary_words` while having
-    shown nothing at all about its writer.
+    document writing "in July" used to trip `capitalises_ordinary_words` while
+    having shown nothing at all about its writer, and `Alvarez` shipped: all-span
+    recall 50/50 -> 49/50 on vicary's own fixture, with held-out recall at 100%
+    throughout. The ship gate the arm was written against could not see it.
 
-    Measured cost, on vicary's own fixture: `Alvarez` in "We stayed with the
-    Alvarez family in July." leaks — all-span recall 50/50 -> 49/50, and two
-    conformance frames change masked bytes. Held-out recall stays 100%, so the
-    ship gate the arm was written against does not catch this; the golden bytes
-    do.
-
-    The fix is to split the lexicon: the stray-capital signal must read only
-    words that are *never* capitalised in correct English. That is a second
-    lexicon emitted by the same build, not a hand-written exclusion list — the
-    hand-written list is what `just asset-lexicon` was built to retire.
+    The fix is a split, not a threshold: the signal reads
+    `stop_words_never_capitalised` and the veto reads both halves. Word for word
+    the veto is what it was, which is why nothing else in this file moved.
     """
     text = "We stayed with the Alvarez family in July."
     assert "Alvarez" in _spans(text)
-    # The defect, pinned so the day it stops being true is a failing test.
-    assert "Alvarez" not in _spans(text, mid_sentence_corroboration=True)
+    assert "Alvarez" in _spans(text, mid_sentence_corroboration=True)
+    # Neither `July` nor `family` is testimony now. `family` matters as much as
+    # the month: it fired on real papers where the capital belonged to a proper
+    # name the writer got right.
+    assert not capitalises_ordinary_words(text)
+
+
+def test_a_capital_english_never_puts_there_is_still_evidence() -> None:
+    """The narrowing must not have emptied the signal.
+
+    The line between the two lexicons is orthographic rather than thematic: a
+    capital on a function word, a verb or an adverb is a mistake, and a capital
+    on a noun, an adjective or a month is a construction English supports. So
+    the same sentence that keeps `Alvarez` above loses it once the writer has
+    capitalised something no proper name could contain.
+    """
+    text = ("i stayed with the Alvarez family in July And it rained. "
+            "we drove home Because it was late.")
+    assert capitalises_ordinary_words(text)
+    assert "Alvarez" in _spans(text, mid_sentence_corroboration=False)
+    assert "Alvarez" not in _spans(text)
+
+
+def test_the_two_lexicons_partition_the_stoplist() -> None:
+    """Disjoint, and their union is the veto. Both halves of that matter.
+
+    Overlap would put a word English capitalises back into the signal, which is
+    the defect this split exists to close — `am` sat on two authored lines and
+    was removed from one for exactly that reason. A gap would silently narrow
+    the *veto*, which makes the redactor more aggressive: it looks privacy-safe,
+    corrupts prose, and passes any check that only asks whether something was
+    masked.
+    """
+    from vicary.name_candidates import _NEVER_CAPITALISED, _SOMETIMES_CAPITALISED
+
+    assert not (_NEVER_CAPITALISED & _SOMETIMES_CAPITALISED)
+    assert _NEVER_CAPITALISED | _SOMETIMES_CAPITALISED == _STOP_WORDS
+    assert len(_STOP_WORDS) == 794
+    # Spot-checks on the line itself, at the three shapes it has to get right.
+    for orthographic in ("july", "friday", "mrs", "americans", "school", "dad"):
+        assert orthographic in _SOMETIMES_CAPITALISED
+        assert not _is_never_capitalised(orthographic)
+    for mistake in ("because", "she", "came", "and", "just"):
+        assert mistake in _NEVER_CAPITALISED
+        assert _is_never_capitalised(mistake)
+    # Folded the same way `_is_stop` folds, or the two lookups disagree on a
+    # possessive and only one of them is consulted for the signal.
+    assert _is_never_capitalised("She's")

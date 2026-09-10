@@ -2,8 +2,9 @@
 //
 // The asset is the product; the language is the wrapper. `notability.txt.gz` is
 // ~2.1 MB of folded Wikidata, Census and SSA evidence with a format number and a
-// sha256 manifest, `stop_words.txt` is the 421-word stoplist that decides what
-// becomes a name candidate at all, and every front door must load THE SAME BYTES —
+// sha256 manifest, `stop_words_never_capitalised.txt`
+// and `stop_words_sometimes_capitalised.txt` are the two halves of the stoplist
+// that decide what becomes a name candidate at all, and every front door must load THE SAME BYTES —
 // a port with its own gazetteer or its own stoplist is a second detector wearing
 // the first one's name.
 //
@@ -18,7 +19,14 @@
 // exactly how two front doors end up shipping different gazetteers.
 
 import { createHash } from "node:crypto";
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  unlinkSync,
+} from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -57,6 +65,19 @@ const payload = [
 mkdirSync(target, { recursive: true });
 for (const [dir, name] of payload) {
   copyFileSync(join(dir, name), join(target, name));
+}
+
+// Copying is not enough when an asset is RENAMED: the old file stays, and a reader
+// that asks for it by name keeps succeeding on bytes nothing rebuilds. Splitting
+// `stop_words.txt` in two left every vendored directory carrying all three. The
+// manifest check below cannot see it — it compares the manifest against the
+// payload, and a file in neither is invisible to both.
+const carried = new Set(payload.map(([, name]) => name));
+for (const stale of readdirSync(target).sort()) {
+  if (!carried.has(stale)) {
+    unlinkSync(join(target, stale));
+    console.error(`pruned stale ${stale}`);
+  }
 }
 
 const described = JSON.parse(readFileSync(join(target, MANIFEST), "utf8")).assets;

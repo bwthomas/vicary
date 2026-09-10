@@ -311,6 +311,27 @@ PRIMITIVE_CORPUS: dict[str, str] = {
     "title_curly": "We read Charlotte’s Web in class.",
     "title_lower": "i read to kill a mockingbird last year.",
     "title_none": "Nothing here matches any title at all.",
+    # The two the mid-sentence rule needs, and it needs both. Without them no
+    # corpus text tripped `capitalises_ordinary_words` at all, so a port could
+    # have skipped the rule entirely and stayed green across every case here —
+    # which is the shape of hole this block exists to close.
+    #
+    # A document that capitalises a word English never capitalises ("Then"),
+    # carrying a lone mid-sentence capital no tier knows. The rule drops the
+    # name; without the rule it is a candidate.
+    "stray_capitaliser": (
+        "i like to build Things at home and Then i show my class. "
+        "we went to the Nantahala last summer."
+    ),
+    # ...and the control that says the gate reads orthography rather than
+    # capitals in general: every capital here is one English requires — a month,
+    # a weekday, a nationality, an honorific, a school's name — so the gate stays
+    # shut and `Alvarez` survives. This is the leak that kept the rule switched
+    # off until 0.2.10, pinned as a text every port must agree on.
+    "orthographic_capitaliser": (
+        "We stayed with the Alvarez family in July. On Friday Mrs. Ruiz took our "
+        "class to Lincoln School and the Americans we met were kind."
+    ),
 }
 
 #: Already-split spans, for the functions that take tokens rather than text.
@@ -544,6 +565,13 @@ PRIMITIVE_STOP_TOKENS: tuple[str, ...] = (
     "The", "the", "Mrs.", "Mrs", "I'm", "I’m", "As", "Terrence", "Okonkwo",
     "im", "dont", "thats", "n't", "'s", "Dr", "Coach", "SLAM", "a", "A",
     "Won't", "Won’t", "he'd", "'", "It's", "Favorite", "favorite", "I",
+    # The six that separate `is_stop` from `is_never_capitalised`. Every one is
+    # a stop word, and every one is a word English capitalises correctly
+    # mid-sentence — a month, a weekday, a nationality, an honorific, and the
+    # two nouns that sit inside "Lincoln School" and "my Dad". A port that
+    # split the lexicon on a thematic line rather than an orthographic one
+    # passes every other case in this file and disagrees here.
+    "July", "Friday", "Americans", "Mrs", "School", "Dad",
 )
 
 #: The stand-in oracles, emitted as data so every port wires the SAME ones.
@@ -796,10 +824,24 @@ def build_primitives_document() -> dict[str, Any]:
             "marks_proper_nouns_min": nc._MARKS_PROPER_NOUNS_MIN,
             "relation_window": nc._RELATION_WINDOW,
             "stop_words": len(nc._STOP_WORDS),
+            # The halves as well as the union, because the union alone cannot
+            # tell a port that split the list correctly from one that put `july`
+            # on the wrong side of it — and which side a word lands on decides
+            # whether a document reads as a sloppy capitaliser.
+            "stop_words_never_capitalised": len(nc._NEVER_CAPITALISED),
+            "stop_words_sometimes_capitalised": len(nc._SOMETIMES_CAPITALISED),
             "title_max_tokens": nc._TITLE_MAX_TOKENS,
         },
         "cases": {
             "is_stop": {t: nc._is_stop(t) for t in PRIMITIVE_STOP_TOKENS},
+            # The narrower question, on the same tokens. Emitted as its own case
+            # because the union alone cannot tell a port that split the stoplist
+            # correctly from one that put `july` on the wrong side of it, and
+            # which side a word lands on decides whether a document reads as a
+            # sloppy capitaliser.
+            "is_never_capitalised": {
+                t: nc._is_never_capitalised(t) for t in PRIMITIVE_STOP_TOKENS
+            },
             "trim": over_lists(lambda t: nc._trim(t)),
             "classify": over_lists(lambda t: nc._classify(t)),
             "classify_with_settlement": over_lists(
@@ -1146,7 +1188,7 @@ def build_gates_document() -> dict[str, Any]:
                 "bar": 0.61,
                 "bars_by_corpus": {
                     "asap-aes-set8": 0.61,
-                    "persuade-20": 8.15,
+                    "persuade-20": 7.40,
                 },
                 "requires": ["corpus"],
                 "why": "Over-redaction is the cost side of recall. A FLOOR, not "

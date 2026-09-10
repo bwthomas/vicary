@@ -107,7 +107,27 @@ def vendor(target: Path) -> int:
     target.mkdir(parents=True, exist_ok=True)
     for source, name in payload():
         shutil.copyfile(source / name, target / name)
+    _prune(target)
     return _verify(target)
+
+
+def _prune(target: Path) -> None:
+    """Delete files in ``target`` the payload no longer carries.
+
+    Copying is not enough when an asset is *renamed*: the old file stays, and a
+    reader that asks for it by name keeps succeeding on bytes nothing rebuilds.
+    That is not hypothetical — splitting ``stop_words.txt`` in two left every
+    vendored directory carrying all three, so a front door somebody forgot to
+    update would have gone on loading the pre-split stoplist and passed its own
+    count assertion doing it. ``_verify`` cannot see this: it checks the
+    manifest against the payload and the payload against the bytes, and a file
+    in neither is invisible to both.
+    """
+    carried = {name for _, name in payload()} | {manifest.MANIFEST_NAME}
+    for stale in sorted(target.iterdir()):
+        if stale.is_file() and stale.name not in carried:
+            stale.unlink()
+            print(f"pruned stale {stale.name}", file=sys.stderr)
 
 
 def main(argv: list[str] | None = None) -> int:

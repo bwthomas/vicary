@@ -140,6 +140,8 @@ class PrimitivesTest < Minitest::Test
       "marks_proper_nouns_min" => C::MARKS_PROPER_NOUNS_MIN,
       "relation_window" => C::RELATION_WINDOW,
       "stop_words" => C.stop_words.size,
+      "stop_words_never_capitalised" => C.never_capitalised.size,
+      "stop_words_sometimes_capitalised" => C.sometimes_capitalised.size,
       "title_max_tokens" => C::TITLE_MAX_TOKENS,
     }
   end
@@ -203,6 +205,7 @@ class PrimitivesTest < Minitest::Test
   # -------------------------------------------------------------------------
 
   section("is_stop", STOP_TOKENS) { |token| C.stop?(token) }
+  section("is_never_capitalised", STOP_TOKENS) { |token| C.never_capitalised?(token) }
 
   section("trim", LISTS) { |tokens| C.trim(tokens) }
   section("classify", LISTS) { |tokens| C.classify(tokens) }

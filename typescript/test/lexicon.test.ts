@@ -27,8 +27,12 @@ import {
   LexiconError,
   lexiconPath,
   load,
+  NEVER_CAPITALISED,
   parseLexicon,
+  SOMETIMES_CAPITALISED,
+  STOP_WORD_LISTS,
 } from "../src/lexicon.js";
+import { STOP_WORDS } from "../src/candidates.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -37,33 +41,44 @@ function probe(body: string, name = "probe"): Set<string> {
   return parseLexicon(name, body, "probe.txt");
 }
 
-test("the shipped stoplist parses to its declared 794 words", () => {
-  const words = load("stop_words");
-  assert.equal(words.size, 794);
-  // Spot-checks at the two ends of the file, so a truncated read fails here and
-  // not only on the count. Same two words the Python suite checks.
-  assert.ok(words.has("the"));
-  assert.ok(words.has("favorite"));
+test("the two halves of the stoplist partition its 794 words", () => {
+  // The union is the veto and it is word for word the single list that shipped
+  // through 0.2.9. Overlap would put a word English capitalises back into the
+  // sloppy-capitaliser signal, which is the defect the split closes; a gap would
+  // narrow the veto, which makes the redactor more aggressive and shows up
+  // nowhere but the prose.
+  const never = load(NEVER_CAPITALISED);
+  const sometimes = load(SOMETIMES_CAPITALISED);
+  for (const word of never) assert.ok(!sometimes.has(word), word);
+  assert.equal(STOP_WORDS.size, 794);
+  assert.equal(never.size + sometimes.size, STOP_WORDS.size);
+  // Spot-checks at the two ends of each file, so a truncated read fails here and
+  // not only on the count. The same words the Python suite checks.
+  assert.ok(never.has("the"));
+  assert.ok(sometimes.has("july"));
+  assert.ok(sometimes.has("school"));
   // Case-folded on read, so a reader never has to remember to fold.
-  for (const word of words) assert.equal(word, word.toLowerCase());
+  for (const word of STOP_WORDS) assert.equal(word, word.toLowerCase());
 });
 
 test("the parsed count matches what the manifest declares", () => {
-  const directory = dirname(lexiconPath("stop_words"));
-  const manifest = JSON.parse(
-    readFileSync(join(directory, MANIFEST_FILENAME), "utf8"),
-  ) as { assets: Record<string, { entries?: number; format?: number }> };
-  const entry = manifest.assets["stop_words.txt"];
-  assert.ok(entry, "the manifest does not describe stop_words.txt");
-  assert.equal(load("stop_words").size, entry.entries);
-  assert.equal(entry.format, LEXICON_FORMAT);
+  for (const name of STOP_WORD_LISTS) {
+    const directory = dirname(lexiconPath(name));
+    const manifest = JSON.parse(
+      readFileSync(join(directory, MANIFEST_FILENAME), "utf8"),
+    ) as { assets: Record<string, { entries?: number; format?: number }> };
+    const entry = manifest.assets[`${name}.txt`];
+    assert.ok(entry, `the manifest does not describe ${name}`);
+    assert.equal(load(name).size, entry.entries);
+    assert.equal(entry.format, LEXICON_FORMAT);
+  }
 });
 
 test("the stoplist is read from the same directory as the gazetteer", () => {
   // Not decoration: a package that finds its stoplist in one cut and its
   // gazetteer in another has two halves of two different detectors, and every
   // symptom of that is a masking decision nobody can reproduce.
-  const directory = dirname(lexiconPath("stop_words"));
+  const directory = dirname(lexiconPath(NEVER_CAPITALISED));
   assert.ok(
     assetSearchPath().includes(directory),
     `stoplist resolved to ${directory}, which is not on the asset search path`,

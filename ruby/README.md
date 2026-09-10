@@ -69,7 +69,7 @@ gzip, which `zlib` reads, so that hazard does not arise on the default path.
 
 Two of the last three read the corpus the repository now ships in
 `conformance/corpora/`, so they measure on a bare checkout with no environment
-set: 100% carrier recall and 8.150 over-fired spans per essay against a ≤ 8.15
+set: 100% carrier recall and 7.400 over-fired spans per essay against a ≤ 7.40
 bar, identical to Python and TypeScript. `VICARY_EVAL_CORPUS_TSV` is an override
 for a different corpus, not a requirement.
 

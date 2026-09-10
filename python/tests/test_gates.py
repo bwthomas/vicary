@@ -110,13 +110,13 @@ OVER_FIRE_SPANS_CEILING = 0.61
 #: ASAP-AES set 8 is a personal narrative whose names the corpus authors had
 #: already replaced with ``@PERSON`` tokens; PERSUADE's prompts are source-based,
 #: so its essays name real entities constantly — `Venus`, `Vauban`, `Paris`,
-#: `Earth`, `Science Olympiad`. 8.15 spans/essay against 0.61 is that difference
+#: `Earth`, `Science Olympiad`. 7.40 spans/essay against 0.61 is that difference
 #: and not a regression. One bar cannot hold both: loose enough for PERSUADE
 #: retires the gate on ASAP-AES, tight enough for ASAP-AES fails PERSUADE for
 #: being the prose it is.
 _OVER_FIRE_SPANS_CEILINGS: dict[str, float] = {
     "asap-aes-set8": 0.61,
-    "persuade-20": 8.15,
+    "persuade-20": 7.40,
 }
 
 
@@ -523,7 +523,7 @@ def test_stoplist_census_exposure(record_gate) -> None:
 
     if census_eval.shipped_dir() is None and not census_eval.census_source():
         pytest.skip("no census table outside a checkout")
-    result = measure(lexicon.load("stop_words"), population=surname_population())
+    result = measure(lexicon.stop_words(), population=surname_population())
     value = result.rate * 100
     record_gate("stoplist surname exposure", value, "<=",
                 STOPLIST_SURNAME_CEILING, "%")
@@ -674,8 +674,8 @@ def test_the_gate_report_says_what_it_could_not_measure(gate_results) -> None:
     measured = {name for name, *_ in gate_results}
     missing = sorted(_ALL_GATES - measured)
     # The corpus is named, not implied. Two of these gates carry a per-corpus bar
-    # — over-firing is 8.15 spans/essay on persuade-20 against 0.61 on ASAP-AES —
-    # so a board that prints `8.15 <= 8.15 PASS` without saying which corpus
+    # — over-firing is 7.40 spans/essay on persuade-20 against 0.61 on ASAP-AES —
+    # so a board that prints `7.40 <= 7.40 PASS` without saying which corpus
     # produced it is a number filed under no corpus at all.
     corpus_id = (corpus_mod.resolve_corpus_id()
                  if "over-fire on prose" in measured else "(none measured)")

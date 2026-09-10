@@ -86,7 +86,7 @@ from vicary_build import config, lexicon
 #: detectors use, read from the language-neutral lexicon rather than imported from
 #: one of the three front doors — a build tool that imports one of its own
 #: consumers is not shared, whatever directory it sits in.
-_TITLE_ORDINARY_WORDS = lexicon.load("stop_words")
+_TITLE_ORDINARY_WORDS = lexicon.stop_words()
 
 #: The version stamped into the User-Agent and the asset's metadata. One number
 #: for all three front doors, read from the repository's ``VERSION``.

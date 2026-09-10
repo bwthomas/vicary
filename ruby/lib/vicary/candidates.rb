@@ -119,8 +119,30 @@ module Vicary
     # load-at-import is that a host may `require "vicary"` to read
     # {Vicary::VERSION} without a vendored asset, and raising there would fail a
     # program that never redacts anything.
+    #
+    # **The union of two files, and every veto must use the union.** The split is
+    # not thematic: `stop_words_never_capitalised` holds the words a mid-sentence
+    # capital is a *mistake* on, and `stop_words_sometimes_capitalised` the ones
+    # correct English capitalises inside a proper name ("Lincoln School"), in a
+    # date ("in July") or as a nationality. Only a document-level *signal* needs
+    # that distinction; candidate generation needs all 794 and always did.
     def self.stop_words
-      @stop_words ||= Lexicon.load("stop_words")
+      @stop_words ||= Lexicon.stop_words
+    end
+
+    # The half of the stoplist a mid-sentence capital is never orthographic on.
+    # Its own list because reading the whole stoplist for that question counts
+    # "in July" as evidence that the writer capitalises sloppily, which it is
+    # not — see the file header in `asset/lexicon/`.
+    def self.never_capitalised
+      @never_capitalised ||= Lexicon.load(Lexicon::NEVER_CAPITALISED)
+    end
+
+    # The other half: stop words English does capitalise mid-sentence — months,
+    # weekdays, honorifics, nationalities, and the nouns and adjectives that sit
+    # inside proper names.
+    def self.sometimes_capitalised
+      @sometimes_capitalised ||= Lexicon.load(Lexicon::SOMETIMES_CAPITALISED)
     end
 
     # Contraction and possessive tails. `[A-Z][A-Za-z'’]*` matches "I'm" as one
@@ -382,6 +404,14 @@ module Vicary
     # band falls through to {.mid_sentence_capitals} rather than being decided at
     # document level, and that is what `INCONSISTENT` is for.
     MARKS_PROPER_NOUNS_MIN = 2
+
+    # How many ordinary words a document must capitalise mid-sentence before its
+    # capitals stop counting as testimony. One is enough, and the reason it is
+    # not a rate: a word on the never-capitalised half of the stoplist is not a
+    # name AND is not a word English capitalises, so a capital on one is neither
+    # orthographic nor ambiguous. A floor of one is only defensible while that
+    # list stays that clean, which is what the sibling lexicon is for.
+    STRAY_CAPITALS_MIN = 1
 
     # A sentence opening on a lower-case letter, which is the writer telling us
     # directly that they are not keeping standard capitalisation. Matched at the
@@ -653,8 +683,24 @@ module Vicary
       # as a surname before emitting it, so all three front doors inherit the
       # behaviour from the same bytes instead of implementing it three times.
       def stop?(token)
-        word = without_clitic(strip(token.downcase, ".,"))
-        stop_words.include?(strip(word, "'’"))
+        stop_words.include?(fold(token))
+      end
+
+      # `token` as the stoplists are keyed: lower-cased, clitic and edge
+      # punctuation off. Extracted so the two lookups cannot fold differently.
+      def fold(token)
+        strip(without_clitic(strip(token.downcase, ".,")), "'’")
+      end
+
+      # Whether a capital on `token` mid-sentence is a mistake rather than a
+      # construction — the narrow half of the stoplist.
+      #
+      # The question {.capitalises_ordinary_words?} needs and {.stop?} does not
+      # answer: every word here is a stop word, but a stop word may be a month, a
+      # nationality or the noun in "Lincoln School", and English capitalises all
+      # three correctly.
+      def never_capitalised?(token)
+        never_capitalised.include?(fold(token))
       end
 
       # Words split on whitespace, the way Python's bare `str.split()` does.
@@ -1100,6 +1146,82 @@ module Vicary
                                                 written_as_a_capital, is_given)
         capital_is_the_only_evidence?(tokens, start, starts, emphasis, headings) &&
           !corroborated?(tokens, written_as_a_capital, is_given)
+      end
+
+      # Whether this document capitalises words that cannot be names.
+      #
+      # Counts mid-sentence capitals landing on the **never-capitalised** half of
+      # the stoplist, which is a narrower question than {.stop?} answers and the
+      # reason that list is a file of its own.
+      #
+      # It used to read the whole stoplist, and that was wrong in a way no
+      # threshold fixes. The stoplist carries months, weekdays, honorifics,
+      # nationalities, religions and ordinary nouns — `English` is on it because
+      # a 34-word paper by an English-language learner had the word masked — and
+      # every one of those is *correctly* capitalised. A document writing "in
+      # July" tripped this having told us nothing, which suppressed `Alvarez` in
+      # "We stayed with the Alvarez family in July."
+      #
+      # Unlike `marks_proper_nouns?`, which counts every mid-sentence capital and
+      # therefore counts the names too, this cannot be satisfied by a document
+      # that simply names a lot of people. Headings are excluded because title
+      # case capitalises every word in one.
+      def capitalises_ordinary_words?(text, headings = [])
+        count = 0
+        each_match(text, MID_SENTENCE_CAP) do |m|
+          word = m[1]
+          next unless never_capitalised?(word)
+
+          start = m.begin(1)
+          finish = start + word.length
+          next if headings.any? { |h_start, h_end| start < h_end && finish > h_start }
+
+          count += 1
+        end
+        count >= STRAY_CAPITALS_MIN
+      end
+
+      # The mid-sentence guard: drop a lone capital a sloppy capitaliser chose.
+      #
+      # The mirror of {.suppressed_as_an_unevidenced_capital?}, and it exists
+      # because that rule guards the smaller hole. A sentence-initial capital is
+      # orthographically required, so it proves nothing — that is the rule
+      # already there, and on the NWP corpus it is **4 of 66** false-positive
+      # spans. A *mid-sentence* capital was taken as sufficient evidence on its
+      # own, and that is **41 of 66**.
+      #
+      # So a mid-sentence capital stops being self-sufficient, but **only in a
+      # document that has shown its capitals are unreliable** — see
+      # {.capitalises_ordinary_words?}. In every other document nothing changes.
+      #
+      # Two channels can still keep the span, and the document's own
+      # capitalisation is deliberately not one of them: `written_as_a_capital`
+      # *is* the mid-sentence capital, so consulting it here would be the span
+      # vouching for itself. What is left is evidence from outside the document —
+      # the given-name tier, and a first-person relation in the local context
+      # ("my friend Cade"), which is testimony that the token names a person
+      # whatever its case.
+      #
+      # **The measured weakness, which is an equity exposure and not just a
+      # coverage one.** Of the true catches this leaves intact on the NWP corpus,
+      # three — `Amy`, `Barry`, `Whitney` — survive on the given-name tier alone.
+      # Given-name coverage is systematically thinner for less common and
+      # non-Anglo names, so the population this rule is most likely to leak is
+      # not a random sample of children.
+      def suppressed_as_a_stray_mid_sentence_capital?(tokens, start, finish, text, starts,
+                                                      is_given)
+        return false unless tokens.length == 1
+        # A sentence-initial capital belongs to the other rule, which already
+        # consults a channel this one must not.
+        return false if starts.any? { |s| s <= start && start <= s + 2 }
+
+        stripped = strip(tokens[0].downcase, ".,'’")
+        return false if is_given.call(stripped)
+
+        folded = without_clitic(stripped)
+        return false if folded != stripped && is_given.call(folded)
+
+        !names_someone_in_the_writers_life?(text, start, finish)
       end
 
       # ---------------------------------------------------------------------
@@ -1583,6 +1705,7 @@ module Vicary
         settlement = options[:settlement]
         headings_are_orthographic = options.fetch(:headings_are_orthographic, true)
         title_relation_refusal = options.fetch(:title_relation_refusal, true)
+        mid_sentence_corroboration = options.fetch(:mid_sentence_corroboration, true)
 
         blocked = each_match(text, PROTECTED).map { |m| [m.begin(0), m.begin(0) + m[0].length] }
         starts = sentence_starts(text)
@@ -1617,6 +1740,10 @@ module Vicary
         end
 
         written_as_a_capital = mid_sentence_capitals(text, starts, headings)
+        # A property of the whole document, read once, for the same reason
+        # `habit` is: two call sites computing it separately could disagree.
+        stray_capitals = mid_sentence_corroboration && !given_name.nil? &&
+                         capitalises_ordinary_words?(text, headings)
 
         out = []
         each_match(text, CANDIDATE_RE) do |m|
@@ -1642,6 +1769,15 @@ module Vicary
             if !given_name.nil? &&
                suppressed_as_an_unevidenced_capital?(run, start, starts, emphasis, headings,
                                                      written_as_a_capital, given_name)
+              next
+            end
+
+            # ...and the other half of the same question, for the capital the
+            # rule above reads as evidence. Only in a document that has shown its
+            # capitals are worth less than that.
+            if stray_capitals &&
+               suppressed_as_a_stray_mid_sentence_capital?(run, start, start + joined.length,
+                                                           text, starts, given_name)
               next
             end
 

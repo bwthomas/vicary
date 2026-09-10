@@ -109,3 +109,26 @@ def load(name: str) -> frozenset[str]:
             "an error and not a warning."
         )
     return frozenset(words)
+
+
+#: The two files whose union is the stoplist, in the order a reader should think
+#: about them. Named here rather than at each call site because the *veto* needs
+#: both and exactly one consumer needs one — a document-level signal that reads a
+#: mid-sentence capital as testimony about the writer, and that must not read
+#: "in July" that way. A call site free to load one half is a call site free to
+#: narrow the veto by accident, which makes the redactor more aggressive: it
+#: looks privacy-safe, corrupts prose, and passes any check that only asks
+#: whether something was masked.
+NEVER_CAPITALISED = "stop_words_never_capitalised"
+SOMETIMES_CAPITALISED = "stop_words_sometimes_capitalised"
+STOP_WORD_LISTS: tuple[str, str] = (NEVER_CAPITALISED, SOMETIMES_CAPITALISED)
+
+
+def stop_words() -> frozenset[str]:
+    """Every word that must never become a name candidate: both halves, unioned.
+
+    Word for word the list that shipped as a single ``stop_words.txt`` through
+    0.2.9. Anything vetoing candidates wants this; only
+    ``capitalises_ordinary_words`` wants a half.
+    """
+    return frozenset().union(*(load(name) for name in STOP_WORD_LISTS))

@@ -33,6 +33,22 @@ def lexicon_path(name: str) -> Path:
     return config.LEXICON_DIR / f"{name}{SUFFIX}"
 
 
+#: The two files whose union is the stoplist. Mirrors
+#: :data:`vicary.lexicon.STOP_WORD_LISTS`, which the pin test compares against.
+#: One consumer — the sloppy-capitaliser signal in ``name_candidates`` — needs
+#: the never-capitalised half alone; everything that *vetoes* a candidate needs
+#: both, and a call site free to load one half is free to narrow the veto by
+#: accident.
+NEVER_CAPITALISED = "stop_words_never_capitalised"
+SOMETIMES_CAPITALISED = "stop_words_sometimes_capitalised"
+STOP_WORD_LISTS: tuple[str, str] = (NEVER_CAPITALISED, SOMETIMES_CAPITALISED)
+
+
+def stop_words() -> frozenset[str]:
+    """Every word that must never become a name candidate: both halves, unioned."""
+    return frozenset().union(*(load(name) for name in STOP_WORD_LISTS))
+
+
 def names() -> list[str]:
     """Every lexicon in the source directory, for the sync step to vendor."""
     return sorted(p.stem for p in config.LEXICON_DIR.glob(f"*{SUFFIX}"))

@@ -39,7 +39,11 @@
  * travel with the constants.
  */
 
-import { load as loadLexicon } from "./lexicon.js";
+import {
+  load as loadLexicon,
+  NEVER_CAPITALISED as NEVER_CAPITALISED_LIST,
+  SOMETIMES_CAPITALISED as SOMETIMES_CAPITALISED_LIST,
+} from "./lexicon.js";
 import { PlaceholderMinter } from "./minter.js";
 
 /**
@@ -115,7 +119,8 @@ export const LANDMARK_SUFFIXES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Capitalised words that are not names, read from the vendored lexicon.
+ * The half of the stoplist a mid-sentence capital is never orthographic on,
+ * read from the vendored lexicon. See {@link STOP_WORDS} for the whole veto.
  *
  * Deliberately broad: this list is the only thing standing between candidate
  * generation and "mask every capitalised word", and a capitalised ordinary word
@@ -129,7 +134,25 @@ export const LANDMARK_SUFFIXES: ReadonlySet<string> = new Set([
  * initialisation, matching Python's load-at-import, so an incomplete install
  * fails when the module is first reached rather than on the first essay.
  */
-export const STOP_WORDS: ReadonlySet<string> = loadLexicon("stop_words");
+export const NEVER_CAPITALISED: ReadonlySet<string> = loadLexicon(NEVER_CAPITALISED_LIST);
+
+/**
+ * The other half: stop words English does capitalise mid-sentence — months,
+ * weekdays, honorifics, nationalities, and the nouns and adjectives that sit
+ * inside proper names ("Lincoln School").
+ */
+export const SOMETIMES_CAPITALISED: ReadonlySet<string> = loadLexicon(SOMETIMES_CAPITALISED_LIST);
+
+/**
+ * The stoplist candidate generation vetoes against: the union of both halves,
+ * word for word the list that shipped as one file. The split exists for one
+ * document-level *signal* that must not read "in July" as evidence its writer
+ * capitalises sloppily; nothing about generation changes.
+ */
+export const STOP_WORDS: ReadonlySet<string> = new Set([
+  ...NEVER_CAPITALISED,
+  ...SOMETIMES_CAPITALISED,
+]);
 
 /**
  * Contraction and possessive tails. `[A-Z][A-Za-z'’]*` matches "I'm" as one
@@ -414,8 +437,28 @@ export function withoutClitic(word: string): string {
  * from the same bytes instead of implementing it three times.
  */
 export function isStop(token: string): boolean {
-  const word = withoutClitic(strip(token.toLowerCase(), ".,"));
-  return STOP_WORDS.has(strip(word, "'’"));
+  return STOP_WORDS.has(fold(token));
+}
+
+/**
+ * `token` as the stoplists are keyed: lower-cased, clitic and edge punctuation
+ * off. Extracted so the two lookups cannot fold differently.
+ */
+function fold(token: string): string {
+  return strip(withoutClitic(strip(token.toLowerCase(), ".,")), "'’");
+}
+
+/**
+ * Whether a capital on `token` mid-sentence is a mistake rather than a
+ * construction — the narrow half of the stoplist.
+ *
+ * The question {@link capitalisesOrdinaryWords} needs and {@link isStop} does
+ * not answer: every word here is a stop word, but a stop word may be a month, a
+ * nationality or the noun in "Lincoln School", and English capitalises all three
+ * correctly.
+ */
+export function isNeverCapitalised(token: string): boolean {
+  return NEVER_CAPITALISED.has(fold(token));
 }
 
 /** Answers "is this a town?" — see the Python `SettlementOracle`. */
@@ -1160,6 +1203,96 @@ export function corroborated(
  * tier feeding it was the defect, and that was addressed in 0.1.0 by adding SSA
  * births to the given-name tier.
  */
+/**
+ * How many ordinary words a document must capitalise mid-sentence before its
+ * capitals stop counting as testimony. One is enough, and the reason it is not a
+ * rate: a word on {@link NEVER_CAPITALISED} is not a name AND is not a word
+ * English capitalises, so a capital on one is neither orthographic nor
+ * ambiguous. A floor of one is only defensible while that list stays that clean,
+ * which is what the sibling lexicon is for.
+ */
+export const STRAY_CAPITALS_MIN = 1;
+
+/**
+ * Whether this document capitalises words that cannot be names.
+ *
+ * Counts mid-sentence capitals landing on the **never-capitalised** half of the
+ * stoplist, which is a narrower question than {@link isStop} answers and the
+ * reason that list is a file of its own.
+ *
+ * It used to read the whole stoplist, and that was wrong in a way no threshold
+ * fixes. The stoplist carries months, weekdays, honorifics, nationalities,
+ * religions and ordinary nouns — `English` is on it because a 34-word paper by
+ * an English-language learner had the word masked — and every one of those is
+ * *correctly* capitalised. A document writing "in July" tripped this having told
+ * us nothing, which suppressed `Alvarez` in "We stayed with the Alvarez family
+ * in July."
+ *
+ * Unlike `MARKS_PROPER_NOUNS_MIN`'s counter, which counts every mid-sentence
+ * capital and therefore counts the names too, this cannot be satisfied by a
+ * document that simply names a lot of people. Headings are excluded because
+ * title case capitalises every word in one.
+ */
+export function capitalisesOrdinaryWords(
+  text: string,
+  headings: readonly Span[] = [],
+): boolean {
+  let count = 0;
+  for (const match of text.matchAll(MID_SENTENCE_CAP)) {
+    if (!isNeverCapitalised(match[0])) continue;
+    // The lookbehind consumes nothing, so group 1 starts where the match does —
+    // which is what the reference's `m.start(1)` resolves to as well.
+    if (overlaps(headings, match.index, match.index + match[0].length)) continue;
+    count += 1;
+  }
+  return count >= STRAY_CAPITALS_MIN;
+}
+
+/**
+ * The mid-sentence guard: drop a lone capital a sloppy capitaliser chose.
+ *
+ * The mirror of {@link suppressedAsAnUnevidencedCapital}, and it exists because
+ * that rule guards the smaller hole. A sentence-initial capital is
+ * orthographically required, so it proves nothing — that is the rule already
+ * there, and on the NWP corpus it is **4 of 66** false-positive spans. A
+ * *mid-sentence* capital was taken as sufficient evidence on its own, and that
+ * is **41 of 66**.
+ *
+ * So a mid-sentence capital stops being self-sufficient, but **only in a
+ * document that has shown its capitals are unreliable** — see
+ * {@link capitalisesOrdinaryWords}. In every other document nothing changes.
+ *
+ * Two channels can still keep the span, and the document's own capitalisation is
+ * deliberately not one of them: `writtenAsACapital` *is* the mid-sentence
+ * capital, so consulting it here would be the span vouching for itself. What is
+ * left is evidence from outside the document — the given-name tier, and a
+ * first-person relation in the local context ("my friend Cade").
+ *
+ * **The measured weakness, which is an equity exposure and not just a coverage
+ * one.** Of the true catches this leaves intact on the NWP corpus, three —
+ * `Amy`, `Barry`, `Whitney` — survive on the given-name tier alone. Given-name
+ * coverage is systematically thinner for less common and non-Anglo names, so the
+ * population this rule is most likely to leak is not a random sample of children.
+ */
+export function suppressedAsAStrayMidSentenceCapital(
+  tokens: readonly string[],
+  start: number,
+  end: number,
+  text: string,
+  starts: ReadonlySet<number>,
+  isGiven: GivenNameOracle,
+): boolean {
+  if (tokens.length !== 1) return false;
+  // A sentence-initial capital belongs to the other rule, which already consults
+  // a channel this one must not.
+  for (const s of starts) if (s <= start && start <= s + 2) return false;
+  const stripped = strip((tokens[0] ?? "").toLowerCase(), ".,'’");
+  if (isGiven(stripped)) return false;
+  const folded = withoutClitic(stripped);
+  if (folded !== stripped && isGiven(folded)) return false;
+  return !namesSomeoneInTheWritersLife(text, start, end);
+}
+
 export function suppressedAsAnUnevidencedCapital(
   tokens: readonly string[],
   start: number,
@@ -1824,6 +1957,12 @@ export interface CandidateOptions {
    * the masking side is the second half of the same rule and neither half works
    * alone. */
   readonly titleRelationRefusal?: boolean;
+  /** Require evidence beyond the capital for a lone mid-sentence capital, in a
+   * document that capitalises ordinary words. See
+   * {@link suppressedAsAStrayMidSentenceCapital}. Needs `givenName` for the same
+   * reason the sentence-initial rule does: requiring a second signal is only
+   * sound where there is a second signal to require. */
+  readonly midSentenceCorroboration?: boolean;
 }
 
 /**
@@ -1843,6 +1982,7 @@ export function findCandidates(
     settlement,
     headingsAreOrthographic = true,
     titleRelationRefusal = true,
+    midSentenceCorroboration = true,
   } = options;
 
   const blocked: Span[] = [...text.matchAll(PROTECTED)].map(
@@ -1882,6 +2022,12 @@ export function findCandidates(
     blocked.some(([blockStart, blockEnd]) => start < blockEnd && end > blockStart);
 
   const writtenAsACapital = midSentenceCapitals(text, starts, headings);
+  // A property of the whole document, read once, for the same reason `habit` is:
+  // two call sites computing it separately could disagree.
+  const strayCapitals =
+    midSentenceCorroboration &&
+    givenName !== undefined &&
+    capitalisesOrdinaryWords(text, headings);
 
   const out: Candidate[] = [];
   for (const match of text.matchAll(CANDIDATE_RE)) {
@@ -1906,6 +2052,18 @@ export function findCandidates(
         givenName !== undefined &&
         suppressedAsAnUnevidencedCapital(
           run, start, starts, emphasis, headings, writtenAsACapital, givenName,
+        )
+      ) {
+        continue;
+      }
+      // ...and the other half of the same question, for the capital the rule
+      // above reads as evidence. Only in a document that has shown its capitals
+      // are worth less than that.
+      if (
+        strayCapitals &&
+        givenName !== undefined &&
+        suppressedAsAStrayMidSentenceCapital(
+          run, start, start + joined.length, text, starts, givenName,
         )
       ) {
         continue;

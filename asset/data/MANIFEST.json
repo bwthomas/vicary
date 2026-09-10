@@ -20,14 +20,21 @@
         "title": 38024
       }
     },
-    "stop_words.txt": {
-      "bytes": 10000,
-      "entries": 794,
+    "stop_words_never_capitalised.txt": {
+      "bytes": 8017,
+      "entries": 499,
       "format": 1,
-      "min_package_version": "0.2.0",
-      "sha256": "dd5f7508f388e00f15db5227f3ddb664113bfc391a3cccaa88b7a917a53a196e"
+      "min_package_version": "0.2.10",
+      "sha256": "23798cb88672c126d71a9d0988b9adf0aa044bdc291847012d76deae71fe1d33"
+    },
+    "stop_words_sometimes_capitalised.txt": {
+      "bytes": 6351,
+      "entries": 295,
+      "format": 1,
+      "min_package_version": "0.2.10",
+      "sha256": "d6c842a9eeaaa74d739a9daea2439d2f69f8b97e7e87157caafd685fd11a32c8"
     }
   },
   "manifest_version": 1,
-  "written_by": "vicary 0.2.9"
+  "written_by": "vicary 0.2.10"
 }

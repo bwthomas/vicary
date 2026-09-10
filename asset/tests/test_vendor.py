@@ -28,7 +28,8 @@ def test_the_payload_is_the_whole_manifest() -> None:
 def test_a_clean_vendor_verifies(tmp_path: Path) -> None:
     assert vendor.vendor(tmp_path) == 0
     assert (tmp_path / "notability.txt.gz").exists()
-    assert (tmp_path / "stop_words.txt").exists()
+    assert (tmp_path / "stop_words_never_capitalised.txt").exists()
+    assert (tmp_path / "stop_words_sometimes_capitalised.txt").exists()
     assert (tmp_path / manifest.MANIFEST_NAME).exists()
 
 
@@ -56,7 +57,9 @@ def test_a_truncated_asset_is_caught_after_landing(tmp_path: Path) -> None:
     # whose manifest is the doctored one by copying it into place first.
     poisoned = tmp_path / "poisoned"
     poisoned.mkdir()
-    for name in ("notability.txt.gz", "stop_words.txt"):
+    for name in ("notability.txt.gz",
+                 "stop_words_never_capitalised.txt",
+                 "stop_words_sometimes_capitalised.txt"):
         (poisoned / name).write_bytes((tmp_path / name).read_bytes())
     (poisoned / manifest.MANIFEST_NAME).write_text(
         json.dumps(described), encoding="utf-8"
@@ -72,8 +75,8 @@ def test_a_short_stoplist_is_caught_too(tmp_path: Path) -> None:
     candidates. Both look privacy-safe; neither is.
     """
     assert vendor.vendor(tmp_path) == 0
-    (tmp_path / "stop_words.txt").write_text(
-        "#!lexicon 1\n#!list stop_words 1\nthe\n", encoding="utf-8"
+    (tmp_path / "stop_words_never_capitalised.txt").write_text(
+        "#!lexicon 1\n#!list stop_words_never_capitalised 1\nthe\n", encoding="utf-8"
     )
     assert vendor._verify(tmp_path) == 1
 
@@ -87,3 +90,19 @@ def test_a_tree_with_no_asset_source_says_so(tmp_path: Path, monkeypatch) -> Non
     """
     monkeypatch.setattr(vendor.config, "DATA_DIR", tmp_path / "absent")
     assert vendor.vendor(tmp_path / "out") == 2
+
+
+def test_a_renamed_asset_does_not_survive_in_the_target(tmp_path: Path) -> None:
+    """Copying leaves a rename behind; the prune is what makes a rename land.
+
+    `stop_words.txt` became two files in 0.2.10, and every vendored directory
+    went on carrying the old one — so a front door nobody had updated would have
+    kept loading the pre-split stoplist and passed its own count assertion doing
+    it. `_verify` cannot see this: it checks the manifest against the payload and
+    the payload against the bytes, and a file in neither is invisible to both.
+    """
+    assert vendor.vendor(tmp_path) == 0
+    stale = tmp_path / "stop_words.txt"
+    stale.write_text("#!lexicon 1\n#!list stop_words 1\nthe\n", encoding="utf-8")
+    assert vendor.vendor(tmp_path) == 0
+    assert not stale.exists()

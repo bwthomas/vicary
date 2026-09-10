@@ -87,8 +87,10 @@ jobs:
             || { echo "wheel is missing vicary/data/notability.txt.gz"; exit 1; }
           python -m zipfile -l dist/*.whl | grep -q 'vicary/data/MANIFEST.json' \
             || { echo "wheel is missing vicary/data/MANIFEST.json"; exit 1; }
-          python -m zipfile -l dist/*.whl | grep -q 'vicary/data/stop_words.txt' \
-            || { echo "wheel is missing vicary/data/stop_words.txt"; exit 1; }
+          for need in stop_words_never_capitalised.txt stop_words_sometimes_capitalised.txt; do
+            python -m zipfile -l dist/*.whl | grep -q "vicary/data/$need" \
+              || { echo "wheel is missing vicary/data/$need"; exit 1; }
+          done
 
       # Install the built wheel into a clean interpreter and redact one sentence
       # through the public entry point. `twine check` reads metadata and proves

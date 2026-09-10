@@ -2,6 +2,75 @@
 
 ## Unreleased
 
+## 0.2.10 — 2026-09-10
+
+### The stoplist is two lists, because one list was answering two questions
+
+* **`stop_words.txt` splits into `stop_words_never_capitalised.txt` (499) and
+  `stop_words_sometimes_capitalised.txt` (295).** The union is word for word the
+  794 that shipped as one file, every reader exposes it as `stop_words()`, and
+  **nothing about candidate generation changes** — measured live on the 56-paper
+  NWP corpus, the split alone produces byte-identical output.
+* **Why split at all.** `capitalises_ordinary_words` decides a document's
+  capitals are untrustworthy when it finds a mid-sentence capital on a stop word,
+  on the premise that a capital there was never orthographic. That premise is
+  false for a third of the list: it carries months, weekdays, honorifics,
+  nationalities, religions and ordinary nouns on purpose — `English` is on it
+  because a 34-word paper by an English-language learner had the word masked —
+  and every one of those is *correctly* capitalised. On NWP the old signal fired
+  on 23 of 56 papers and its evidence included `July`, `Friday`, `Christmas`,
+  `Americans`, `Dad` and `School`, the last on four papers where the capital
+  belonged to a school's name.
+* **The line is orthographic, not thematic**, because a thematic line is an
+  argument every new word reopens. Function words, verbs, adverbs, interjections
+  and contractions are evidence; nouns, adjectives, numerals and the proper-noun
+  categories are not, since English capitalises those inside proper names
+  ("Lincoln School", "Great Lakes", "First Baptist"). The two files must stay
+  disjoint and their union whole — an overlap puts a correctly-capitalised word
+  back into the signal, and a gap narrows the *veto*, which makes the redactor
+  more aggressive. Both are asserted in all three ports.
+* **`just asset-sync` now prunes.** Copying is not enough when an asset is
+  renamed: every vendored directory went on carrying `stop_words.txt`, so a front
+  door nobody had updated would have kept loading the pre-split list and passed
+  its own count assertion doing it. The manifest check could not see it — it
+  compares the manifest against the payload and the payload against the bytes,
+  and a file in neither is invisible to both.
+
+### Mid-sentence corroboration ships ON, in all three ports
+
+* **A lone mid-sentence capital is no longer sufficient evidence, in a document
+  that capitalises ordinary words.** The existing rule guards the
+  sentence-initial bucket, which is 4 of 66 false-positive spans on NWP against
+  this one's 41: it guarded the smallest bucket and trusted the largest, which is
+  sound for competent prose and backwards for the writing this library is pointed
+  at. Built in 0.2.9 and shipped **off**, because the gate it depends on read
+  correct English as sloppiness and suppressed `Alvarez` in *"We stayed with the
+  Alvarez family in July."* The lexicon split closed that, and the rule is on by
+  default in Python, Ruby and TypeScript.
+* **Measured, live, on the NWP 56.** 113 spans -> 99. **Zero PII lost, in every
+  grade band.** 13 false positives and 1 public entity recovered; precision
+  15.9% -> 18.2% (LE 22.9 -> 26.7, UE 15.0 -> 15.8, MS 13.8 -> 14.8, HS 10.3 ->
+  13.0); papers damaged for nothing 27/56 -> 23/56. The un-split gate scored 20
+  fp and 2 public at the price of the leak; 15 of those 20 survive the correct
+  gate, and that is the price of a signal that reads only what it can read.
+* **Every gate re-measured and one ratcheted.** Over-fire on `persuade-20` 8.15
+  -> **7.40 spans/essay, and the bar moves with it**; all-span carrier recall
+  back to 50/50; held-out recall 100% throughout; golden conformance bytes
+  unchanged; bare-surname exposure 1.199%, stoplist surname exposure 0.497%.
+* **Two conformance corpus texts, because the rule was reachable by nothing.**
+  No text in the primitives corpus tripped the gate, so a port could have skipped
+  the rule entirely and stayed green — `stray_capitaliser` and
+  `orthographic_capitaliser` separate it in both directions, and
+  `cases.is_never_capitalised` pins which side of the lexicon each token landed
+  on. Verified by removing the rule from Ruby and watching four probes fail.
+* **The exposure is unchanged and still stated in a test.** Of the true catches
+  the rule leaves intact on NWP, three — `Amy`, `Barry`, `Whitney` — survive on
+  the given-name tier alone. Given-name coverage is systematically thinner for
+  less common and non-Anglo names, so a surname no tier knows, written once
+  mid-sentence in a genuinely sloppy document, is what this leaks, and the
+  population it leaks is not a random sample of children.
+  `test_a_name_no_tier_knows_is_the_failure_mode` says so where it can fail.
+
 ## 0.2.9 — 2026-09-10
 
 ### Inflection belongs to the detector, not to a list of pairs somebody remembered

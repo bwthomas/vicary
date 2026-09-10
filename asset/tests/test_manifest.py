@@ -37,8 +37,15 @@ def test_both_assets_are_described(tmp_path: Path) -> None:
     reject the file it was told to carry.
     """
     payload = _written(tmp_path)
-    assert set(payload["assets"]) == {"notability.txt.gz", "stop_words.txt"}
-    assert payload["assets"]["stop_words.txt"]["entries"] == 794
+    assert set(payload["assets"]) == {
+        "notability.txt.gz",
+        "stop_words_never_capitalised.txt",
+        "stop_words_sometimes_capitalised.txt",
+    }
+    # The two halves of one stoplist, and 499 + 295 is the 794 that shipped
+    # as a single file through 0.2.9.
+    assert payload["assets"]["stop_words_never_capitalised.txt"]["entries"] == 499
+    assert payload["assets"]["stop_words_sometimes_capitalised.txt"]["entries"] == 295
 
 
 def test_the_tier_counts_come_from_the_file_not_the_build(tmp_path: Path) -> None:
@@ -143,6 +150,6 @@ def test_a_format_change_raises_the_floor_without_being_asked(tmp_path: Path) ->
 def test_a_new_asset_gets_the_current_floor(tmp_path: Path) -> None:
     """Nothing older has ever shipped it, so nothing older can read it."""
     payload = _written(tmp_path)
-    assert payload["assets"]["stop_words.txt"]["min_package_version"] == (
+    assert payload["assets"]["stop_words_never_capitalised.txt"]["min_package_version"] == (
         config.version()
     )

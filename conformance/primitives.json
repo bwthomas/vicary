@@ -1158,6 +1158,133 @@
           "nice"
         ]
       ],
+      "orthographic_capitaliser": [
+        [
+          0,
+          2,
+          "We"
+        ],
+        [
+          3,
+          9,
+          "stayed"
+        ],
+        [
+          10,
+          14,
+          "with"
+        ],
+        [
+          15,
+          18,
+          "the"
+        ],
+        [
+          19,
+          26,
+          "Alvarez"
+        ],
+        [
+          27,
+          33,
+          "family"
+        ],
+        [
+          34,
+          36,
+          "in"
+        ],
+        [
+          37,
+          41,
+          "July"
+        ],
+        [
+          43,
+          45,
+          "On"
+        ],
+        [
+          46,
+          52,
+          "Friday"
+        ],
+        [
+          53,
+          56,
+          "Mrs"
+        ],
+        [
+          58,
+          62,
+          "Ruiz"
+        ],
+        [
+          63,
+          67,
+          "took"
+        ],
+        [
+          68,
+          71,
+          "our"
+        ],
+        [
+          72,
+          77,
+          "class"
+        ],
+        [
+          78,
+          80,
+          "to"
+        ],
+        [
+          81,
+          88,
+          "Lincoln"
+        ],
+        [
+          89,
+          95,
+          "School"
+        ],
+        [
+          96,
+          99,
+          "and"
+        ],
+        [
+          100,
+          103,
+          "the"
+        ],
+        [
+          104,
+          113,
+          "Americans"
+        ],
+        [
+          114,
+          116,
+          "we"
+        ],
+        [
+          117,
+          120,
+          "met"
+        ],
+        [
+          121,
+          125,
+          "were"
+        ],
+        [
+          126,
+          130,
+          "kind"
+        ]
+      ],
       "particle": [
         [
           0,
@@ -1564,6 +1691,108 @@
           51,
           56,
           "story"
+        ]
+      ],
+      "stray_capitaliser": [
+        [
+          0,
+          1,
+          "i"
+        ],
+        [
+          2,
+          6,
+          "like"
+        ],
+        [
+          7,
+          9,
+          "to"
+        ],
+        [
+          10,
+          15,
+          "build"
+        ],
+        [
+          16,
+          22,
+          "Things"
+        ],
+        [
+          23,
+          25,
+          "at"
+        ],
+        [
+          26,
+          30,
+          "home"
+        ],
+        [
+          31,
+          34,
+          "and"
+        ],
+        [
+          35,
+          39,
+          "Then"
+        ],
+        [
+          40,
+          41,
+          "i"
+        ],
+        [
+          42,
+          46,
+          "show"
+        ],
+        [
+          47,
+          49,
+          "my"
+        ],
+        [
+          50,
+          55,
+          "class"
+        ],
+        [
+          57,
+          59,
+          "we"
+        ],
+        [
+          60,
+          64,
+          "went"
+        ],
+        [
+          65,
+          67,
+          "to"
+        ],
+        [
+          68,
+          71,
+          "the"
+        ],
+        [
+          72,
+          81,
+          "Nantahala"
+        ],
+        [
+          82,
+          86,
+          "last"
+        ],
+        [
+          87,
+          93,
+          "summer"
         ]
       ],
       "title_book": [
@@ -2401,6 +2630,43 @@
           "She"
         ]
       ],
+      "orthographic_capitaliser": [
+        [
+          0,
+          2,
+          "We"
+        ],
+        [
+          19,
+          26,
+          "Alvarez"
+        ],
+        [
+          37,
+          41,
+          "July"
+        ],
+        [
+          43,
+          56,
+          "On Friday Mrs"
+        ],
+        [
+          58,
+          62,
+          "Ruiz"
+        ],
+        [
+          81,
+          95,
+          "Lincoln School"
+        ],
+        [
+          104,
+          113,
+          "Americans"
+        ]
+      ],
       "particle": [
         [
           0,
@@ -2517,6 +2783,23 @@
           35,
           43,
           "Marisol'"
+        ]
+      ],
+      "stray_capitaliser": [
+        [
+          16,
+          22,
+          "Things"
+        ],
+        [
+          35,
+          39,
+          "Then"
+        ],
+        [
+          72,
+          81,
+          "Nantahala"
         ]
       ],
       "title_book": [
@@ -2714,6 +2997,7 @@
       "lowercase_particle_tail": "lowercase",
       "lowercase_writer": "lowercase",
       "one_mark": "silent",
+      "orthographic_capitaliser": "consistent",
       "particle": "consistent",
       "plain": "consistent",
       "possessive": "consistent",
@@ -2723,6 +3007,7 @@
       "shout": "lowercase",
       "silent_prose": "silent",
       "single_quoted": "silent",
+      "stray_capitaliser": "inconsistent",
       "title_book": "consistent",
       "title_curly": "consistent",
       "title_is_relation": "silent",
@@ -2754,6 +3039,7 @@
       "lowercase_particle_tail": "lowercase",
       "lowercase_writer": "lowercase",
       "one_mark": "silent",
+      "orthographic_capitaliser": "consistent",
       "particle": "consistent",
       "plain": "consistent",
       "possessive": "consistent",
@@ -2763,6 +3049,7 @@
       "shout": "lowercase",
       "silent_prose": "silent",
       "single_quoted": "silent",
+      "stray_capitaliser": "inconsistent",
       "title_book": "consistent",
       "title_curly": "consistent",
       "title_is_relation": "silent",
@@ -2940,6 +3227,7 @@
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
+      "orthographic_capitaliser": [],
       "particle": [
         "gogh",
         "van gogh"
@@ -2952,6 +3240,7 @@
       "shout": [],
       "silent_prose": [],
       "single_quoted": [],
+      "stray_capitaliser": [],
       "title_book": [],
       "title_curly": [],
       "title_is_relation": [],
@@ -2983,6 +3272,7 @@
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
+      "orthographic_capitaliser": [],
       "particle": [],
       "plain": [],
       "possessive": [],
@@ -3010,6 +3300,7 @@
       ],
       "silent_prose": [],
       "single_quoted": [],
+      "stray_capitaliser": [],
       "title_book": [],
       "title_curly": [],
       "title_is_relation": [],
@@ -3051,6 +3342,7 @@
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
+      "orthographic_capitaliser": [],
       "particle": [
         "gogh",
         "vincent"
@@ -3063,6 +3355,7 @@
       "shout": [],
       "silent_prose": [],
       "single_quoted": [],
+      "stray_capitaliser": [],
       "title_book": [],
       "title_curly": [],
       "title_is_relation": [],
@@ -3265,6 +3558,26 @@
           "NAME"
         ]
       ],
+      "orthographic_capitaliser": [
+        [
+          19,
+          26,
+          "Alvarez",
+          "NAME"
+        ],
+        [
+          58,
+          62,
+          "Ruiz",
+          "NAME"
+        ],
+        [
+          81,
+          88,
+          "Lincoln",
+          "NAME"
+        ]
+      ],
       "particle": [
         [
           16,
@@ -3334,6 +3647,7 @@
           "NAME"
         ]
       ],
+      "stray_capitaliser": [],
       "title_book": [],
       "title_curly": [],
       "title_is_relation": [
@@ -3681,6 +3995,26 @@
           "NAME"
         ]
       ],
+      "orthographic_capitaliser": [
+        [
+          19,
+          26,
+          "Alvarez",
+          "NAME"
+        ],
+        [
+          58,
+          62,
+          "Ruiz",
+          "NAME"
+        ],
+        [
+          81,
+          88,
+          "Lincoln",
+          "NAME"
+        ]
+      ],
       "particle": [
         [
           16,
@@ -3766,6 +4100,14 @@
           35,
           42,
           "Marisol",
+          "NAME"
+        ]
+      ],
+      "stray_capitaliser": [
+        [
+          72,
+          81,
+          "Nantahala",
           "NAME"
         ]
       ],
@@ -4068,6 +4410,26 @@
           "NAME"
         ]
       ],
+      "orthographic_capitaliser": [
+        [
+          19,
+          26,
+          "Alvarez",
+          "NAME"
+        ],
+        [
+          58,
+          62,
+          "Ruiz",
+          "NAME"
+        ],
+        [
+          81,
+          88,
+          "Lincoln",
+          "NAME"
+        ]
+      ],
       "particle": [
         [
           16,
@@ -4147,6 +4509,14 @@
           35,
           42,
           "Marisol",
+          "NAME"
+        ]
+      ],
+      "stray_capitaliser": [
+        [
+          72,
+          81,
+          "Nantahala",
           "NAME"
         ]
       ],
@@ -4282,6 +4652,7 @@
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
+      "orthographic_capitaliser": [],
       "particle": [],
       "plain": [],
       "possessive": [],
@@ -4296,6 +4667,7 @@
       "shout": [],
       "silent_prose": [],
       "single_quoted": [],
+      "stray_capitaliser": [],
       "title_book": [],
       "title_curly": [],
       "title_is_relation": [],
@@ -4312,22 +4684,61 @@
         ]
       ]
     },
-    "is_stop": {
+    "is_never_capitalised": {
       "'": false,
       "'s": false,
       "A": true,
+      "Americans": false,
       "As": true,
       "Coach": false,
-      "Dr": true,
-      "Favorite": true,
+      "Dad": false,
+      "Dr": false,
+      "Favorite": false,
+      "Friday": false,
       "I": true,
       "I'm": true,
       "It's": true,
       "I’m": true,
+      "July": false,
+      "Mrs": false,
+      "Mrs.": false,
+      "Okonkwo": false,
+      "SLAM": false,
+      "School": false,
+      "Terrence": false,
+      "The": true,
+      "Won't": false,
+      "Won’t": false,
+      "a": true,
+      "dont": true,
+      "favorite": false,
+      "he'd": true,
+      "im": true,
+      "n't": false,
+      "thats": true,
+      "the": true
+    },
+    "is_stop": {
+      "'": false,
+      "'s": false,
+      "A": true,
+      "Americans": true,
+      "As": true,
+      "Coach": false,
+      "Dad": true,
+      "Dr": true,
+      "Favorite": true,
+      "Friday": true,
+      "I": true,
+      "I'm": true,
+      "It's": true,
+      "I’m": true,
+      "July": true,
       "Mrs": true,
       "Mrs.": true,
       "Okonkwo": false,
       "SLAM": false,
+      "School": true,
       "Terrence": false,
       "The": true,
       "Won't": false,
@@ -5158,6 +5569,83 @@
           "nice"
         ]
       ],
+      "orthographic_capitaliser": [
+        [
+          3,
+          9,
+          "stayed"
+        ],
+        [
+          10,
+          14,
+          "with"
+        ],
+        [
+          15,
+          18,
+          "the"
+        ],
+        [
+          27,
+          33,
+          "family"
+        ],
+        [
+          34,
+          36,
+          "in"
+        ],
+        [
+          63,
+          67,
+          "took"
+        ],
+        [
+          68,
+          71,
+          "our"
+        ],
+        [
+          72,
+          77,
+          "class"
+        ],
+        [
+          78,
+          80,
+          "to"
+        ],
+        [
+          96,
+          99,
+          "and"
+        ],
+        [
+          100,
+          103,
+          "the"
+        ],
+        [
+          114,
+          116,
+          "we"
+        ],
+        [
+          117,
+          120,
+          "met"
+        ],
+        [
+          121,
+          125,
+          "were"
+        ],
+        [
+          126,
+          130,
+          "kind"
+        ]
+      ],
       "particle": [
         [
           3,
@@ -5469,6 +5957,93 @@
           51,
           56,
           "story"
+        ]
+      ],
+      "stray_capitaliser": [
+        [
+          0,
+          1,
+          "i"
+        ],
+        [
+          2,
+          6,
+          "like"
+        ],
+        [
+          7,
+          9,
+          "to"
+        ],
+        [
+          10,
+          15,
+          "build"
+        ],
+        [
+          23,
+          25,
+          "at"
+        ],
+        [
+          26,
+          30,
+          "home"
+        ],
+        [
+          31,
+          34,
+          "and"
+        ],
+        [
+          40,
+          41,
+          "i"
+        ],
+        [
+          42,
+          46,
+          "show"
+        ],
+        [
+          47,
+          49,
+          "my"
+        ],
+        [
+          50,
+          55,
+          "class"
+        ],
+        [
+          57,
+          59,
+          "we"
+        ],
+        [
+          60,
+          64,
+          "went"
+        ],
+        [
+          65,
+          67,
+          "to"
+        ],
+        [
+          68,
+          71,
+          "the"
+        ],
+        [
+          82,
+          86,
+          "last"
+        ],
+        [
+          87,
+          93,
+          "summer"
         ]
       ],
       "title_book": [
@@ -5944,6 +6519,10 @@
         "I met {NAME_1} today. She was nice.",
         1
       ],
+      "orthographic_capitaliser": [
+        "We stayed with the {NAME_3} family in July. On Friday Mrs. {NAME_2} took our class to {NAME_1} School and the Americans we met were kind.",
+        3
+      ],
       "particle": [
         "My inspiration, Vincent van Gogh, painted for years.",
         0
@@ -5979,6 +6558,10 @@
       "single_quoted": [
         "He used words like '{NAME_2}' and '{NAME_1}' in the story.",
         2
+      ],
+      "stray_capitaliser": [
+        "i like to build Things at home and Then i show my class. we went to the Nantahala last summer.",
+        0
       ],
       "title_book": [
         "I read To Kill a Mockingbird last year.",
@@ -6098,6 +6681,10 @@
         "I met {NAME} today. She was nice.",
         1
       ],
+      "orthographic_capitaliser": [
+        "We stayed with the {NAME} family in July. On Friday Mrs. {NAME} took our class to {NAME} School and the Americans we met were kind.",
+        3
+      ],
       "particle": [
         "My inspiration, Vincent van Gogh, painted for years.",
         0
@@ -6133,6 +6720,10 @@
       "single_quoted": [
         "He used words like '{NAME}' and '{NAME}' in the story.",
         2
+      ],
+      "stray_capitaliser": [
+        "i like to build Things at home and Then i show my class. we went to the Nantahala last summer.",
+        0
       ],
       "title_book": [
         "I read To Kill a Mockingbird last year.",
@@ -6252,6 +6843,10 @@
         "I met Marisol today. She was nice.",
         0
       ],
+      "orthographic_capitaliser": [
+        "We stayed with the {NAME_3} family in July. On Friday Mrs. {NAME_2} took our class to {NAME_1} School and the Americans we met were kind.",
+        3
+      ],
       "particle": [
         "My inspiration, Vincent van Gogh, painted for years.",
         0
@@ -6287,6 +6882,10 @@
       "single_quoted": [
         "He used words like '{NAME_1}' and 'Marisol' in the story.",
         1
+      ],
+      "stray_capitaliser": [
+        "i like to build Things at home and Then i show my class. we went to the Nantahala last summer.",
+        0
       ],
       "title_book": [
         "I read To Kill a Mockingbird last year.",
@@ -6406,6 +7005,10 @@
         "I met {NAME_1} today. She was nice.",
         1
       ],
+      "orthographic_capitaliser": [
+        "We stayed with the {NAME_3} family in July. On Friday Mrs. {NAME_2} took our class to {NAME_1} School and the Americans we met were kind.",
+        3
+      ],
       "particle": [
         "My inspiration, {NAME_1}, painted for years.",
         1
@@ -6441,6 +7044,10 @@
       "single_quoted": [
         "He used words like '{NAME_2}' and '{NAME_1}' in the story.",
         2
+      ],
+      "stray_capitaliser": [
+        "i like to build Things at home and Then i show my class. we went to the Nantahala last summer.",
+        0
       ],
       "title_book": [
         "I read To Kill a Mockingbird last year.",
@@ -6557,6 +7164,16 @@
       "one_mark": [
         "marisol"
       ],
+      "orthographic_capitaliser": [
+        "alvarez",
+        "americans",
+        "friday",
+        "july",
+        "lincoln",
+        "mrs",
+        "ruiz",
+        "school"
+      ],
       "particle": [
         "gogh",
         "vincent"
@@ -6581,6 +7198,11 @@
       ],
       "silent_prose": [],
       "single_quoted": [],
+      "stray_capitaliser": [
+        "nantahala",
+        "then",
+        "things"
+      ],
       "title_book": [
         "kill",
         "mockingbird",
@@ -6672,6 +7294,16 @@
       "one_mark": [
         "marisol"
       ],
+      "orthographic_capitaliser": [
+        "alvarez",
+        "americans",
+        "friday",
+        "july",
+        "lincoln",
+        "mrs",
+        "ruiz",
+        "school"
+      ],
       "particle": [
         "gogh",
         "vincent"
@@ -6696,6 +7328,11 @@
       ],
       "silent_prose": [],
       "single_quoted": [],
+      "stray_capitaliser": [
+        "nantahala",
+        "then",
+        "things"
+      ],
       "title_book": [
         "kill",
         "mockingbird",
@@ -6845,6 +7482,7 @@
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
+      "orthographic_capitaliser": [],
       "particle": [],
       "plain": [],
       "possessive": [],
@@ -6870,6 +7508,7 @@
       "shout": [],
       "silent_prose": [],
       "single_quoted": [],
+      "stray_capitaliser": [],
       "title_book": [],
       "title_curly": [],
       "title_is_relation": [],
@@ -7020,6 +7659,10 @@
         0,
         21
       ],
+      "orthographic_capitaliser": [
+        0,
+        43
+      ],
       "particle": [
         0
       ],
@@ -7052,6 +7695,10 @@
         0,
         20,
         35
+      ],
+      "stray_capitaliser": [
+        0,
+        57
       ],
       "title_book": [
         0
@@ -7244,6 +7891,7 @@
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
+      "orthographic_capitaliser": [],
       "particle": [],
       "plain": [],
       "possessive": [],
@@ -7253,6 +7901,7 @@
       "shout": [],
       "silent_prose": [],
       "single_quoted": [],
+      "stray_capitaliser": [],
       "title_book": [
         [
           7,
@@ -7314,6 +7963,7 @@
       "lowercase_particle_tail": [],
       "lowercase_writer": [],
       "one_mark": [],
+      "orthographic_capitaliser": [],
       "particle": [],
       "plain": [],
       "possessive": [],
@@ -7323,6 +7973,7 @@
       "shout": [],
       "silent_prose": [],
       "single_quoted": [],
+      "stray_capitaliser": [],
       "title_book": [
         [
           7,
@@ -8595,6 +9246,133 @@
           "nice"
         ]
       ],
+      "orthographic_capitaliser": [
+        [
+          0,
+          2,
+          "We"
+        ],
+        [
+          3,
+          9,
+          "stayed"
+        ],
+        [
+          10,
+          14,
+          "with"
+        ],
+        [
+          15,
+          18,
+          "the"
+        ],
+        [
+          19,
+          26,
+          "Alvarez"
+        ],
+        [
+          27,
+          33,
+          "family"
+        ],
+        [
+          34,
+          36,
+          "in"
+        ],
+        [
+          37,
+          41,
+          "July"
+        ],
+        [
+          43,
+          45,
+          "On"
+        ],
+        [
+          46,
+          52,
+          "Friday"
+        ],
+        [
+          53,
+          56,
+          "Mrs"
+        ],
+        [
+          58,
+          62,
+          "Ruiz"
+        ],
+        [
+          63,
+          67,
+          "took"
+        ],
+        [
+          68,
+          71,
+          "our"
+        ],
+        [
+          72,
+          77,
+          "class"
+        ],
+        [
+          78,
+          80,
+          "to"
+        ],
+        [
+          81,
+          88,
+          "Lincoln"
+        ],
+        [
+          89,
+          95,
+          "School"
+        ],
+        [
+          96,
+          99,
+          "and"
+        ],
+        [
+          100,
+          103,
+          "the"
+        ],
+        [
+          104,
+          113,
+          "Americans"
+        ],
+        [
+          114,
+          116,
+          "we"
+        ],
+        [
+          117,
+          120,
+          "met"
+        ],
+        [
+          121,
+          125,
+          "were"
+        ],
+        [
+          126,
+          130,
+          "kind"
+        ]
+      ],
       "particle": [
         [
           0,
@@ -9001,6 +9779,108 @@
           51,
           56,
           "story"
+        ]
+      ],
+      "stray_capitaliser": [
+        [
+          0,
+          1,
+          "i"
+        ],
+        [
+          2,
+          6,
+          "like"
+        ],
+        [
+          7,
+          9,
+          "to"
+        ],
+        [
+          10,
+          15,
+          "build"
+        ],
+        [
+          16,
+          22,
+          "Things"
+        ],
+        [
+          23,
+          25,
+          "at"
+        ],
+        [
+          26,
+          30,
+          "home"
+        ],
+        [
+          31,
+          34,
+          "and"
+        ],
+        [
+          35,
+          39,
+          "Then"
+        ],
+        [
+          40,
+          41,
+          "i"
+        ],
+        [
+          42,
+          46,
+          "show"
+        ],
+        [
+          47,
+          49,
+          "my"
+        ],
+        [
+          50,
+          55,
+          "class"
+        ],
+        [
+          57,
+          59,
+          "we"
+        ],
+        [
+          60,
+          64,
+          "went"
+        ],
+        [
+          65,
+          67,
+          "to"
+        ],
+        [
+          68,
+          71,
+          "the"
+        ],
+        [
+          72,
+          81,
+          "Nantahala"
+        ],
+        [
+          82,
+          86,
+          "last"
+        ],
+        [
+          87,
+          93,
+          "summer"
         ]
       ],
       "title_book": [
@@ -9588,6 +10468,8 @@
     "marks_proper_nouns_min": 2,
     "relation_window": 90,
     "stop_words": 794,
+    "stop_words_never_capitalised": 499,
+    "stop_words_sometimes_capitalised": 295,
     "title_max_tokens": 8
   },
   "corpus": {
@@ -9610,6 +10492,7 @@
     "lowercase_particle_tail": "marisol de and i went home. we stayed late.",
     "lowercase_writer": "then terrence okonkwo showed up. i was so happy. we went home.",
     "one_mark": "I met Marisol today. She was nice.",
+    "orthographic_capitaliser": "We stayed with the Alvarez family in July. On Friday Mrs. Ruiz took our class to Lincoln School and the Americans we met were kind.",
     "particle": "My inspiration, Vincent van Gogh, painted for years.",
     "plain": "My cousin Terrence Okonkwo came over that summer.",
     "possessive": "Terrence's older brother, Narciso's friend, and Lincoln’s hat.",
@@ -9619,6 +10502,7 @@
     "shout": "Then SLAM! the door closed and Marisol laughed.",
     "silent_prose": "Nothing here is capitalised mid sentence at all. It is only prose.",
     "single_quoted": "He used words like 'Terrence' and 'Marisol' in the story.",
+    "stray_capitaliser": "i like to build Things at home and Then i show my class. we went to the Nantahala last summer.",
     "title_book": "I read To Kill a Mockingbird last year.",
     "title_curly": "We read Charlotte’s Web in class.",
     "title_is_relation": "My cousin Vinny came over that summer and never left.",
@@ -10035,7 +10919,13 @@
     "It's",
     "Favorite",
     "favorite",
-    "I"
+    "I",
+    "July",
+    "Friday",
+    "Americans",
+    "Mrs",
+    "School",
+    "Dad"
   ],
   "suffixes": {
     "landmark": [

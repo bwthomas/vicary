@@ -42,10 +42,12 @@ import {
   OVERRIDABLE_TIERS,
   PRECEDENCE,
   PARTICLES,
+  NEVER_CAPITALISED,
   PROTECTED,
   PROXIMITY_CUES,
   RELATION_CUES,
   RELATION_WINDOW,
+  SOMETIMES_CAPITALISED,
   STOP_WORDS,
   TITLE_MAX_TOKENS,
   WORD_TOKEN,
@@ -60,6 +62,7 @@ import {
   findTitleSpans,
   maskCandidates,
   headingSpans,
+  isNeverCapitalised,
   isStop,
   midSentenceCapitals,
   namesSomeoneInTheWritersLife,
@@ -199,11 +202,16 @@ test("the spec's constants are this build's constants", () => {
     marks_proper_nouns_min: MARKS_PROPER_NOUNS_MIN,
     relation_window: RELATION_WINDOW,
     stop_words: STOP_WORDS.size,
+    stop_words_never_capitalised: NEVER_CAPITALISED.size,
+    stop_words_sometimes_capitalised: SOMETIMES_CAPITALISED.size,
     title_max_tokens: TITLE_MAX_TOKENS,
   });
 });
 
 section("is_stop", stopTokens, (token: string) => isStop(token));
+section("is_never_capitalised", stopTokens, (token: string) =>
+  isNeverCapitalised(token),
+);
 
 section("trim", lists, (tokens: string[]) => trim(tokens));
 section("classify", lists, (tokens: string[]) => classify(tokens));
@@ -368,7 +376,8 @@ test("every section the spec carries is checked by this file", () => {
   // would otherwise ship unchecked, which is the exact gap the file exists to
   // close.
   const checked = new Set([
-    "is_stop", "trim", "classify", "classify_with_settlement",
+    "is_stop", "is_never_capitalised", "trim", "classify",
+    "classify_with_settlement",
     "classify_tags", "classify_tags_with_settlement", "masks_with_settlement",
     "word_token", "lower_token", "any_token", "candidate_re", "protected",
     "sentence_starts", "emphasis_spans", "heading_spans",

@@ -31,7 +31,8 @@ import { readFileSync } from "node:fs";
 export const REQUIRED_ASSET_FILES = [
   "assets/notability.txt.gz",
   "assets/MANIFEST.json",
-  "assets/stop_words.txt",
+  "assets/stop_words_never_capitalised.txt",
+  "assets/stop_words_sometimes_capitalised.txt",
 ];
 
 /**

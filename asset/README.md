@@ -11,8 +11,11 @@ asset/
     notability.txt.gz      the folded gazetteer, seven tiers
     MANIFEST.json          sha256, byte count, tier counts, format, cut date
   lexicon/                 word lists — TRACKED, language-neutral
-    stop_words.txt         794 words that must never become name candidates,
-                           authored singulars plus a generated plural region
+    stop_words_never_        the two halves of the stoplist: 794 words that
+      capitalised.txt        must never become name candidates, split by
+    stop_words_sometimes_    whether English capitalises the word mid-sentence.
+      capitalised.txt        Authored singulars plus a generated plural region
+                             in each. THE VETO IS THE UNION.
   vicary_build/            the fetch mechanism (Python, stdlib only)
   tests/                   its own suite, run by `just asset-test`
 ```
@@ -35,12 +38,40 @@ It was, as `vicary.build`, until it was lifted out. Three costs, all real:
 - The builder imported the Python detector's stoplist. A build tool that depends
   on one of its own consumers is not shared, whatever directory it sits in.
 
-The stoplist is now `lexicon/stop_words.txt`, read by the builder and by all three
-detectors. It is data for the same reason the gazetteer is: a word list
-transliterated by hand into a second language diverges silently, and the divergence
-shows up as prose corruption in one language and not the others — which no parity
-check on *masked output* would catch, because a stop word going missing changes
-what gets masked in essays nobody put in a fixture.
+The stoplist is now `lexicon/`, read by the builder and by all three detectors. It
+is data for the same reason the gazetteer is: a word list transliterated by hand
+into a second language diverges silently, and the divergence shows up as prose
+corruption in one language and not the others — which no parity check on *masked
+output* would catch, because a stop word going missing changes what gets masked in
+essays nobody put in a fixture.
+
+## It is two files, and the veto is the union
+
+`stop_words_never_capitalised.txt` (499) and `stop_words_sometimes_capitalised.txt`
+(295) are one list for every rule that vetoes a candidate: load both, union them,
+and you have word for word the 794 that shipped as a single file through 0.2.9.
+Each reader exposes that union as `stop_words()`, and no call site should be
+loading a half to veto with.
+
+One consumer wants a half. `capitalises_ordinary_words` decides that a document's
+capitals are untrustworthy when it finds a mid-sentence capital on a stop word, on
+the premise that a capital there was never orthographic — and that premise is
+false for months, weekdays, honorifics, nationalities, religions, and the nouns
+and adjectives that sit inside proper names. `English` is on the stoplist because
+a 34-word paper by an English-language learner had the word masked; `School` fired
+on four NWP papers and every one of them was a school's name. A document writing
+"in July" tripped the signal having told us nothing, and that suppressed `Alvarez`
+in *"We stayed with the Alvarez family in July."*
+
+The line between the files is **orthographic, not thematic**, because a thematic
+line is an argument every new word reopens: function words, verbs, adverbs,
+interjections and contractions on one side; nouns, adjectives, numerals and the
+proper-noun categories on the other. The two files must stay disjoint — an overlap
+puts a word English capitalises back into the signal — and their union must stay
+whole, since a gap narrows the *veto*, which makes the redactor more aggressive:
+privacy-safe to look at, prose-corrupting in fact, and invisible to any check that
+only asks whether something was masked. Both properties are asserted in all three
+ports.
 
 ## Commands
 
@@ -67,7 +98,7 @@ here once, and it printed a pass.
 
 ## The stoplist is half generated
 
-Everything below the `# >>> generated inflections` line in `lexicon/stop_words.txt`
+Everything below the `# >>> generated inflections` line in each `lexicon/*.txt`
 is written by `just asset-lexicon`. **Author singulars only**; the bare plural is
 emitted for you, which is what stopped `Sets` and `Parties` from being name
 candidates that no hand-written pair happened to cover.

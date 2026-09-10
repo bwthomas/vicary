@@ -98,7 +98,8 @@ def test_every_source_file_is_tracked() -> None:
 REQUIRED_PACKAGE_DATA = (
     "data/notability.txt.gz",
     "data/MANIFEST.json",
-    "data/stop_words.txt",
+    "data/stop_words_never_capitalised.txt",
+    "data/stop_words_sometimes_capitalised.txt",
 )
 
 

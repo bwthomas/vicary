@@ -6,14 +6,30 @@ require_relative "../lib/vicary"
 
 class LexiconTest < Minitest::Test
   def test_the_shipped_stoplist_parses_to_its_declared_words
-    words = Vicary::Lexicon.load("stop_words")
-    assert_equal manifest_entry.fetch("entries"), words.size
-    # Spot-checks at the two ends of the file, so a truncated read fails here and
-    # not only on the count. Same two words the Python suite checks.
-    assert_includes words, "the"
-    assert_includes words, "favorite"
-    # Case-folded on read, so a reader never has to remember to fold.
-    words.each { |word| assert_equal word, word.downcase }
+    Vicary::Lexicon::STOP_WORD_LISTS.each do |name|
+      words = Vicary::Lexicon.load(name)
+      assert_equal manifest_entry(name).fetch("entries"), words.size
+      # Case-folded on read, so a reader never has to remember to fold.
+      words.each { |word| assert_equal word, word.downcase }
+    end
+  end
+
+  def test_the_two_halves_partition_the_stoplist
+    # The union is the veto and it is word for word the single list that shipped
+    # through 0.2.9. Overlap would put a word English capitalises back into the
+    # sloppy-capitaliser signal, which is the defect the split closes; a gap
+    # would narrow the veto, which makes the redactor more aggressive and shows
+    # up nowhere but the prose.
+    never = Vicary::Lexicon.load(Vicary::Lexicon::NEVER_CAPITALISED)
+    sometimes = Vicary::Lexicon.load(Vicary::Lexicon::SOMETIMES_CAPITALISED)
+    assert_empty never & sometimes
+    assert_equal 794, Vicary::Lexicon.stop_words.size
+    assert_equal Vicary::Lexicon.stop_words, Vicary::Candidates.stop_words
+    # Spot-checks at the two ends of each file, so a truncated read fails here
+    # and not only on the count. The same words the Python suite checks.
+    assert_includes never, "the"
+    assert_includes sometimes, "july"
+    assert_includes sometimes, "school"
   end
 
   def test_the_shipped_stoplist_is_the_format_this_reader_claims_to_read
@@ -26,7 +42,7 @@ class LexiconTest < Minitest::Test
     # Not decoration: a package that finds its stoplist in one cut and its
     # gazetteer in another has two halves of two different detectors, and every
     # symptom of that is a masking decision nobody can reproduce.
-    directory = Vicary::Lexicon.path("stop_words").parent
+    directory = Vicary::Lexicon.path(Vicary::Lexicon::NEVER_CAPITALISED).parent
     on_path = Vicary::Asset.search_path.map { |dir| dir.expand_path.to_s }
     assert_includes on_path, directory.expand_path.to_s,
                     "stoplist resolved to #{directory}, which is not on the asset search path"
@@ -113,7 +129,8 @@ class LexiconTest < Minitest::Test
 
   def test_a_missing_lexicon_names_the_file_and_how_to_get_it
     error = assert_raises(Vicary::Lexicon::LexiconError) do
-      Vicary::Lexicon.load("stop_words", path: File.join(__dir__, "no-such-lexicon.txt"))
+      Vicary::Lexicon.load(Vicary::Lexicon::NEVER_CAPITALISED,
+                           path: File.join(__dir__, "no-such-lexicon.txt"))
     end
     assert_match(/no-such-lexicon\.txt/, error.message)
     assert_match(/rake sync_assets/, error.message)
@@ -124,11 +141,11 @@ class LexiconTest < Minitest::Test
   # What the manifest says about the shipped stoplist, read from whichever
   # directory the reader actually resolved — so this cannot pass by reading one
   # cut's manifest about another cut's file.
-  def manifest_entry
-    directory = Vicary::Lexicon.path("stop_words").parent
+  def manifest_entry(name = Vicary::Lexicon::NEVER_CAPITALISED)
+    directory = Vicary::Lexicon.path(name).parent
     manifest = JSON.parse(directory.join(Vicary::Asset::MANIFEST_FILENAME).read)
-    entry = manifest.dig("assets", "stop_words.txt")
-    assert entry, "the manifest does not describe stop_words.txt"
+    entry = manifest.dig("assets", "#{name}#{Vicary::Lexicon::SUFFIX}")
+    assert entry, "the manifest does not describe #{name}"
     entry
   end
 end

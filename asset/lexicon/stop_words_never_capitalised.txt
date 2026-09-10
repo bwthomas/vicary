@@ -1,0 +1,126 @@
+#!lexicon 1
+#!list stop_words_never_capitalised 499
+# Ordinary words that must never become name candidates, and that English never
+# capitalises in the middle of a sentence.
+#
+# HALF A LIST. The stoplist every front door vetoes candidates against is this
+# file UNION `stop_words_sometimes_capitalised.txt`, and neither half is the
+# stoplist on its own. Loading only one under-vetoes, which makes the redactor
+# more aggressive — the failure that looks privacy-safe and corrupts prose. The
+# `#!list` count on each file is per-file; the union is what code must build.
+#
+# Why there are two files. One consumer asks a second question of these words:
+# `capitalises_ordinary_words` decides a document's capitals are untrustworthy
+# when it finds a mid-sentence capital on a stop word, on the premise that a
+# capital there was never orthographic. That premise is true of the words below
+# and false of the words in the sibling file — "in July" and "my Dad" are
+# correctly capitalised English, and reading them as sloppiness suppressed
+# `Alvarez` in "We stayed with the Alvarez family in July." So the *veto* wants
+# every stop word and the *signal* wants only these, and one list could not
+# serve both.
+#
+# The line between the two files is orthographic, not thematic, because a
+# thematic line is an argument every new word reopens:
+#
+#   here    function words, verbs, adverbs, interjections and contractions —
+#           a capital on one mid-sentence is a mistake, never a construction;
+#   sibling nouns, adjectives, numerals, and the proper-noun categories —
+#           English capitalises these inside proper names ("Lincoln School",
+#           "Great Lakes", "First Baptist"), so a capital is uninformative.
+#
+# Language-neutral on purpose. This list is the only thing standing between
+# candidate generation and "mask every capitalised word", so all three front doors
+# have to work from the same words — a stoplist transliterated by hand into a
+# second language is a second detector wearing the first one's name, and the
+# difference shows up as prose corruption in one language and not the others,
+# which no parity check on masked output would catch.
+#
+# Skewed toward over-inclusion deliberately. A missed name is one span and shows
+# up in the recall number; a wrongly-masked common word corrupts every essay that
+# uses it and shows up nowhere unless somebody reads the prose.
+#
+# Format: `#!` lines are directives, `#` lines are comments, and every other line
+# contributes whitespace-separated words. The count on the `#!list` directive is
+# the number of DISTINCT words after case-folding — authored and generated
+# together, since a reader loads one file — and each front door asserts it
+# against what it parsed. That is not ceremony: a short read here silently makes
+# the redactor MORE aggressive, which looks privacy-safe and passes any check that
+# only asks whether something was masked.
+#
+# A word appearing twice is not an error — the groupings below are thematic and
+# overlap ("else", "may", "us"), and enforcing uniqueness in the source would make
+# the list harder to read for no benefit.
+#
+# Write the SINGULAR only. Plurals are generated into the region at the bottom by
+# `python -m vicary_build lexicon`, which is also what stops one from being added
+# without being priced: the generator drops any form an American bears as a
+# surname, and a hand-written plural is not priced by anything.
+  a an the this that these those there here it its it's
+  i me my mine myself we us our ours ourselves you your yours
+  he him his she her hers they them their theirs who whom whose which what
+  and or but so because although though however therefore thus hence yet
+  if then else when while until since before after during once whenever
+  for from to into onto out off over under above below between among across
+  through around about against along beside beyond within without
+  at by in on up down near finally
+  is am are was were be been being have has had having do does did doing
+  can could will would shall should might must let
+  not no nor none nothing never always sometimes often usually rarely
+  all any both each every few many more most much several some such
+  also even just only really very too still again ever else quite rather
+  call called come came go went get got give gave take took make made
+  see saw look looked think thought know knew say said tell told ask asked
+  want wanted need needed try tried help helped work worked feel felt
+  find found keep kept leave left put set start started stop stopped
+  remember remembered learn learned teach taught write wrote read
+  everyone everybody someone somebody anyone anybody nobody everything
+  something anything
+  yes yeah ok okay maybe perhaps well now today tomorrow yesterday
+  im ive ill id dont cant wont didnt isnt aint thats theres whats
+  as than instead unless whether either neither plus versus etc
+  getting making looking thinking talking playing living walking running
+  sitting standing growing learning moving trying using
+  back away together alone everywhere somewhere anywhere nowhere
+
+# `may`, `march` and `august` are ordinary words too, and they are NOT here:
+# they live in the sibling file, because a mid-sentence `May` is a month far
+# more often than it is a modal. The veto is the union, so candidate generation
+# is unchanged either way; what moves is whether the capital counts as evidence
+# that the writer is sloppy, and on a month it does not.
+
+# >>> generated inflections — written by `python -m vicary_build lexicon`
+# Bare plurals of the words above, so a capitalised `Sets` or `Parties` is
+# vetoed by the same lookup its singular is. Hand-written pairs used to do this
+# and only for the 35 somebody thought of.
+#
+# Two subtractions are applied here and neither is optional. A form borne as an
+# American surname is dropped, because a stop word puts every family bearing it
+# beyond the redactor (`may` would claim `Mays`, `will` would claim `Wills`).
+# A form that is a common given name is dropped for a sharper reason: a stop
+# word wins over the given-name tier, so `we` -> `wes` would stop redacting a
+# child called Wes. Plurals still written out by hand above are the ones a
+# subtraction removes from here — they are load-bearing, not leftovers.
+#
+# Regenerate with `python -m vicary_build lexicon`; do not edit below by hand.
+  abouts aboves acrosses afters agains againsts aints alones alongs alsos
+  althoughs alwayses amongs ands anies ans anybodies anyones anythings
+  anywheres arounds ases askeds asks ats aways becauses beens befores beings
+  belows bes besides betweens beyonds boths buts calleds calls cames cans
+  cants coulds didnts dids doeses doings donts durings eithers elses etcs
+  everies everybodies everyones everythings everywheres feels fews finallies
+  finds froms gaves gets gives gos gots growings hads hases havings helpeds
+  hences hims hises howevers ids ifs ills ins insteads intos ises isnts justs
+  keeps kepts knews knows learneds learnings learns leaves lefts lets lookeds
+  lookings looks makes maybes mights mosts movings muches musts myselfs
+  neededs neithers nobodies nos nothings nots nowheres nows offs oftens okays
+  onces onlies ons ontos ourselveses outs perhapses playings pluses puts
+  quites rarelies rathers reads reallies remembereds remembers runnings saids
+  saws says sets severals shalls shes shoulds sinces sittings somebodies
+  someones somethings sometimeses somewheres standings starteds stoppeds
+  suches talkings taughts teaches tells thans thems thens therefores thes
+  theses thinkings thinks thises thoses thoughs thoughts throughs thuses
+  todays togethers tolds tomorrows toos trieds tries tryings unders unlesses
+  untils ups uses usings usuallies veries versuses walkings wanteds wants
+  wases wents weres whenevers whens whethers whiches whoms whos whoses withins
+  withouts wonts workeds woulds writes wrotes yeahs yeses yesterdays yets yous
+# <<< end generated inflections
