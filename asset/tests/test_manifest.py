@@ -38,7 +38,7 @@ def test_both_assets_are_described(tmp_path: Path) -> None:
     """
     payload = _written(tmp_path)
     assert set(payload["assets"]) == {"notability.txt.gz", "stop_words.txt"}
-    assert payload["assets"]["stop_words.txt"]["entries"] == 421
+    assert payload["assets"]["stop_words.txt"]["entries"] == 471
 
 
 def test_the_tier_counts_come_from_the_file_not_the_build(tmp_path: Path) -> None:

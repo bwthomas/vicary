@@ -1,6 +1,6 @@
 {
   "document_version": 1,
-  "note": "Which behavioural concern each front door is expected to unit-test, and every accepted gap with its reason. Read by tools/tests/test_coverage_parity.py. Three implementations of one detector should be tested to the same depth; where they are not, the divergence is declared here with a reason rather than discovered by counting test files a year later. Adding a suite to one port and not the others fails this file, and so does adding one this file does not declare — the check runs in both directions, because a suite nothing declares is how a concern ends up tested in one port only.",
+  "note": "Which behavioural concern each front door is expected to unit-test, and every accepted gap with its reason. Read by tools/tests/test_coverage_parity.py. Three implementations of one detector should be tested to the same depth; where they are not, the divergence is declared here with a reason rather than discovered by counting test files a year later. Adding a suite to one port and not the others fails this file, and so does adding one this file does not declare \u2014 the check runs in both directions, because a suite nothing declares is how a concern ends up tested in one port only.",
   "concerns": {
     "primitives": {
       "why": "The shared primitives spec, one test per case family plus the constant tables.",
@@ -9,13 +9,13 @@
       "ruby": "test/primitives_test.rb"
     },
     "candidates": {
-      "why": "Candidate generation internals — the regexes, the capitalisation habit, the relation window, the corroboration guard. Distinct from `primitives`: that checks agreement with the reference on recorded cases, this names each behaviour so a failure says which rule broke rather than which case differs.",
+      "why": "Candidate generation internals \u2014 the regexes, the capitalisation habit, the relation window, the corroboration guard. Distinct from `primitives`: that checks agreement with the reference on recorded cases, this names each behaviour so a failure says which rule broke rather than which case differs.",
       "python": "tests/test_name_candidates.py",
       "typescript": "test/candidates.test.ts",
       "ruby": "test/candidates_test.rb"
     },
     "structured": {
-      "why": "The structured-identifier pass — phone, email, SSN, card with its Luhn gate, address, ZIP, age, DOB, username, URL — and the order they are applied in.",
+      "why": "The structured-identifier pass \u2014 phone, email, SSN, card with its Luhn gate, address, ZIP, age, DOB, username, URL \u2014 and the order they are applied in.",
       "python": "tests/test_redaction.py",
       "typescript": "test/structured.test.ts",
       "ruby": "test/structured_test.rb"
@@ -27,7 +27,7 @@
       "ruby": "test/redact_test.rb"
     },
     "span_map": {
-      "why": "Offset translation between redacted and original coordinates — span derivation from the restore map, the two half-open translations, and the contract to refuse when the map is absent or partial. Distinct from `redact`, which covers the restore map itself: that says what a placeholder stands for, this says where it came from, and a host drawing a highlight over a student's own essay needs the second.",
+      "why": "Offset translation between redacted and original coordinates \u2014 span derivation from the restore map, the two half-open translations, and the contract to refuse when the map is absent or partial. Distinct from `redact`, which covers the restore map itself: that says what a placeholder stands for, this says where it came from, and a host drawing a highlight over a student's own essay needs the second.",
       "python": "tests/test_span_map.py",
       "typescript": "test/spans.test.ts",
       "ruby": "test/spans_test.rb"
@@ -63,7 +63,7 @@
       "ruby": "test/gates_test.rb"
     },
     "packaging": {
-      "why": "That the built artifact carries the asset and installs, and that the release path's own logic — the conformance gate, the pack-contents reader, the is-it-really-published check — is exercised without cutting a release. A packaging break is invisible to every other suite and shows up for whoever runs install first.",
+      "why": "That the built artifact carries the asset and installs, and that the release path's own logic \u2014 the conformance gate, the pack-contents reader, the is-it-really-published check \u2014 is exercised without cutting a release. A packaging break is invisible to every other suite and shows up for whoever runs install first.",
       "python": "tests/test_packaging.py",
       "typescript": "test/packaging.test.ts",
       "ruby": "test/release_test.rb"
@@ -81,16 +81,22 @@
       "ruby": "test/config_test.rb"
     },
     "local_classifier": {
-      "why": "The local PII classifier the reference's recall harness measures — its false-positive guards and its honest boundary at third-party names.",
+      "why": "The local PII classifier the reference's recall harness measures \u2014 its false-positive guards and its honest boundary at third-party names.",
       "python": "tests/test_local_classifier.py",
       "typescript": null,
       "ruby": null
     },
     "latency_baseline": {
-      "why": "The latency regression comparison and — mostly — its refusals. Each port decides for itself whether a paired measurement may be compared, so each port tests its own decision: a port that silently read another port's record would compare figures 2-3x apart in absolute cost, and one that silently declined would report a regression as a pass. Both failures are invisible from the other two ports.",
+      "why": "The latency regression comparison and \u2014 mostly \u2014 its refusals. Each port decides for itself whether a paired measurement may be compared, so each port tests its own decision: a port that silently read another port's record would compare figures 2-3x apart in absolute cost, and one that silently declined would report a regression as a pass. Both failures are invisible from the other two ports.",
       "python": "tests/test_latency_baseline.py",
       "typescript": "test/latencyBaseline.test.ts",
       "ruby": "test/latency_baseline_test.rb"
+    },
+    "lexicon_exposure": {
+      "why": "Pricing a word-list membership test by the real surnames it claims. A measurement instrument for a proposal, not a runtime path \u2014 it exists because the leak fixture's 44 spans cannot see a widening that walks thousands of census surnames into a common-noun veto.",
+      "python": "tests/test_lexicon_exposure.py",
+      "typescript": null,
+      "ruby": null
     }
   },
   "accepted_divergences": [
@@ -112,17 +118,27 @@
     {
       "concern": "regex_dialect",
       "port": "python",
-      "reason": "JUSTIFIED. Python is the dialect the other two are measured against, so there is no divergence for it to pin — the question 'does this port's regex engine agree with the reference' is not askable of the reference. Its build-time demonym derivation, which the old `dialect` description wrongly folded in here, is tools/tests/test_demonyms_and_carryover.py."
+      "reason": "JUSTIFIED. Python is the dialect the other two are measured against, so there is no divergence for it to pin \u2014 the question 'does this port's regex engine agree with the reference' is not askable of the reference. Its build-time demonym derivation, which the old `dialect` description wrongly folded in here, is tools/tests/test_demonyms_and_carryover.py."
     },
     {
       "concern": "local_classifier",
       "port": "typescript",
-      "reason": "JUSTIFIED. There is no local_classifier module in this port and none is planned. It belongs to the reference's evaluation harness — the thing that MEASURES recall against injected ground truth — not to the detector the three front doors implement. A port of it would be a second detector to keep in parity for no caller's benefit."
+      "reason": "JUSTIFIED. There is no local_classifier module in this port and none is planned. It belongs to the reference's evaluation harness \u2014 the thing that MEASURES recall against injected ground truth \u2014 not to the detector the three front doors implement. A port of it would be a second detector to keep in parity for no caller's benefit."
     },
     {
       "concern": "local_classifier",
       "port": "ruby",
-      "reason": "JUSTIFIED. Same as TypeScript: the module is the reference evaluation harness's, not the detector's. Recorded rather than left undeclared, which is how it sat until 2026-08-12 — 41 collected Python tests belonging to no declared concern, invisible to this file because nothing checked the on-disk-to-declared direction."
+      "reason": "JUSTIFIED. Same as TypeScript: the module is the reference evaluation harness's, not the detector's. Recorded rather than left undeclared, which is how it sat until 2026-08-12 \u2014 41 collected Python tests belonging to no declared concern, invisible to this file because nothing checked the on-disk-to-declared direction."
+    },
+    {
+      "concern": "lexicon_exposure",
+      "port": "typescript",
+      "reason": "JUSTIFIED. The probe scores a PROPOSAL against the census table before anything ships; it is reference-side, like the recall harness, and reads no vendored asset a port carries. If a veto is ever adopted, the veto is the thing the ports must agree on and it gets its own concern \u2014 this one stays Python-only."
+    },
+    {
+      "concern": "lexicon_exposure",
+      "port": "ruby",
+      "reason": "JUSTIFIED. The probe scores a PROPOSAL against the census table before anything ships; it is reference-side, like the recall harness, and reads no vendored asset a port carries. If a veto is ever adopted, the veto is the thing the ports must agree on and it gets its own concern \u2014 this one stays Python-only."
     }
   ]
 }

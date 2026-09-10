@@ -1,5 +1,5 @@
 #!lexicon 1
-#!list stop_words 421
+#!list stop_words 471
 # Ordinary words that must never become name candidates.
 #
 # Language-neutral on purpose. This list is the only thing standing between
@@ -61,3 +61,34 @@
   sitting standing growing learning moving trying using
   back away together alone everywhere somewhere anywhere nowhere
   right wrong true false sure certain important special favorite
+
+# Named categories that are proper nouns but identify nobody: holidays and
+# observances, languages, nationalities and ethnic groups, religions and their
+# scriptures. A capitalised token here reads as a proper noun to candidate
+# generation and always has, which is why `English` was masked in a 34-word
+# paper by an English-language learner writing about learning English.
+#
+# Two rules governed what is on this list, and both are load-bearing.
+#
+# 1. Nothing that `is_common_given_name` already carries. Easter, Valentine,
+#    German, Latina, Christian, Jesus and Quran were all proposed here and all
+#    excluded on that test: a stop word wins over the given-name tier, so
+#    listing one of those would stop redacting a real child called Christian.
+# 2. Priced before adding, not after. The 50 words below claim 138,506 American
+#    surname bearers between them — 0.072% of the census population, against the
+#    1.25% ceiling the bare-surname exposure gate enforces. French (63,991) and
+#    English (46,393) are most of it. Measured 2026-09-10; re-measure before
+#    extending, because the cheap-looking additions are the common ones.
+#
+# Scope is deliberately narrow. Public FIGURES, PLACES and WORKS belong in the
+# gazetteer, which already carries `Che Guevara` and `Australia`; settlements
+# are excluded from it on purpose and stay excluded. This list is only for the
+# categories no gazetteer tier models at all.
+  christmas halloween thanksgiving hanukkah passover ramadan eid diwali
+  kwanzaa valentines
+  english spanish french chinese japanese korean italian russian arabic
+  hindi portuguese vietnamese greek polish irish scottish
+  hispanic latino asian african american americans european mexican
+  canadian indian native jewish muslim catholic protestant buddhist
+  hindu nazi nazis
+  god bible koran torah allah

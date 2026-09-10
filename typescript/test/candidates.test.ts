@@ -83,8 +83,8 @@ function plain(spans: Span[]): [number, number][] {
 // The stoplist, and what a stop word is
 // ---------------------------------------------------------------------------
 
-test("the stoplist is the shipped 421 words, not a transliteration", () => {
-  assert.equal(STOP_WORDS.size, 421);
+test("the stoplist is the shipped 471 words, not a transliteration", () => {
+  assert.equal(STOP_WORDS.size, 471);
 });
 
 test("a clitic is stripped before the stoplist is consulted", () => {

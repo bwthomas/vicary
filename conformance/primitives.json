@@ -9587,7 +9587,7 @@
     "lowercase_min_tokens": 2,
     "marks_proper_nouns_min": 2,
     "relation_window": 90,
-    "stop_words": 421,
+    "stop_words": 471,
     "title_max_tokens": 8
   },
   "corpus": {

@@ -43,7 +43,7 @@ class CandidatesTest < Minitest::Test
   # -------------------------------------------------------------------------
 
   def test_the_stoplist_is_the_shipped_421_words_not_a_transliteration
-    assert_equal 421, C.stop_words.size
+    assert_equal 471, C.stop_words.size
   end
 
   def test_a_clitic_is_stripped_before_the_stoplist_is_consulted

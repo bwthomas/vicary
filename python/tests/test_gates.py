@@ -141,6 +141,22 @@ def over_fire_ceiling(corpus_id: str) -> float:
 #: moved a tier, and that is exactly what should fail here.
 CENSUS_BARE_SURNAME_CEILING = 1.25
 
+#: What share of American surname bearers the STOPLIST claims, as a percentage.
+#:
+#: A separate ceiling because it is a separate hole, and it was open for the
+#: list's whole life. `bare-surname exposure` scores the GAZETTEER's tiers; it
+#: reads 1.20% with a 421-word stoplist and 1.20% with a 471-word one, so it
+#: cannot see a stoplist widening at all. Measured 2026-09-10, the shipped list
+#: already claimed ~0.43% before anything was added to it — `young`, `long`,
+#: `white`, `brown`, `small` and `best` are all common surnames — and nothing in
+#: CI had ever said so.
+#:
+#: A stop word is a stronger KEEP than a gazetteer tier: it stops a token being
+#: a name candidate at all, ahead of the given-name tier. So the number belongs
+#: on the same scale as its sibling and under a bar of its own. 0.60 leaves room
+#: for a few more curated additions and no room for a careless one.
+STOPLIST_SURNAME_CEILING = 0.60
+
 #: How much slower than the last release this port may redact the corpus. Read
 #: from the baseline file rather than written here, so one number governs all
 #: three ports and a release updates it in one place. The absolute ceiling this
@@ -484,6 +500,31 @@ def test_bare_surname_census_exposure(census_exposure, record_gate) -> None:
     assert value <= CENSUS_BARE_SURNAME_CEILING, (
         f"bare-surname exposure {value:.2f}% exceeds "
         f"{CENSUS_BARE_SURNAME_CEILING}%\n" + census_eval.render(census_exposure)
+    )
+
+
+def test_stoplist_census_exposure(record_gate) -> None:
+    """How much of the US surname population the STOPLIST claims.
+
+    The sibling of `bare-surname exposure`, on the same bearer-weighted scale,
+    watching the door that one cannot see. Every word here is a KEEP that fires
+    before the given-name tier, so a common surname added for its common-noun
+    sense — `Young`, `Brown`, `Long` — costs every family that bears it.
+    """
+    from vicary import lexicon
+    from vicary.eval.lexicon_exposure import measure, surname_population
+
+    if census_eval.shipped_dir() is None and not census_eval.census_source():
+        pytest.skip("no census table outside a checkout")
+    result = measure(lexicon.load("stop_words"), population=surname_population())
+    value = result.rate * 100
+    record_gate("stoplist surname exposure", value, "<=",
+                STOPLIST_SURNAME_CEILING, "%")
+    assert value <= STOPLIST_SURNAME_CEILING, (
+        f"stoplist surname exposure {value:.3f}% exceeds "
+        f"{STOPLIST_SURNAME_CEILING}% — {result.claimed} surnames, "
+        f"{result.bearers_claimed:,} bearers. Most common: "
+        + ", ".join(result.examples)
     )
 
 

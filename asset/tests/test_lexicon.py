@@ -17,7 +17,7 @@ from vicary_build import config, lexicon
 
 def test_the_shipped_stoplist_parses() -> None:
     words = lexicon.load("stop_words")
-    assert len(words) == 421
+    assert len(words) == 471
     # Spot-checks at the two ends of the file, so a truncated read fails here and
     # not only on the count.
     assert "the" in words
@@ -31,7 +31,7 @@ def test_both_readers_agree_on_the_shipped_stoplist() -> None:
 
     Two readers of one format is the cost of not coupling the build mechanism to
     one of its consumers. This is the test that keeps that cost from becoming a
-    divergence: a stoplist that parses to 421 words here and 419 there would show
+    divergence: a stoplist that parses to 471 words here and 469 there would show
     up as prose corruption in one language and nothing at all in the tests.
     """
     from vicary import lexicon as runtime_lexicon
