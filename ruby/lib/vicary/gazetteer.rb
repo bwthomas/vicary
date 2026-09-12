@@ -52,7 +52,8 @@ module Vicary
     # forgotten here would read back as an empty set, and an empty KEEP tier
     # redacts everything it was built to protect while presenting as
     # over-aggressive tuning.
-    TIER_NAMES = %w[full short place given title demonym settlement].freeze
+    TIER_NAMES = %w[full short place given given_corroboration title
+                    demonym settlement].freeze
 
     # Name particles that may lead a two- or three-token *partial* surname.
     #
@@ -179,7 +180,8 @@ module Vicary
     # use rather than taken as constructor arguments, because they are functions
     # of +title+ and must never be able to disagree with it.
     class Index
-      attr_reader :full, :short, :place, :given, :title, :demonym, :settlement, :meta
+      attr_reader :full, :short, :place, :given, :given_corroboration, :title,
+                  :demonym, :settlement, :meta
 
       def initialize(asset)
         asset.tiers.each_key do |name|
@@ -198,6 +200,10 @@ module Vicary
         @place = asset.tiers.fetch("place", EMPTY)
         # Common given names. The INVERSE signal — see #common_given_name?.
         @given = asset.tiers.fetch("given", EMPTY)
+        # Given names between the corroboration floor and the generation floor —
+        # the INCREMENT over +given+, never the whole set. Readers union the two;
+        # see #vouches_for_a_given_name_in_corroboration?.
+        @given_corroboration = asset.tiers.fetch("given_corroboration", EMPTY)
         # Works and fictional characters — multi-token only. See #title?.
         @title = asset.tiers.fetch("title", EMPTY)
         # English demonyms — `cuban`, `nigerian`. A KEEP, see DEMONYM.
@@ -297,6 +303,28 @@ module Vicary
         !key.empty? && !key.include?(" ") && given.include?(key)
       end
 
+      # #common_given_name?, at the permissive corroboration floor.
+      #
+      # **Strictly wider than #common_given_name? and never narrower**, because
+      # +given_corroboration+ holds the increment and this unions it with
+      # +given+ rather than replacing it. A caller reaching for this one cannot
+      # accidentally get a smaller answer than the generation tier would give,
+      # which is the failure a second independently-built list would allow.
+      #
+      # The two floors exist because the two roles cost differently. A
+      # generation hit creates a span out of lower-case prose; a corroboration
+      # hit can only un-suppress a span the writer's own capital already
+      # proposed. The shipped 1,800-birth knee was measured against the first
+      # and does not transfer to the second.
+      #
+      # Consulted by Candidates.corroborated? and by nothing else.
+      def vouches_for_a_given_name_in_corroboration?(token)
+        key = Gazetteer.normalize(token)
+        return false if key.empty? || key.include?(" ")
+
+        given.include?(key) || given_corroboration.include?(key)
+      end
+
       # True when +name+ is a town, city or village.
       #
       # **Not part of the notability decision, and deliberately not consulted by
@@ -389,6 +417,11 @@ module Vicary
       # True when +token+ is a common given name — a REDACT signal, not a KEEP.
       def common_given_name?(token)
         load.common_given_name?(token)
+      end
+
+      # The given-name tier at its permissive, corroboration-only floor.
+      def vouches_for_a_given_name_in_corroboration?(token)
+        load.vouches_for_a_given_name_in_corroboration?(token)
       end
 
       # True when +name+ is a town or city — a TYPING signal, not a keep.

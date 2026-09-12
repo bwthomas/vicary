@@ -415,6 +415,7 @@ class LocalNameClassifier:
         notable: NotabilityOracle | None = None,
         topical: frozenset[str] = frozenset(),
         given_name: GivenNameOracle | None = None,
+        given_name_corroboration: GivenNameOracle | None = None,
         title: TitleOracle | None = None,
         title_prefix: TitleOracle | None = None,
         settlement: SettlementOracle | None = None,
@@ -455,6 +456,10 @@ class LocalNameClassifier:
         #: Turns on the lowercase route through candidate generation, which is
         #: the only one that reaches a student who writes without capitals.
         self.given_name = given_name
+        #: The same tier at its permissive floor, read only by the
+        #: sentence-initial corroboration rule. None leaves that rule reading
+        #: ``given_name``, which is the pre-dial behaviour.
+        self.given_name_corroboration = given_name_corroboration
         #: Keeps the books, films and characters a student writes *about*. The
         #: notability tier holds real people only, so without this every work
         #: title and fictional character is redacted.
@@ -556,6 +561,7 @@ class LocalNameClassifier:
                 notable=self.notable,
                 keep=self.topical | extra_keep,
                 given_name=self.given_name,
+                given_name_corroboration=self.given_name_corroboration,
                 title=self.title,
                 title_prefix=self.title_prefix,
                 settlement=self.settlement,

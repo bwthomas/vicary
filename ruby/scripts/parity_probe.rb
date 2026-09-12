@@ -59,7 +59,8 @@ def ruby_rows(names)
       Vicary::Gazetteer.normalize(name),
       Vicary::Gazetteer.notability(name),
       Vicary::Gazetteer.settlement?(name).to_s,
-      Vicary::Gazetteer.common_given_name?(name).to_s
+      Vicary::Gazetteer.common_given_name?(name).to_s,
+      Vicary::Gazetteer.vouches_for_a_given_name_in_corroboration?(name).to_s
     ].join("\t")
   end
 end
@@ -85,6 +86,7 @@ def python_rows(names)
             g.notability(line),
             str(g.is_settlement(line)).lower(),
             str(g.is_common_given_name(line)).lower(),
+            str(g.vouches_for_a_given_name_in_corroboration(line)).lower(),
         ]))
   PY
 
@@ -106,7 +108,8 @@ divergent = mine.zip(reference).reject { |ours, theirs| ours == theirs }
 
 if divergent.empty?
   puts "#{names.length} probes, no divergence from the Python reference."
-  puts "(fold, verdict, settlement typing and given-name signal all identical)"
+  puts "(fold, verdict, settlement typing and BOTH given-name signals — the"
+  puts " generation floor and the corroboration floor — all identical)"
   exit 0
 end
 
@@ -117,7 +120,8 @@ divergent.each do |ours, theirs|
   warn "  this port: #{ours}"
   warn ""
 end
-warn "Columns are: name, fold, verdict, is_settlement, is_common_given_name."
+warn "Columns are: name, fold, verdict, is_settlement, is_common_given_name, " \
+     "vouches_for_a_given_name_in_corroboration."
 warn "A divergence in the fold column is the one to fix first — every other"
 warn "column is a lookup keyed on it, so one bad fold moves all of them."
 exit 1

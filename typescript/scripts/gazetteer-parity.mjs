@@ -26,6 +26,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   isCommonGivenName,
+  vouchesForAGivenNameInCorroboration,
   isSettlement,
   normalize,
   notability,
@@ -64,6 +65,7 @@ function mineRows(names) {
       notability(name),
       String(isSettlement(name)),
       String(isCommonGivenName(name)),
+      String(vouchesForAGivenNameInCorroboration(name)),
     ].join("\t"),
   );
 }
@@ -90,6 +92,7 @@ for line in sys.stdin.read().split("\\n"):
         g.notability(line),
         str(g.is_settlement(line)).lower(),
         str(g.is_common_given_name(line)).lower(),
+        str(g.vouches_for_a_given_name_in_corroboration(line)).lower(),
     ]))
 `;
   try {
@@ -117,7 +120,10 @@ const divergent = names
 
 if (divergent.length === 0) {
   console.log(`${names.length} names, no divergence from the Python reference.`);
-  console.log("(fold, notability tier, settlement and given-name verdicts)");
+  console.log(
+    "(fold, notability tier, settlement, and BOTH given-name verdicts —\n" +
+      " the generation floor and the corroboration floor)",
+  );
   process.exit(0);
 }
 
@@ -125,7 +131,9 @@ console.error(
   `${divergent.length} of ${names.length} names diverge from the reference:`,
 );
 console.error("");
-console.error("  name\tnormalize\tnotability\tsettlement\tgiven");
+console.error(
+  "  name\tnormalize\tnotability\tsettlement\tgiven\tgiven_corroboration",
+);
 for (const row of divergent) {
   console.error(`  reference: ${row.reference}`);
   console.error(`  this port: ${row.mine}`);

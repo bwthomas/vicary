@@ -89,21 +89,21 @@ test("a truncated tier is refused rather than silently smaller", () => {
   // people, which means MORE redaction, which looks privacy-safe and passes any
   // check that only asks whether something was masked.
   assert.throws(
-    () => parseAsset("#!gazetteer 5\n#!tier full 3\nabraham lincoln\n"),
+    () => parseAsset("#!gazetteer 6\n#!tier full 3\nabraham lincoln\n"),
     /declares 3 entries and parsed 1/,
   );
 });
 
 test("a directive the format number did not admit to is refused", () => {
   assert.throws(
-    () => parseAsset("#!gazetteer 5\n#!tier full 1\nx\n#!newthing 1\n"),
+    () => parseAsset("#!gazetteer 6\n#!tier full 1\nx\n#!newthing 1\n"),
     /format changed without its number changing/,
   );
 });
 
 test("an entry before any tier is an error, not an orphan", () => {
   assert.throws(
-    () => parseAsset("#!gazetteer 5\nabraham lincoln\n"),
+    () => parseAsset("#!gazetteer 6\nabraham lincoln\n"),
     /before any #!tier/,
   );
 });

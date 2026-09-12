@@ -181,6 +181,18 @@
     {
       "name": "São Paulo",
       "why": "NFKD"
+    },
+    {
+      "name": "Treyce",
+      "why": "corroboration floor: 315 SSA births — below the 1,800 generation floor, above the 200 corroboration floor. The one true catch on the NWP 56 that this tier reaches."
+    },
+    {
+      "name": "Imagine",
+      "why": "corroboration floor: 136 SSA births — below BOTH floors, and the ordinary word whose arrival is what first moves over-fire. It pins the bottom of the free window."
+    },
+    {
+      "name": "Deshawn",
+      "why": "corroboration floor: above BOTH floors, so the two given-name answers must agree. A port that read the increment tier INSTEAD of unioning it would fail here and nowhere else."
     }
   ],
   "batch_note": "The batched pass — several fields masked in ONE pass, joined by BATCH_SEPARATOR, with the joined document's numbering and one restore map per field. Compared against a FRESH Python Redactor's redact_outbound_batch: fresh matters, because the reference carries notable keeps forward from an inbound pass and a used redactor would be answering a different question than a direction-agnostic port can. Each case fixes the seam it covers, exactly as redaction_probes does.",

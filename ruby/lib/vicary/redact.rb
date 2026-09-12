@@ -120,7 +120,16 @@ module Vicary
       # The one difference between the two gazetteer levels. Absent rather than
       # nil, so `gazetteer` and `gazetteer-lowercase` differ by the presence of a
       # key rather than by a value the merge would have to strip.
-      oracles[:given_name] = ->(token) { Gazetteer.common_given_name?(token) } if level == NAMES_LOWERCASE
+      if level == NAMES_LOWERCASE
+        oracles[:given_name] = ->(token) { Gazetteer.common_given_name?(token) }
+        # Paired deliberately: the corroboration floor is inert without
+        # `given_name` — every rule that could read it is gated on an oracle
+        # being supplied — so wiring it at the bare level too would be a dial
+        # that looks set and does nothing, which is worse than an absent one.
+        oracles[:given_name_corroboration] = lambda { |token|
+          Gazetteer.vouches_for_a_given_name_in_corroboration?(token)
+        }
+      end
       oracles
     end
 

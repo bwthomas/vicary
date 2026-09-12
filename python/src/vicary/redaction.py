@@ -642,6 +642,7 @@ class Redactor:
         notable: NotabilityOracle | None = None,
         topical: frozenset[str] = frozenset(),
         given_name: GivenNameOracle | None = None,
+        given_name_corroboration: GivenNameOracle | None = None,
         title: TitleOracle | None = None,
         title_prefix: TitleOracle | None = None,
         settlement: SettlementOracle | None = None,
@@ -671,6 +672,7 @@ class Redactor:
                 notable=notable,
                 topical=topical,
                 given_name=given_name,
+                given_name_corroboration=given_name_corroboration,
                 title=title,
                 title_prefix=title_prefix,
                 settlement=settlement,
@@ -1042,6 +1044,7 @@ def _gazetteer_oracles(level: str) -> dict:
         is_title,
         is_title_prefix,
         notability,
+        vouches_for_a_given_name_in_corroboration,
     )
 
     return {
@@ -1060,6 +1063,15 @@ def _gazetteer_oracles(level: str) -> dict:
         # The one difference between the two gazetteer levels.
         "given_name": (
             is_common_given_name if level == NAMES_LOWERCASE else None
+        ),
+        # Paired with it deliberately. The corroboration floor is inert without
+        # `given_name` — every rule that could read it is gated on an oracle
+        # being supplied — so wiring it at the `gazetteer` level too would be a
+        # dial that looks set and does nothing, which is worse than an absent
+        # one.
+        "given_name_corroboration": (
+            vouches_for_a_given_name_in_corroboration
+            if level == NAMES_LOWERCASE else None
         ),
     }
 

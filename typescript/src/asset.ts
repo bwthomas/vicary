@@ -4,7 +4,7 @@
  * The asset is a gzipped, line-oriented text file, chosen over a binary format
  * precisely so three languages can read it without a schema compiler:
  *
- *     #!gazetteer 5                 format number, checked not sniffed
+ *     #!gazetteer 6                 format number, checked not sniffed
  *     #!meta {"cut_date": ...}      provenance, one JSON object
  *     #!tier demonym 1047           tier name and its DECLARED entry count
  *     abidjanese                    one normalised entry per line
@@ -34,7 +34,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /** Asset format this reader understands. Refuse anything else. */
-export const SUPPORTED_FORMAT = 5;
+export const SUPPORTED_FORMAT = 6;
 
 export const ASSET_FILENAME = "notability.txt.gz";
 export const MANIFEST_FILENAME = "MANIFEST.json";

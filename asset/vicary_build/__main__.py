@@ -1,8 +1,10 @@
 """``python -m vicary_build`` — the build mechanism's front door.
 
-Two verbs, because the build produces two distinct things a person wants
-separately: ``fetch`` rebuilds the asset from its upstreams and rewrites the
-manifest, and ``vendor`` copies the tracked payload into one package.
+Verbs, because the build produces distinct things a person wants separately:
+``fetch`` rebuilds the asset from its upstreams and rewrites the manifest, and
+``vendor`` copies the tracked payload into one package. ``lexicon`` and
+``given-tiers`` re-cut one tracked artifact each from a LOCAL source, without a
+network sweep — see their own help for why that is a verb rather than a flag.
 
 ``fetch`` rewrites the manifest and then verifies the file it just wrote, in that
 order and unconditionally. The failure this guards against has happened: a build
@@ -85,6 +87,39 @@ def _cmd_lexicon(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_given_tiers(args: argparse.Namespace) -> int:
+    """Re-cut the two SSA-derived tiers of the existing asset, in place.
+
+    Separate from `fetch` for the same reason `lexicon` is, one layer down. The
+    given-name tiers come from a local, offline archive; every other tier comes
+    from a live ~30-query SPARQL sweep. So running `fetch` to move a births
+    floor re-cuts seven tiers nobody meant to touch, and they move with whatever
+    Wikidata did since the last cut — which makes the floor change unmeasurable,
+    because the thing under test is no longer the only thing that differs.
+    """
+    from vicary_build import gazetteer
+
+    source = args.ssa or config.get(config.SSA_NAMES_ZIP_ENV_VAR)
+    if not source:
+        print(
+            "--ssa, or "
+            f"{config.SSA_NAMES_ZIP_ENV_VAR}, must name a local copy of the SSA "
+            "baby-names archive: ssa.gov answers 403 to some networks on every "
+            "path, so there is no download to fall back on.",
+            file=sys.stderr,
+        )
+        return 2
+    births = gazetteer.read_ssa_given_names(source)
+    path = config.DATA_DIR / gazetteer.ASSET_NAME
+    written, counts = gazetteer.rebuild_given_tiers(path, births)
+    for tier, entries in counts.items():
+        print(f"tier {tier}: {entries:,} entries", file=sys.stderr)
+    print(f"{path.name} rewritten: {written:,} bytes", file=sys.stderr)
+    rewritten = manifest.write(rebuilt={gazetteer.ASSET_NAME})
+    print(f"manifest rewritten: {rewritten}")
+    return 0
+
+
 def _cmd_manifest(args: argparse.Namespace) -> int:
     """Refresh the manifest without rebuilding, for when a lexicon changed.
 
@@ -132,6 +167,17 @@ def main(argv: list[str] | None = None) -> int:
              "tracked census and given-name tables",
     )
     inflect.set_defaults(func=_cmd_lexicon)
+
+    recut = sub.add_parser(
+        "given-tiers",
+        help="re-cut the two SSA-derived given-name tiers in place, offline",
+    )
+    recut.add_argument(
+        "--ssa", default=None,
+        help="local names.zip or extracted directory; defaults to "
+             f"${config.SSA_NAMES_ZIP_ENV_VAR}",
+    )
+    recut.set_defaults(func=_cmd_given_tiers)
 
     refresh = sub.add_parser(
         "manifest", help="re-checksum the tracked payload without rebuilding it"

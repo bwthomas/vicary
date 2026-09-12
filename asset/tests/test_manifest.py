@@ -56,9 +56,10 @@ def test_the_tier_counts_come_from_the_file_not_the_build(tmp_path: Path) -> Non
     """
     payload = _written(tmp_path)
     tiers = payload["assets"]["notability.txt.gz"]["tiers"]
-    assert sum(tiers.values()) == 392165
+    assert sum(tiers.values()) == 414065
     assert set(tiers) == {
-        "demonym", "full", "given", "place", "settlement", "short", "title",
+        "demonym", "full", "given", "given_corroboration", "place",
+        "settlement", "short", "title",
     }
 
 
@@ -84,7 +85,7 @@ def test_a_refresh_does_not_raise_an_untouched_assets_floor(tmp_path: Path) -> N
                 "manifest_version": 1,
                 "assets": {
                     "notability.txt.gz": {
-                        "format": 5,
+                        "format": 6,  # what the asset on disk carries
                         "min_package_version": "0.0.1",
                         "sources": ["https://recorded.invalid/upstream"],
                     }

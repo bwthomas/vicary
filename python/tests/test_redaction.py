@@ -631,11 +631,14 @@ def test_the_identity_level_loads_no_gazetteer(
 
 
 def test_only_the_lowercase_level_passes_the_given_name_oracle() -> None:
-    """Pins the single argument that separates the two gazetteer levels.
+    """Pins the arguments that separate the two gazetteer levels.
 
-    It is one keyword, and it does two things — adds the case-insensitive route
-    AND gates a precision filter on the capitalised route — which is why the
-    arms differ in over-firing by more than the route alone explains.
+    The first does two things — adds the case-insensitive route AND gates a
+    precision filter on the capitalised route — which is why the arms differ in
+    over-firing by more than the route alone explains. The second is the
+    corroboration floor, which travels WITH it rather than separately: it is
+    read only by rules that are themselves gated on `given_name`, so wiring it
+    at the bare level would be a dial that looks set and does nothing.
     """
     from vicary.redaction import (
         NAMES_GAZETTEER,
@@ -643,10 +646,12 @@ def test_only_the_lowercase_level_passes_the_given_name_oracle() -> None:
         _gazetteer_oracles,
     )
 
+    paired = ("given_name", "given_name_corroboration")
     bare = _gazetteer_oracles(NAMES_GAZETTEER)
     full = _gazetteer_oracles(NAMES_LOWERCASE)
-    assert bare["given_name"] is None
-    assert full["given_name"] is not None
-    assert {k: v for k, v in bare.items() if k != "given_name"} == {
-        k: v for k, v in full.items() if k != "given_name"
+    for key in paired:
+        assert bare[key] is None
+        assert full[key] is not None
+    assert {k: v for k, v in bare.items() if k not in paired} == {
+        k: v for k, v in full.items() if k not in paired
     }

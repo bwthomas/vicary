@@ -31,7 +31,7 @@ module Vicary
   # her name removed.
   module Asset
     # Asset format this reader understands. Refuse anything else.
-    SUPPORTED_FORMAT = 5
+    SUPPORTED_FORMAT = 6
 
     ASSET_FILENAME = "notability.txt.gz"
     MANIFEST_FILENAME = "MANIFEST.json"

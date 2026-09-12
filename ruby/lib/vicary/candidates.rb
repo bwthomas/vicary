@@ -1098,13 +1098,26 @@ module Vicary
       # given-name tier. `is_given` is passed in rather than defaulted so this is
       # only reachable on the path where an oracle exists.
       #
+      # **The tier is read at a lower floor here than it is for generation**,
+      # when the caller supplies `is_given_for_corroboration`. Absent, it
+      # defaults to `is_given` and this behaves exactly as it did before the dial
+      # existed. The two roles cost differently: a generation hit invents a span
+      # out of lower-case prose, a corroboration hit can only restore one the
+      # writer's own capital already proposed, and the shipped 1,800-birth knee
+      # was measured against the first. **This is the only rule that reads the
+      # lower floor** — the mid-sentence stray rule and the case-variance rule
+      # both keep the generation floor, because the corpus that priced this
+      # channel has zero true catches in the first one's suppressed set.
+      #
       # ANY token counts, not just the first, and the heading rule is what made
       # that distinction load-bearing. Before it, this was only ever reached for
       # single-token spans, so "first token" and "any token" were the same thing.
       # A heading is title-cased, so a multi-token span inside one also arrives
       # here — and "My Brother Terrence Okonkwo" leads with an honorific, so
       # checking only the first token consulted "Brother" and leaked the name.
-      def corroborated?(tokens, written_as_a_capital, is_given)
+      def corroborated?(tokens, written_as_a_capital, is_given,
+                        is_given_for_corroboration = nil)
+        vouches = is_given_for_corroboration || is_given
         # Both channels see the same stripped token, and the strip set is `.,'’`
         # rather than the `'’` {.mid_sentence_capitals} folds with. That
         # asymmetry is deliberate and was a defect once: the capital channel
@@ -1114,7 +1127,7 @@ module Vicary
         # character — asked the tier about `Terrence'` and was told no.
         tokens.each do |token|
           stripped = strip(token.downcase, ".,'’")
-          return true if written_as_a_capital.include?(stripped) || is_given.call(stripped)
+          return true if written_as_a_capital.include?(stripped) || vouches.call(stripped)
 
           # ...and again with the possessive off. "Terrence's" at a sentence
           # start is the shape this is for: the writer capitalised "Terrence"
@@ -1133,7 +1146,7 @@ module Vicary
           # reverse, so it can only reduce suppression, never increase it.
           folded = without_clitic(stripped)
           if folded != stripped &&
-             (written_as_a_capital.include?(folded) || is_given.call(folded))
+             (written_as_a_capital.include?(folded) || vouches.call(folded))
             return true
           end
         end
@@ -1193,9 +1206,11 @@ module Vicary
       # **Do not "fix" it**; the tier feeding it was the defect, and that was
       # addressed in 0.1.0 by adding SSA births to the given-name tier.
       def suppressed_as_an_unevidenced_capital?(tokens, start, starts, emphasis, headings,
-                                                written_as_a_capital, is_given)
+                                                written_as_a_capital, is_given,
+                                                is_given_for_corroboration = nil)
         capital_is_the_only_evidence?(tokens, start, starts, emphasis, headings) &&
-          !corroborated?(tokens, written_as_a_capital, is_given)
+          !corroborated?(tokens, written_as_a_capital, is_given,
+                         is_given_for_corroboration)
       end
 
       # Whether this document capitalises words that cannot be names.
@@ -1817,6 +1832,9 @@ module Vicary
       # Options, all optional:
       # * `:given_name` — turns on the lowercase route. Absent, this keys on
       #   capitalisation alone and misses lowercase writing by construction.
+      # * `:given_name_corroboration` — the same tier at its permissive floor,
+      #   read by the sentence-initial rule ONLY. Absent, that rule reads
+      #   `:given_name` and nothing changes. Inert without `:given_name`.
       # * `:title`, `:title_prefix` — protect work titles and fictional-character
       #   names from generation entirely. Absent, a student writing about a book
       #   has the book redacted.
@@ -1832,6 +1850,7 @@ module Vicary
       #   second half of the same rule and neither half works alone.
       def find_candidates(text, options = {})
         given_name = options[:given_name]
+        given_name_corroboration = options[:given_name_corroboration]
         title = options[:title]
         title_prefix = options[:title_prefix]
         settlement = options[:settlement]
@@ -1920,7 +1939,8 @@ module Vicary
             # oracle exists.
             if !given_name.nil? &&
                suppressed_as_an_unevidenced_capital?(run, start, starts, emphasis, headings,
-                                                     written_as_a_capital, given_name)
+                                                     written_as_a_capital, given_name,
+                                                     given_name_corroboration)
               next
             end
 

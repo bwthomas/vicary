@@ -40,6 +40,7 @@ import {
 import type { Identity } from "./conformance.js";
 import {
   isCommonGivenName,
+  vouchesForAGivenNameInCorroboration,
   isNotable,
   isSettlement,
   isTitle,
@@ -155,6 +156,7 @@ export interface Oracles {
   readonly titlePrefix?: TitleOracle;
   readonly settlement?: SettlementOracle;
   readonly givenName?: GivenNameOracle;
+  readonly givenNameCorroboration?: GivenNameOracle;
 }
 
 /**
@@ -183,7 +185,16 @@ export function gazetteerOracles(level: string): Oracles {
     // The one difference between the two gazetteer levels. Absent rather than
     // undefined, so `gazetteer` and `gazetteer-lowercase` differ by the presence
     // of a key rather than by a value the spread would have to strip.
-    ...(level === NAMES_LOWERCASE ? { givenName: isCommonGivenName } : {}),
+    // Paired deliberately: the corroboration floor is inert without `givenName`
+    // — every rule that could read it is gated on an oracle being supplied — so
+    // wiring it at the bare level too would be a dial that looks set and does
+    // nothing, which is worse than an absent one.
+    ...(level === NAMES_LOWERCASE
+      ? {
+          givenName: isCommonGivenName,
+          givenNameCorroboration: vouchesForAGivenNameInCorroboration,
+        }
+      : {}),
   };
 }
 

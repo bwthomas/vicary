@@ -98,7 +98,7 @@ ASSET_RELPATH = Path("data") / assets.NOTABILITY_ASSET
 
 #: On-disk format this reader understands. A mismatch raises: an asset whose
 #: tier semantics changed is worse than a missing one, because it answers.
-SUPPORTED_FORMAT = 5
+SUPPORTED_FORMAT = 6
 
 #: Lookup verdicts. Strings rather than an enum so they survive a JSON round
 #: trip into eval rows without a converter.
@@ -121,8 +121,9 @@ DEMONYM = "demonym"
 #: is a red test rather than a frozenset that silently reads empty. An empty
 #: KEEP tier redacts everything it was built to protect, which presents as
 #: over-aggressive tuning rather than as a packaging bug.
-TIER_NAMES: tuple[str, ...] = ("full", "short", "place", "given", "title",
-                               "demonym", "settlement")
+TIER_NAMES: tuple[str, ...] = ("full", "short", "place", "given",
+                               "given_corroboration", "title", "demonym",
+                               "settlement")
 
 #: Name particles that may lead a two- or three-token *partial* surname. Kept in
 #: sync with the builder's list by a unit test rather than by import, so the
@@ -207,6 +208,10 @@ class Gazetteer:
     place: frozenset[str]
     #: Common given names. The INVERSE signal — see :meth:`is_common_given_name`.
     given: frozenset[str] = frozenset()
+    #: Given names between the corroboration floor and the generation floor —
+    #: the INCREMENT over :attr:`given`, never the whole set. Readers union the
+    #: two; see :meth:`vouches_for_a_given_name_in_corroboration`.
+    given_corroboration: frozenset[str] = frozenset()
     #: Works and fictional characters — multi-token only. See :meth:`is_title`.
     title: frozenset[str] = frozenset()
     #: English demonyms — ``cuban``, ``nigerian``. A KEEP, see :attr:`DEMONYM`.
@@ -329,6 +334,32 @@ class Gazetteer:
         """
         key = normalize(token)
         return bool(key) and " " not in key and key in self.given
+
+    def vouches_for_a_given_name_in_corroboration(self, token: str) -> bool:
+        """:meth:`is_common_given_name`, at the permissive corroboration floor.
+
+        **Strictly wider than :meth:`is_common_given_name` and never narrower**,
+        because ``given_corroboration`` holds the increment and this unions it
+        with ``given`` rather than replacing it. A caller that reaches for this
+        one cannot accidentally get a smaller answer than the generation tier
+        would have given, which is the failure a second independently-built list
+        would make possible.
+
+        The two floors exist because the two *roles* cost differently. A
+        generation hit creates a span out of lower-case prose, so its cost is
+        bounded by nothing the writer did; a corroboration hit can only
+        un-suppress a span the writer's own capital already put forward, so its
+        cost is bounded by the candidate set. The shipped 1,800-birth knee was
+        measured against the first of those and does not transfer to the second.
+
+        Consulted by :func:`vicary.name_candidates.corroborated` and by nothing
+        else. It is NOT a second opinion about whether a token names a person —
+        pass :meth:`is_common_given_name` anywhere that question is being asked.
+        """
+        key = normalize(token)
+        if not key or " " in key:
+            return False
+        return key in self.given or key in self.given_corroboration
 
     def is_settlement(self, name: str) -> bool:
         """True when ``name`` is a town, city or village.
@@ -459,6 +490,7 @@ def _parse(text: str) -> Gazetteer:
         short=frozenset(tiers["short"]),
         place=frozenset(tiers["place"]),
         given=frozenset(tiers["given"]),
+        given_corroboration=frozenset(tiers["given_corroboration"]),
         title=frozenset(tiers["title"]),
         demonym=frozenset(tiers["demonym"]),
         settlement=frozenset(tiers["settlement"]),
@@ -541,6 +573,11 @@ def notability(name: str) -> str:
 def is_common_given_name(token: str) -> bool:
     """True when ``token`` is a common given name — a REDACT signal, not a KEEP."""
     return load().is_common_given_name(token)
+
+
+def vouches_for_a_given_name_in_corroboration(token: str) -> bool:
+    """The given-name tier at its permissive, corroboration-only floor."""
+    return load().vouches_for_a_given_name_in_corroboration(token)
 
 
 def is_settlement(name: str) -> bool:

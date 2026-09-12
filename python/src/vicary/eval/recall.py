@@ -555,6 +555,7 @@ def build_redactor(mode: str, guardrail_id: str | None, *,
             is_title,
             is_title_prefix,
             notability,
+            vouches_for_a_given_name_in_corroboration,
         )
 
         return Redactor(
@@ -567,6 +568,14 @@ def build_redactor(mode: str, guardrail_id: str | None, *,
             settlement=is_settlement,
             given_name=(is_common_given_name
                         if mode == "local-gazetteer-lowercase" else None),
+            # Wired HERE and not left to default, because the default is
+            # "behave as before" — which would make every gate in this file
+            # score an arm no host runs. A gate blind to the change it is
+            # certifying reads PASS for the same reason a broken thermometer
+            # reads room temperature.
+            given_name_corroboration=(
+                vouches_for_a_given_name_in_corroboration
+                if mode == "local-gazetteer-lowercase" else None),
             corroborate=corroborate,
             notability_tier=notability,
             number_placeholders=number_placeholders,

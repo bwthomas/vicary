@@ -624,6 +624,7 @@ def test_asset_carries_its_provenance(gazetteer: Gazetteer) -> None:
         "place_min_sitelinks",
         "place_min_sitelinks_single_token",
         "given_name_min_births",
+        "given_name_corroboration_min_births",
         "given_name_source",
     ):
         assert key in gazetteer.meta, key
@@ -987,6 +988,50 @@ def test_the_given_tier_excludes_the_words_that_broke_the_bearer_arm(
     """
     for word in ("Like", "Pride", "Recess"):
         assert not gazetteer.is_common_given_name(word), word
+
+
+def test_the_corroboration_tier_is_the_increment_and_nothing_else(
+    gazetteer: Gazetteer,
+) -> None:
+    """Two floors on one table, stored as a disjoint pair.
+
+    The invariant that makes "corroboration is never narrower than generation"
+    structural rather than checked: the asset carries the INCREMENT, so a reader
+    can only widen by unioning. Two independently-built lists could drift apart
+    in either direction and no recall gate would see the narrowing, because the
+    names that went missing are still reached by the generation channel.
+    """
+    assert gazetteer.given & gazetteer.given_corroboration == frozenset()
+    assert gazetteer.vouches_for_a_given_name_in_corroboration("Treyce")
+    assert not gazetteer.is_common_given_name("Treyce")
+    for name in ("Deshawn", "Marisol", "Terrence"):
+        assert gazetteer.is_common_given_name(name), name
+        assert gazetteer.vouches_for_a_given_name_in_corroboration(name), name
+
+
+def test_the_corroboration_tier_stops_where_the_measurement_stopped(
+    gazetteer: Gazetteer,
+) -> None:
+    """`Imagine` is the bottom of the free window and must stay outside.
+
+    136 SSA births, and it is the ordinary word whose arrival is what first
+    moves the persuade-20 over-fire measurement (6.700 -> 6.750). The floor is
+    200 precisely so this one does not arrive; a tier that reached it would be
+    spending a budget the shipped measurement says it does not spend.
+    """
+    for word in ("Imagine", "Like", "Pride", "Recess"):
+        assert not gazetteer.vouches_for_a_given_name_in_corroboration(word), word
+
+
+def test_the_corroboration_tier_does_not_count_as_notability(
+    gazetteer: Gazetteer,
+) -> None:
+    """It points the same way ``given`` does — REDACT — so it cannot inflate the
+    one number that answers "how much notability does this asset carry"."""
+    assert gazetteer.entry_count == (
+        len(gazetteer.full) + len(gazetteer.short) + len(gazetteer.place)
+        + len(gazetteer.title) + len(gazetteer.demonym)
+    )
 
 
 def test_a_truncated_ssa_parse_is_refused(tmp_path: Path) -> None:

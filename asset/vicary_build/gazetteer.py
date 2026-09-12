@@ -131,7 +131,14 @@ def default_out() -> Path:
 #: format-4 asset answers the same shape of question with a list that misses
 #: Deshawn, Ayaan and Meisha, which is the quietest failure in this file — a
 #: recall gap that presents as nothing at all.
-ASSET_FORMAT = 5
+#: 6 (2026-09-12): a new `given_corroboration` tier. Additive — every format-5
+#: tier keeps its meaning — but the reader is strict about tier names and about
+#: the format number, so an asset carrying the tier is not readable by
+#: format-5 code and a format-5 asset leaves the new tier empty. An empty
+#: corroboration tier is silent: it restores the pre-change suppression and
+#: re-opens the leak this tier exists to close, which is a recall gap that
+#: presents as nothing at all. Hence the bump.
+ASSET_FORMAT = 6
 
 SPARQL_ENDPOINT = "https://qlever.dev/api/wikidata"
 
@@ -329,6 +336,35 @@ PLACE_MIN_SITELINKS_SINGLE_TOKEN = 150
 #: the over-firing gate. That is a real trade rather than an oversight — it buys
 #: the rarest tail at the cost of the tightest gate — and it is left unmade.
 GIVEN_NAME_MIN_BIRTHS = 1_800
+
+#: Second, permissive floor on the same births table, read ONLY when the tier is
+#: asked to *corroborate* a candidate capitalisation already proposed — never
+#: when it is asked to generate one. :data:`GIVEN_NAME_MIN_BIRTHS` stays 1,800
+#: for generation and this changes nothing about it.
+#:
+#: The two roles carry different costs, which is the whole argument for two
+#: floors. A generation hit CREATES a span out of lower-case prose, so its cost
+#: is unbounded by anything the document did. A corroboration hit can only
+#: *un-suppress* a span the writer's own capital already put forward, so its
+#: cost is bounded by the candidate set — and the 1,800 knee was measured
+#: against the first of those (see :data:`GIVEN_NAME_MIN_BIRTHS`), not the
+#: second.
+#:
+#: 200 IS MID-WINDOW IN A MEASURED WINDOW OF [137, 315], not a round number.
+#: Measured 2026-09-10 on the 56-paper NWP AWC corpus against the persuade-20
+#: over-fire gate. The window has a name at each end:
+#:
+#: * `Treyce`, **315 births** — the one true catch in this corpus that any
+#:   rescue channel reaches at all. A floor above 315 recovers nothing.
+#: * `Imagine`, **136 births** — an ordinary word whose arrival is what first
+#:   moves over-fire. A floor at or below 136 starts paying for the tier.
+#:
+#: Every floor in [137, 315] recovers that one catch at **+0.000 spans/essay**.
+#: Below it the channel costs and reaches no further catch; above it there is no
+#: channel. Mid-window rather than either edge because both edges are one
+#: corpus's measurement and a floor sitting on a measured boundary inherits its
+#: sampling error.
+GIVEN_NAME_CORROBORATION_MIN_BIRTHS = 200
 
 #: Census bar for the demonym tier — 2.5x stricter than the short tier's, and the
 #: asymmetry is the point rather than an accident of tuning.
@@ -1131,13 +1167,26 @@ def build_tiers(
     # tokens. See GIVEN_NAME_MIN_BIRTHS: the derived version asked which names
     # famous people have, and the answer skewed away from the students whose
     # names this tier exists to catch.
+    def _given_name_shaped(token: str) -> bool:
+        return len(token) >= 2 and "-" not in token and "'" not in token
+
     given = {
         token
         for token, births in (ssa_births or {}).items()
-        if births >= GIVEN_NAME_MIN_BIRTHS
-        and len(token) >= 2
-        and "-" not in token
-        and "'" not in token
+        if births >= GIVEN_NAME_MIN_BIRTHS and _given_name_shaped(token)
+    }
+
+    # The corroboration tier holds the INCREMENT, not the whole floor-200 set:
+    # every reader unions it with `given`. Storing the increment is what makes
+    # "generation is a subset of corroboration" structural instead of a property
+    # two independently-built lists have to be checked for. It also keeps the
+    # bytes honest — the overlap is 8,138 entries that would otherwise ship
+    # twice — and makes the diff on a re-cut readable.
+    given_corroboration = {
+        token
+        for token, births in (ssa_births or {}).items()
+        if GIVEN_NAME_CORROBORATION_MIN_BIRTHS <= births < GIVEN_NAME_MIN_BIRTHS
+        and _given_name_shaped(token)
     }
 
     title: set[str] = set()
@@ -1200,10 +1249,95 @@ def build_tiers(
         "short": set(short),
         "place": place,
         "given": given,
+        "given_corroboration": given_corroboration,
         "title": title,
         "demonym": demonym,
         "settlement": settlement,
     }
+
+
+def read_asset(path: Path) -> tuple[int, dict, dict[str, set[str]]]:
+    """``(format, meta, tiers)`` from an asset this module wrote.
+
+    The inverse of :func:`write_asset`, and it lives here rather than being
+    borrowed from ``vicary.gazetteer`` for the reason the whole build tree is
+    separate: a build tool that imports one of its three consumers is not shared.
+    It is also deliberately *lenient* about the format number where the runtime
+    reader is strict — re-cutting a tier is exactly the operation that has to be
+    able to read the previous format and write the next one.
+    """
+    tiers: dict[str, set[str]] = {}
+    declared: dict[str, int] = {}
+    meta: dict = {}
+    fmt = 0
+    current: set[str] | None = None
+    with gzip.open(path, "rt", encoding="utf-8") as fh:
+        for line in fh:
+            line = line.rstrip("\n")
+            if line.startswith("#!"):
+                head, _, rest = line[2:].partition(" ")
+                if head == "gazetteer":
+                    fmt = int(rest.strip())
+                elif head == "meta":
+                    meta = json.loads(rest)
+                elif head == "tier":
+                    name, _, count = rest.partition(" ")
+                    current = tiers.setdefault(name, set())
+                    declared[name] = int(count)
+                continue
+            if line and current is not None:
+                current.add(line)
+    if not fmt:
+        raise ValueError(f"{path} has no gazetteer format header")
+    # The same truncation check the runtime reader makes, for the same reason: a
+    # partial copy answers plausibly and wrongly, and this verb is about to
+    # write whatever it read back out.
+    for name, count in declared.items():
+        if len(tiers[name]) != count:
+            raise ValueError(
+                f"tier {name!r} declares {count} entries, found "
+                f"{len(tiers[name])} — the asset on disk is truncated"
+            )
+    return fmt, meta, tiers
+
+
+def rebuild_given_tiers(path: Path, ssa_births: dict[str, int]) -> tuple[int, dict[str, int]]:
+    """Re-cut ONLY the two SSA-derived tiers of an existing asset, in place.
+
+    Returns ``(bytes written, {tier: entries})``.
+
+    Why this exists as its own operation rather than "just run ``fetch``": the
+    two given-name tiers are derived from a **local, versioned, offline** file,
+    and every other tier is derived from a live SPARQL sweep of Wikidata. So a
+    full rebuild to move a births floor re-cuts eight tiers to change two, and
+    the seven it did not mean to touch move with whatever Wikidata did since the
+    last cut — which makes the floor change unmeasurable, because the arm under
+    test is no longer the only thing that differs. Same argument as the
+    ``lexicon`` verb's, one layer down.
+
+    The tiers are rebuilt by calling the same predicates :func:`build_tiers`
+    uses, not by a second implementation of them, so a full ``fetch`` and this
+    verb produce the same two tiers from the same archive.
+    """
+    fmt, meta, tiers = read_asset(path)
+    rebuilt = build_tiers(humans=[], places=[], ssa_births=ssa_births)
+    for name in ("given", "given_corroboration"):
+        tiers[name] = rebuilt[name]
+    meta.update({
+        "given_name_min_births": GIVEN_NAME_MIN_BIRTHS,
+        "given_name_corroboration_min_births": (
+            GIVEN_NAME_CORROBORATION_MIN_BIRTHS
+        ),
+        "given_name_source": "SSA baby names, all years, both sexes",
+        "ssa_names_parsed": len(ssa_births),
+        # The other tiers are whatever the previous cut produced. Say so in the
+        # artifact rather than letting today's date imply a sweep that did not
+        # happen.
+        "given_tiers_recut": date.today().isoformat(),
+        "given_tiers_recut_from_format": fmt,
+    })
+    written = write_asset(path, tiers, meta)
+    return written, {name: len(entries) for name, entries in sorted(tiers.items())}
 
 
 def write_asset(path: Path, tiers: dict[str, set[str]], meta: dict) -> int:
@@ -1323,6 +1457,9 @@ def main(argv: list[str] | None = None) -> int:
         "place_min_sitelinks": PLACE_MIN_SITELINKS,
         "place_min_sitelinks_single_token": PLACE_MIN_SITELINKS_SINGLE_TOKEN,
         "given_name_min_births": GIVEN_NAME_MIN_BIRTHS,
+        "given_name_corroboration_min_births": (
+            GIVEN_NAME_CORROBORATION_MIN_BIRTHS
+        ),
         "given_name_source": "SSA baby names, all years, both sexes",
         "demonym_max_us_surname_population": DEMONYM_MAX_US_SURNAME_POPULATION,
         "demonym_labels_fetched": len(demonyms),

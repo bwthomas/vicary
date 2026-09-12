@@ -1781,3 +1781,86 @@ def test_the_interior_channel_counts_headings_and_says_why() -> None:
     headings = nc._heading_spans(text)
     assert headings
     assert nc.capitalises_ordinary_words(text, headings)
+
+
+# ---------------------------------------------------------------------------
+# The corroboration-only given-name floor
+# ---------------------------------------------------------------------------
+
+
+def test_the_corroboration_floor_is_read_only_when_it_is_supplied() -> None:
+    """Absent, the rule reads the generation oracle and nothing changes.
+
+    This is the compatibility half of the dial, and it is the half a host
+    depends on: a caller passing its own set-membership function must get the
+    behaviour it got before the argument existed.
+    """
+    text = "Treyce came over after school."
+    starts, emphasis, headings, written = _channels(text)
+    run = ["Treyce"]
+    assert _capital_is_the_only_evidence(run, 0, starts, emphasis, headings)
+    # Generation floor alone: no channel vouches, so the span is suppressed.
+    assert not corroborated(run, written, lambda name: False)
+    assert suppressed_as_an_unevidenced_capital(
+        run, 0, starts, emphasis, headings, written, lambda name: False
+    )
+    # Explicit None is the same as not passing it at all.
+    assert not corroborated(run, written, lambda name: False, None)
+
+
+def test_the_corroboration_floor_rescues_a_sentence_initial_capital() -> None:
+    """The whole point: a wider tier, read ONLY as a second signal.
+
+    `Treyce` carries 315 SSA births — under the 1,800 generation floor and over
+    the 200 corroboration floor. With the second oracle supplied the span
+    survives; with only the first it does not.
+    """
+    text = "Treyce came over after school."
+    starts, emphasis, headings, written = _channels(text)
+    run = ["Treyce"]
+    wider = {"treyce"}.__contains__
+    assert corroborated(run, written, lambda name: False, wider)
+    assert not suppressed_as_an_unevidenced_capital(
+        run, 0, starts, emphasis, headings, written, lambda name: False, wider
+    )
+
+
+def test_the_corroboration_floor_does_not_move_generation() -> None:
+    """Two floors, and the lower one must NOT create candidates.
+
+    The 1,800 knee was measured against generation, where a hit invents a span
+    out of lower-case prose. If the wider tier leaked into that role it would be
+    spending the knee's budget, and the over-fire measurement behind the
+    corroboration floor would not describe what shipped.
+    """
+    from vicary.name_candidates import find_candidates
+
+    text = "then treyce came over after school."
+    generation_only = {"terrence", "deshawn"}.__contains__
+    found = find_candidates(
+        text,
+        given_name=generation_only,
+        given_name_corroboration={"treyce"}.__contains__,
+    )
+    assert [c.text for c in found] == []
+
+
+def test_the_shipped_corroboration_tier_is_strictly_wider() -> None:
+    """The union is what makes "never narrower" structural rather than checked.
+
+    The asset stores the INCREMENT, so a reader that returned the increment
+    alone would answer False for every name above the generation floor — a
+    regression no recall gate would see, because those names are still reached
+    by the generation channel.
+    """
+    from vicary import gazetteer
+
+    index = gazetteer.load()
+    assert index.given & index.given_corroboration == frozenset()
+    assert index.vouches_for_a_given_name_in_corroboration("Treyce")
+    assert not index.is_common_given_name("Treyce")
+    # Above BOTH floors: the two answers agree.
+    assert index.is_common_given_name("Deshawn")
+    assert index.vouches_for_a_given_name_in_corroboration("Deshawn")
+    # Below BOTH floors — the ordinary word that bounds the free window.
+    assert not index.vouches_for_a_given_name_in_corroboration("Imagine")

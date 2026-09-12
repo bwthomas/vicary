@@ -2,6 +2,66 @@
 
 ## Unreleased
 
+### A second, permissive floor on the given-name tier, read only to corroborate
+
+`GIVEN_NAME_MIN_BIRTHS` stays 1,800 for candidate *generation* and moves nothing.
+A new `given_corroboration` tier holds the SSA births between 200 and 1,800 —
+21,900 names, +57 KB on a 2.23 MB asset — and exactly one rule reads it:
+`corroborated`, the helper of the sentence-initial guard. **Asset format 5 -> 6.**
+
+The argument for two floors is that the two roles cost differently. A generation
+hit invents a span out of lower-case prose, so nothing the writer did bounds its
+cost; a corroboration hit can only un-suppress a span the writer's own capital
+already proposed. The 1,800 knee was measured against the first of those and
+does not transfer to the second.
+
+**200 is mid-window in a measured window of [137, 315], and the window has a name
+at each end.** Measured live on the persuade-20 over-fire gate, this checkout:
+
+| corroboration floor | tier | over-fire | vs 6.700 |
+|---|---:|---:|---:|
+| off (control) | 0 | 6.700 | — |
+| 315 — `Treyce`, the top | 15,622 | 6.700 | +0.000 |
+| **200 — SHIPPED** | **21,900** | **6.700** | **+0.000** |
+| 137 — the bottom | 27,621 | 6.700 | +0.000 |
+| 136 — `Imagine` arrives | 27,720 | 6.750 | +0.050 |
+| 100 | 32,541 | 6.750 | +0.050 |
+| 1 — any record | 97,828 | 6.950 | +0.250 |
+
+What it buys, on the 56-paper NWP AWC corpus: **true catches 18 -> 19**. The one
+it reaches is `Treyce` (315 births), in a LOWER_ELEMENTARY paper — the band the
+damage concentrates in. It costs 4 further spans, 2 public and 2 ordinary words,
+so aggregate precision is flat at 19.4% (18/93 -> 19/98) and papers damaged for
+nothing go 20/56 -> 21/56. Per band, precision: LE 27.6% -> 27.3%, UE 15.8% ->
+15.0%, MS 16.7% unchanged, HS 14.3% unchanged.
+
+Every other gate is unmoved in all three ports: held-out recall 100%, all-span
+recall 100%, KEEP precision 100%, round-trip 100%, bare-surname exposure 1.199%,
+stoplist surname exposure 0.497%. The conformance golden masked bytes are
+unchanged, which is the gate that matters here — held-out recall is blind to a
+visible span, and this rule touches visible spans.
+
+* **The asset stores the INCREMENT, not the floor-200 set**, and every reader
+  unions it with `given`. That is what makes "corroboration is never narrower
+  than generation" structural instead of a property two independently-built
+  lists have to be checked for — and a narrowing would be invisible to every
+  recall gate, because the names that went missing are still reached by the
+  generation channel.
+* **Exactly one rule reads the lower floor.** The mid-sentence stray rule and
+  the case-variance rule keep the generation floor: on the NWP 56 the first
+  one's suppressed set contains zero true catches, so a wider tier there can
+  only restore ordinary words.
+* **`corroborated(..., is_given_for_corroboration=None)` defaults to
+  `is_given`**, so a host passing its own set-membership function is unaffected.
+  `find_candidates` and `mask_candidates` take `given_name_corroboration`;
+  `gazetteer_oracles` wires it at `gazetteer-lowercase` only, paired with
+  `given_name`, because it is inert without one.
+* **`python -m vicary_build given-tiers` re-cuts the two SSA-derived tiers in
+  place, offline.** Same argument as the `lexicon` verb's: those two tiers come
+  from a local archive and every other tier comes from a live SPARQL sweep, so
+  running `fetch` to move a births floor re-cuts seven tiers nobody meant to
+  touch and makes the floor change unmeasurable.
+
 ### Two free channels of the writer's own orthography
 
 Neither consults a list, so neither can inherit a list's mistakes, and neither

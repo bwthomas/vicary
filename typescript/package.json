@@ -1,6 +1,6 @@
 {
   "name": "@bwthomas/vicary",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "description": "Offline redaction of personal names in student compositions",
   "license": "MIT",
   "author": "Blake Thomas <bwthomas@gmail.com>",

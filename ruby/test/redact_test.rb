@@ -102,6 +102,11 @@ class RedactTest < Minitest::Test
     lowercase = Vicary.gazetteer_oracles(Vicary::NAMES_LOWERCASE)
     refute gazetteer.key?(:given_name)
     assert lowercase.key?(:given_name)
+    # The corroboration floor travels WITH the route rather than separately: it
+    # is read only by a rule that is itself gated on `given_name`, so wiring it
+    # at the bare level would be a dial that looks set and does nothing.
+    refute gazetteer.key?(:given_name_corroboration)
+    assert lowercase.key?(:given_name_corroboration)
     # The settlement oracle is wired at BOTH, unlike `given_name`: it decides a
     # placeholder's TYPE, not a verdict, so it has nothing to do with which
     # candidate routes are on. Presence rather than identity, because each call
@@ -109,7 +114,8 @@ class RedactTest < Minitest::Test
     # function references and this port cannot.
     assert gazetteer.key?(:settlement)
     assert lowercase.key?(:settlement)
-    assert_equal [:given_name], lowercase.keys - gazetteer.keys
+    assert_equal %i[given_name given_name_corroboration],
+                 lowercase.keys - gazetteer.keys
   end
 
   # -------------------------------------------------------------------------

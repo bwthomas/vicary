@@ -41,6 +41,7 @@ export {
   TIER_NAMES,
   TITLE,
   isCommonGivenName,
+  vouchesForAGivenNameInCorroboration,
   isNotable,
   isSettlement,
   isTitle,

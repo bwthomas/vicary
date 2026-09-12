@@ -62,21 +62,21 @@ class AssetTest < Minitest::Test
     # people, which means MORE redaction, which looks privacy-safe and passes any
     # check that only asks whether something was masked.
     error = assert_raises(Vicary::Asset::FormatError) do
-      Vicary::Asset.parse("#!gazetteer 5\n#!tier full 3\nabraham lincoln\n")
+      Vicary::Asset.parse("#!gazetteer 6\n#!tier full 3\nabraham lincoln\n")
     end
     assert_match(/declares 3 entries and parsed 1/, error.message)
   end
 
   def test_a_directive_the_format_number_did_not_admit_to_is_refused
     error = assert_raises(Vicary::Asset::FormatError) do
-      Vicary::Asset.parse("#!gazetteer 5\n#!tier full 1\nx\n#!newthing 1\n")
+      Vicary::Asset.parse("#!gazetteer 6\n#!tier full 1\nx\n#!newthing 1\n")
     end
     assert_match(/format changed without its number changing/, error.message)
   end
 
   def test_an_entry_before_any_tier_is_an_error_not_an_orphan
     error = assert_raises(Vicary::Asset::FormatError) do
-      Vicary::Asset.parse("#!gazetteer 5\nabraham lincoln\n")
+      Vicary::Asset.parse("#!gazetteer 6\nabraham lincoln\n")
     end
     assert_match(/before any/, error.message)
   end

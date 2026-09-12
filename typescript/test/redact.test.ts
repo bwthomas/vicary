@@ -105,13 +105,18 @@ test("the lowercase route is the only difference between the two levels", () => 
   const lowercase = gazetteerOracles(NAMES_LOWERCASE);
   assert.equal(gazetteer.givenName, undefined);
   assert.ok(lowercase.givenName !== undefined);
+  // The corroboration floor travels WITH the route rather than separately: it
+  // is read only by a rule that is itself gated on `givenName`, so wiring it at
+  // the bare level would be a dial that looks set and does nothing.
+  assert.equal(gazetteer.givenNameCorroboration, undefined);
+  assert.ok(lowercase.givenNameCorroboration !== undefined);
   // The settlement oracle is wired at BOTH, unlike `givenName`: it decides a
   // placeholder's TYPE, not a verdict, so it has nothing to do with which
   // candidate routes are on.
   assert.equal(gazetteer.settlement, lowercase.settlement);
   assert.deepEqual(
     Object.keys(lowercase).filter((k) => !(k in gazetteer)),
-    ["givenName"],
+    ["givenName", "givenNameCorroboration"],
   );
 });
 

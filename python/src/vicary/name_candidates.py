@@ -1020,6 +1020,7 @@ def corroborated(
     tokens: list[str],
     written_as_a_capital: frozenset[str] | set[str],
     is_given: GivenNameOracle,
+    is_given_for_corroboration: GivenNameOracle | None = None,
 ) -> bool:
     """A second signal, for a span whose capital proves nothing on its own.
 
@@ -1027,6 +1028,24 @@ def corroborated(
     (``written_as_a_capital``, from :func:`_mid_sentence_capitals`), and the
     given-name tier. ``is_given`` is passed in rather than read from a default so
     this is only reachable on the path where an oracle exists.
+
+    **The tier is read at a lower floor here than it is for generation**, when
+    the caller supplies ``is_given_for_corroboration``. Absent, it defaults to
+    ``is_given`` and this function behaves exactly as it did before the dial
+    existed — a host passing a plain set-membership function is unaffected. The
+    argument for two floors is that the two roles cost differently: a generation
+    hit invents a span out of lower-case prose, a corroboration hit can only
+    restore one the writer's own capital already proposed, and the shipped
+    1,800-birth knee was measured against the first. See
+    :meth:`vicary.gazetteer.Gazetteer.vouches_for_a_given_name_in_corroboration`
+    for the floor and the two names that bound the window it sits in.
+
+    **This is the only rule that reads the lower floor.** The mid-sentence stray
+    rule and the case-variance rule both consult the same tier and both keep the
+    generation floor, because the measurement that priced this channel priced it
+    here: on the 56-paper NWP corpus the mid-sentence rule's suppressed set
+    contains **zero** true catches, so a wider tier there buys nothing and can
+    only restore ordinary words.
 
     ANY token counts, not just the first, and the heading rule is what made that
     distinction load-bearing. Before it, this was only ever reached for
@@ -1042,9 +1061,12 @@ def corroborated(
     # asked the tier about `Terrence'` and was told no. Only reachable once the
     # capital is the sole evidence, which is why an opening quote counting as a
     # sentence start is what surfaced it.
+    vouches = is_given if is_given_for_corroboration is None else (
+        is_given_for_corroboration
+    )
     for token in tokens:
         stripped = token.lower().strip(".,'’")
-        if stripped in written_as_a_capital or is_given(stripped):
+        if stripped in written_as_a_capital or vouches(stripped):
             return True
         # ...and again with the possessive off. "Terrence's" at a sentence start
         # is the shape this is for: the writer capitalised "Terrence" elsewhere in
@@ -1063,7 +1085,7 @@ def corroborated(
         # reverse, so it can only reduce suppression, never increase it.
         folded = _without_clitic(stripped)
         if folded != stripped and (
-            folded in written_as_a_capital or is_given(folded)
+            folded in written_as_a_capital or vouches(folded)
         ):
             return True
     return False
@@ -1331,6 +1353,7 @@ def suppressed_as_an_unevidenced_capital(
     headings: tuple[tuple[int, int], ...],
     written_as_a_capital: frozenset[str] | set[str],
     is_given: GivenNameOracle,
+    is_given_for_corroboration: GivenNameOracle | None = None,
 ) -> bool:
     """The sentence-initial guard: drop a span whose only evidence is a capital
     that orthography required, unless a second channel vouches for it.
@@ -1356,7 +1379,9 @@ def suppressed_as_an_unevidenced_capital(
     """
     return _capital_is_the_only_evidence(
         tokens, start, starts, emphasis, headings
-    ) and not corroborated(tokens, written_as_a_capital, is_given)
+    ) and not corroborated(
+        tokens, written_as_a_capital, is_given, is_given_for_corroboration
+    )
 
 
 def find_title_spans(
@@ -1547,6 +1572,7 @@ def find_candidates(
     text: str,
     *,
     given_name: GivenNameOracle | None = None,
+    given_name_corroboration: GivenNameOracle | None = None,
     title: TitleOracle | None = None,
     title_prefix: TitleOracle | None = None,
     settlement: SettlementOracle | None = None,
@@ -1563,6 +1589,12 @@ def find_candidates(
     Args:
         given_name: Turns on the lowercase route. Absent, this function keys on
             capitalisation alone and misses lowercase writing by construction.
+        given_name_corroboration: The same tier at its permissive floor, read by
+            the sentence-initial rule ONLY — see :func:`corroborated`. Absent,
+            that rule reads ``given_name`` and nothing changes, which is what a
+            host passing its own set-membership function gets. Inert without
+            ``given_name``: every rule that could consult it is already gated on
+            an oracle being supplied at all.
         title: Protects work titles and fictional-character names from generation
             entirely. Absent, a student writing about a book has the book redacted.
         settlement: Types a masked span ``{LOCATION}`` instead of ``{NAME}``.
@@ -1679,7 +1711,7 @@ def find_candidates(
             # oracle exists — see :func:`suppressed_as_an_unevidenced_capital`.
             if given_name is not None and suppressed_as_an_unevidenced_capital(
                 run, start, starts, emphasis, headings,
-                written_as_a_capital, given_name,
+                written_as_a_capital, given_name, given_name_corroboration,
             ):
                 continue
             # ...and the other half of the same question, for the capital the
@@ -2209,6 +2241,7 @@ def mask_candidates(
     notable: NotabilityOracle | None = None,
     keep: frozenset[str] = frozenset(),
     given_name: GivenNameOracle | None = None,
+    given_name_corroboration: GivenNameOracle | None = None,
     title: TitleOracle | None = None,
     title_prefix: TitleOracle | None = None,
     settlement: SettlementOracle | None = None,
@@ -2233,6 +2266,9 @@ def mask_candidates(
             same keep / landmark / notability gates as capitalised ones, so a
             student who writes "van gogh" is treated like one who writes "Van
             Gogh".
+        given_name_corroboration: Forwarded to :func:`find_candidates`, where the
+            sentence-initial rule reads it in place of ``given_name``. Absent,
+            behaviour is unchanged.
         title: Keeps work titles and fictional-character names whole. Applied
             before generation rather than after, so it also protects titles that
             generation would otherwise split on an interior stopword.
@@ -2267,7 +2303,9 @@ def mask_candidates(
     """
     lowered_keep = {k.lower() for k in keep}
     candidates = find_candidates(
-        text, given_name=given_name, title=title, title_prefix=title_prefix,
+        text, given_name=given_name,
+        given_name_corroboration=given_name_corroboration,
+        title=title, title_prefix=title_prefix,
         settlement=settlement,
         headings_are_orthographic=headings_are_orthographic,
         title_relation_refusal=title_relation_refusal,

@@ -363,7 +363,8 @@ test("every tier the shipped asset carries is one this reader knows", () => {
   assert.deepEqual(
     [...TIER_NAMES].sort(),
     [
-      "demonym", "full", "given", "place", "settlement", "short", "title",
+      "demonym", "full", "given", "given_corroboration", "place", "settlement",
+      "short", "title",
     ],
   );
   assert.ok(gz.full.size > 0);

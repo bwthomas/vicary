@@ -64,6 +64,7 @@ export const TIER_NAMES = [
   "short",
   "place",
   "given",
+  "given_corroboration",
   "title",
   "demonym",
   "settlement",
@@ -199,6 +200,12 @@ export class GazetteerIndex {
   readonly place: ReadonlySet<string>;
   /** Common given names. The INVERSE signal — see {@link isCommonGivenName}. */
   readonly given: ReadonlySet<string>;
+  /**
+   * Given names between the corroboration floor and the generation floor — the
+   * INCREMENT over {@link given}, never the whole set. Readers union the two;
+   * see {@link vouchesForAGivenNameInCorroboration}.
+   */
+  readonly givenCorroboration: ReadonlySet<string>;
   /** Works and fictional characters — multi-token only. See {@link isTitle}. */
   readonly title: ReadonlySet<string>;
   /** English demonyms — `cuban`, `nigerian`. A KEEP, see {@link DEMONYM}. */
@@ -229,6 +236,7 @@ export class GazetteerIndex {
     this.short = tier("short");
     this.place = tier("place");
     this.given = tier("given");
+    this.givenCorroboration = tier("given_corroboration");
     this.title = tier("title");
     this.demonym = tier("demonym");
     this.settlement = tier("settlement");
@@ -357,6 +365,28 @@ export class GazetteerIndex {
   }
 
   /**
+   * {@link isCommonGivenName}, at the permissive corroboration floor.
+   *
+   * **Strictly wider than {@link isCommonGivenName} and never narrower**,
+   * because `given_corroboration` holds the increment and this unions it with
+   * `given` rather than replacing it. A caller reaching for this one cannot
+   * accidentally get a smaller answer than the generation tier would give,
+   * which is the failure a second independently-built list would allow.
+   *
+   * The two floors exist because the two roles cost differently. A generation
+   * hit creates a span out of lower-case prose; a corroboration hit can only
+   * un-suppress a span the writer's own capital already proposed. The shipped
+   * 1,800-birth knee was measured against the first and does not transfer.
+   *
+   * Consulted by {@link corroborated} and by nothing else.
+   */
+  vouchesForAGivenNameInCorroboration(token: string): boolean {
+    const key = normalize(token);
+    if (key === "" || key.includes(" ")) return false;
+    return this.given.has(key) || this.givenCorroboration.has(key);
+  }
+
+  /**
    * True when `name` is a town, city or village.
    *
    * **Not part of the notability decision, and deliberately not consulted by**
@@ -449,6 +479,11 @@ export function notability(name: string): Notability {
 /** True when `token` is a common given name — a REDACT signal, not a KEEP. */
 export function isCommonGivenName(token: string): boolean {
   return load().isCommonGivenName(token);
+}
+
+/** The given-name tier at its permissive, corroboration-only floor. */
+export function vouchesForAGivenNameInCorroboration(token: string): boolean {
+  return load().vouchesForAGivenNameInCorroboration(token);
 }
 
 /** True when `name` is a town or city — a TYPING signal, not a keep. */

@@ -1164,6 +1164,17 @@ export type GivenNameOracle = (name: string) => boolean;
  * tier. `isGiven` is passed in rather than defaulted so this is only reachable
  * on the path where an oracle exists.
  *
+ * **The tier is read at a lower floor here than it is for generation**, when
+ * the caller supplies `isGivenForCorroboration`. Absent, it defaults to
+ * `isGiven` and this behaves exactly as it did before the dial existed. The two
+ * roles cost differently: a generation hit invents a span out of lower-case
+ * prose, a corroboration hit can only restore one the writer's own capital
+ * already proposed, and the shipped 1,800-birth knee was measured against the
+ * first. **This is the only rule that reads the lower floor** — the mid-sentence
+ * stray rule and the case-variance rule both keep the generation floor, because
+ * the corpus that priced this channel has zero true catches in the first one's
+ * suppressed set.
+ *
  * ANY token counts, not just the first, and the heading rule is what made that
  * distinction load-bearing. Before it, this was only ever reached for
  * single-token spans, so "first token" and "any token" were the same thing. A
@@ -1175,7 +1186,9 @@ export function corroborated(
   tokens: readonly string[],
   writtenAsACapital: ReadonlySet<string>,
   isGiven: GivenNameOracle,
+  isGivenForCorroboration?: GivenNameOracle,
 ): boolean {
+  const vouches = isGivenForCorroboration ?? isGiven;
   // Both channels see the same stripped token, and the strip set is `.,'’`
   // rather than the `'’` {@link midSentenceCapitals} folds with. That asymmetry
   // is deliberate and was a defect once: the capital channel stripped `.,'’` and
@@ -1185,7 +1198,7 @@ export function corroborated(
   // `Terrence'` and was told no.
   for (const token of tokens) {
     const stripped = strip(token.toLowerCase(), ".,'’");
-    if (writtenAsACapital.has(stripped) || isGiven(stripped)) return true;
+    if (writtenAsACapital.has(stripped) || vouches(stripped)) return true;
     // ...and again with the possessive off. "Terrence's" at a sentence start is
     // the shape this is for: the writer capitalised "Terrence" elsewhere in the
     // document, which is testimony about the name, and the `'s` is not part of
@@ -1200,7 +1213,7 @@ export function corroborated(
     // Strictly additive: it can turn a false into a true and never the reverse,
     // so it can only reduce suppression, never increase it.
     const folded = withoutClitic(stripped);
-    if (folded !== stripped && (writtenAsACapital.has(folded) || isGiven(folded))) {
+    if (folded !== stripped && (writtenAsACapital.has(folded) || vouches(folded))) {
       return true;
     }
   }
@@ -1441,10 +1454,11 @@ export function suppressedAsAnUnevidencedCapital(
   headings: readonly Span[],
   writtenAsACapital: ReadonlySet<string>,
   isGiven: GivenNameOracle,
+  isGivenForCorroboration?: GivenNameOracle,
 ): boolean {
   return (
     capitalIsTheOnlyEvidence(tokens, start, starts, emphasis, headings) &&
-    !corroborated(tokens, writtenAsACapital, isGiven)
+    !corroborated(tokens, writtenAsACapital, isGiven, isGivenForCorroboration)
   );
 }
 
@@ -2079,6 +2093,12 @@ export interface CandidateOptions {
   /** Turns on the lowercase route. Absent, this keys on capitalisation alone and
    * misses lowercase writing by construction. */
   readonly givenName?: GivenNameOracle;
+  /** The same tier at its permissive floor, read by the sentence-initial rule
+   * ONLY — see {@link corroborated}. Absent, that rule reads `givenName` and
+   * nothing changes, which is what a host passing its own set-membership
+   * function gets. Inert without `givenName`: every rule that could consult it
+   * is already gated on an oracle being supplied at all. */
+  readonly givenNameCorroboration?: GivenNameOracle;
   /** Protects work titles and fictional-character names from generation entirely.
    * Absent, a student writing about a book has the book redacted. */
   readonly title?: TitleOracle;
@@ -2125,6 +2145,7 @@ export function findCandidates(
 ): Candidate[] {
   const {
     givenName,
+    givenNameCorroboration,
     title,
     titlePrefix,
     settlement,
@@ -2219,6 +2240,7 @@ export function findCandidates(
         givenName !== undefined &&
         suppressedAsAnUnevidencedCapital(
           run, start, starts, emphasis, headings, writtenAsACapital, givenName,
+          givenNameCorroboration,
         )
       ) {
         continue;
