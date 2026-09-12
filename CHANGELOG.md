@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.13 — 2026-09-12
+
 ### A second, permissive floor on the given-name tier, read only to corroborate
 
 `GIVEN_NAME_MIN_BIRTHS` stays 1,800 for candidate *generation* and moves nothing.
