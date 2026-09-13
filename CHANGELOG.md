@@ -2,6 +2,42 @@
 
 ## Unreleased
 
+## 0.2.15 — 2026-09-13
+
+**npm has been stranded on 0.2.12 for two releases.** PyPI and RubyGems took
+0.2.14; the TypeScript port did not, because its latency gate kept reading
+4.78%, 11.92% and 9.37% on GitHub's runners against an 8% bar while the same
+checkout read ~3.1% on Apple Silicon. That was diagnosed as TypeScript being
+slower on x64 and accepted. It was not. On CI this release measures **+1.29%**,
+and npm users get everything 0.2.13 and 0.2.14 carried — the given-name floor,
+the two orthography channels, and the span-map fixes.
+
+### The document's two casing questions are answered by one pass over its words
+
+Row 5 asks which words the writer capitalised mid-sentence and which they left
+lower-case. A word token answers exactly one of them, because its first
+character is either a capital or it is not — but the two were written as
+separate functions, so **every document was tokenised twice where it used to be
+tokenised once**. A third scan then ran a backtracking word pattern,
+`[a-z'’-]*[A-Z]`, retried at every letter of every capital-less word, to locate
+interior capitals the two-character hint had already found.
+
+Both are gone. One fused `document_casing` pass fills both sets, with the
+lower-case half opt-in for its single caller, and `capitalises_inside_a_word`
+now walks out from `INTERIOR_CAP_HINT` to the word carrying each capital
+instead of re-scanning; `INTERIOR_CAP_WORD` is retired. Equivalence was fuzzed
+against the previous bodies — 200k cases in TypeScript, 60k each in Python and
+Ruby — with zero mismatches, and no golden moved.
+
+**TypeScript was never the slow port.** Ruby pays a larger share of its own
+baseline for row 5 (4.6% against 4.0%) and passes anyway; TypeScript failed
+because its baseline is 5.3x faster, so the same mistake had no slack to hide
+in, and x64 roughly doubles what it costs. Ablating the two flags in the built
+`dist` puts the tree back on v0.2.12 to within noise, so there is no residual.
+
+On CI, against each port's own registry baseline: TypeScript **+1.29%** against
+v0.2.12, Ruby and Python comfortably inside the bar against v0.2.14.
+
 ## 0.2.14 — 2026-09-13
 
 **This release carries everything listed under 0.2.13 as well.** That version was
