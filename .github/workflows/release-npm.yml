@@ -114,7 +114,12 @@ jobs:
       contents: read
       id-token: write
     steps:
+      # Full history, for the same reason the `gates` job above states it: the
+      # latency pair checks the previous release out into a worktree, and a
+      # shallow clone has no tags to check out.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Say which of the two things this run is
         run: |
@@ -171,7 +176,19 @@ jobs:
       - name: Vendor the asset
         run: npm run sync-assets
 
+      # The pair the latency gate needs, exactly as the `gates` job above and
+      # `ci.yml` supply it. Without it that gate reports NOT MEASURED, and since
+      # `93df3c1` a gate set with an unmeasured gate does not exit 0 -- which is
+      # right, and is what stopped 0.2.14 publishing here while PyPI and
+      # RubyGems took it. The publish job re-runs the suite against the artifact
+      # it is about to ship, so it needs the same inputs that suite needs; a
+      # release path measuring less than CI is how a split publish happens.
+      - name: Latency pair
+        run: python3 ../tools/latency_pair.py --impl typescript --out "$RUNNER_TEMP/pair.json"
+
       - run: npm test
+        env:
+          VICARY_LATENCY_PAIR: ${{ runner.temp }}/pair.json
 
       # The gate lives in `scripts/release-gate.mjs` rather than in shell here, for
       # the reason the gem workflow moved its own: this was
