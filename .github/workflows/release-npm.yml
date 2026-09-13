@@ -176,6 +176,13 @@ jobs:
       - name: Vendor the asset
         run: npm run sync-assets
 
+      # `dist/` is what the latency harness imports, and `npm test` builds only
+      # `dist-test/`. The `gates` job above builds before it pairs; this job had
+      # no reason to build at all until the pair arrived, so the step comes with
+      # it rather than being assumed.
+      - name: Build
+        run: npm run build
+
       # The pair the latency gate needs, exactly as the `gates` job above and
       # `ci.yml` supply it. Without it that gate reports NOT MEASURED, and since
       # `93df3c1` a gate set with an unmeasured gate does not exit 0 -- which is
