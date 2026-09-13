@@ -305,6 +305,41 @@ _INTERIOR_CAPITAL_PREFIXES: tuple[str, ...] = (
 #: the commonest surname shapes there are.
 _PIECE = re.compile(r"[^'’\-‐-―]+")
 
+#: The word tokens :func:`has_interior_capital` can possibly say yes to, and the
+#: only ones :func:`_capitalises_inside_a_word` needs to look at.
+#:
+#: It is :data:`_WORD_TOKEN` with one letter of the continuation class removed:
+#: a capital somewhere after the first character. That is a *necessary*
+#: condition for an interior capital — every position the exemptions in
+#: :func:`has_interior_capital` still allow to fire is at piece-index 1 or
+#: later, so it is at word-index 1 or later too — which makes this a filter and
+#: never a second opinion. The answer stays that function's.
+#:
+#: The match is the same substring :data:`_WORD_TOKEN` would have produced, not
+#: a fragment of one. A token whose first capital after position 0 sits at *k*
+#: has every earlier character in ``[a-z'’-]`` by construction, so the engine
+#: matches from the token's own start, and the trailing class then runs greedily
+#: to the token's own end.
+#:
+#: Why this is worth a second pattern: the scan is per-document and the words it
+#: is looking for are rare. On the twenty-essay gate corpus exactly ONE document
+#: contains an interior capital, so the other nineteen used to be tokenised to
+#: the last word — and a regex call spent on each — to return false.
+_INTERIOR_CAP_WORD = re.compile(r"[A-Za-z][a-z'’-]*[A-Z][A-Za-z'’-]*")
+
+#: The two-character shape :data:`_INTERIOR_CAP_WORD` cannot match without: a
+#: capital with a word character in front of it. Every capital that pattern
+#: fires on is preceded either by its own first character or by one of
+#: ``[a-z'’-]``, and both are inside this class, so a document that fails this
+#: has no interior capital and needs no word scan at all.
+#:
+#: It exists because the precise pattern backtracks. ``[a-z'’-]*[A-Z]`` is
+#: retried at every letter of every word that has no capital after it, which is
+#: most words in most documents; this is a two-character scan that cannot
+#: backtrack. On the twenty-essay gate corpus it clears thirteen documents
+#: outright at a twentieth of the cost.
+_INTERIOR_CAP_HINT = re.compile(r"[A-Za-z'’-][A-Z]")
+
 #: Tokens a lowercase span must reach before it is emitted at all. Set to 2
 #: deliberately, and it is the single decision that makes this route affordable —
 #: see :func:`_find_lowercase_candidates`.
@@ -1148,9 +1183,14 @@ def _capitalises_inside_a_word(text: str) -> bool:
     rather than hypothetical: on the 56-paper NWP corpus 14 papers carry an
     interior capital and 2 of them (`SPecial`, `AFter`) carry it only inside a
     heading.
+
+    The scan is over :data:`_INTERIOR_CAP_WORD` rather than every word token,
+    which is a filter and not a change of answer — see that pattern.
     """
-    return any(has_interior_capital(m.group(0))
-               for m in _WORD_TOKEN.finditer(text))
+    if _INTERIOR_CAP_HINT.search(text) is None:
+        return False
+    return any(has_interior_capital(word)
+               for word in _INTERIOR_CAP_WORD.findall(text))
 
 
 def written_in_lower_case(text: str) -> frozenset[str]:
@@ -1168,8 +1208,10 @@ def written_in_lower_case(text: str) -> frozenset[str]:
     consults no list, so it cannot inherit one's mistakes.
     """
     out: set[str] = set()
-    for match in _WORD_TOKEN.finditer(text):
-        token = match.group(0)
+    # `findall` rather than `finditer`: this wants the word and never its
+    # position, and at one match object per word of every document that is the
+    # difference between an allocation per word and none.
+    for token in _WORD_TOKEN.findall(text):
         if not token[0].islower():
             continue
         out.add(token.lower().strip("'’"))

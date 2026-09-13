@@ -1084,6 +1084,32 @@ test("the ordinary-words gate has a second channel needing no list", () => {
   assert.equal(capitalisesOrdinaryWords(listless), true);
 });
 
+// The prefilter is a filter, never a second opinion.
+//
+// `capitalisesInsideAWord` no longer looks at every word token — it looks at
+// INTERIOR_CAP_WORD, gated on INTERIOR_CAP_HINT. Both are necessary conditions
+// for `hasInteriorCapital`, so the answer is unchanged; this pins that against
+// the shapes where a narrower scan could plausibly have started in the wrong
+// place. A word sitting against an apostrophe or a hyphen is the one that
+// matters — both characters are in WORD_TOKEN's continuation class, so a
+// word-boundary assertion would have skipped the token entirely.
+test("the interior channel reads the document the word scan would have", () => {
+  const cases = [
+    "'ChoaCh' is what the sign said.",
+    "-ChoaCh- is what the sign said.",
+    "The sign said ChoaCh.",
+    "We read about the ABc in class.",
+    "It was a dePenDs kind of day.",
+    "SPecial",
+    "The word BILLo was on the board.",
+  ];
+  for (const text of cases) {
+    const words = text.match(WORD_TOKEN) ?? [];
+    const expected = words.some((w) => hasInteriorCapital(w));
+    assert.equal(capitalisesInsideAWord(text), expected, text);
+  }
+});
+
 test("the interior channel counts headings, and says why", () => {
   // Title case capitalises every word in a heading, which is why a heading's
   // capitals are discounted everywhere else. It does not put a capital in the

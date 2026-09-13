@@ -1783,6 +1783,34 @@ def test_the_interior_channel_counts_headings_and_says_why() -> None:
     assert nc.capitalises_ordinary_words(text, headings)
 
 
+@pytest.mark.parametrize("text", [
+    "'ChoaCh' is what the sign said.",
+    "-ChoaCh- is what the sign said.",
+    "The sign said ChoaCh.",
+    "We read about the ABc in class.",
+    "It was a dePenDs kind of day.",
+    "SPecial",
+    "The word BILLo was on the board.",
+])
+def test_the_interior_channel_reads_the_document_the_word_scan_would_have(
+    text: str,
+) -> None:
+    """The prefilter is a filter, never a second opinion.
+
+    :func:`_capitalises_inside_a_word` no longer looks at every word token — it
+    looks at :data:`_INTERIOR_CAP_WORD`, gated on :data:`_INTERIOR_CAP_HINT`.
+    Both are necessary conditions for :func:`has_interior_capital`, so the
+    answer is unchanged; this pins that against the shapes where a narrower scan
+    could plausibly have started in the wrong place. A word sitting against an
+    apostrophe or a hyphen is the one that matters — both characters are in
+    :data:`_WORD_TOKEN`'s continuation class, so a word-boundary assertion would
+    have skipped the token entirely.
+    """
+    expected = any(nc.has_interior_capital(m.group(0))
+                   for m in nc._WORD_TOKEN.finditer(text))
+    assert nc._capitalises_inside_a_word(text) is expected
+
+
 # ---------------------------------------------------------------------------
 # The corroboration-only given-name floor
 # ---------------------------------------------------------------------------

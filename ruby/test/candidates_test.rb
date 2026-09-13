@@ -914,6 +914,34 @@ class CaseVarianceTest < Minitest::Test
     assert C.capitalises_ordinary_words?(listless)
   end
 
+  # The prefilter is a filter, never a second opinion.
+  #
+  # {Candidates.capitalises_inside_a_word?} no longer looks at every word token
+  # — it looks at {INTERIOR_CAP_WORD}, gated on {INTERIOR_CAP_HINT}. Both are
+  # necessary conditions for {Candidates.interior_capital?}, so the answer is
+  # unchanged; this pins that against the shapes where a narrower scan could
+  # plausibly have started in the wrong place. A word sitting against an
+  # apostrophe or a hyphen is the one that matters — both characters are in
+  # {WORD_TOKEN}'s continuation class, so a word-boundary assertion would have
+  # skipped the token entirely.
+  def test_the_interior_channel_reads_the_document_the_word_scan_would_have
+    [
+      "'ChoaCh' is what the sign said.",
+      "-ChoaCh- is what the sign said.",
+      "The sign said ChoaCh.",
+      "We read about the ABc in class.",
+      "It was a dePenDs kind of day.",
+      "SPecial",
+      "The word BILLo was on the board.",
+    ].each do |text|
+      expected = false
+      text.scan(Vicary::Candidates::WORD_TOKEN) do |word|
+        expected = true if C.interior_capital?(word)
+      end
+      assert_equal expected, C.capitalises_inside_a_word?(text), text
+    end
+  end
+
   def test_the_interior_channel_counts_headings_and_says_why
     # Title case capitalises every word in a heading, which is why a heading's
     # capitals are discounted everywhere else. It does not put a capital in the
