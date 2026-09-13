@@ -76,7 +76,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -133,7 +133,7 @@ jobs:
       # fails as though the credential were wrong rather than as though the client
       # were too old. The version print is here so the log answers that question
       # without a re-run.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
