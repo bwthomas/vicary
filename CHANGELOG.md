@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## 0.2.14 — 2026-09-13
+
+**This release carries everything listed under 0.2.13 as well.** That version was
+tagged, all three of its release workflows failed the Ruby latency gate at
+**31.905%** against an 8% bar, and it was published nowhere — so 0.2.12's users
+have never had the given-name floor or the two orthography channels below. The
+first entry here is the fix for the regression that stranded them; on CI the same
+gate now reads **2.441%** in Ruby, 1.59% in Python and 4.49% in TypeScript.
+
+### The orthography scans read off a prefilter, not every word token
+
+Row 5's precision gain was real and three times too slow to ship. Both scans now
+gate on a cheap necessary condition first — a two-character hint for the
+interior-capital rule — and run the precise pattern only over the words that
+clear it. Both conditions are necessary for the rule, so **the answer is
+unchanged and no golden moved**; what changes is how many words the expensive
+pattern ever sees. Ruby's threefold worse regression was per-character regexes,
+now byte comparisons. Measured interleaved against v0.2.12 on one machine:
+Python +15.66% -> +2.36%, TypeScript +10.16% -> +4.47%, Ruby +23.03% -> +3.58%.
+
+Each port pins its prefilter against the shapes where a narrower scan could have
+started in the wrong place — a word against an apostrophe or a hyphen — because
+a prefilter that skips a word is indistinguishable from a rule that declines it.
+
 ### The latency gate compares against a release, not against a tag
 
 `previous_release` took the newest `v*` tag merged into HEAD and asked nothing
