@@ -127,7 +127,36 @@ IMPLEMENTATIONS = ("python", "typescript", "ruby")
 #: having, and closing the gap is not worth what it costs: sigma falls as
 #: 1/sqrt(rounds), so matching Ruby's 0.46% means about 19 times the rounds —
 #: 280-odd, up from fifteen — to sharpen a decision that is not close either way.
-DEFAULT_ROUNDS = {"python": 5, "typescript": 15, "ruby": 5}
+#: **Every count here is EVEN, and that is load-bearing, not tidiness.** The
+#: protocol counterbalances by swapping which side runs first every round, so an
+#: odd count gives one order more rounds than the other and leaves the order
+#: effect in the answer. Measured on TypeScript at the shipped 15: the
+#: previous-first rounds read +6.80% and the current-first rounds +3.16%, a
+#: **3.64 pp order effect**, 8 rounds against 7 — and the pooled statistic
+#: landed at +6.61%, next to the over-represented order rather than between the
+#: two. Re-run at 16 the same checkout read +2.29%, +4.22%, +3.01%. Nothing
+#: about the code changed; the gate had been measuring its own round count.
+DEFAULT_ROUNDS = {"python": 6, "typescript": 16, "ruby": 6}
+
+
+def balanced_median(values: list[float]) -> float:
+    """Median with the two counterbalanced orders weighted equally.
+
+    ``values[0::2]`` are the rounds where this side ran first and
+    ``values[1::2]`` those where it ran second -- the two halves of the
+    counterbalance. Pooling them and taking one median lets whichever order has
+    more rounds, or simply more spread, decide; averaging the two medians gives
+    each order the weight the design intended.
+
+    This is deliberately expressed in ``previous_ms`` and ``current_ms`` rather
+    than in ``regression_pct``, because **all three ports recompute the
+    percentage from that pair and ignore the one this tool writes**. Correcting
+    the statistic anywhere else would have changed the record and not the gate.
+    """
+    if not values:
+        raise ValueError("no rounds to summarise")
+    first, second = values[0::2], values[1::2]
+    return (statistics.median(first) + statistics.median(second)) / 2
 
 
 def run(cmd: list[str], cwd: Path, env: dict | None = None) -> subprocess.CompletedProcess:
@@ -382,6 +411,13 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     if args.rounds is None:
         args.rounds = DEFAULT_ROUNDS[args.impl]
+    if args.rounds % 2:
+        sys.stderr.write(
+            f"--rounds must be even; got {args.rounds}. The protocol swaps which "
+            f"side runs first every round, so an odd count gives one order more "
+            f"rounds than the other and reports the difference as a regression.\n"
+        )
+        return 1
 
     root = repo_root()
     published = published_releases.published_versions(args.impl)
@@ -428,8 +464,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
-    prev_ms = statistics.median(previous)
-    cur_ms = statistics.median(current)
+    prev_ms = balanced_median(previous)
+    cur_ms = balanced_median(current)
     record = {
         "document_version": 1,
         "implementation": args.impl,
