@@ -136,7 +136,19 @@ IMPLEMENTATIONS = ("python", "typescript", "ruby")
 #: landed at +6.61%, next to the over-represented order rather than between the
 #: two. Re-run at 16 the same checkout read +2.29%, +4.22%, +3.01%. Nothing
 #: about the code changed; the gate had been measuring its own round count.
-DEFAULT_ROUNDS = {"python": 6, "typescript": 16, "ruby": 6}
+#:
+#: **TypeScript's count is sized for a shared CI runner, not for a laptop.** The
+#: earlier reasoning here measured per-round noise on one developer machine and
+#: concluded that more rounds were not worth buying. That held until the gate
+#: ran where releases actually run: on GitHub's runners the same unchanged
+#: checkout read 4.78% and then 11.92% against an 8% bar, while a laptop read
+#: 3.15%. The runners are three times slower in absolute terms and far noisier,
+#: and sigma falls as 1/sqrt(rounds) -- so four times the rounds halves it. A
+#: TypeScript measurement costs about a third of a second, which makes 64 rounds
+#: roughly 40 seconds and the cheapest thing on the release path by a wide
+#: margin. Python and Ruby stay at 6: their per-round noise is 0.7% and 1.7%,
+#: and neither has ever failed this gate on a runner.
+DEFAULT_ROUNDS = {"python": 6, "typescript": 64, "ruby": 6}
 
 
 def balanced_median(values: list[float]) -> float:
