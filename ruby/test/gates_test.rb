@@ -612,6 +612,23 @@ class GatesTest < Minitest::Test
     assert_equal 10, bare.scan("NOT MEASURED").size
   end
 
+  # The report has always named what it could not measure, and the suite has
+  # always exited 0 while it did — `9 of 9 measured gates hold; 1 are NOT
+  # MEASURED` is a green run describing a gate set that was not cleared. That is
+  # how a release whose latency was never compared reads as a release that
+  # passed, which is what 0.2.13 did in all three ports. The skip stays, because
+  # a gate that cannot compare must decline rather than invent a number; what it
+  # no longer gets is a green exit. `just latency-pair ruby` supplies the missing
+  # side locally, and `just ci` takes it for all three ports.
+  def test_a_run_that_could_not_measure_a_gate_does_not_clear_the_gate_set
+    unmeasured = self.class.full_board.measurements.select { |m| m.passed.nil? }.map { |m| m.gate.id }
+    assert_equal [], unmeasured,
+                 "#{unmeasured.size} gates were NOT MEASURED (#{unmeasured.join(', ')}), so " \
+                 "this run did not clear the gate set — and a run that says so must not " \
+                 "exit 0. The latency gate needs the other side of its pair: " \
+                 "`just latency-pair ruby`, or `just ci`, which takes it."
+  end
+
   # Print the board, whatever this run could reach.
   #
   # `rake gates` used to print minitest's dot row and nothing else, while Python's
@@ -622,10 +639,12 @@ class GatesTest < Minitest::Test
   # Assembled from the measurements the tests above already made rather than
   # re-measuring: the corpus arm redacts 50 essays and paying for that twice to
   # print it would make the report expensive enough to switch off.
-  def self.print_board
+  # Measured once and shared with the gate-set test below: the fixture arm is not
+  # free, and a board measured twice is two chances to disagree with itself.
+  def self.full_board
     corpus_metrics = corpus
     corpus_id = corpus_metrics.nil? ? nil : Vicary::Corpus.resolve_corpus_id
-    full = Vicary::Gates.measure(
+    @full_board ||= Vicary::Gates.measure(
       spec, Vicary::Conformance.load_gates,
       asset_entries: Vicary::Gazetteer.load.entry_count,
       bare_surname_exposure: exposure.rate,
@@ -641,6 +660,12 @@ class GatesTest < Minitest::Test
          end),
       corpus_id: corpus_id
     ) { |sentence, identity| Vicary.redact(sentence, identity) }
+  end
+
+  def self.print_board
+    corpus_metrics = corpus
+    corpus_id = corpus_metrics.nil? ? nil : Vicary::Corpus.resolve_corpus_id
+    full = full_board
     puts
     # The corpus is named, not implied. Two of these gates carry a per-corpus
     # bar — over-firing is 8.15 spans/essay on persuade-20 against 0.61 on

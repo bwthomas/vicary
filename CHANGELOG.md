@@ -2,6 +2,63 @@
 
 ## Unreleased
 
+### The latency gate compares against a release, not against a tag
+
+`previous_release` took the newest `v*` tag merged into HEAD and asked nothing
+about whether it had ever been published. Two tags in this history never were:
+`v0.2.10`, which `9eaa538` cut 0.2.11 to replace, and `v0.2.13`, whose three
+release workflows all failed this very gate. Measured against `v0.2.13` the next
+release reads **-3.60% / -14.75% / -10.49%** and passes in every port — because
+the slow code is on BOTH sides of that ratio. A 0.2.14 that fixed nothing would
+have passed the same way, and the regression against the 0.2.12 users actually
+have would never have been printed.
+
+So the baseline is now the newest tag **the port's own registry is serving**, and
+the registry is asked: PyPI for Python, npm for TypeScript, RubyGems for Ruby
+(`tools/published_releases.py`). Per port because they disagree — PyPI has never
+served 0.2.11, npm has never served 0.2.6, RubyGems refused 0.2.3 on the same
+commit the other two took — and "the last release" is whichever one that port's
+users can install. Skipped tags are named on stdout and recorded in the pair
+record's `against` block, so a baseline that moved back is a fact a reader can
+reconstruct rather than infer.
+
+A registry that cannot be reached is a **refusal to measure**, never a fall back
+to the newest tag: falling back is the defect, and it fails green. An offline
+machine asserts what it knows out loud —
+`VICARY_PUBLISHED_VERSIONS_PYTHON="0.2.12 0.2.8"` — and the pair record says the
+number came from an assertion rather than from a registry.
+
+Measured on this commit, all three ports now skip `v0.2.13` and land on
+`v0.2.12`: Python **+3.68%**, TypeScript **+5.53%**, Ruby **+4.69%**, against the
+8% bar.
+
+### A gate set that reports NOT MEASURED no longer exits 0
+
+`just ci` was `lint test gates conformance parity coverage` and never took the
+pair, so every local run printed `NOT MEASURED (1): latency vs last release` and
+`-> this run does not clear the gate set` — under `20 passed, 1 skipped`, exit 0.
+A gate whose failure mode is a green exit is not a gate; it is how "`just ci`
+green, 9 of 9 gates hold" gets written down about a build whose latency was never
+measured.
+
+Both halves are fixed. Each port's gate set now **fails** when any gate reports
+NOT MEASURED — Python in the report test, TypeScript and Ruby in a new gate-set
+test beside their board printers, so the three stay in parity. And `just
+latency-pairs` takes the pair for every port present, into a per-commit location
+`just gates` and `just test` read; `just ci` runs it first. The records are keyed
+on the commit so a stale one is absent rather than silently read as this build's
+verdict, and nothing is cached between runs.
+
+The skip itself stays: a gate that cannot compare must decline rather than invent
+a number, and every reason is still printed. What it no longer gets is a green
+light.
+
+CI takes the pair on **every** matrix entry rather than one. The saving was half
+a minute; the cost was the other entries reporting NOT MEASURED under a green
+tick, which is now a failure. `tools/tests/test_release_paths.py` guards both
+shapes: no workflow may point the gate at an empty pair path, and no justfile
+recipe may run a gate set without one pointed at it.
+
 ## 0.2.13 — 2026-09-12
 
 ### A second, permissive floor on the given-name tier, read only to corroborate

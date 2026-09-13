@@ -72,8 +72,14 @@ negative. No runner effect survives the pairing. One 8-group probe put that
 component at +1.1% before pooling — a variance component on 8 groups is that
 unstable, which is the reason for the pooled figure rather than the first one.
 
-The previous release comes from this repository's own history rather than from a
-registry, so this runs on a bare checkout with no network. Its `asset/` and
+The previous release's CODE comes from this repository's own history, so the
+measurement itself needs no network. WHICH release it is does: a tag records that
+a release was attempted and only the registry records that one happened, and this
+history holds two tags — `v0.2.10` and `v0.2.13` — that were published nowhere.
+So the baseline is the newest tag the port's own registry is serving
+(`published_releases.py`), and a registry that cannot be reached is a refusal to
+measure rather than a quiet fall back to the newest tag, which is the failure
+that fails green. Its `asset/` and
 `conformance/` are overwritten with the current checkout's before it is built:
 the gazetteer and the corpus are inputs, not code, and holding them fixed is what
 makes the difference attributable to the change under test.
@@ -94,6 +100,13 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+# `tools/` is not a package, and this file is both run as a script and loaded by
+# path from `tools/tests/`. The first puts this directory on sys.path and the
+# second does not, so it is said once here rather than in every caller.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import published_releases  # noqa: E402
 
 IMPLEMENTATIONS = ("python", "typescript", "ruby")
 
@@ -134,26 +147,72 @@ def repo_root() -> Path:
     return here.parent
 
 
-def previous_release(root: Path) -> tuple[str, str]:
-    """The newest ``v*`` tag reachable from HEAD that is not HEAD itself.
+def tag_version(tag: str) -> str:
+    """``"v0.2.12"`` -> ``"0.2.12"``. The registries carry the number, not the tag."""
+    return tag[1:] if tag.startswith("v") else tag
+
+
+def previous_release(root: Path, impl: str,
+                     published: published_releases.Answer) -> tuple[str, str, list[str]]:
+    """The newest tag before HEAD that this port's registry is actually serving.
 
     Excluding a tag ON HEAD is what makes this work during a release: the tag
     push that publishes 0.2.5 must compare against 0.2.4, not against itself,
     which would report 0% forever and pass every time.
+
+    Excluding a tag the registry never took is the same argument one step out,
+    and it is the one that was missing. A tag records that a release was
+    *attempted*; only the registry records that one happened, which makes the tag
+    a self-report and the registry the measurement. This repository has burned
+    two of them — ``v0.2.10``, which ``9eaa538`` cut 0.2.11 to replace, and
+    ``v0.2.13``, whose three workflows all failed this very gate. Timed against
+    ``v0.2.13`` a 0.2.14 that fixed nothing measures −3.60% / −14.75% / −10.49%
+    and passes in every port, because the slow code is on BOTH sides of the
+    ratio; the regression against the 0.2.12 users actually have never appears.
+
+    Returns the tag, its commit, and the tags skipped on the way — the skips are
+    written into the pair record, because a baseline that silently moved two
+    releases back is a number whose provenance a reader cannot reconstruct.
+
+    An unknown registry answer is a refusal, never a fallback to the newest tag:
+    falling back is the defect, and it fails green.
     """
+    if published.unknown:
+        sys.stderr.write(
+            f"cannot tell which versions {published.source} is serving, so there is no "
+            f"baseline this gate can defend: {published.error}\n"
+            f"The newest tag is NOT the fallback — a tag is a claim that a release was "
+            f"attempted, and two in this history were never published. To measure "
+            f"offline, assert what the registry serves out loud:\n"
+            f"  {published_releases.ENV_VAR}_{impl.upper()}='0.2.12 0.2.8'\n"
+        )
+        raise SystemExit(1)
+
     head = check(["git", "rev-parse", "HEAD"], root, "resolving HEAD")
     tags = check(
         ["git", "tag", "--list", "v*", "--sort=-v:refname", "--merged", "HEAD"],
         root, "listing release tags",
     ).splitlines()
+    skipped: list[str] = []
     for tag in (t.strip() for t in tags if t.strip()):
         sha = check(["git", "rev-list", "-n", "1", tag], root, f"resolving {tag}")
-        if sha != head:
-            return tag, sha
+        if sha == head:
+            continue
+        if not published.serving(tag_version(tag)):
+            skipped.append(tag)
+            print(
+                f"{tag} is tagged in this history but {published.source} does not serve "
+                f"{tag_version(tag)} — it is not a release, so it is not the baseline.",
+                flush=True,
+            )
+            continue
+        return tag, sha, skipped
+
     sys.stderr.write(
-        "no release tag before HEAD is reachable — nothing to compare against. "
-        "A shallow clone is the usual cause: the pair needs tags and history, so "
-        "check out with fetch-depth: 0.\n"
+        f"no tag before HEAD is served by {published.source}"
+        + (f" (skipped {', '.join(skipped)}, tagged but never published)" if skipped else "")
+        + " — nothing to compare against. A shallow clone is the other usual cause: "
+        "the pair needs tags and history, so check out with fetch-depth: 0.\n"
     )
     raise SystemExit(1)
 
@@ -325,7 +384,8 @@ def main(argv: list[str] | None = None) -> int:
         args.rounds = DEFAULT_ROUNDS[args.impl]
 
     root = repo_root()
-    ref, ref_sha = previous_release(root)
+    published = published_releases.published_versions(args.impl)
+    ref, ref_sha, skipped = previous_release(root, args.impl, published)
     head = check(["git", "rev-parse", "HEAD"], root, "resolving HEAD")
 
     with tempfile.TemporaryDirectory(prefix="vicary-prev-") as tmp:
@@ -375,7 +435,16 @@ def main(argv: list[str] | None = None) -> int:
         "implementation": args.impl,
         "corpus": sorted(corpora)[0],
         "corpus_sha256": sorted(digests)[0],
-        "against": {"ref": ref, "sha": ref_sha},
+        # The baseline names its own provenance. A reader of this record can ask
+        # why it is not the newest tag and get the answer from the record rather
+        # than from a registry it would have to re-query.
+        "against": {
+            "ref": ref,
+            "sha": ref_sha,
+            "version": tag_version(ref),
+            "published_on": published.source,
+            "tags_skipped_unpublished": skipped,
+        },
         "head_sha": head,
         "rounds": args.rounds,
         "runtime": sorted(runtimes)[0] if len(runtimes) == 1 else "mixed",
@@ -390,8 +459,9 @@ def main(argv: list[str] | None = None) -> int:
 
     sign = "+" if (record["regression_pct"] or 0) >= 0 else ""
     print(
-        f"{args.impl}: {cur_ms:.3f} ms here against {prev_ms:.3f} ms at {ref}, "
-        f"measured on the same machine — {sign}{record['regression_pct']:.2f}%"
+        f"{args.impl}: {cur_ms:.3f} ms here against {prev_ms:.3f} ms at {ref} "
+        f"(served by {published.source}), measured on the same machine — "
+        f"{sign}{record['regression_pct']:.2f}%"
     )
     return 0
 

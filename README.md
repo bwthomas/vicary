@@ -22,8 +22,11 @@ and it answers in single-digit milliseconds.
 
 All three ports measure the same nine gates now, and 9 of 9 is the CI figure — the
 one gate that needs more than a checkout is latency, which needs a pair record
-from the same machine. On a bare checkout without one, every port reports 8 of 9
-and prints `NOT MEASURED` with the reason for the ninth.
+from the same machine. Without one, every port still prints `NOT MEASURED` with
+the reason for the ninth, and the suite now **fails** rather than exiting 0 while
+saying so: a gate set that reports it was not cleared and returns a green light
+is not a gate. `just ci` takes the pair for all three ports before it gates, so
+the local loop measures what CI measures.
 
 That fraction is the number of masking-required fixture frames the port reproduces
 byte-for-byte, printed by every `npm test` / `rake test` run and ratcheted by it.
@@ -546,8 +549,22 @@ this checkout alternately, on the machine running the gate, counterbalancing the
 order each round; the gate compares those two numbers and nothing else. Every
 property of the machine is common to both sides and cancels. Nothing is recorded
 between releases, nothing is pinned to a runner, and the gate works on a laptop:
-`just latency-pair ruby`. Without a pair it reports NOT MEASURED with the reason
-attached, because one side of a comparison is not a gate.
+`just latency-pair ruby`, or `just ci`, which takes all three. Without a pair it
+reports NOT MEASURED with the reason attached — and the run goes red, because one
+side of a comparison is not a gate and a gate that fails green is not one either.
+
+**Which release it compares against is the registry's answer, not the tag list.**
+A `v*` tag records that a release was *attempted*; only the registry records that
+one happened, and this repository has two tags that were published nowhere —
+`v0.2.10`, and `v0.2.13`, whose three workflows all failed this gate. Timed
+against a burned tag the slow code sits on both sides of the ratio and everything
+passes, including a release that fixed nothing. So the baseline is the newest tag
+the port's own registry is serving — PyPI for Python, npm for TypeScript,
+RubyGems for Ruby, asked per port because they disagree: PyPI has never served
+0.2.11, npm has never served 0.2.6, and RubyGems refused 0.2.3 on the same commit
+the other two took. A registry that cannot be reached is a refusal to measure,
+never a quiet fall back to the newest tag; an offline machine asserts what it
+knows out loud with `VICARY_PUBLISHED_VERSIONS_RUBY="0.2.12 0.2.11"`.
 
 **How much of the bar the noise uses, measured rather than inferred.** Each
 port's gate statistic was run repeatedly against a fixed head and tag, so its
@@ -768,7 +785,9 @@ under a 200 status.
 The discipline that got us here stays. A gate a runner cannot reach prints
 `NOT MEASURED` **by name**, never reduced out of the denominator, and each port
 asserts that behaviour by withholding the inputs on purpose. A green badge that
-means less than it appears to is worse than no badge.
+means less than it appears to is worse than no badge — which is why a run that
+prints one of those names now fails: the report said `this run does not clear the
+gate set` for months while the suite exited 0 underneath it.
 
 Two overrides, both optional. `VICARY_EVAL_CORPUS_TSV` measures the ASAP-AES
 corpus instead, or `VICARY_EVAL_CORPUS` names a registered one per run; two corpus

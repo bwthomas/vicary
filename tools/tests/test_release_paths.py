@@ -157,6 +157,63 @@ def test_every_port_takes_the_pair_on_ordinary_ci() -> None:
     )
 
 
+def test_no_workflow_points_the_gate_at_an_empty_pair_path() -> None:
+    """A conditional pair path is a gate set that cannot clear itself.
+
+    Every gate job used to take the pair on ONE matrix entry and hand the others
+    ``VICARY_LATENCY_PAIR: ''`` — half a minute saved, and a gate that reported
+    NOT MEASURED on the remaining entries under a green tick. Now that an
+    unmeasured gate fails the suite, an entry that runs the gates must be able to
+    measure them, and an empty path is the shape that quietly cannot.
+    """
+    for filename in [CI_WORKFLOW, *sorted(PUBLISH_PATHS)]:
+        for line in workflow_path(filename).read_text().splitlines():
+            if f"{baseline.PAIR_ENV_VAR}:" not in line:
+                continue
+            assert "|| ''" not in line and '|| ""' not in line, (
+                f"{filename} points the latency gate at an empty pair path on some "
+                f"matrix entries: {line.strip()}. Those runs report NOT MEASURED, "
+                f"which no longer passes — take the pair on every entry that gates"
+            )
+
+
+def test_the_local_loop_takes_the_pair_before_it_gates() -> None:
+    """`just ci` is the loop a developer actually runs, and it did not take the
+    pair at all.
+
+    So every local run printed `NOT MEASURED (1): latency vs last release` and
+    `-> this run does not clear the gate set`, and exited 0 while saying it. Row
+    5's cost went unnoticed for the whole of its unreleased life that way: CI
+    would have caught it, and the commits had not been pushed yet.
+    """
+    text = (repo_root() / "justfile").read_text()
+    recipe = next((line for line in text.splitlines() if line.startswith("ci:")), None)
+    assert recipe, "the justfile has no `ci` recipe"
+    assert "latency-pairs" in recipe, (
+        f"`{recipe}` does not take the latency pair, so its gate set can only "
+        f"report the latency gate NOT MEASURED"
+    )
+    assert recipe.index("latency-pairs") < recipe.index("gates"), (
+        f"`{recipe}` takes the pair after the gates read it"
+    )
+    # Every invocation that RUNS a gate set has to be pointed at a record. In
+    # TypeScript and Ruby the gate set is inside the test suite, so that is two
+    # recipes per port, not one — `npm test` and `rake test` are where CI reads
+    # those ports' gates, and a `gates` recipe pointed alone would leave the
+    # suite CI actually runs unable to measure.
+    gate_runs = ("just py-gates", "npm run gates", "rake gates", "npm test", "rake test")
+    for command in gate_runs:
+        lines = [line for line in text.splitlines()
+                 if command in line and not line.lstrip().startswith("#")]
+        assert lines, f"the justfile no longer runs `{command}`"
+        for line in lines:
+            assert baseline.PAIR_ENV_VAR in line, (
+                f"`{command}` runs a gate set with no pair record pointed at it: "
+                f"{line.strip()} — that gate can only report NOT MEASURED, which "
+                f"no longer passes"
+            )
+
+
 def test_the_spec_the_gate_reads_carries_no_recorded_measurements() -> None:
     """The stored baseline is gone, and it has to stay gone.
 

@@ -105,13 +105,13 @@ jobs:
       # same machine, so the machine cancels — which is the whole design, and
       # the reason nothing is recorded between releases any more.
       #
-      # One matrix entry rather than all of them, and now for COST rather than
-      # for validity: the pair is sound on any runner and any interpreter,
-      # because it never compares across machines. It just takes half a minute,
-      # and the question it answers is about the code, which does not differ
-      # between matrix entries.
+      # EVERY matrix entry, not one. The saving was half a minute on the other
+      # entry and the cost was a gate set that reported NOT MEASURED there and
+      # exited 0 anyway — which is no longer allowed to happen: an unmeasured
+      # gate now fails the suite, so any entry that runs the gates has to be able
+      # to measure them. The pair is sound on any runner and any interpreter,
+      # because it never compares across machines.
       - name: Latency pair
-        if: matrix.python-version == '3.13'
         run: python ../tools/latency_pair.py --impl python --out "$RUNNER_TEMP/pair.json"
 
       # Separate step so a gate regression is distinguishable from a unit-test
@@ -120,7 +120,7 @@ jobs:
       # measures, prints, and reports NOT MEASURED with the reason attached.
       - name: Gates
         env:
-          VICARY_LATENCY_PAIR: ${{ matrix.python-version == '3.13' && format('{0}/pair.json', runner.temp) || '' }}
+          VICARY_LATENCY_PAIR: ${{ runner.temp }}/pair.json
         run: pytest -m gates -s
 
       - name: Asset integrity
@@ -244,7 +244,6 @@ jobs:
       # compiled by this checkout's tsc against these node_modules, so neither
       # side reaches the registry.
       - name: Build
-        if: matrix.node-version == '22'
         run: npm run build
       # The latency gate's other half, measured HERE: the previous release and
       # this checkout, timed alternately on this runner. Both sides face the same
@@ -252,14 +251,16 @@ jobs:
       # rounds as the others because its per-process noise is three times theirs
       # — 2 ms measurements and a JIT that does not settle identically twice.
       #
-      # One matrix entry rather than both, and for COST rather than validity: the
-      # pair never compares across machines, so it is sound anywhere.
+      # EVERY matrix entry, not one. The pair never compares across machines, so
+      # it is sound anywhere; what changed is that skipping it on the other entry
+      # left the gate set there reporting NOT MEASURED under a green tick, and an
+      # unmeasured gate now fails the suite. The build above is unconditional for
+      # the same reason — the pair times compiled output.
       - name: Latency pair
-        if: matrix.node-version == '22'
         run: python3 ../tools/latency_pair.py --impl typescript --out "$RUNNER_TEMP/pair.json"
       - run: npm test
         env:
-          VICARY_LATENCY_PAIR: ${{ matrix.node-version == '22' && format('{0}/pair.json', runner.temp) || '' }}
+          VICARY_LATENCY_PAIR: ${{ runner.temp }}/pair.json
       # Printed as its own step so the scoreboard is readable in the checks list
       # without expanding a test log. It reports 0 of 35 until the detector lands,
       # which is the honest number and the reason it is printed at all.
@@ -341,12 +342,13 @@ jobs:
       # machine, so the machine cancels — which matters most in this port, where
       # identical code spread 67% across six of GitHub's own runners.
       #
-      # One matrix entry rather than both, and for COST rather than validity.
+      # EVERY matrix entry, not one: an unmeasured gate now fails the suite, so
+      # an entry that runs the gates has to be able to measure them. Validity was
+      # never the question — the pair does not compare across machines.
       - name: Latency pair
-        if: matrix.ruby-version == '3.3'
         run: python3 ../tools/latency_pair.py --impl ruby --out "$RUNNER_TEMP/pair.json"
       - run: rake test
         env:
-          VICARY_LATENCY_PAIR: ${{ matrix.ruby-version == '3.3' && format('{0}/pair.json', runner.temp) || '' }}
+          VICARY_LATENCY_PAIR: ${{ runner.temp }}/pair.json
       - name: Conformance scoreboard
         run: rake conformance

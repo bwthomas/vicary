@@ -691,11 +691,26 @@ def test_the_default_a_host_gets_is_the_arm_these_gates_measured() -> None:
 
 
 def test_the_gate_report_says_what_it_could_not_measure(gate_results) -> None:
-    """Runs last. Prints every gate's number, and names the ones that skipped.
+    """Runs last. Prints every gate's number, names the ones that skipped, and
+    FAILS if there were any.
 
     This is the whole reason the gates are allowed to skip: a green run that
     quietly measured four things out of seven is the failure mode the skip
     mechanism creates, so the report states the coverage rather than implying it.
+
+    Stating it was not enough. The report has said "this run does not clear the
+    gate set" since the skip mechanism landed, and the suite exited 0 while it
+    said so — `20 passed, 1 skipped`, on a run whose latency gate had never been
+    given a pair to compare against. A verdict the exit code contradicts is a
+    verdict nothing reads: it is how "`just ci` green" gets written down about a
+    build whose latency was never measured, which is exactly what happened to
+    0.2.13 for the whole of its unreleased life.
+
+    So the exit code now follows the verdict. The skip stays — a gate that cannot
+    compare must still decline rather than invent a number, and `render` still
+    prints the reason — but a run that declines does not get a green light.
+    Locally, `just latency-pair python` supplies the missing side; `just ci`
+    takes it for all three ports before the gates run.
     """
     measured = {name for name, *_ in gate_results}
     missing = sorted(_ALL_GATES - measured)
@@ -721,6 +736,13 @@ def test_the_gate_report_says_what_it_could_not_measure(gate_results) -> None:
     else:
         lines.append(f"  all {len(_ALL_GATES)} gates measured")
     print("\n".join(lines))
+
+    assert not missing, (
+        f"{len(missing)} of {len(_ALL_GATES)} gates were NOT MEASURED "
+        f"({', '.join(missing)}), so this run did not clear the gate set — and a "
+        f"run that says so must not exit 0. The latency gate needs the other side "
+        f"of its pair: `just latency-pair python`, or `just ci`, which takes it."
+    )
 
 
 #: Every gate name that a complete run reports. Kept here so the report can say

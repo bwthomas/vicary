@@ -8,6 +8,16 @@ set shell := ["bash", "-uc"]
 
 python := "python/.venv/bin/python"
 
+# Where `just latency-pairs` leaves each port's pair record and `just gates`
+# looks for it. Keyed on the commit on purpose: a record measured for another
+# commit is not this build's verdict, and the only witness of that locally is the
+# file's name — CI has `GITHUB_SHA` and the readers check it there. So a stale
+# record is simply ABSENT here, the gate says the file does not exist, and the
+# run goes red naming it. The alternative — one fixed path per port — is a
+# week-old measurement read as today's, silently.
+pair_dir := "/tmp/vicary-latency-pairs"
+head_sha := `git rev-parse --short HEAD 2>/dev/null || echo nohead`
+
 _default:
     @just --list
 
@@ -105,7 +115,7 @@ tools:
 # `vicary` as third-party and demands a reshuffle of every import block here.
 tools-lint:
     cd tools && ../python/.venv/bin/ruff check tests coverage_board.py version_sync.py \
-      latency_pair.py latency_measure.py
+      latency_pair.py latency_measure.py published_releases.py
     cd asset && ../python/.venv/bin/ruff check vicary_build tests
 
 # ---------------------------------------------------------------------------
@@ -141,7 +151,11 @@ version version="":
 # a regression.
 #
 #   just latency-pair ruby           # writes /tmp/vicary-latency-pair-ruby.json
-#   VICARY_LATENCY_PAIR=/tmp/vicary-latency-pair-ruby.json just rb-gates
+#   cd ruby && VICARY_LATENCY_PAIR=/tmp/vicary-latency-pair-ruby.json rake gates
+#
+# `just latency-pairs` below is the same thing for every port at once, into the
+# location `just gates` reads, and `just ci` runs it. This form is for measuring
+# one port by hand.
 #
 # It takes a minute per port and needs the port set up the way its tests need it
 # — `npm ci` in typescript/, the venv in python/ — because it builds the previous
@@ -152,6 +166,29 @@ latency-pair impl out="":
     @{{python}} tools/latency_pair.py --impl {{impl}} \
       --out {{ if out == "" { "/tmp/vicary-latency-pair-" + impl + ".json" } else { out } }}
 
+# Take the pair for every port present, into the per-commit location `just gates`
+# reads. This is what `just ci` runs, and running it is the whole point: `ci` used
+# to be `lint test gates conformance parity coverage`, the pair was a manual
+# recipe nobody in a hurry types, and so the gate set printed `NOT MEASURED (1):
+# latency vs last release` and `-> this run does not clear the gate set` on every
+# local run — under a `20 passed, 1 skipped` that exited 0. Two halves of the same
+# defect: the suite now fails on an unmeasured gate, and this makes the gate
+# measurable without anyone remembering to.
+#
+# It costs about a minute per port, which is what it costs to know. `just gates`
+# alone still works and still refuses to pass without this, naming the file it
+# wanted.
+latency-pairs:
+    @mkdir -p {{pair_dir}}
+    @{{python}} tools/latency_pair.py --impl python \
+      --out {{pair_dir}}/{{head_sha}}-python.json
+    @if [ -f typescript/package.json ]; then {{python}} tools/latency_pair.py \
+      --impl typescript --out {{pair_dir}}/{{head_sha}}-typescript.json; \
+      else echo "SKIPPED typescript — no package.json yet"; fi
+    @if [ -f ruby/Rakefile ]; then {{python}} tools/latency_pair.py \
+      --impl ruby --out {{pair_dir}}/{{head_sha}}-ruby.json; \
+      else echo "SKIPPED ruby — no Rakefile yet"; fi
+
 # ---------------------------------------------------------------------------
 # Across every front door
 # ---------------------------------------------------------------------------
@@ -160,12 +197,21 @@ latency-pair impl out="":
 # not present yet are skipped out loud, never silently — a run that tested one of
 # three and said nothing is the failure mode this whole repository exists to
 # prevent.
+# TypeScript and Ruby are pointed at their pair records here as well as in
+# `gates`, because in those two ports the gate set IS part of the test suite —
+# `npm test` and `rake test` run `gates.test.ts` and `gates_test.rb`, which is
+# how CI measures the gates there. Python's front door splits them (`pytest -m
+# "not gates"`), so it needs nothing here. An unmeasured gate now fails, so a
+# bare `just test` in those two ports refuses until the pair exists, naming the
+# file it wanted: `just latency-pairs`, or `just ci`, which takes it first.
 test:
     @just tools
     @just py-test
-    @if [ -f typescript/package.json ]; then cd typescript && npm test; \
+    @if [ -f typescript/package.json ]; then cd typescript && \
+      VICARY_LATENCY_PAIR={{pair_dir}}/{{head_sha}}-typescript.json npm test; \
       else echo "SKIPPED typescript — no package.json yet"; fi
-    @if [ -f ruby/Rakefile ]; then cd ruby && rake test; \
+    @if [ -f ruby/Rakefile ]; then cd ruby && \
+      VICARY_LATENCY_PAIR={{pair_dir}}/{{head_sha}}-ruby.json rake test; \
       else echo "SKIPPED ruby — no Rakefile yet"; fi
 
 lint:
@@ -202,10 +248,12 @@ lint:
 # input, like frames.json; the measurements stay each port's own. Absent
 # languages are skipped out loud, never silently.
 gates:
-    @just py-gates
-    @if [ -f typescript/package.json ]; then cd typescript && npm run gates; \
+    @VICARY_LATENCY_PAIR={{pair_dir}}/{{head_sha}}-python.json just py-gates
+    @if [ -f typescript/package.json ]; then cd typescript && \
+      VICARY_LATENCY_PAIR={{pair_dir}}/{{head_sha}}-typescript.json npm run gates; \
       else echo "SKIPPED typescript — no package.json yet"; fi
-    @if [ -f ruby/Rakefile ]; then cd ruby && rake gates; \
+    @if [ -f ruby/Rakefile ]; then cd ruby && \
+      VICARY_LATENCY_PAIR={{pair_dir}}/{{head_sha}}-ruby.json rake gates; \
       else echo "SKIPPED ruby — no Rakefile yet"; fi
 
 # Diff each port's answers against the Python reference directly, on the seams
@@ -283,4 +331,13 @@ _conformance-check:
 coverage:
     @{{python}} tools/coverage_board.py
 
-ci: lint test gates conformance parity coverage
+# The pair comes FIRST, before `test` and not merely before `gates`: in
+# TypeScript and Ruby the gate set is inside the test suite, so a pair taken
+# after it would leave those two ports reporting NOT MEASURED in the one place
+# CI reads them.
+#
+# Nothing is cached between runs on purpose. A pair record keyed on the commit
+# would still be stale the moment the working tree moves under it, and a stale
+# `current` side measured against a fresh `previous` one is the same wrong answer
+# the stored baseline used to give — with none of the noise that made it obvious.
+ci: lint latency-pairs test gates conformance parity coverage

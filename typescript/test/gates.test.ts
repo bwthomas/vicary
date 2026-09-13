@@ -38,6 +38,7 @@ import {
   resolveCorpusId,
 } from "../src/corpus.js";
 import { load } from "../src/gazetteer.js";
+import type { GateReport } from "../src/gates.js";
 import {
   ACCEPTED_VIOLATIONS,
   KNOWN_PLACEHOLDERS,
@@ -708,8 +709,13 @@ test("restore by token is keyed on what a consumer actually sees", () => {
 // Registered with `process.on("exit")` so it lands after the assertions. A report
 // that runs first prints an empty table and passes — the same ordering
 // `python/tests/conftest.py` enforces, for the same reason.
-process.on("exit", () => {
-  const full = measureGates(
+// Measured once and shared, because the test below reaches the same board: the
+// fixture arm is not free, and a board measured twice is two chances to disagree
+// with itself.
+let fullBoard: GateReport | null = null;
+function board(): GateReport {
+  if (fullBoard !== null) return fullBoard;
+  fullBoard = measureGates(
     spec,
     gates,
     (sentence: string, identity: Identity) => redact(sentence, identity),
@@ -730,6 +736,33 @@ process.on("exit", () => {
           }),
     },
   );
+  return fullBoard;
+}
+
+// The report has always named what it could not measure, and the suite has
+// always exited 0 while it did — `9 of 9 measured gates hold; 1 are NOT
+// MEASURED` is a green check list describing a gate set that was not cleared.
+// That is how a release whose latency was never compared reads as a release that
+// passed, which is what 0.2.13 did in all three ports. The skip stays, because a
+// gate that cannot compare must decline rather than invent a number; what it no
+// longer gets is a green exit. `just latency-pair typescript` supplies the
+// missing side locally, and `just ci` takes it for all three ports.
+test("a run that could not measure a gate does not clear the gate set", () => {
+  const unmeasured = board()
+    .measurements.filter((m) => m.passed === null)
+    .map((m) => m.gate.id);
+  assert.deepEqual(
+    unmeasured,
+    [],
+    `${unmeasured.length} gates were NOT MEASURED (${unmeasured.join(", ")}), so ` +
+      `this run did not clear the gate set — and a run that says so must not exit 0. ` +
+      `The latency gate needs the other side of its pair: \`just latency-pair ` +
+      `typescript\`, or \`just ci\`, which takes it.`,
+  );
+});
+
+process.on("exit", () => {
+  const full = board();
   // The corpus is named, not implied. Two of these gates carry a per-corpus bar
   // — over-firing is 8.15 spans/essay on persuade-20 against 0.61 on ASAP-AES —
   // so a board that prints `8.150 <= 8.15 PASS` without saying which corpus
