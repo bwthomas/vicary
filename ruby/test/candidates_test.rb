@@ -917,13 +917,15 @@ class CaseVarianceTest < Minitest::Test
   # The prefilter is a filter, never a second opinion.
   #
   # {Candidates.capitalises_inside_a_word?} no longer looks at every word token
-  # — it looks at {INTERIOR_CAP_WORD}, gated on {INTERIOR_CAP_HINT}. Both are
-  # necessary conditions for {Candidates.interior_capital?}, so the answer is
-  # unchanged; this pins that against the shapes where a narrower scan could
-  # plausibly have started in the wrong place. A word sitting against an
-  # apostrophe or a hyphen is the one that matters — both characters are in
-  # {WORD_TOKEN}'s continuation class, so a word-boundary assertion would have
-  # skipped the token entirely.
+  # — it looks at {INTERIOR_CAP_HINT} and walks out from each hit to the word
+  # carrying it. The hint is a necessary condition for
+  # {Candidates.interior_capital?}, so the answer is unchanged; this pins that
+  # against the shapes where a narrower scan could plausibly have started or
+  # stopped in the wrong place. A word sitting against an apostrophe or a hyphen
+  # is the one that matters — both characters are in {WORD_TOKEN}'s
+  # continuation class, so a word-boundary assertion would have skipped the
+  # token entirely, and `'ChoaCh'` hints at its own FIRST letter before it hints
+  # at the interior one.
   def test_the_interior_channel_reads_the_document_the_word_scan_would_have
     [
       "'ChoaCh' is what the sign said.",

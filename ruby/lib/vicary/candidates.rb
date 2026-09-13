@@ -186,41 +186,31 @@ module Vicary
     # of the commonest surname shapes there are.
     PIECE = /[^'’\-‐-―]+/
 
-    # The word tokens {Candidates.interior_capital?} can possibly say yes to,
-    # and the only ones {Candidates.capitalises_inside_a_word?} needs to look
-    # at.
+    # The only shape a word with an interior capital can carry: a capital with a
+    # word character in front of it. Every capital {Candidates.interior_capital?}
+    # is allowed to fire on sits at word-index 1 or later, so it is preceded
+    # either by the word's own first character or by one of `[A-Za-z'’-]`, and
+    # both are inside this class. A document that fails this has no interior
+    # capital and needs no word scan at all; a document that passes has told the
+    # scan exactly where to look. That makes this a filter and never a second
+    # opinion — the answer stays that method's.
     #
-    # It is {WORD_TOKEN} with one letter of the continuation class removed: a
-    # capital somewhere after the first character. That is a *necessary*
-    # condition for an interior capital — every position the exemptions in
-    # {Candidates.interior_capital?} still allow to fire is at piece-index 1 or
-    # later, so it is at word-index 1 or later too — which makes this a filter
-    # and never a second opinion. The answer stays that method's.
-    #
-    # The match is the same substring {WORD_TOKEN} would have produced, not a
-    # fragment of one. A token whose first capital after position 0 sits at k
-    # has every earlier character in `[a-z'’-]` by construction, so the engine
-    # matches from the token's own start, and the trailing class then runs
-    # greedily to the token's own end.
-    #
-    # Why this is worth a second pattern: the scan is per-document and the words
-    # it is looking for are rare. On the twenty-essay gate corpus exactly ONE
-    # document contains an interior capital, so the other nineteen used to be
-    # tokenised to the last word — and a regex spent on each — to return false.
-    INTERIOR_CAP_WORD = /[A-Za-z][a-z'’-]*[A-Z][A-Za-z'’-]*/
-
-    # The two-character shape {INTERIOR_CAP_WORD} cannot match without: a
-    # capital with a word character in front of it. Every capital that pattern
-    # fires on is preceded either by its own first character or by one of
-    # `[a-z'’-]`, and both are inside this class, so a document that fails
-    # this has no interior capital and needs no word scan at all.
-    #
-    # It exists because the precise pattern backtracks. `[a-z'’-]*[A-Z]` is
-    # retried at every letter of every word that has no capital after it, which
-    # is most words in most documents; this is a two-character scan that cannot
-    # backtrack. On the twenty-essay gate corpus it clears thirteen documents
-    # outright at a twentieth of the cost.
+    # Two characters, and it cannot backtrack. It replaced a precise word
+    # pattern (`[A-Za-z][a-z'’-]*[A-Z][A-Za-z'’-]*`) that did: `[a-z'’-]*[A-Z]`
+    # is retried at every letter of every word that has no capital after it,
+    # which is most words in most documents, and running it over the whole text
+    # cost threefold what running this one and walking out from its hits costs —
+    # 57 µs per document against 17.5 on the twenty-essay gate corpus. The walk
+    # is in {Candidates.capitalises_inside_a_word?}; the word it reaches is the
+    # same substring {WORD_TOKEN} would have produced, because the walk uses
+    # that token's own continuation class.
     INTERIOR_CAP_HINT = /[A-Za-z'’-][A-Z]/
+
+    # The complement of {WORD_TOKEN}'s continuation class, and its first-character
+    # class. The interior-capital walk reads outwards from a hint rather than
+    # forwards from a word, so it needs the boundary rather than the token.
+    NOT_WORD_CHARACTER = /[^A-Za-z'’-]/
+    WORD_FIRST_CHARACTER = /[A-Za-z]/
 
     # Where a sentence begins: start of text, after terminal punctuation and any
     # closing quote, after a line break, or immediately inside an *opening*
@@ -382,6 +372,11 @@ module Vicary
 
     # One row of the precedence table: a tag, and what it decides.
     PrecedenceRow = Struct.new(:tag, :mask, :kind)
+
+    # What one pass over a document's words says about how the writer cases
+    # them. See {Candidates.document_casing}; either half is empty when the
+    # caller did not ask for it.
+    DocumentCasing = Struct.new(:written_as_a_capital, :written_in_lower_case)
 
     # The precedence table. The first row whose tag the span carries decides both
     # the mask/keep verdict and the placeholder, and that is the whole
@@ -1085,16 +1080,63 @@ module Vicary
       # Horses" vouch for "Horses" as a name — the heading corroborating itself,
       # one line removed.
       def mid_sentence_capitals(text, starts, headings = [])
-        out = Set.new
+        document_casing(text, starts, headings, lower_case: false).written_as_a_capital
+      end
+
+      # Both halves of the document's casing testimony, from ONE pass over its
+      # words.
+      #
+      # {.mid_sentence_capitals} and {.written_in_lower_case} ask opposite
+      # questions of the same tokens — one reads the words a writer capitalised
+      # where orthography would not have, the other the words they left
+      # lower-case — and a token answers exactly one of them, because a word's
+      # first character is either a capital or it is not. Run separately they
+      # tokenised every document twice.
+      #
+      # That second tokenisation is what this exists to remove, and it is worth
+      # a method rather than a comment: the pair was most of what the two
+      # orthography channels added to the release latency gate.
+      #
+      # Each half is opt-in because each has a caller that does not want it. The
+      # lower-case set is evidence only where the writer marks proper nouns at
+      # all (see `lower_cased` in {.find_candidates}), and asking for a set that
+      # will be discarded is the cost this method was written to avoid.
+      def document_casing(text, starts = Set.new, headings = [], capitals: true, lower_case: true)
+        capitalised = Set.new
+        lowered = Set.new
         each_match(text, WORD_TOKEN) do |m|
           token = m[0]
-          next if starts.include?(m.begin(0)) || !token[0].match?(/[A-Z]/)
+          # A byte comparison rather than `token[0].match?(/[A-Z]/)`, which
+          # allocated a one-character string and ran a regex for every word of
+          # every document. Exact, not an approximation: {WORD_TOKEN}'s first
+          # character is `[A-Za-z]`, so it is ASCII, a single byte, and
+          # lower-case exactly when it is not upper-case — which is what splits
+          # the two halves, at one test rather than two.
+          first = token.getbyte(0)
+          if first >= 97 && first <= 122
+            next unless lower_case
+
+            # {.strip} copies the string whether or not it takes anything off,
+            # and almost no word ends in an apostrophe. Same value either way —
+            # a strip that removes nothing returns an equal string, and the set
+            # holds values.
+            #
+            # Only the tail is worth testing. {.strip} works in from both ends,
+            # and the head was just established to be a lower-case ASCII letter,
+            # so the leading pass stops on the first character every time.
+            lowered_token = token.downcase
+            lowered_token = strip(lowered_token, "'’") if lowered_token.end_with?("'", "’")
+            lowered << lowered_token
+            next
+          end
+          next unless capitals
+          next if starts.include?(m.begin(0))
           next if token.length > 1 && upper?(token)
           next if overlaps?(headings, m.begin(0), m.begin(0) + token.length)
 
-          out << strip(token.downcase, "'’")
+          capitalised << strip(token.downcase, "'’")
         end
-        out
+        DocumentCasing.new(capitalised, lowered)
       end
 
       # ---------------------------------------------------------------------
@@ -1334,13 +1376,27 @@ module Vicary
       # NWP corpus 14 papers carry an interior capital and 2 of them (`SPecial`,
       # `AFter`) carry it only inside a heading.
       #
-      # The scan is over {INTERIOR_CAP_WORD} rather than every word token, which
-      # is a filter and not a change of answer — see that pattern.
+      # The scan is driven off {INTERIOR_CAP_HINT} rather than run over every
+      # word token, which is a filter and not a change of answer — see that
+      # pattern. Each hit names a capital and the walk reaches the word carrying
+      # it; the hit need not be interior itself (`'ChoaCh'` hints at its own
+      # first letter), so the WHOLE token is handed over rather than the
+      # position being judged here.
       def capitalises_inside_a_word?(text)
-        return false unless INTERIOR_CAP_HINT.match?(text)
+        pos = 0
+        while (hint = INTERIOR_CAP_HINT.match(text, pos))
+          capital = hint.begin(0) + 1
+          boundary = text.rindex(NOT_WORD_CHARACTER, capital - 1)
+          # A word begins on a letter, so a run of leading apostrophes or
+          # hyphens the walk crossed belongs to no word — `'Abc` tokenises to
+          # `Abc`. The capital is itself a letter, so this never runs past it.
+          start = text.index(WORD_FIRST_CHARACTER, boundary.nil? ? 0 : boundary + 1)
+          stop = text.index(NOT_WORD_CHARACTER, capital + 1) || text.length
+          return true if interior_capital?(text[start...stop])
 
-        text.scan(INTERIOR_CAP_WORD) do |word|
-          return true if interior_capital?(word)
+          # Past the whole word: it has just been read in full, so a second
+          # capital inside it would ask the same question again.
+          pos = stop
         end
         false
       end
@@ -1359,29 +1415,7 @@ module Vicary
       # letters, which is what keeps the rule free of any imported collision: it
       # consults no list, so it cannot inherit one's mistakes.
       def written_in_lower_case(text)
-        out = Set.new
-        # `scan` rather than `each_match`, and a byte comparison rather than
-        # `token[0].match?(/[a-z]/)` — which allocated a one-character string
-        # and ran a regex for every word of every document. Exact, not an
-        # approximation: {WORD_TOKEN}'s first character is `[A-Za-z]`, so it is
-        # ASCII and a single byte by construction.
-        text.scan(WORD_TOKEN) do |token|
-          first = token.getbyte(0)
-          next unless first >= 97 && first <= 122
-
-          # {.strip} copies the string whether or not it takes anything off,
-          # and almost no word ends in an apostrophe. Same value either way — a
-          # strip that removes nothing returns an equal string, and the set
-          # holds values.
-          #
-          # Only the tail is worth testing. {.strip} works in from both ends,
-          # and the head was just established to be a lower-case ASCII letter,
-          # so the leading pass stops on the first character every time.
-          lowered = token.downcase
-          lowered = strip(lowered, "'’") if lowered.end_with?("'", "’")
-          out << lowered
-        end
-        out
+        document_casing(text, capitals: false).written_in_lower_case
       end
 
       # The mid-sentence guard: drop a lone capital a sloppy capitaliser chose.
@@ -1947,21 +1981,23 @@ module Vicary
           blocked.any? { |block_start, block_end| start < block_end && finish > block_start }
         end
 
-        written_as_a_capital = mid_sentence_capitals(text, starts, headings)
-        # A property of the whole document, read once, for the same reason
-        # `habit` is: two call sites computing it separately could disagree.
+        # Both casing questions, read once from one pass over the words, for the
+        # same reason `habit` is read once: two call sites computing it
+        # separately could disagree.
+        #
+        # The lower-case half is asked for only where the writer marks proper
+        # nouns at all: that rule reads the ABSENCE of a capital as testimony,
+        # and the habit states in as many words that an absence means nothing in
+        # a LOWERCASE or SILENT document. Running it there would suppress every
+        # capital the writer did manage.
+        casing = document_casing(
+          text, starts, headings,
+          lower_case: case_variance && !given_name.nil? && marks_proper_nouns?(habit),
+        )
+        written_as_a_capital = casing.written_as_a_capital
+        lower_cased = casing.written_in_lower_case
         stray_capitals = mid_sentence_corroboration && !given_name.nil? &&
                          capitalises_ordinary_words?(text, headings)
-        # The mirror of `written_as_a_capital`, read once for the same reason.
-        # Empty unless the writer marks proper nouns at all: this rule reads the
-        # ABSENCE of a capital as testimony, and the habit states in as many
-        # words that an absence means nothing in a LOWERCASE or SILENT document.
-        # Running it there would suppress every capital the writer did manage.
-        lower_cased = if case_variance && !given_name.nil? && marks_proper_nouns?(habit)
-                        written_in_lower_case(text)
-                      else
-                        Set.new
-                      end
 
         out = []
         each_match(text, CANDIDATE_RE) do |m|

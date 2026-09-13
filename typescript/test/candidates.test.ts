@@ -1087,12 +1087,14 @@ test("the ordinary-words gate has a second channel needing no list", () => {
 // The prefilter is a filter, never a second opinion.
 //
 // `capitalisesInsideAWord` no longer looks at every word token — it looks at
-// INTERIOR_CAP_WORD, gated on INTERIOR_CAP_HINT. Both are necessary conditions
-// for `hasInteriorCapital`, so the answer is unchanged; this pins that against
-// the shapes where a narrower scan could plausibly have started in the wrong
-// place. A word sitting against an apostrophe or a hyphen is the one that
-// matters — both characters are in WORD_TOKEN's continuation class, so a
-// word-boundary assertion would have skipped the token entirely.
+// INTERIOR_CAP_HINT and walks out from each hit to the word carrying it. The
+// hint is a necessary condition for `hasInteriorCapital`, so the answer is
+// unchanged; this pins that against the shapes where a narrower scan could
+// plausibly have started or stopped in the wrong place. A word sitting against
+// an apostrophe or a hyphen is the one that matters — both characters are in
+// WORD_TOKEN's continuation class, so a word-boundary assertion would have
+// skipped the token entirely, and `'ChoaCh'` hints at its own FIRST letter
+// before it hints at the interior one.
 test("the interior channel reads the document the word scan would have", () => {
   const cases = [
     "'ChoaCh' is what the sign said.",

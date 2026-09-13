@@ -208,43 +208,45 @@ export const INTERIOR_CAPITAL_PREFIXES = [
 export const PIECE = /[^'’\-‐-―]+/g;
 
 /**
- * The word tokens {@link hasInteriorCapital} can possibly say yes to, and the
- * only ones {@link capitalisesInsideAWord} needs to look at.
+ * The only shape a word with an interior capital can carry: a capital with a
+ * word character in front of it. Every capital {@link hasInteriorCapital} is
+ * allowed to fire on sits at word-index 1 or later, so it is preceded either by
+ * the word's own first character or by one of `[A-Za-z'’-]`, and both are
+ * inside this class. A document that fails this has no interior capital and
+ * needs no word scan at all; a document that passes has told the scan exactly
+ * where to look. That makes this a filter and never a second opinion — the
+ * answer stays {@link hasInteriorCapital}'s.
  *
- * It is {@link WORD_TOKEN} with one letter of the continuation class removed: a
- * capital somewhere after the first character. That is a *necessary* condition
- * for an interior capital — every position the exemptions in
- * {@link hasInteriorCapital} still allow to fire is at piece-index 1 or later,
- * so it is at word-index 1 or later too — which makes this a filter and never a
- * second opinion. The answer stays that function's.
+ * Two characters, and it cannot backtrack. It replaced a precise word pattern
+ * (`[A-Za-z][a-z'’-]*[A-Z][A-Za-z'’-]*`) that did: `[a-z'’-]*[A-Z]` is retried
+ * at every letter of every word that has no capital after it, which is most
+ * words in most documents, and running it over the whole text cost twelvefold
+ * what running this one and walking out from its hits costs — 8.5 µs per
+ * document against 1.7 on the twenty-essay gate corpus. The walk is in
+ * {@link capitalisesInsideAWord}; the word it reaches is the same substring
+ * {@link WORD_TOKEN} would have produced, because the walk uses that token's
+ * own continuation class.
  *
- * The match is the same substring {@link WORD_TOKEN} would have produced, not a
- * fragment of one. A token whose first capital after position 0 sits at *k* has
- * every earlier character in `[a-z'’-]` by construction, so the engine matches
- * from the token's own start, and the trailing class then runs greedily to the
- * token's own end.
- *
- * Why this is worth a second pattern: the scan is per-document and the words it
- * is looking for are rare. On the twenty-essay gate corpus exactly ONE document
- * contains an interior capital, so the other nineteen used to be tokenised to
- * the last word — and a regex spent on each — to return false.
+ * Global, so the walk can resume past a word it has already judged, and reset
+ * on entry to that function rather than trusted between calls.
  */
-export const INTERIOR_CAP_WORD = /[A-Za-z][a-z'’-]*[A-Z][A-Za-z'’-]*/g;
+export const INTERIOR_CAP_HINT = /[A-Za-z'’-][A-Z]/g;
 
-/**
- * The two-character shape {@link INTERIOR_CAP_WORD} cannot match without: a
- * capital with a word character in front of it. Every capital that pattern
- * fires on is preceded either by its own first character or by one of
- * `[a-z'’-]`, and both are inside this class, so a document that fails this
- * has no interior capital and needs no word scan at all.
- *
- * It exists because the precise pattern backtracks. `[a-z'’-]*[A-Z]` is
- * retried at every letter of every word that has no capital after it, which is
- * most words in most documents; this is a two-character scan that cannot
- * backtrack. On the twenty-essay gate corpus it clears thirteen documents
- * outright at a twentieth of the cost.
- */
-export const INTERIOR_CAP_HINT = /[A-Za-z'’-][A-Z]/;
+/** A character {@link WORD_TOKEN} continues a word through: `[A-Za-z'’-]`. */
+function continuesAWord(code: number): boolean {
+  return (
+    (code >= 65 && code <= 90) ||
+    (code >= 97 && code <= 122) ||
+    code === 39 ||
+    code === 8217 ||
+    code === 45
+  );
+}
+
+/** A character {@link WORD_TOKEN} can *begin* a word on: `[A-Za-z]`. */
+function beginsAWord(code: number): boolean {
+  return (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+}
 
 /**
  * Where a sentence begins: start of text, after terminal punctuation and any
@@ -1150,15 +1152,80 @@ export function midSentenceCapitals(
   starts: ReadonlySet<number>,
   headings: readonly Span[] = [],
 ): Set<string> {
-  const out = new Set<string>();
+  return documentCasing(text, starts, headings, true, false).writtenAsACapital;
+}
+
+/** A caller with no sentence-start index, for the half that does not read one. */
+const NO_SENTENCE_STARTS: ReadonlySet<number> = new Set<number>();
+
+/** What one pass over a document's words says about how the writer cases them. */
+export interface DocumentCasing {
+  /** See {@link midSentenceCapitals}. Empty when the caller did not ask. */
+  readonly writtenAsACapital: Set<string>;
+  /** See {@link writtenInLowerCase}. Empty when the caller did not ask. */
+  readonly writtenInLowerCase: Set<string>;
+}
+
+/**
+ * Both halves of the document's casing testimony, from ONE pass over its words.
+ *
+ * {@link midSentenceCapitals} and {@link writtenInLowerCase} ask opposite
+ * questions of the same tokens — one reads the words a writer capitalised where
+ * orthography would not have, the other the words they left lower-case — and a
+ * token answers exactly one of them, because a word's first character is either
+ * a capital or it is not. Run separately they tokenised every document twice.
+ *
+ * That second tokenisation is what this exists to remove, and it is worth a
+ * function rather than a comment: the pair cost 54.4 µs per document on the
+ * twenty-essay gate corpus and this costs 34.9, which is most of what the two
+ * orthography channels added to the release latency gate.
+ *
+ * Each half is opt-in because each has a caller that does not want it. The
+ * lower-case set is evidence only where the writer marks proper nouns at all
+ * (see the `lowerCased` binding in {@link findCandidates}), and asking for a set
+ * that will be discarded is the cost this function was written to avoid.
+ */
+export function documentCasing(
+  text: string,
+  starts: ReadonlySet<number>,
+  headings: readonly Span[] = [],
+  capitals = true,
+  lowerCase = true,
+): DocumentCasing {
+  const writtenAsACapital = new Set<string>();
+  const writtenInLowerCase = new Set<string>();
   for (const match of text.matchAll(WORD_TOKEN)) {
     const token = match[0];
-    if (starts.has(match.index) || !/[A-Z]/.test(token[0]!)) continue;
+    // `charCodeAt` rather than `/[A-Z]/.test(token[0])`, which allocated a
+    // one-character string and ran a regex for every word of every document.
+    // Exact, not an approximation: WORD_TOKEN's first character is `[A-Za-z]`,
+    // so it is ASCII, a single code unit, and lower-case exactly when it is not
+    // upper-case — which is what splits the two halves.
+    const first = token.charCodeAt(0);
+    if (first >= 97 && first <= 122) {
+      if (!lowerCase) continue;
+      // `strip` walks and re-slices whether or not it takes anything off, and
+      // almost no word ends in an apostrophe. Same value either way — a strip
+      // that removes nothing returns an equal string, and the set holds values.
+      //
+      // Only the tail is worth testing. `strip` works in from both ends, and
+      // the head was just established to be a lower-case ASCII letter, so the
+      // leading pass stops on the first character every time.
+      const lowered = token.toLowerCase();
+      writtenInLowerCase.add(
+        lowered.endsWith("'") || lowered.endsWith("’")
+          ? strip(lowered, "'’")
+          : lowered,
+      );
+      continue;
+    }
+    if (!capitals) continue;
+    if (starts.has(match.index)) continue;
     if (token.length > 1 && isUpper(token)) continue;
     if (overlaps(headings, match.index, match.index + token.length)) continue;
-    out.add(strip(token.toLowerCase(), "'’"));
+    writtenAsACapital.add(strip(token.toLowerCase(), "'’"));
   }
-  return out;
+  return { writtenAsACapital, writtenInLowerCase };
 }
 
 /**
@@ -1376,15 +1443,29 @@ export function hasInteriorCapital(word: string): boolean {
  * only inside a heading.
  */
 export function capitalisesInsideAWord(text: string): boolean {
-  // Over INTERIOR_CAP_WORD rather than every word token, which is a filter and
-  // not a change of answer — see that pattern. `match` rather than `matchAll`:
-  // this wants the words and never their positions, and the global form returns
-  // them as one array without an object per match.
-  if (!INTERIOR_CAP_HINT.test(text)) return false;
-  const words = text.match(INTERIOR_CAP_WORD);
-  if (words === null) return false;
-  for (const word of words) {
-    if (hasInteriorCapital(word)) return true;
+  // Driven off {@link INTERIOR_CAP_HINT} rather than a word pattern run over
+  // the whole text, which is a filter and not a change of answer — see that
+  // pattern. Each hit names a capital; the walk either reaches the word that
+  // carries it or establishes that the capital is the word's own first
+  // character, which no exemption in `hasInteriorCapital` can fire on.
+  INTERIOR_CAP_HINT.lastIndex = 0;
+  let hint: RegExpExecArray | null;
+  while ((hint = INTERIOR_CAP_HINT.exec(text)) !== null) {
+    const capital = hint.index + 1;
+    let start = capital;
+    while (start > 0 && continuesAWord(text.charCodeAt(start - 1))) start -= 1;
+    // A word begins on a letter, so a run of leading apostrophes or hyphens the
+    // walk crossed belongs to no word — `'Abc` tokenises to `Abc`.
+    while (start < capital && !beginsAWord(text.charCodeAt(start))) start += 1;
+    let end = capital + 1;
+    while (end < text.length && continuesAWord(text.charCodeAt(end))) end += 1;
+    // Past the whole word: `hasInteriorCapital` has just read all of it, so a
+    // second capital inside it would ask the same question again. The hit that
+    // brought us here need not be interior — `'ChoaCh'` hints at its own first
+    // letter — which is why the WHOLE token is handed over rather than the
+    // position being judged here.
+    INTERIOR_CAP_HINT.lastIndex = end;
+    if (hasInteriorCapital(text.slice(start, end))) return true;
   }
   return false;
 }
@@ -1404,34 +1485,7 @@ export function capitalisesInsideAWord(text: string): boolean {
  * consults no list, so it cannot inherit one's mistakes.
  */
 export function writtenInLowerCase(text: string): Set<string> {
-  const out = new Set<string>();
-  // `match` rather than `matchAll`: this wants the words and never their
-  // positions, and the global form returns them as one array without an object
-  // per match — at one per word of every document, that was the scan's cost.
-  const tokens = text.match(WORD_TOKEN);
-  if (tokens === null) return out;
-  for (const token of tokens) {
-    // `charCodeAt` rather than `/[a-z]/.test(token[0])`, which allocated a
-    // one-character string and ran a regex for every word of every document.
-    // Exact, not an approximation: WORD_TOKEN's first character is `[A-Za-z]`,
-    // so it is ASCII and a single code unit by construction.
-    const first = token.charCodeAt(0);
-    if (first < 97 || first > 122) continue;
-    // `strip` walks and re-slices whether or not it takes anything off, and
-    // almost no word ends in an apostrophe. Same value either way — a strip
-    // that removes nothing returns an equal string, and the set holds values.
-    //
-    // Only the tail is worth testing. `strip` works in from both ends, and the
-    // head was just established to be a lower-case ASCII letter, so the leading
-    // pass stops on the first character every time.
-    const lowered = token.toLowerCase();
-    out.add(
-      lowered.endsWith("'") || lowered.endsWith("’")
-        ? strip(lowered, "'’")
-        : lowered,
-    );
-  }
-  return out;
+  return documentCasing(text, NO_SENTENCE_STARTS, [], false).writtenInLowerCase;
 }
 
 /**
@@ -2258,22 +2312,26 @@ export function findCandidates(
   const isProtected = (start: number, end: number): boolean =>
     blocked.some(([blockStart, blockEnd]) => start < blockEnd && end > blockStart);
 
-  const writtenAsACapital = midSentenceCapitals(text, starts, headings);
-  // A property of the whole document, read once, for the same reason `habit` is:
-  // two call sites computing it separately could disagree.
+  // Both casing questions, read once from one pass over the words, for the same
+  // reason `habit` is read once: two call sites computing it separately could
+  // disagree.
+  //
+  // The lower-case half is asked for only where the writer marks proper nouns at
+  // all: that rule reads the ABSENCE of a capital as testimony, and the habit
+  // states in as many words that an absence means nothing in a LOWERCASE or
+  // SILENT document. Running it there would suppress every capital the writer
+  // did manage.
+  const { writtenAsACapital, writtenInLowerCase: lowerCased } = documentCasing(
+    text,
+    starts,
+    headings,
+    true,
+    caseVariance && givenName !== undefined && marksProperNouns(habit),
+  );
   const strayCapitals =
     midSentenceCorroboration &&
     givenName !== undefined &&
     capitalisesOrdinaryWords(text, headings);
-  // The mirror of `writtenAsACapital`, read once for the same reason. Empty
-  // unless the writer marks proper nouns at all: this rule reads the ABSENCE of
-  // a capital as testimony, and the habit states in as many words that an
-  // absence means nothing in a LOWERCASE or SILENT document. Running it there
-  // would suppress every capital the writer did manage.
-  const lowerCased =
-    caseVariance && givenName !== undefined && marksProperNouns(habit)
-      ? writtenInLowerCase(text)
-      : new Set<string>();
 
   const out: Candidate[] = [];
   for (const match of text.matchAll(CANDIDATE_RE)) {

@@ -83,8 +83,10 @@ from __future__ import annotations
 
 import enum
 import re
+import string
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import NamedTuple
 
 from vicary import lexicon
 
@@ -305,40 +307,31 @@ _INTERIOR_CAPITAL_PREFIXES: tuple[str, ...] = (
 #: the commonest surname shapes there are.
 _PIECE = re.compile(r"[^'’\-‐-―]+")
 
-#: The word tokens :func:`has_interior_capital` can possibly say yes to, and the
-#: only ones :func:`_capitalises_inside_a_word` needs to look at.
+#: The only shape a word with an interior capital can carry: a capital with a
+#: word character in front of it. Every capital :func:`has_interior_capital` is
+#: allowed to fire on sits at word-index 1 or later, so it is preceded either by
+#: the word's own first character or by one of ``[A-Za-z'’-]``, and both are
+#: inside this class. A document that fails this has no interior capital and
+#: needs no word scan at all; a document that passes has told the scan exactly
+#: where to look. That makes this a filter and never a second opinion — the
+#: answer stays :func:`has_interior_capital`'s.
 #:
-#: It is :data:`_WORD_TOKEN` with one letter of the continuation class removed:
-#: a capital somewhere after the first character. That is a *necessary*
-#: condition for an interior capital — every position the exemptions in
-#: :func:`has_interior_capital` still allow to fire is at piece-index 1 or
-#: later, so it is at word-index 1 or later too — which makes this a filter and
-#: never a second opinion. The answer stays that function's.
-#:
-#: The match is the same substring :data:`_WORD_TOKEN` would have produced, not
-#: a fragment of one. A token whose first capital after position 0 sits at *k*
-#: has every earlier character in ``[a-z'’-]`` by construction, so the engine
-#: matches from the token's own start, and the trailing class then runs greedily
-#: to the token's own end.
-#:
-#: Why this is worth a second pattern: the scan is per-document and the words it
-#: is looking for are rare. On the twenty-essay gate corpus exactly ONE document
-#: contains an interior capital, so the other nineteen used to be tokenised to
-#: the last word — and a regex call spent on each — to return false.
-_INTERIOR_CAP_WORD = re.compile(r"[A-Za-z][a-z'’-]*[A-Z][A-Za-z'’-]*")
-
-#: The two-character shape :data:`_INTERIOR_CAP_WORD` cannot match without: a
-#: capital with a word character in front of it. Every capital that pattern
-#: fires on is preceded either by its own first character or by one of
-#: ``[a-z'’-]``, and both are inside this class, so a document that fails this
-#: has no interior capital and needs no word scan at all.
-#:
-#: It exists because the precise pattern backtracks. ``[a-z'’-]*[A-Z]`` is
+#: Two characters, and it cannot backtrack. It replaced a precise word pattern
+#: (``[A-Za-z][a-z'’-]*[A-Z][A-Za-z'’-]*``) that did: ``[a-z'’-]*[A-Z]`` is
 #: retried at every letter of every word that has no capital after it, which is
-#: most words in most documents; this is a two-character scan that cannot
-#: backtrack. On the twenty-essay gate corpus it clears thirteen documents
-#: outright at a twentieth of the cost.
+#: most words in most documents, and running it over the whole text cost
+#: twelvefold what running this one and walking out from its hits costs. The
+#: walk is in :func:`_capitalises_inside_a_word`; the word it reaches is the
+#: same substring :data:`_WORD_TOKEN` would have produced, because the walk uses
+#: that token's own continuation class.
 _INTERIOR_CAP_HINT = re.compile(r"[A-Za-z'’-][A-Z]")
+
+#: The characters :data:`_WORD_TOKEN` continues a word through, and the ones it
+#: can *begin* a word on. Sets rather than the patterns themselves because the
+#: interior-capital walk reads one character at a time — see
+#: :func:`_capitalises_inside_a_word`.
+_WORD_CONTINUES = frozenset(string.ascii_letters + "'’-")
+_WORD_BEGINS = frozenset(string.ascii_letters)
 
 #: Tokens a lowercase span must reach before it is emitted at all. Set to 2
 #: deliberately, and it is the single decision that makes this route affordable —
@@ -956,10 +949,60 @@ def _mid_sentence_capitals(
     emphasis rule had just raised. A capital is testimony only where the writer
     had a lower-case alternative and declined it.
     """
-    out: set[str] = set()
+    return _document_casing(text, starts, headings,
+                            lower_case=False).written_as_a_capital
+
+
+class _DocumentCasing(NamedTuple):
+    """What one pass over a document's words says about how it cases them."""
+
+    #: See :func:`_mid_sentence_capitals`. Empty when the caller did not ask.
+    written_as_a_capital: frozenset[str]
+    #: See :func:`written_in_lower_case`. Empty when the caller did not ask.
+    written_in_lower_case: frozenset[str]
+
+
+def _document_casing(
+    text: str,
+    starts: frozenset[int] = frozenset(),
+    headings: tuple[tuple[int, int], ...] = (),
+    *,
+    capitals: bool = True,
+    lower_case: bool = True,
+) -> _DocumentCasing:
+    """Both halves of the document's casing testimony, from ONE pass over its
+    words.
+
+    :func:`_mid_sentence_capitals` and :func:`written_in_lower_case` ask
+    opposite questions of the same tokens — one reads the words a writer
+    capitalised where orthography would not have, the other the words they left
+    lower-case — and a token answers exactly one of them, because a word's first
+    character is either a capital or it is not. Run separately they tokenised
+    every document twice.
+
+    That second tokenisation is what this exists to remove, and it is worth a
+    function rather than a comment: the pair was most of what the two
+    orthography channels added to the release latency gate.
+
+    Each half is opt-in because each has a caller that does not want it. The
+    lower-case set is evidence only where the writer marks proper nouns at all
+    (see ``lower_cased`` in :func:`find_candidates`), and asking for a set that
+    will be discarded is the cost this function was written to avoid.
+    """
+    capitalised: set[str] = set()
+    lowered: set[str] = set()
     for match in _WORD_TOKEN.finditer(text):
         token = match.group(0)
-        if match.start() in starts or not token[0].isupper():
+        # :data:`_WORD_TOKEN`'s first character is ``[A-Za-z]``, so it is
+        # lower-case exactly when it is not upper-case — which is what splits
+        # the two halves, at one test rather than two.
+        if not token[0].isupper():
+            if lower_case:
+                lowered.add(token.lower().strip("'’"))
+            continue
+        if not capitals:
+            continue
+        if match.start() in starts:
             continue
         if len(token) > 1 and token.isupper():
             continue
@@ -969,8 +1012,8 @@ def _mid_sentence_capitals(
         if any(match.start() < h_end and match.end() > h_start
                for h_start, h_end in headings):
             continue
-        out.add(token.lower().strip("'’"))
-    return frozenset(out)
+        capitalised.add(token.lower().strip("'’"))
+    return _DocumentCasing(frozenset(capitalised), frozenset(lowered))
 
 
 #: Longest line still readable as a heading. Body prose in these documents is
@@ -1184,13 +1227,32 @@ def _capitalises_inside_a_word(text: str) -> bool:
     interior capital and 2 of them (`SPecial`, `AFter`) carry it only inside a
     heading.
 
-    The scan is over :data:`_INTERIOR_CAP_WORD` rather than every word token,
-    which is a filter and not a change of answer — see that pattern.
+    The scan is driven off :data:`_INTERIOR_CAP_HINT` rather than run over every
+    word token, which is a filter and not a change of answer — see that pattern.
+    Each hit names a capital and the walk reaches the word carrying it; the hit
+    need not be interior itself (``'ChoaCh'`` hints at its own first letter), so
+    the WHOLE token is handed over rather than the position being judged here.
     """
-    if _INTERIOR_CAP_HINT.search(text) is None:
-        return False
-    return any(has_interior_capital(word)
-               for word in _INTERIOR_CAP_WORD.findall(text))
+    length = len(text)
+    hint = _INTERIOR_CAP_HINT.search(text)
+    while hint is not None:
+        capital = hint.start() + 1
+        start = capital
+        while start > 0 and text[start - 1] in _WORD_CONTINUES:
+            start -= 1
+        # A word begins on a letter, so a run of leading apostrophes or hyphens
+        # the walk crossed belongs to no word — `'Abc` tokenises to `Abc`.
+        while start < capital and text[start] not in _WORD_BEGINS:
+            start += 1
+        end = capital + 1
+        while end < length and text[end] in _WORD_CONTINUES:
+            end += 1
+        if has_interior_capital(text[start:end]):
+            return True
+        # Past the whole word: it has just been read in full, so a second
+        # capital inside it would ask the same question again.
+        hint = _INTERIOR_CAP_HINT.search(text, end)
+    return False
 
 
 def written_in_lower_case(text: str) -> frozenset[str]:
@@ -1207,15 +1269,7 @@ def written_in_lower_case(text: str) -> frozenset[str]:
     letters, which is what keeps the rule free of any imported collision: it
     consults no list, so it cannot inherit one's mistakes.
     """
-    out: set[str] = set()
-    # `findall` rather than `finditer`: this wants the word and never its
-    # position, and at one match object per word of every document that is the
-    # difference between an allocation per word and none.
-    for token in _WORD_TOKEN.findall(text):
-        if not token[0].islower():
-            continue
-        out.add(token.lower().strip("'’"))
-    return frozenset(out)
+    return _document_casing(text, capitals=False).written_in_lower_case
 
 
 def capitalises_ordinary_words(
@@ -1701,23 +1755,24 @@ def find_candidates(
     def _protected(start: int, end: int) -> bool:
         return any(start < b_end and end > b_start for b_start, b_end in blocked)
 
-    written_as_a_capital = _mid_sentence_capitals(text, starts, headings)
-    # A property of the whole document, read once, for the same reason `habit`
-    # is: two call sites computing it separately could disagree.
+    # Both casing questions, read once from one pass over the words, for the
+    # same reason `habit` is read once: two call sites computing it separately
+    # could disagree.
+    #
+    # The lower-case half is asked for only where the writer marks proper nouns
+    # at all: that rule reads the ABSENCE of a capital as testimony, and
+    # `CapitalisationHabit` says in as many words that an absence means nothing
+    # in a LOWERCASE or SILENT document. Running it there would suppress every
+    # capital the writer did manage.
+    written_as_a_capital, lower_cased = _document_casing(
+        text, starts, headings,
+        lower_case=(case_variance and given_name is not None
+                    and habit.marks_proper_nouns),
+    )
     stray_capitals = (
         mid_sentence_corroboration
         and given_name is not None
         and capitalises_ordinary_words(text, headings)
-    )
-    # The mirror of `written_as_a_capital`, read once for the same reason. Empty
-    # unless the writer marks proper nouns at all: this rule reads the ABSENCE
-    # of a capital as testimony, and `CapitalisationHabit` says in as many words
-    # that an absence means nothing in a LOWERCASE or SILENT document. Running
-    # it there would suppress every capital the writer did manage.
-    lower_cased = (
-        written_in_lower_case(text)
-        if case_variance and given_name is not None and habit.marks_proper_nouns
-        else frozenset()
     )
 
     out: list[Candidate] = []
