@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.16 — 2026-10-19
+
 ### A host can assert that no placeholder reaches a reader
 
 A student was shown "How exactly does microplastic affect a specific {NAME_1}"
