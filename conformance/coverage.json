@@ -32,6 +32,12 @@
       "typescript": "test/spans.test.ts",
       "ruby": "test/spans_test.rb"
     },
+    "placeholders": {
+      "why": "The host boundary: finding a placeholder in text bound for a reader, in vicary's own grammar and the shapes a model paraphrases it into, the typed error that names kinds and never the text, and the prose and quote scrubs. Checked against `conformance/placeholders.json`, including the pattern's source text, which all three ports compile byte for byte.",
+      "python": "tests/test_placeholders.py",
+      "typescript": "test/placeholders.test.ts",
+      "ruby": "test/placeholders_test.rb"
+    },
     "gazetteer": {
       "why": "The notability index as the detector reads it: the fold, tier precedence, the title prefix walk, and the demonym tier's KEEP.",
       "python": null,

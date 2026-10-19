@@ -1,6 +1,6 @@
 # conformance — the spec all three front doors run against
 
-Four files, generated from the Python implementation and consumed by every port:
+Five files, generated from the Python implementation and consumed by every port:
 
 | file | what it is |
 |---|---|
@@ -8,11 +8,15 @@ Four files, generated from the Python implementation and consumed by every port:
 | `gates.json` | the nine gates: what is measured, the bar, and which gates declare a data requirement |
 | `primitives.json` | the tokenisation and capitalisation answers underneath a frame: 18 primitives over 27 texts and 12 token lists |
 | `spans.json` | the offset-translation answers: where each replacement came from, and what a given offset is in the other coordinate system, over 53 cases |
+| `placeholders.json` | the host-boundary guard: the placeholder pattern's source text, which every port compiles byte for byte, and 40 hand-built positive and negative cases with the reference's matches, kinds, code-point offsets and both scrubs |
 
-Regenerate with `just sync-conformance`. Never hand-edit them: all four are
+Regenerate with `just sync-conformance`. Never hand-edit them: all five are
 compared byte-for-byte against a fresh export by
 `tools/tests/test_conformance.py`, so an edit that is not a regeneration fails
-the build — which is the point.
+the build — which is the point. `placeholders.json` adds a fifth direction: each
+case carries a hand-written `leaks` intent, and the build fails when the
+reference's answer contradicts it, so a pattern change cannot re-export a
+regression as the new truth.
 
 Plus two directories of **measurement inputs** — data the gates are scored
 against, rather than answers generated from the detector:

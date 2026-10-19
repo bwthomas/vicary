@@ -63,6 +63,23 @@ the identity — a caller can handle "no spans" and cannot detect a wrong offset
 Python and Ruby ports character for character above the BMP as well as below it;
 `conformance/spans.json` carries astral cases that fail a transliteration.
 
+**Before a reader sees it.** A host must not show a placeholder it did not
+restore — echoed by a model, or paraphrased as `[NAME_1]`, `{Name_1}` or a bare
+`NAME_1`. Check the last string first:
+
+```ts
+import { assertNoPlaceholders, scrubPlaceholders } from "@bwthomas/vicary";
+
+show(assertNoPlaceholders(feedback));   // throws PlaceholderLeakError
+show(scrubPlaceholders(feedback).text); // or drop each sentence carrying one
+```
+
+The error names the kinds and the count, never the text. `findPlaceholders` and
+`hasPlaceholders` answer without throwing (offsets in code points, as above);
+`scrubPlaceholders(text, { quote: true })` elides instead, for a verbatim quote.
+`PLACEHOLDER_LIKE` is the same source text as the Python and Ruby patterns,
+checked against `conformance/placeholders.json`.
+
 **The gates.** Of the nine in [`conformance/gates.json`](../conformance), this
 port measures the five that need no operator-supplied data, and all five hold:
 

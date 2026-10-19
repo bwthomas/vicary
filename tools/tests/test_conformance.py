@@ -415,3 +415,35 @@ def test_the_two_translations_are_inverse_at_every_span_boundary(
         f"only {checked} boundary round trips available — the probe offsets "
         "stopped covering span edges, so this test is passing on nothing"
     )
+
+
+def test_the_committed_placeholders_file_is_a_current_export(
+    conformance_directory: Path,
+) -> None:
+    on_disk = (conformance_directory / conformance.PLACEHOLDERS_FILENAME).read_text(
+        "utf-8"
+    )
+    fresh = conformance.dumps(conformance.build_placeholders_document())
+    assert on_disk == fresh, (
+        "conformance/placeholders.json is stale — the placeholder pattern, a "
+        "scrub rule or the case table changed and the file the ports check "
+        "their guard against did not. Regenerate with `just sync-conformance` "
+        "and READ THE DIFF: a case that stopped matching is a placeholder a "
+        "host would now show a reader."
+    )
+
+
+def test_every_placeholder_case_answers_its_written_intent() -> None:
+    """The reference agrees with the intent written beside each case.
+
+    Without this the export is self-certifying: a pattern change that starts
+    matching "Ms. Name", or stops matching ``[NAME_1]``, regenerates cleanly and
+    hands all three ports the regression as the new truth.
+    """
+    document = conformance.build_placeholders_document()
+    wrong = [
+        case["case_id"]
+        for case in document["cases"]
+        if bool(case["matches"]) is not case["leaks"]
+    ]
+    assert not wrong, f"cases whose answer contradicts their intent: {wrong}"

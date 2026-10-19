@@ -188,6 +188,52 @@ bytes, the per-field maps and the flag against the Python reference — a port c
 reproduce every byte while mis-assigning the maps, and the maps are what a restore
 reads.
 
+### Before a reader sees it
+
+A host restores the placeholders a reader may see and leaves the rest masked —
+so the last thing it must check is that none of the rest survived into what it is
+about to display. Two paths ship one anyway, and the masker cannot see either: a
+model echoes a placeholder it read that the host's restore map does not cover, or
+paraphrases one into a shape a host matching vicary's exact grammar misses —
+`[NAME_1]`, `{Name_1}`, `{ NAME_1 }`, a bare `NAME_1`. A student was shown "How
+exactly does microplastic affect a specific {NAME_1}".
+
+Every front door owns that grammar, so a host does not copy it:
+
+| | Python | TypeScript | Ruby |
+|---|---|---|---|
+| matches | `find_placeholders(text)` | `findPlaceholders(text)` | `Vicary.find_placeholders(text)` |
+| any? | `has_placeholders(text)` | `hasPlaceholders(text)` | `Vicary.has_placeholders?(text)` |
+| raise | `assert_no_placeholders(text)` | `assertNoPlaceholders(text)` | `Vicary.assert_no_placeholders(text)` |
+| remove | `scrub_placeholders(text, quote=False)` | `scrubPlaceholders(text, { quote })` | `Vicary.scrub_placeholders(text, quote: false)` |
+| error | `PlaceholderLeakError` (a `ValueError`) | `PlaceholderLeakError` (an `Error`) | `Vicary::PlaceholderLeakError` (an `ArgumentError`) |
+| pattern | `PLACEHOLDER_LIKE` | `PLACEHOLDER_LIKE` | `Vicary::Placeholders::PLACEHOLDER_LIKE` |
+
+```python
+from vicary import assert_no_placeholders, scrub_placeholders
+
+feedback = restore(model_reply)               # what the host may put back
+show(assert_no_placeholders(feedback))        # raises rather than display one
+# or, where a degraded reply beats none:
+show(scrub_placeholders(feedback).text)
+```
+
+The error carries the kinds and the count, **never the text**: its message goes
+to a log, and the text is what was not supposed to leave. A `{UPPER_CASE}` token
+naming no known kind reports `OTHER`, since its letters are the document's own.
+The scrub never puts a word back — there is no map and nothing is guessed. A
+prose sentence carrying a placeholder is dropped whole (an honorific or initial
+does not end a sentence, so "Unlike Ms. {NAME_1}, …" goes together); when every
+sentence carries one it reads "someone", "a place" and so on instead. With
+`quote` set, for a verbatim quote of the writer's own words, each is elided as
+`…`.
+
+Plain words are not placeholders: `NAME`, `Ms. Name`, `{x}` and `(NAME)` pass.
+`{name}` does not — in text bound for a reader it is a template nobody filled.
+The pattern is one source text, written in the regex dialect all three engines
+agree on, and `conformance/placeholders.json` records it beside 40 positive and
+negative cases each port reproduces, offsets in code points included.
+
 ### Modes
 
 | mode | what it does | cost |

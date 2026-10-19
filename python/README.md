@@ -62,6 +62,21 @@ measures a different system and misses the easiest spans in any composition.
 Redaction is reversible: `result.restore_map` maps each placeholder back to the
 span it replaced, for a host that needs to show a student their own words.
 
+What a host must not show is a placeholder it did not restore — echoed by a
+model, or paraphrased as `[NAME_1]`, `{Name_1}` or a bare `NAME_1`. Check the
+last string before a reader sees it:
+
+```python
+from vicary import assert_no_placeholders, scrub_placeholders
+
+show(assert_no_placeholders(feedback))    # raises PlaceholderLeakError
+show(scrub_placeholders(feedback).text)   # or drop each sentence carrying one
+```
+
+The error names the kinds and the count, never the text. `find_placeholders` and
+`has_placeholders` answer without raising; `scrub_placeholders(quote=True)` elides
+instead, for a verbatim quote of the writer's words.
+
 `VICARY_REDACTION` selects the mode — `off` (the default), `local` (recommended),
 `stub` or `guardrail` — and `VICARY_NAME_DETECTION` decides how hard `local` looks
 for names it was not handed. The full variable table is in the

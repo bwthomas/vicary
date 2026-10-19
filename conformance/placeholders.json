@@ -1,0 +1,817 @@
+{
+  "cases": [
+    {
+      "case_id": "canonical:numbered",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 56,
+          "kind": "NAME",
+          "start": 48,
+          "text": "{NAME_1}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "How exactly does microplastic affect a specific someone?"
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "How exactly does microplastic affect a specific …?"
+      },
+      "text": "How exactly does microplastic affect a specific {NAME_1}?"
+    },
+    {
+      "case_id": "canonical:unnumbered",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 21,
+          "kind": "EMAIL",
+          "start": 14,
+          "text": "{EMAIL}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Contact me at this after class."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Contact me at … after class."
+      },
+      "text": "Contact me at {EMAIL} after class."
+    },
+    {
+      "case_id": "canonical:long_kind",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 40,
+          "kind": "US_SOCIAL_SECURITY_NUMBER",
+          "start": 13,
+          "text": "{US_SOCIAL_SECURITY_NUMBER}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "My number is this."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "My number is …."
+      },
+      "text": "My number is {US_SOCIAL_SECURITY_NUMBER}."
+    },
+    {
+      "case_id": "canonical:location",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 24,
+          "kind": "LOCATION",
+          "start": 12,
+          "text": "{LOCATION_2}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "We drove to a place last summer."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "We drove to … last summer."
+      },
+      "text": "We drove to {LOCATION_2} last summer."
+    },
+    {
+      "case_id": "canonical:unknown_kind",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 13,
+          "kind": "OTHER",
+          "start": 4,
+          "text": "{FOO_BAR}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "The this was unexpected."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "The … was unexpected."
+      },
+      "text": "The {FOO_BAR} was unexpected."
+    },
+    {
+      "case_id": "paraphrase:square",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 12,
+          "kind": "NAME",
+          "start": 4,
+          "text": "[NAME_1]"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Ask someone about the essay."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Ask … about the essay."
+      },
+      "text": "Ask [NAME_1] about the essay."
+    },
+    {
+      "case_id": "paraphrase:angle",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 24,
+          "kind": "LOCATION",
+          "start": 12,
+          "text": "<LOCATION_1>"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "You mention a place twice."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "You mention … twice."
+      },
+      "text": "You mention <LOCATION_1> twice."
+    },
+    {
+      "case_id": "paraphrase:mixed_case",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 20,
+          "kind": "NAME",
+          "start": 12,
+          "text": "{Name_1}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Your friend someone helped."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Your friend … helped."
+      },
+      "text": "Your friend {Name_1} helped."
+    },
+    {
+      "case_id": "paraphrase:lower_case",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 20,
+          "kind": "NAME",
+          "start": 12,
+          "text": "{name_1}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Your friend someone helped."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Your friend … helped."
+      },
+      "text": "Your friend {name_1} helped."
+    },
+    {
+      "case_id": "paraphrase:inner_spaces",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 22,
+          "kind": "NAME",
+          "start": 12,
+          "text": "{ NAME_1 }"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Your friend someone helped."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Your friend … helped."
+      },
+      "text": "Your friend { NAME_1 } helped."
+    },
+    {
+      "case_id": "paraphrase:tab_inside",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 22,
+          "kind": "NAME",
+          "start": 12,
+          "text": "[\tNAME_1\t]"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Your friend someone helped."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Your friend … helped."
+      },
+      "text": "Your friend [\tNAME_1\t] helped."
+    },
+    {
+      "case_id": "paraphrase:mismatched_brackets",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 20,
+          "kind": "NAME",
+          "start": 12,
+          "text": "{NAME_1]"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Your friend someone helped."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Your friend … helped."
+      },
+      "text": "Your friend {NAME_1] helped."
+    },
+    {
+      "case_id": "paraphrase:bare_numbered",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 18,
+          "kind": "NAME",
+          "start": 12,
+          "text": "NAME_1"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Your friend someone helped."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Your friend … helped."
+      },
+      "text": "Your friend NAME_1 helped."
+    },
+    {
+      "case_id": "paraphrase:bare_at_end",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 23,
+          "kind": "NAME",
+          "start": 16,
+          "text": "NAME_12"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "The essay names someone"
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "The essay names …"
+      },
+      "text": "The essay names NAME_12"
+    },
+    {
+      "case_id": "paraphrase:bare_compound_kind",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 24,
+          "kind": "IP_ADDRESS",
+          "start": 12,
+          "text": "IP_ADDRESS_1"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Logged from this today."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Logged from … today."
+      },
+      "text": "Logged from IP_ADDRESS_1 today."
+    },
+    {
+      "case_id": "paraphrase:person",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 27,
+          "kind": "PERSON",
+          "start": 19,
+          "text": "[Person]"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "This reminds me of someone."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "This reminds me of …."
+      },
+      "text": "This reminds me of [Person]."
+    },
+    {
+      "case_id": "paraphrase:unfilled_template",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 11,
+          "kind": "NAME",
+          "start": 5,
+          "text": "{name}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Dear someone, great work!"
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Dear …, great work!"
+      },
+      "text": "Dear {name}, great work!"
+    },
+    {
+      "case_id": "paraphrase:double_brace",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 12,
+          "kind": "NAME",
+          "start": 6,
+          "text": "{name}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Dear {someone}, great work!"
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Dear { … }, great work!"
+      },
+      "text": "Dear {{name}}, great work!"
+    },
+    {
+      "case_id": "mixed:several_kinds",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 8,
+          "kind": "NAME",
+          "start": 0,
+          "text": "{NAME_1}"
+        },
+        {
+          "end": 24,
+          "kind": "EMAIL",
+          "start": 17,
+          "text": "[EMAIL]"
+        },
+        {
+          "end": 42,
+          "kind": "LOCATION",
+          "start": 30,
+          "text": "<location_2>"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 3,
+        "text": "someone emailed this from a place."
+      },
+      "scrub_quote": {
+        "removed": 3,
+        "text": "… emailed … from …."
+      },
+      "text": "{NAME_1} emailed [EMAIL] from <location_2>."
+    },
+    {
+      "case_id": "offsets:astral",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 19,
+          "kind": "NAME",
+          "start": 11,
+          "text": "{NAME_1}"
+        },
+        {
+          "end": 32,
+          "kind": "NAME",
+          "start": 26,
+          "text": "NAME_2"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 2,
+        "text": "🦭 waves at someone 🦭 and someone."
+      },
+      "scrub_quote": {
+        "removed": 2,
+        "text": "🦭 waves at … 🦭 and …."
+      },
+      "text": "🦭 waves at {NAME_1} 🦭 and NAME_2."
+    },
+    {
+      "case_id": "negative:plain_text",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "A clear thesis and three strong examples."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "A clear thesis and three strong examples."
+      },
+      "text": "A clear thesis and three strong examples."
+    },
+    {
+      "case_id": "negative:empty",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": ""
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": ""
+      },
+      "text": ""
+    },
+    {
+      "case_id": "negative:code_braces",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "Use {x} and {0} and {} in the formula."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "Use {x} and {0} and {} in the formula."
+      },
+      "text": "Use {x} and {0} and {} in the formula."
+    },
+    {
+      "case_id": "negative:word_name",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "Write your NAME at the top."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "Write your NAME at the top."
+      },
+      "text": "Write your NAME at the top."
+    },
+    {
+      "case_id": "negative:title_name",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "Ms. Name graded the quiz."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "Ms. Name graded the quiz."
+      },
+      "text": "Ms. Name graded the quiz."
+    },
+    {
+      "case_id": "negative:bracketed_word",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "See [Name of the book] for details."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "See [Name of the book] for details."
+      },
+      "text": "See [Name of the book] for details."
+    },
+    {
+      "case_id": "negative:parentheses",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "Fill in (NAME) on the form."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "Fill in (NAME) on the form."
+      },
+      "text": "Fill in (NAME) on the form."
+    },
+    {
+      "case_id": "negative:lower_bare",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "Set name_1 = 3 in the code."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "Set name_1 = 3 in the code."
+      },
+      "text": "Set name_1 = 3 in the code."
+    },
+    {
+      "case_id": "negative:longer_word",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "FILENAME_1 and NAMES_1 are variables."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "FILENAME_1 and NAMES_1 are variables."
+      },
+      "text": "FILENAME_1 and NAMES_1 are variables."
+    },
+    {
+      "case_id": "negative:unnumbered_bare",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "PHONE and EMAIL are fields."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "PHONE and EMAIL are fields."
+      },
+      "text": "PHONE and EMAIL are fields."
+    },
+    {
+      "case_id": "negative:kind_inside_word",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "[NAMEPLATE] and <NAMES> are not kinds."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "[NAMEPLATE] and <NAMES> are not kinds."
+      },
+      "text": "[NAMEPLATE] and <NAMES> are not kinds."
+    },
+    {
+      "case_id": "negative:html",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "Use <b>bold</b> and [1] citations."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "Use <b>bold</b> and [1] citations."
+      },
+      "text": "Use <b>bold</b> and [1] citations."
+    },
+    {
+      "case_id": "negative:bare_number_attached",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "NAME_1x and xNAME_1 are not tokens."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "NAME_1x and xNAME_1 are not tokens."
+      },
+      "text": "NAME_1x and xNAME_1 are not tokens."
+    },
+    {
+      "case_id": "negative:student_ellipsis",
+      "leaks": false,
+      "matches": [],
+      "scrub_prose": {
+        "removed": 0,
+        "text": "I waited … and waited."
+      },
+      "scrub_quote": {
+        "removed": 0,
+        "text": "I waited … and waited."
+      },
+      "text": "I waited … and waited."
+    },
+    {
+      "case_id": "scrub:honorific",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 31,
+          "kind": "NAME",
+          "start": 23,
+          "text": "{NAME_1}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Great work. Keep going!"
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Great work. Unlike Ms. …, you cite sources. Keep going!"
+      },
+      "text": "Great work. Unlike Ms. {NAME_1}, you cite sources. Keep going!"
+    },
+    {
+      "case_id": "scrub:initial_and_eg",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 35,
+          "kind": "NAME",
+          "start": 27,
+          "text": "{NAME_1}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Cite e.g. your sources. Well done."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Cite e.g. your sources. J. … said so. Well done."
+      },
+      "text": "Cite e.g. your sources. J. {NAME_1} said so. Well done."
+    },
+    {
+      "case_id": "scrub:every_sentence",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 12,
+          "kind": "NAME",
+          "start": 4,
+          "text": "{NAME_1}"
+        },
+        {
+          "end": 31,
+          "kind": "LOCATION",
+          "start": 19,
+          "text": "{LOCATION_2}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 2,
+        "text": "Ask someone about a place."
+      },
+      "scrub_quote": {
+        "removed": 2,
+        "text": "Ask … about …."
+      },
+      "text": "Ask {NAME_1} about {LOCATION_2}."
+    },
+    {
+      "case_id": "scrub:other_kind_fallback",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 15,
+          "kind": "EMAIL",
+          "start": 8,
+          "text": "{EMAIL}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "Mention this here."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "Mention … here."
+      },
+      "text": "Mention {EMAIL} here."
+    },
+    {
+      "case_id": "scrub:quote_before_punct",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 15,
+          "kind": "NAME",
+          "start": 7,
+          "text": "{NAME_1}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "He met someone."
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "He met …."
+      },
+      "text": "He met {NAME_1}."
+    },
+    {
+      "case_id": "scrub:newlines",
+      "leaks": true,
+      "matches": [
+        {
+          "end": 21,
+          "kind": "NAME",
+          "start": 13,
+          "text": "{NAME_1}"
+        }
+      ],
+      "scrub_prose": {
+        "removed": 1,
+        "text": "First point. Last point?"
+      },
+      "scrub_quote": {
+        "removed": 1,
+        "text": "First point. … disagrees!\nLast point?"
+      },
+      "text": "First point.\n{NAME_1} disagrees!\nLast point?"
+    }
+  ],
+  "conventions": {
+    "kind": "upper-cased, brackets and spaces stripped, any _n suffix dropped; a kind not in `kinds` is reported as `other_kind`",
+    "offsets": "start and end count code points, not UTF-16 code units",
+    "scrub_prose": "drop each sentence carrying a placeholder and join the rest with single spaces; when every sentence carries one, replace each placeholder with its generic stand-in (`this` when none is listed)",
+    "scrub_quote": "replace each placeholder with an ellipsis, collapse the whitespace around every ellipsis to one space, close it up before punctuation, and trim"
+  },
+  "document_version": 1,
+  "generic_stand_ins": {
+    "LOCATION": "a place",
+    "NAME": "someone",
+    "ORGANIZATION": "an organization",
+    "PERSON": "someone",
+    "SCHOOL": "the school"
+  },
+  "kinds": [
+    "US_SOCIAL_SECURITY_NUMBER",
+    "CREDIT_DEBIT_CARD_EXPIRY",
+    "CREDIT_DEBIT_CARD_NUMBER",
+    "US_BANK_ACCOUNT_NUMBER",
+    "US_BANK_ROUTING_NUMBER",
+    "CREDIT_DEBIT_CARD_CVV",
+    "US_PASSPORT_NUMBER",
+    "AWS_ACCESS_KEY",
+    "AWS_SECRET_KEY",
+    "DATE_OF_BIRTH",
+    "LICENSE_PLATE",
+    "ORGANIZATION",
+    "MAC_ADDRESS",
+    "IP_ADDRESS",
+    "DRIVER_ID",
+    "LOCATION",
+    "PASSWORD",
+    "USERNAME",
+    "ZIP_CODE",
+    "ADDRESS",
+    "PERSON",
+    "SCHOOL",
+    "EMAIL",
+    "PHONE",
+    "NAME",
+    "AGE",
+    "PIN",
+    "URL"
+  ],
+  "other_kind": "OTHER",
+  "pattern": "\\{[A-Z][A-Z_]*(?:_[0-9]+)?\\}|[{\\[<][ \\t]*(?:[Uu][Ss]_[Ss][Oo][Cc][Ii][Aa][Ll]_[Ss][Ee][Cc][Uu][Rr][Ii][Tt][Yy]_[Nn][Uu][Mm][Bb][Ee][Rr]|[Cc][Rr][Ee][Dd][Ii][Tt]_[Dd][Ee][Bb][Ii][Tt]_[Cc][Aa][Rr][Dd]_[Ee][Xx][Pp][Ii][Rr][Yy]|[Cc][Rr][Ee][Dd][Ii][Tt]_[Dd][Ee][Bb][Ii][Tt]_[Cc][Aa][Rr][Dd]_[Nn][Uu][Mm][Bb][Ee][Rr]|[Uu][Ss]_[Bb][Aa][Nn][Kk]_[Aa][Cc][Cc][Oo][Uu][Nn][Tt]_[Nn][Uu][Mm][Bb][Ee][Rr]|[Uu][Ss]_[Bb][Aa][Nn][Kk]_[Rr][Oo][Uu][Tt][Ii][Nn][Gg]_[Nn][Uu][Mm][Bb][Ee][Rr]|[Cc][Rr][Ee][Dd][Ii][Tt]_[Dd][Ee][Bb][Ii][Tt]_[Cc][Aa][Rr][Dd]_[Cc][Vv][Vv]|[Uu][Ss]_[Pp][Aa][Ss][Ss][Pp][Oo][Rr][Tt]_[Nn][Uu][Mm][Bb][Ee][Rr]|[Aa][Ww][Ss]_[Aa][Cc][Cc][Ee][Ss][Ss]_[Kk][Ee][Yy]|[Aa][Ww][Ss]_[Ss][Ee][Cc][Rr][Ee][Tt]_[Kk][Ee][Yy]|[Dd][Aa][Tt][Ee]_[Oo][Ff]_[Bb][Ii][Rr][Tt][Hh]|[Ll][Ii][Cc][Ee][Nn][Ss][Ee]_[Pp][Ll][Aa][Tt][Ee]|[Oo][Rr][Gg][Aa][Nn][Ii][Zz][Aa][Tt][Ii][Oo][Nn]|[Mm][Aa][Cc]_[Aa][Dd][Dd][Rr][Ee][Ss][Ss]|[Ii][Pp]_[Aa][Dd][Dd][Rr][Ee][Ss][Ss]|[Dd][Rr][Ii][Vv][Ee][Rr]_[Ii][Dd]|[Ll][Oo][Cc][Aa][Tt][Ii][Oo][Nn]|[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd]|[Uu][Ss][Ee][Rr][Nn][Aa][Mm][Ee]|[Zz][Ii][Pp]_[Cc][Oo][Dd][Ee]|[Aa][Dd][Dd][Rr][Ee][Ss][Ss]|[Pp][Ee][Rr][Ss][Oo][Nn]|[Ss][Cc][Hh][Oo][Oo][Ll]|[Ee][Mm][Aa][Ii][Ll]|[Pp][Hh][Oo][Nn][Ee]|[Nn][Aa][Mm][Ee]|[Aa][Gg][Ee]|[Pp][Ii][Nn]|[Uu][Rr][Ll])(?:_[0-9]+)?[ \\t]*[}\\]>]|(?<![A-Za-z0-9_])(?:US_SOCIAL_SECURITY_NUMBER|CREDIT_DEBIT_CARD_EXPIRY|CREDIT_DEBIT_CARD_NUMBER|US_BANK_ACCOUNT_NUMBER|US_BANK_ROUTING_NUMBER|CREDIT_DEBIT_CARD_CVV|US_PASSPORT_NUMBER|AWS_ACCESS_KEY|AWS_SECRET_KEY|DATE_OF_BIRTH|LICENSE_PLATE|ORGANIZATION|MAC_ADDRESS|IP_ADDRESS|DRIVER_ID|LOCATION|PASSWORD|USERNAME|ZIP_CODE|ADDRESS|PERSON|SCHOOL|EMAIL|PHONE|NAME|AGE|PIN|URL)_[0-9]+(?![A-Za-z0-9_])",
+  "sentence_end": "(?<![A-Z][a-z]\\.)(?<!(?<![A-Za-z0-9_])[A-Z][a-z][a-z]\\.)(?<!(?<![A-Za-z0-9_])[A-Z]\\.)(?<!(?<![A-Za-z0-9_])e\\.g\\.)(?<!(?<![A-Za-z0-9_])i\\.e\\.)(?<!(?<![A-Za-z0-9_])vs\\.)(?<=[.!?])[ \\t\\n\\r\\f\\v]+"
+}

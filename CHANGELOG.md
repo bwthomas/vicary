@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+### A host can assert that no placeholder reaches a reader
+
+A student was shown "How exactly does microplastic affect a specific {NAME_1}"
+in a host's feedback. The host fixed it where it arose and added a last-line
+guard — by copying vicary's placeholder grammar and widening it by hand for the
+shapes a model writes when it paraphrases one back. Every front door now owns
+that grammar, so hosts stop copying it:
+
+- `find_placeholders` / `findPlaceholders` / `Vicary.find_placeholders` return
+  each match with its kind and code-point offsets; `has_placeholders` answers
+  yes or no.
+- `assert_no_placeholders` raises `PlaceholderLeakError`, naming the kinds and
+  the count and never the text, since its message goes to a log.
+- `scrub_placeholders` removes them: a prose sentence carrying one is dropped
+  whole, a quote elides it as `…`. Nothing is rewritten back into a word.
+
+The pattern catches vicary's own `{KIND}` / `{KIND_n}`, any known kind in any
+case inside `{}`, `[]` or `<>` with stray spaces, and a bare `KIND_n`; `NAME`,
+`Ms. Name`, `{x}` and `(NAME)` pass. It is one source text in all three ports,
+written in the regex dialect they share, and the new
+`conformance/placeholders.json` records it with 40 cases — each carrying a
+hand-written intent the build checks the reference against.
+
 ## 0.2.15 — 2026-09-13
 
 **npm has been stranded on 0.2.12 for two releases.** PyPI and RubyGems took

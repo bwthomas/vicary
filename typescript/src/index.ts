@@ -63,6 +63,21 @@ export type { Identity } from "./conformance.js";
 
 export { PlaceholderMinter } from "./minter.js";
 
+/** The host boundary: no placeholder reaches a reader. See `placeholders.ts`. */
+export {
+  GENERIC_STAND_INS,
+  OTHER_KIND,
+  PLACEHOLDER_KINDS,
+  PLACEHOLDER_LIKE,
+  PlaceholderLeakError,
+  assertNoPlaceholders,
+  findPlaceholders,
+  hasPlaceholders,
+  placeholderKind,
+  scrubPlaceholders,
+} from "./placeholders.js";
+export type { PlaceholderMatch, ScrubResult } from "./placeholders.js";
+
 export {
   BATCH_SEPARATOR,
   DEFAULT_NAME_DETECTION,

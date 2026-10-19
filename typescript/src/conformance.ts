@@ -328,6 +328,43 @@ export function loadSpans(directory?: string): SpanSpec {
   return raw as SpanSpec;
 }
 
+/** One `placeholders.json` case: text plus every answer a port must reproduce. */
+export interface PlaceholderCase {
+  readonly case_id: string;
+  readonly text: string;
+  readonly leaks: boolean;
+  readonly matches: ReadonlyArray<{
+    readonly text: string;
+    readonly kind: string;
+    readonly start: number;
+    readonly end: number;
+  }>;
+  readonly scrub_prose: { readonly text: string; readonly removed: number };
+  readonly scrub_quote: { readonly text: string; readonly removed: number };
+}
+
+/** `conformance/placeholders.json` as read. */
+export interface PlaceholderSpec {
+  readonly document_version: number;
+  readonly kinds: readonly string[];
+  readonly other_kind: string;
+  readonly generic_stand_ins: Record<string, string>;
+  readonly pattern: string;
+  readonly sentence_end: string;
+  readonly conventions: Record<string, string>;
+  readonly cases: readonly PlaceholderCase[];
+}
+
+/** Load `conformance/placeholders.json`. Absent is an error, never an empty
+ * spec: a guard checked against nothing reports the same green as one that
+ * agrees. */
+export function loadPlaceholders(directory?: string): PlaceholderSpec {
+  const dir = directory ?? conformanceDir();
+  const raw = JSON.parse(readFileSync(join(dir, "placeholders.json"), "utf8"));
+  requireVersion(raw.document_version, "placeholders.json");
+  return raw as PlaceholderSpec;
+}
+
 /** Load `conformance/gates.json`. */
 export function loadGates(directory?: string): GateSpec {
   const dir = directory ?? conformanceDir();

@@ -33,6 +33,11 @@ Redaction is reversible: a result carries a ``restore_map`` from placeholder bac
 to the original span, so a host that needs to show a student their own words can
 put them back.
 
+What a host must NOT show is a placeholder it did not restore. Before text reaches
+a reader, :func:`assert_no_placeholders` raises if any survives — vicary's own
+grammar or the shapes a model writes when it paraphrases one — and
+:func:`scrub_placeholders` removes them. See :mod:`vicary.placeholders`.
+
 Subpackages, none of which the runtime path imports:
 
 * :mod:`vicary.eval`    — the measurement corpus, fixture, and scoring harness.
@@ -49,6 +54,20 @@ from vicary.local_classifier import (
     LocalNameClassifier,
     LocalRedactionResult,
     StudentIdentity,
+)
+from vicary.placeholders import (
+    GENERIC_STAND_INS,
+    OTHER_KIND,
+    PLACEHOLDER_KINDS,
+    PLACEHOLDER_LIKE,
+    PlaceholderLeakError,
+    PlaceholderMatch,
+    ScrubResult,
+    assert_no_placeholders,
+    find_placeholders,
+    has_placeholders,
+    placeholder_kind,
+    scrub_placeholders,
 )
 from vicary.redaction import (
     DEFAULT_NAME_DETECTION,
@@ -74,6 +93,7 @@ from vicary.redaction import (
 
 __all__ = [
     "DEFAULT_NAME_DETECTION",
+    "GENERIC_STAND_INS",
     "LocalNameClassifier",
     "LocalRedactionResult",
     "MODE_GUARDRAIL",
@@ -83,17 +103,28 @@ __all__ = [
     "NAMES_GAZETTEER",
     "NAMES_IDENTITY",
     "NAMES_LOWERCASE",
+    "OTHER_KIND",
     "OutboundBatch",
+    "PLACEHOLDER_KINDS",
+    "PLACEHOLDER_LIKE",
+    "PlaceholderLeakError",
+    "PlaceholderMatch",
     "RedactionResult",
     "RedactionSpan",
     "Redactor",
+    "ScrubResult",
     "StudentIdentity",
     "__version__",
+    "assert_no_placeholders",
     "build_redactor_if_enabled",
+    "find_placeholders",
+    "has_placeholders",
     "name_detection",
+    "placeholder_kind",
     "redaction_enabled",
     "derive_spans",
     "redaction_mode",
+    "scrub_placeholders",
     "to_original",
     "to_redacted",
 ]

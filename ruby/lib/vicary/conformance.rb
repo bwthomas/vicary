@@ -181,6 +181,23 @@ module Vicary
         raw
       end
 
+      # The placeholder guard's contract: the pattern source, the cases and the
+      # reference's answers. Absent is an error, as for `spans.json`: a guard
+      # checked against nothing reports the same green as one that agrees.
+      def load_placeholders(dir = nil)
+        dir = Pathname.new(dir || directory)
+        path = dir.join("placeholders.json")
+        unless path.file?
+          raise SpecError,
+                "no placeholders.json at #{path}. The ports would check their " \
+                "placeholder guard against nothing."
+        end
+
+        raw = JSON.parse(path.read)
+        require_version(raw["document_version"], "placeholders.json")
+        raw
+      end
+
       # Score an implementation against every frame.
       #
       # The block receives (sentence, identity) — the same input every Python arm

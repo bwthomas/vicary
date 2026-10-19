@@ -1485,6 +1485,130 @@ def build_spans_document() -> dict[str, Any]:
         "cases": cases,
     }
 
+# ---------------------------------------------------------------------------
+# The placeholder guard: what a host must never show a reader
+# ---------------------------------------------------------------------------
+#
+# The other documents here specify how text is MASKED. This one specifies the
+# opposite boundary: whether a string a host is about to display still carries a
+# placeholder, including the shapes a model writes when it paraphrases one back.
+# It is pure — text in, answers out — and the cases are hand-built, because a
+# leak is a state the masker never produces on purpose.
+#
+# Each case carries its INTENT (`leaks`), written by hand, beside the reference's
+# answers. `tools/tests/test_conformance.py` asserts the two agree, so a pattern
+# change that starts matching "Ms. Name" fails on the intent rather than being
+# re-exported as the new truth. The pattern's source text is recorded too: all
+# three ports compile the same bytes, and a port that drifts fails there first.
+
+PLACEHOLDERS_FILENAME = "placeholders.json"
+
+#: ``case_id -> (text, leaks)``. ``leaks`` is the hand-written intent.
+PLACEHOLDER_CASES: dict[str, tuple[str, bool]] = {
+    # vicary's own grammar, as minted.
+    "canonical:numbered": ("How exactly does microplastic affect a specific "
+                           "{NAME_1}?", True),
+    "canonical:unnumbered": ("Contact me at {EMAIL} after class.", True),
+    "canonical:long_kind": ("My number is {US_SOCIAL_SECURITY_NUMBER}.", True),
+    "canonical:location": ("We drove to {LOCATION_2} last summer.", True),
+    # An upper-case token in braces that names no kind is still the grammar —
+    # reported as OTHER so its letters are not echoed.
+    "canonical:unknown_kind": ("The {FOO_BAR} was unexpected.", True),
+    # What a model writes when it paraphrases one back.
+    "paraphrase:square": ("Ask [NAME_1] about the essay.", True),
+    "paraphrase:angle": ("You mention <LOCATION_1> twice.", True),
+    "paraphrase:mixed_case": ("Your friend {Name_1} helped.", True),
+    "paraphrase:lower_case": ("Your friend {name_1} helped.", True),
+    "paraphrase:inner_spaces": ("Your friend { NAME_1 } helped.", True),
+    "paraphrase:tab_inside": ("Your friend [\tNAME_1\t] helped.", True),
+    "paraphrase:mismatched_brackets": ("Your friend {NAME_1] helped.", True),
+    "paraphrase:bare_numbered": ("Your friend NAME_1 helped.", True),
+    "paraphrase:bare_at_end": ("The essay names NAME_12", True),
+    "paraphrase:bare_compound_kind": ("Logged from IP_ADDRESS_1 today.", True),
+    "paraphrase:person": ("This reminds me of [Person].", True),
+    "paraphrase:unfilled_template": ("Dear {name}, great work!", True),
+    "paraphrase:double_brace": ("Dear {{name}}, great work!", True),
+    "mixed:several_kinds": ("{NAME_1} emailed [EMAIL] from <location_2>.", True),
+    # Above the Basic Multilingual Plane: offsets count code points in every
+    # port, so a JavaScript port reporting UTF-16 code units fails here.
+    "offsets:astral": ("🦭 waves at {NAME_1} 🦭 and NAME_2.", True),
+    # Prose the guard must leave alone.
+    "negative:plain_text": ("A clear thesis and three strong examples.", False),
+    "negative:empty": ("", False),
+    "negative:code_braces": ("Use {x} and {0} and {} in the formula.", False),
+    "negative:word_name": ("Write your NAME at the top.", False),
+    "negative:title_name": ("Ms. Name graded the quiz.", False),
+    "negative:bracketed_word": ("See [Name of the book] for details.", False),
+    "negative:parentheses": ("Fill in (NAME) on the form.", False),
+    "negative:lower_bare": ("Set name_1 = 3 in the code.", False),
+    "negative:longer_word": ("FILENAME_1 and NAMES_1 are variables.", False),
+    "negative:unnumbered_bare": ("PHONE and EMAIL are fields.", False),
+    "negative:kind_inside_word": ("[NAMEPLATE] and <NAMES> are not kinds.", False),
+    "negative:html": ("Use <b>bold</b> and [1] citations.", False),
+    "negative:bare_number_attached": ("NAME_1x and xNAME_1 are not tokens.", False),
+    "negative:student_ellipsis": ("I waited … and waited.", False),
+    # Sentence handling for the prose scrub: the honorific must not split.
+    "scrub:honorific": ("Great work. Unlike Ms. {NAME_1}, you cite sources. "
+                        "Keep going!", True),
+    "scrub:initial_and_eg": ("Cite e.g. your sources. J. {NAME_1} said so. "
+                             "Well done.", True),
+    "scrub:every_sentence": ("Ask {NAME_1} about {LOCATION_2}.", True),
+    "scrub:other_kind_fallback": ("Mention {EMAIL} here.", True),
+    "scrub:quote_before_punct": ("He met {NAME_1}.", True),
+    "scrub:newlines": ("First point.\n{NAME_1} disagrees!\nLast point?", True),
+}
+
+
+def _placeholder_case(case_id: str, text: str, leaks: bool) -> dict[str, Any]:
+    from vicary.placeholders import find_placeholders, scrub_placeholders
+
+    prose = scrub_placeholders(text)
+    quote = scrub_placeholders(text, quote=True)
+    return {
+        "case_id": case_id,
+        "text": text,
+        "leaks": leaks,
+        "matches": [
+            {"text": m.text, "kind": m.kind, "start": m.start, "end": m.end}
+            for m in find_placeholders(text)
+        ],
+        "scrub_prose": {"text": prose.text, "removed": prose.removed},
+        "scrub_quote": {"text": quote.text, "removed": quote.removed},
+    }
+
+
+def build_placeholders_document() -> dict[str, Any]:
+    """The placeholder guard's contract as data: the pattern, cases, answers."""
+    from vicary import placeholders as ph
+
+    return {
+        "document_version": DOCUMENT_VERSION,
+        "kinds": list(ph.PLACEHOLDER_KINDS),
+        "other_kind": ph.OTHER_KIND,
+        "generic_stand_ins": dict(ph.GENERIC_STAND_INS),
+        # Source text, compiled by every port as-is. Written in the dialect the
+        # three engines share, so the bytes can be the same.
+        "pattern": ph.PLACEHOLDER_LIKE.pattern,
+        "sentence_end": ph.SENTENCE_END.pattern,
+        "conventions": {
+            "offsets": "start and end count code points, not UTF-16 code units",
+            "kind": "upper-cased, brackets and spaces stripped, any _n suffix "
+                    "dropped; a kind not in `kinds` is reported as `other_kind`",
+            "scrub_prose": "drop each sentence carrying a placeholder and join "
+                           "the rest with single spaces; when every sentence "
+                           "carries one, replace each placeholder with its "
+                           "generic stand-in (`this` when none is listed)",
+            "scrub_quote": "replace each placeholder with an ellipsis, collapse "
+                           "the whitespace around every ellipsis to one space, "
+                           "close it up before punctuation, and trim",
+        },
+        "cases": [
+            _placeholder_case(case_id, text, leaks)
+            for case_id, (text, leaks) in PLACEHOLDER_CASES.items()
+        ],
+    }
+
+
 def dumps(document: dict[str, Any]) -> str:
     """Canonical serialisation: sorted keys, two-space indent, trailing newline.
 
@@ -1568,6 +1692,19 @@ def load_gates_document(path: Path | None = None) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def load_placeholders_document(path: Path | None = None) -> dict[str, Any]:
+    """Read ``conformance/placeholders.json``. Raises when it is absent."""
+    if path is None:
+        directory = conformance_dir()
+        if directory is None:
+            raise FileNotFoundError(
+                "no conformance/ directory above this module — the spec lives in "
+                "the repository, not in an installed distribution"
+            )
+        path = directory / PLACEHOLDERS_FILENAME
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
 def load_spans_document(path: Path | None = None) -> dict[str, Any]:
     """Read ``conformance/spans.json``. Raises when it is absent.
 
@@ -1610,6 +1747,7 @@ def main(argv: list[str] | None = None) -> int:
     gates_doc = dumps(build_gates_document())
     primitives_doc = dumps(build_primitives_document())
     spans_doc = dumps(build_spans_document())
+    placeholders_doc = dumps(build_placeholders_document())
 
     if not args.write:
         print(frames_doc, end="")
@@ -1624,10 +1762,13 @@ def main(argv: list[str] | None = None) -> int:
     (directory / GATES_FILENAME).write_text(gates_doc, encoding="utf-8")
     (directory / PRIMITIVES_FILENAME).write_text(primitives_doc, encoding="utf-8")
     (directory / SPANS_FILENAME).write_text(spans_doc, encoding="utf-8")
+    (directory / PLACEHOLDERS_FILENAME).write_text(placeholders_doc,
+                                                   encoding="utf-8")
     print(f"wrote {directory / FRAMES_FILENAME}")
     print(f"wrote {directory / GATES_FILENAME}")
     print(f"wrote {directory / PRIMITIVES_FILENAME}")
     print(f"wrote {directory / SPANS_FILENAME}")
+    print(f"wrote {directory / PLACEHOLDERS_FILENAME}")
     return 0
 
 

@@ -45,6 +45,19 @@ replaced. A map that is absent, or that covers only some of the placeholders in
 the text, yields **no** spans and translates as the identity — a caller can
 handle "no spans" and cannot detect a wrong offset.
 
+Before a reader sees it, check that no placeholder the host did not restore
+survived — echoed by a model, or paraphrased as `[NAME_1]`, `{Name_1}` or a bare
+`NAME_1`:
+
+```ruby
+show(Vicary.assert_no_placeholders(feedback))    # raises PlaceholderLeakError
+show(Vicary.scrub_placeholders(feedback).text)   # or drop each sentence carrying one
+```
+
+The error names the kinds and the count, never the text.
+`Vicary.find_placeholders` and `Vicary.has_placeholders?` answer without raising;
+`scrub_placeholders(text, quote: true)` elides instead, for a verbatim quote.
+
 ## Checking it
 
 Three layers, because each catches what the one above it cannot.
