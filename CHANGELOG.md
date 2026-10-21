@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.17 — 2026-10-21
+
 ### Stop words spelled by ear are no longer names
 
 A safety reader downstream of vicary released a real neglect disclosure from a
