@@ -13,6 +13,7 @@ import re
 
 import pytest
 
+from vicary import build_redactor_if_enabled
 from vicary import name_candidates as nc
 from vicary.eval.fixture import (
     RECALL_FRAMES,
@@ -1894,3 +1895,130 @@ def test_the_shipped_corroboration_tier_is_strictly_wider() -> None:
     assert index.vouches_for_a_given_name_in_corroboration("Deshawn")
     # Below BOTH floors — the ordinary word that bounds the free window.
     assert not index.vouches_for_a_given_name_in_corroboration("Imagine")
+
+
+# ---------------------------------------------------------------------------
+# Stop words spelled by ear
+#
+# Young writers, and young Spanish-L1 writers most of all, spell the
+# closed-class words by ear. Several of those spellings are also given names the
+# tier knows, so the shipped redactor turned "dey sai ai smel" into "dey
+# {NAME_2} smel" and "so ai dont get mai clos dirtier" into "so ai dont get
+# {NAME_1} dirtier" — removing the content words a downstream reader needed, at
+# 3.05 placeholders per child ``ell_es`` essay against 0.86 for the
+# standard-English twin. The two passages are verbatim from that set.
+# ---------------------------------------------------------------------------
+
+PHONETIC_SMELL = (
+    "one dai i rodi de bus to la escuela and de kids big start japping at mi. "
+    "dey sai ai smel veri bad and mi clos is stinki. ai no sai notin bacause ai "
+    "is sad in mi corazon.\n\n"
+    "at nait ai take bath but de tub is beri dirty and no have sop most of time. "
+    "De ticher sai she talk to dem but dey still bisper. Ai only wanna fit."
+)
+
+PHONETIC_CLOTHES = (
+    "i dont laik it wen kids en de skool sai ai smel dey sai it en a min vois an "
+    "ai shood play wid mai toys insted so ai dont get mai clos dirtier kos ai dont "
+    "get nu wans an mi favrit shert is rip en de sleev."
+)
+
+
+@pytest.fixture(scope="module")
+def redact_local():
+    redactor = build_redactor_if_enabled("local", identity=None)
+    return lambda text: redactor.redact_inbound(text).text
+
+
+def test_the_reported_smell_passage_keeps_its_words(redact_local) -> None:
+    out = redact_local(PHONETIC_SMELL)
+    assert "dey sai ai smel veri bad" in out
+    assert "{NAME" not in out
+
+
+def test_the_reported_clothes_passage_keeps_its_words(redact_local) -> None:
+    out = redact_local(PHONETIC_CLOTHES)
+    assert "sai ai smel" in out
+    assert "so ai dont get mai clos dirtier" in out
+    assert "wid mai toys insted" in out
+    assert "mi favrit shert" in out
+    assert "{NAME" not in out
+
+
+def test_a_name_beside_the_phonetic_words_is_still_masked(redact_local) -> None:
+    # The register switches the SPELLINGS off as names, nothing else.
+    out = redact_local("yestedei jeni sai mi hair is greasi and dey sai ai smel. "
+                 "Terrence Okonkwo sai no.")
+    assert "jeni" not in out
+    assert "Terrence" not in out and "Okonkwo" not in out
+
+
+def test_one_spelling_alone_is_not_a_register(redact_local) -> None:
+    # A friend called Mai, written in lower case, in otherwise standard prose:
+    # one distinct spelling is a coincidence, so the route behaves as before.
+    text = ("after school i went to the park with mai nguyen and her brother. "
+            "we played til dark.")
+    assert nc.phonetic_function_words(text) == frozenset()
+    assert "nguyen" not in redact_local(text)
+
+
+def test_a_mid_sentence_capital_is_testimony_that_wins() -> None:
+    text = "dey sai ai can play wit Mai. Mai is nice an mai mom laik her."
+    assert nc.phonetic_function_words(text, frozenset({"mai"})) == frozenset(
+        {"dey", "sai", "ai"}
+    )
+
+
+def test_the_writer_must_write_the_spelling_in_lower_case() -> None:
+    # "Mai" at a sentence start in a register document, never written in lower
+    # case: no testimony that it is a word to this writer, so not a stop.
+    text = "Mai is mi friend. dey sai she is nice."
+    assert "mai" not in nc.phonetic_function_words(text)
+
+
+def test_a_phonetic_spelling_does_not_seed_a_lowercase_span() -> None:
+    given = {"sai", "mai", "jeni"}.__contains__
+    text = "dey sai ai smel an mai clos is dirti"
+    assert find_candidates(text, given_name=given) == []
+
+
+def test_a_phonetic_spelling_is_trimmed_from_a_sentence_initial_capital() -> None:
+    given = {"ai", "mi", "de"}.__contains__
+    text = "dey sai ai cry an mi mama sai de bus. Ai cry. Mi mama sai no. De bus is late."
+    assert find_candidates(text, given_name=given) == []
+
+
+def test_without_the_register_the_capital_still_proposes() -> None:
+    given = {"ai"}.__contains__
+    text = "We met at the park. Ai said hello to everyone."
+    assert [c.text for c in find_candidates(text, given_name=given)] == ["Ai"]
+
+
+def test_a_particle_inside_a_name_survives_the_register() -> None:
+    given = {"maria"}.__contains__
+    text = "dey sai ai can go. Yesterday Maria de Cruz came."
+    assert "Maria de Cruz" in [
+        c.text for c in find_candidates(text, given_name=given)
+    ]
+
+
+def test_the_no_oracle_arm_is_unchanged() -> None:
+    # The register only withdraws what the tier proposed or vouched for, so a
+    # host that passes no given-name list gets exactly what it got before.
+    text = "dey sai it. Ai cry."
+    assert [c.text for c in find_candidates(text)] == ["Ai"]
+
+
+def test_every_phonetic_spelling_targets_a_stop_word() -> None:
+    # The rule is "a spelling of a stop word is a stop word". A target that is
+    # not on the stoplist would make this a list of words someone saw masked.
+    off = {w: t for w, t in nc._PHONETIC_FUNCTION_WORDS.items()
+           if not nc._is_stop(t)}
+    assert off == {}
+    # ...and a spelling already on the stoplist needs no entry here.
+    assert not set(nc._PHONETIC_FUNCTION_WORDS) & _STOP_WORDS
+
+
+def test_the_list_is_sorted_and_the_floor_is_two() -> None:
+    assert list(nc._PHONETIC_FUNCTION_WORDS) == sorted(nc._PHONETIC_FUNCTION_WORDS)
+    assert nc._PHONETIC_REGISTER_MIN == 2

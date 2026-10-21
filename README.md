@@ -513,6 +513,22 @@ repairs and they do not work:
   28/28 → 27/28 to buy one span of over-firing. Below the floor the document has
   offered one bit and it is taken as given.
 
+### Stop words spelled by ear
+
+Young writers, and young writers whose first language is Spanish most of all,
+spell the closed-class words by ear: "dey sai ai smel", "so ai dont get mai clos
+dirtier". `mai` and `sai` are given names at the generation floor, and `ai`, `mi`,
+`de`, `da` and `dat` at the corroboration floor, so the lowercase route used to
+mask "sai ai" and "mai clos" and let the tier vouch for a sentence-initial "Ai",
+"Mi" or "De". A spelling of a stop word is that stop word, so a document that
+writes **two or more different** spellings from a short list (33, each paired
+with the stop word it spells) reads the ones it writes in lower case as stop
+words: they cannot seed a lowercase span and are trimmed from a capitalised run.
+One spelling alone is a coincidence — a friend called Mai — and changes nothing;
+a spelling the document also capitalises mid-sentence stays a name; a particle
+inside a name ("Maria de Cruz") keeps its place; and a real seed may still reach
+a spelled word, so "jeni sai" masks as before.
+
 ## Measurement
 
 The gates live with the library, in `tests/test_gates.py`, and are ordinary

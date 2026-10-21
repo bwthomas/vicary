@@ -67,6 +67,16 @@
       "id": "org-and-place",
       "why": "The precedence table's colliding rows: settlement vs org suffix vs landmark.",
       "text": "Progressive Insurance is in Falls Church. The Lincoln Memorial is in Washington. Allen Park has a park. Springfield Township hired Akron Public Library."
+    },
+    {
+      "id": "phonetic-register-smell",
+      "why": "Row 261: stop words spelled by ear (`sai`, `ai`, `mai`, `mi`, `de`) are given names in the real tier at one floor or the other. In a document that writes two or more of them in lower case they are stop words, so \"dey sai ai smel\" keeps its words and the sentence-initial \"Ai\", \"Mi\" and \"De\" are not vouched for.",
+      "text": "one dai i rodi de bus to la escuela and de kids big start japping at mi. dey sai ai smel veri bad and mi clos is stinki. ai no sai notin bacause ai is sad in mi corazon.\n\nMi mama no wash mi clos because she work todey. De tub is beri dirty. Ai wish ai can smel nice.\n\nyestedei jeni sai mi hair is greasi and ai cry in de bathroom."
+    },
+    {
+      "id": "phonetic-register-clothes",
+      "why": "Row 261: a phonetic spelling may not seed a lowercase span (\"mai clos\", \"sai ai\"), and the register needs two distinct spellings — one alone, as in a friend called mai, changes nothing.",
+      "text": "i dont laik it wen kids en de skool sai ai smel dey sai it en a min vois an ai shood play wid mai toys insted so ai dont get mai clos dirtier kos ai dont get nu wans.\nafter school i went to the park with mai nguyen and her brother."
     }
   ],
   "gazetteer_names": [

@@ -332,11 +332,33 @@ PRIMITIVE_CORPUS: dict[str, str] = {
         "We stayed with the Alvarez family in July. On Friday Mrs. Ruiz took our "
         "class to Lincoln School and the Americans we met were kind."
     ),
+    # A writer spelling stop words by ear: `sai`, `mai`, `ai`, `mi`
+    # are all in the stand-in given-name tier, so before the register rule the
+    # lowercase route masked "sai ai" and "mai clos" and the tier vouched for the
+    # sentence-initial "Ai" and "Mi". "jeni sai" must still mask — a real seed may
+    # reach a phonetic word — and "Maria de Cruz" keeps its interior particle.
+    "phonetic_register": (
+        "dey sai ai smel an so ai dont get mai clos dirtier. Ai cry. "
+        "Mi mama sai no an mi brother sai it to. yestedei jeni sai mi hair is "
+        "greasi. Maria de Cruz sai sorri."
+    ),
+    # ...and the control: one spelling is a coincidence, not a register, so the
+    # lowercase "mai nguyen" in otherwise lowercase prose is reached as before.
+    "phonetic_one_spelling": (
+        "after school i went to the park with mai nguyen and her brother. "
+        "we played til dark."
+    ),
 }
 
 #: Already-split spans, for the functions that take tokens rather than text.
 PRIMITIVE_TOKEN_LISTS: dict[str, list[str]] = {
     "two_names": ["Terrence", "Okonkwo"],
+    # Read by `trim_phonetic` against :data:`PRIMITIVE_PHONETIC`: a lone
+    # spelled stop word, one leading a name, and one sitting inside a name as
+    # a particle — which must survive.
+    "phonetic_alone": ["Ai"],
+    "phonetic_leading": ["Den", "Jake"],
+    "phonetic_particle": ["Maria", "de", "Cruz"],
     "allcaps_run": ["My", "Best", "Friend", "Deshawn", "Pritchard", "Would", "Never"],
     "honorific_and_name": ["Mrs.", "Okonkwo"],
     "bare_honorific": ["Mrs."],
@@ -607,8 +629,14 @@ PRIMITIVE_TITLES: tuple[str, ...] = (
 #:
 #: * ``is_given(token)`` -> ``token.lower()`` is in ``given_names``
 PRIMITIVE_GIVEN_NAMES: tuple[str, ...] = (
-    "deshawn", "marguerite", "marisol", "narciso", "renée", "terrence", "vincent",
+    "ai", "deshawn", "jeni", "mai", "marguerite", "marisol", "mi", "narciso",
+    "renée", "sai", "terrence", "vincent",
 )
+
+#: The document-level phonetic set ``trim_phonetic`` is evaluated under, fixed
+#: rather than derived so the case tests `_trim` and nothing upstream of it.
+#: `phonetic_function_words` is its own case, over the corpus.
+PRIMITIVE_PHONETIC: frozenset[str] = frozenset({"ai", "de", "den"})
 
 #: The notability *tier* oracle, as a stand-in — see
 #: :data:`~vicary.name_candidates.CORROBORATING_TIER`. Only ``full_name`` may
@@ -745,6 +773,9 @@ def build_primitives_document() -> dict[str, Any]:
             "given_names": list(PRIMITIVE_GIVEN_NAMES),
             "full_names": list(PRIMITIVE_FULL_NAMES),
             "iconic_surnames": list(PRIMITIVE_ICONIC_SURNAMES),
+            # Not an oracle but an input of the same kind: the fixed set
+            # `trim_phonetic` runs under. Sorted, as a set.
+            "phonetic": sorted(PRIMITIVE_PHONETIC),
         },
         # The classification policy itself, as data. Emitted because it is the
         # one part of the detector a port can get wrong while passing every
@@ -786,6 +817,9 @@ def build_primitives_document() -> dict[str, Any]:
             "honorifics": list(nc._HONORIFICS),
             "particles": list(nc._PARTICLES),
             "clitics": list(nc._CLITICS),
+            # Spellings only, in source order (sorted there). The stop word each
+            # one spells is documentation in the reference; no port reads it.
+            "phonetic_function_words": list(nc._PHONETIC_FUNCTION_WORDS),
         },
         # The span cases the relation predicates run over, with offsets resolved
         # here so a port compares answers rather than reproducing this file's
@@ -822,6 +856,7 @@ def build_primitives_document() -> dict[str, Any]:
             "heading_max_chars": nc._HEADING_MAX_CHARS,
             "lowercase_min_tokens": nc._LOWERCASE_MIN_TOKENS,
             "marks_proper_nouns_min": nc._MARKS_PROPER_NOUNS_MIN,
+            "phonetic_register_min": nc._PHONETIC_REGISTER_MIN,
             "relation_window": nc._RELATION_WINDOW,
             "stop_words": len(nc._STOP_WORDS),
             # The halves as well as the union, because the union alone cannot
@@ -843,6 +878,14 @@ def build_primitives_document() -> dict[str, Any]:
                 t: nc._is_never_capitalised(t) for t in PRIMITIVE_STOP_TOKENS
             },
             "trim": over_lists(lambda t: nc._trim(t)),
+            "trim_phonetic": over_lists(lambda t: nc._trim(t, PRIMITIVE_PHONETIC)),
+            # Sorted: a set. Read against the document's own mid-sentence
+            # capitals, which is what `find_candidates` passes.
+            "phonetic_function_words": over_corpus(
+                lambda x: sorted(nc.phonetic_function_words(
+                    x, nc._mid_sentence_capitals(x, nc._sentence_starts(x))
+                ))
+            ),
             "classify": over_lists(lambda t: nc._classify(t)),
             "classify_with_settlement": over_lists(
                 lambda t: nc._classify(t, _primitive_settlement)

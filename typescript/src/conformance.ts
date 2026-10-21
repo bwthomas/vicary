@@ -232,6 +232,7 @@ export interface Primitives {
     givenNames: string[];
     fullNames: string[];
     iconicSurnames: string[];
+    phonetic: string[];
   };
   /** The classification policy, in order. See `PRECEDENCE` in `candidates.ts`. */
   precedence: PrecedenceRow[];
@@ -255,7 +256,12 @@ export interface Primitives {
    * alternations, and `withoutClitic` strips the first clitic that matches. A
    * port that sorted any of them would build a different pattern.
    */
-  wordLists: { honorifics: string[]; particles: string[]; clitics: string[] };
+  wordLists: {
+    honorifics: string[];
+    particles: string[];
+    clitics: string[];
+    phonetic_function_words: string[];
+  };
   /** The relation override's word lists, and the tiers it may override. */
   relation: {
     cues: string[];
@@ -288,6 +294,7 @@ export function loadPrimitives(directory?: string): Primitives {
       givenNames: raw.oracles.given_names as string[],
       fullNames: raw.oracles.full_names as string[],
       iconicSurnames: raw.oracles.iconic_surnames as string[],
+      phonetic: raw.oracles.phonetic as string[],
     },
     precedence: raw.precedence as PrecedenceRow[],
     suffixes: raw.suffixes as { organization: string[]; landmark: string[] },
@@ -299,6 +306,7 @@ export function loadPrimitives(directory?: string): Primitives {
       honorifics: string[];
       particles: string[];
       clitics: string[];
+      phonetic_function_words: string[];
     },
     relation: {
       cues: raw.relation.cues as string[],

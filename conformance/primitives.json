@@ -1327,6 +1327,275 @@
           "years"
         ]
       ],
+      "phonetic_one_spelling": [
+        [
+          0,
+          5,
+          "after"
+        ],
+        [
+          6,
+          12,
+          "school"
+        ],
+        [
+          13,
+          14,
+          "i"
+        ],
+        [
+          15,
+          19,
+          "went"
+        ],
+        [
+          20,
+          22,
+          "to"
+        ],
+        [
+          23,
+          26,
+          "the"
+        ],
+        [
+          27,
+          31,
+          "park"
+        ],
+        [
+          32,
+          36,
+          "with"
+        ],
+        [
+          37,
+          40,
+          "mai"
+        ],
+        [
+          41,
+          47,
+          "nguyen"
+        ],
+        [
+          48,
+          51,
+          "and"
+        ],
+        [
+          52,
+          55,
+          "her"
+        ],
+        [
+          56,
+          63,
+          "brother"
+        ],
+        [
+          65,
+          67,
+          "we"
+        ],
+        [
+          68,
+          74,
+          "played"
+        ],
+        [
+          75,
+          78,
+          "til"
+        ],
+        [
+          79,
+          83,
+          "dark"
+        ]
+      ],
+      "phonetic_register": [
+        [
+          0,
+          3,
+          "dey"
+        ],
+        [
+          4,
+          7,
+          "sai"
+        ],
+        [
+          8,
+          10,
+          "ai"
+        ],
+        [
+          11,
+          15,
+          "smel"
+        ],
+        [
+          16,
+          18,
+          "an"
+        ],
+        [
+          19,
+          21,
+          "so"
+        ],
+        [
+          22,
+          24,
+          "ai"
+        ],
+        [
+          25,
+          29,
+          "dont"
+        ],
+        [
+          30,
+          33,
+          "get"
+        ],
+        [
+          34,
+          37,
+          "mai"
+        ],
+        [
+          38,
+          42,
+          "clos"
+        ],
+        [
+          43,
+          50,
+          "dirtier"
+        ],
+        [
+          52,
+          54,
+          "Ai"
+        ],
+        [
+          55,
+          58,
+          "cry"
+        ],
+        [
+          60,
+          62,
+          "Mi"
+        ],
+        [
+          63,
+          67,
+          "mama"
+        ],
+        [
+          68,
+          71,
+          "sai"
+        ],
+        [
+          72,
+          74,
+          "no"
+        ],
+        [
+          75,
+          77,
+          "an"
+        ],
+        [
+          78,
+          80,
+          "mi"
+        ],
+        [
+          81,
+          88,
+          "brother"
+        ],
+        [
+          89,
+          92,
+          "sai"
+        ],
+        [
+          93,
+          95,
+          "it"
+        ],
+        [
+          96,
+          98,
+          "to"
+        ],
+        [
+          100,
+          108,
+          "yestedei"
+        ],
+        [
+          109,
+          113,
+          "jeni"
+        ],
+        [
+          114,
+          117,
+          "sai"
+        ],
+        [
+          118,
+          120,
+          "mi"
+        ],
+        [
+          121,
+          125,
+          "hair"
+        ],
+        [
+          126,
+          128,
+          "is"
+        ],
+        [
+          129,
+          135,
+          "greasi"
+        ],
+        [
+          137,
+          142,
+          "Maria"
+        ],
+        [
+          143,
+          145,
+          "de"
+        ],
+        [
+          146,
+          150,
+          "Cruz"
+        ],
+        [
+          151,
+          154,
+          "sai"
+        ],
+        [
+          155,
+          160,
+          "sorri"
+        ]
+      ],
       "plain": [
         [
           0,
@@ -2679,6 +2948,24 @@
           "Vincent van Gogh"
         ]
       ],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [
+        [
+          52,
+          54,
+          "Ai"
+        ],
+        [
+          60,
+          62,
+          "Mi"
+        ],
+        [
+          137,
+          150,
+          "Maria de Cruz"
+        ]
+      ],
       "plain": [
         [
           0,
@@ -2999,6 +3286,8 @@
       "one_mark": "silent",
       "orthographic_capitaliser": "consistent",
       "particle": "consistent",
+      "phonetic_one_spelling": "lowercase",
+      "phonetic_register": "lowercase",
       "plain": "consistent",
       "possessive": "consistent",
       "possessive_lowercase_habit": "lowercase",
@@ -3041,6 +3330,8 @@
       "one_mark": "silent",
       "orthographic_capitaliser": "consistent",
       "particle": "consistent",
+      "phonetic_one_spelling": "lowercase",
+      "phonetic_register": "lowercase",
       "plain": "consistent",
       "possessive": "consistent",
       "possessive_lowercase_habit": "lowercase",
@@ -3070,6 +3361,9 @@
       "interior_stop": "NAME",
       "landmark": "NAME",
       "org_suffix": "ORGANIZATION",
+      "phonetic_alone": "NAME",
+      "phonetic_leading": "NAME",
+      "phonetic_particle": "NAME",
       "school": "ORGANIZATION",
       "settlement": "NAME",
       "settlement_with_landmark_suffix": "NAME",
@@ -3103,6 +3397,15 @@
       ],
       "org_suffix": [
         "ORGANIZATION",
+        "PERSON"
+      ],
+      "phonetic_alone": [
+        "PERSON"
+      ],
+      "phonetic_leading": [
+        "PERSON"
+      ],
+      "phonetic_particle": [
         "PERSON"
       ],
       "school": [
@@ -3157,6 +3460,15 @@
         "ORGANIZATION",
         "PERSON"
       ],
+      "phonetic_alone": [
+        "PERSON"
+      ],
+      "phonetic_leading": [
+        "PERSON"
+      ],
+      "phonetic_particle": [
+        "PERSON"
+      ],
       "school": [
         "LOCATION",
         "ORGANIZATION",
@@ -3193,6 +3505,9 @@
       "interior_stop": "NAME",
       "landmark": "NAME",
       "org_suffix": "LOCATION",
+      "phonetic_alone": "NAME",
+      "phonetic_leading": "NAME",
+      "phonetic_particle": "NAME",
       "school": "LOCATION",
       "settlement": "LOCATION",
       "settlement_with_landmark_suffix": "LOCATION",
@@ -3232,6 +3547,8 @@
         "gogh",
         "van gogh"
       ],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [],
       "plain": [],
       "possessive": [],
       "possessive_lowercase_habit": [],
@@ -3274,6 +3591,8 @@
       "one_mark": [],
       "orthographic_capitaliser": [],
       "particle": [],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [],
       "plain": [],
       "possessive": [],
       "possessive_lowercase_habit": [],
@@ -3347,6 +3666,8 @@
         "gogh",
         "vincent"
       ],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [],
       "plain": [],
       "possessive": [],
       "possessive_lowercase_habit": [],
@@ -3583,6 +3904,28 @@
           16,
           32,
           "Vincent van Gogh",
+          "NAME"
+        ]
+      ],
+      "phonetic_one_spelling": [
+        [
+          37,
+          47,
+          "mai nguyen",
+          "NAME"
+        ]
+      ],
+      "phonetic_register": [
+        [
+          137,
+          150,
+          "Maria de Cruz",
+          "NAME"
+        ],
+        [
+          109,
+          117,
+          "jeni sai",
           "NAME"
         ]
       ],
@@ -4016,6 +4359,46 @@
           "NAME"
         ]
       ],
+      "phonetic_one_spelling": [
+        [
+          32,
+          40,
+          "with mai",
+          "NAME"
+        ],
+        [
+          68,
+          78,
+          "played til",
+          "NAME"
+        ]
+      ],
+      "phonetic_register": [
+        [
+          137,
+          150,
+          "Maria de Cruz",
+          "NAME"
+        ],
+        [
+          38,
+          50,
+          "clos dirtier",
+          "NAME"
+        ],
+        [
+          63,
+          71,
+          "mama sai",
+          "NAME"
+        ],
+        [
+          100,
+          113,
+          "yestedei jeni",
+          "NAME"
+        ]
+      ],
       "plain": [
         [
           10,
@@ -4431,6 +4814,27 @@
           "NAME"
         ]
       ],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [
+        [
+          52,
+          54,
+          "Ai",
+          "NAME"
+        ],
+        [
+          60,
+          62,
+          "Mi",
+          "NAME"
+        ],
+        [
+          137,
+          150,
+          "Maria de Cruz",
+          "NAME"
+        ]
+      ],
       "plain": [
         [
           10,
@@ -4647,6 +5051,8 @@
       "one_mark": [],
       "orthographic_capitaliser": [],
       "particle": [],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [],
       "plain": [],
       "possessive": [],
       "possessive_lowercase_habit": [],
@@ -5666,6 +6072,255 @@
           "years"
         ]
       ],
+      "phonetic_one_spelling": [
+        [
+          0,
+          5,
+          "after"
+        ],
+        [
+          6,
+          12,
+          "school"
+        ],
+        [
+          13,
+          14,
+          "i"
+        ],
+        [
+          15,
+          19,
+          "went"
+        ],
+        [
+          20,
+          22,
+          "to"
+        ],
+        [
+          23,
+          26,
+          "the"
+        ],
+        [
+          27,
+          31,
+          "park"
+        ],
+        [
+          32,
+          36,
+          "with"
+        ],
+        [
+          37,
+          40,
+          "mai"
+        ],
+        [
+          41,
+          47,
+          "nguyen"
+        ],
+        [
+          48,
+          51,
+          "and"
+        ],
+        [
+          52,
+          55,
+          "her"
+        ],
+        [
+          56,
+          63,
+          "brother"
+        ],
+        [
+          65,
+          67,
+          "we"
+        ],
+        [
+          68,
+          74,
+          "played"
+        ],
+        [
+          75,
+          78,
+          "til"
+        ],
+        [
+          79,
+          83,
+          "dark"
+        ]
+      ],
+      "phonetic_register": [
+        [
+          0,
+          3,
+          "dey"
+        ],
+        [
+          4,
+          7,
+          "sai"
+        ],
+        [
+          8,
+          10,
+          "ai"
+        ],
+        [
+          11,
+          15,
+          "smel"
+        ],
+        [
+          16,
+          18,
+          "an"
+        ],
+        [
+          19,
+          21,
+          "so"
+        ],
+        [
+          22,
+          24,
+          "ai"
+        ],
+        [
+          25,
+          29,
+          "dont"
+        ],
+        [
+          30,
+          33,
+          "get"
+        ],
+        [
+          34,
+          37,
+          "mai"
+        ],
+        [
+          38,
+          42,
+          "clos"
+        ],
+        [
+          43,
+          50,
+          "dirtier"
+        ],
+        [
+          55,
+          58,
+          "cry"
+        ],
+        [
+          63,
+          67,
+          "mama"
+        ],
+        [
+          68,
+          71,
+          "sai"
+        ],
+        [
+          72,
+          74,
+          "no"
+        ],
+        [
+          75,
+          77,
+          "an"
+        ],
+        [
+          78,
+          80,
+          "mi"
+        ],
+        [
+          81,
+          88,
+          "brother"
+        ],
+        [
+          89,
+          92,
+          "sai"
+        ],
+        [
+          93,
+          95,
+          "it"
+        ],
+        [
+          96,
+          98,
+          "to"
+        ],
+        [
+          100,
+          108,
+          "yestedei"
+        ],
+        [
+          109,
+          113,
+          "jeni"
+        ],
+        [
+          114,
+          117,
+          "sai"
+        ],
+        [
+          118,
+          120,
+          "mi"
+        ],
+        [
+          121,
+          125,
+          "hair"
+        ],
+        [
+          126,
+          128,
+          "is"
+        ],
+        [
+          129,
+          135,
+          "greasi"
+        ],
+        [
+          143,
+          145,
+          "de"
+        ],
+        [
+          151,
+          154,
+          "sai"
+        ],
+        [
+          155,
+          160,
+          "sorri"
+        ]
+      ],
       "plain": [
         [
           3,
@@ -6520,6 +7175,14 @@
         "My inspiration, Vincent van Gogh, painted for years.",
         0
       ],
+      "phonetic_one_spelling": [
+        "after school i went to the park with {NAME_1} and her brother. we played til dark.",
+        1
+      ],
+      "phonetic_register": [
+        "dey sai ai smel an so ai dont get mai clos dirtier. Ai cry. Mi mama sai no an mi brother sai it to. yestedei {NAME_2} mi hair is greasi. {NAME_1} sai sorri.",
+        2
+      ],
       "plain": [
         "My cousin {NAME_1} came over that summer.",
         1
@@ -6681,6 +7344,14 @@
       "particle": [
         "My inspiration, Vincent van Gogh, painted for years.",
         0
+      ],
+      "phonetic_one_spelling": [
+        "after school i went to the park with {NAME} and her brother. we played til dark.",
+        1
+      ],
+      "phonetic_register": [
+        "dey sai ai smel an so ai dont get mai clos dirtier. Ai cry. Mi mama sai no an mi brother sai it to. yestedei {NAME} mi hair is greasi. {NAME} sai sorri.",
+        2
       ],
       "plain": [
         "My cousin {NAME} came over that summer.",
@@ -6844,6 +7515,14 @@
         "My inspiration, Vincent van Gogh, painted for years.",
         0
       ],
+      "phonetic_one_spelling": [
+        "after school i went to the park with {NAME_1} and her brother. we played til dark.",
+        1
+      ],
+      "phonetic_register": [
+        "dey sai ai smel an so ai dont get mai clos dirtier. Ai cry. Mi mama sai no an mi brother sai it to. yestedei {NAME_2} mi hair is greasi. {NAME_1} sai sorri.",
+        2
+      ],
       "plain": [
         "My cousin {NAME_1} came over that summer.",
         1
@@ -7006,6 +7685,14 @@
         "My inspiration, {NAME_1}, painted for years.",
         1
       ],
+      "phonetic_one_spelling": [
+        "after school i went to the park with {NAME_1} and her brother. we played til dark.",
+        1
+      ],
+      "phonetic_register": [
+        "dey sai ai smel an so ai dont get mai clos dirtier. Ai cry. Mi mama sai no an mi brother sai it to. yestedei {NAME_2} mi hair is greasi. {NAME_1} sai sorri.",
+        2
+      ],
       "plain": [
         "My cousin {NAME_1} came over that summer.",
         1
@@ -7092,6 +7779,9 @@
       "interior_stop": true,
       "landmark": false,
       "org_suffix": true,
+      "phonetic_alone": true,
+      "phonetic_leading": true,
+      "phonetic_particle": true,
       "school": true,
       "settlement": true,
       "settlement_with_landmark_suffix": true,
@@ -7170,6 +7860,10 @@
       "particle": [
         "gogh",
         "vincent"
+      ],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [
+        "cruz"
       ],
       "plain": [
         "okonkwo",
@@ -7300,6 +7994,10 @@
       "particle": [
         "gogh",
         "vincent"
+      ],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [
+        "cruz"
       ],
       "plain": [
         "okonkwo",
@@ -7455,6 +8153,57 @@
       "window-cue-at-80-inside-90": false,
       "window-cue-at-92-outside-90": false
     },
+    "phonetic_function_words": {
+      "accented": [],
+      "allcaps": [],
+      "bare_i": [],
+      "below_floor": [],
+      "corroborated_surname": [],
+      "corroborated_surname_refused": [],
+      "determiner_seed": [],
+      "empty": [],
+      "headings": [],
+      "honorific": [],
+      "hyphen": [],
+      "hyphen_lowercase_tail": [],
+      "iconic_relation": [],
+      "inconsistent": [],
+      "initials": [],
+      "landmark": [],
+      "lowercase_particle_tail": [],
+      "lowercase_writer": [],
+      "one_mark": [],
+      "orthographic_capitaliser": [],
+      "particle": [],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [
+        "ai",
+        "de",
+        "dey",
+        "mai",
+        "mi",
+        "sai"
+      ],
+      "plain": [],
+      "possessive": [],
+      "possessive_lowercase_habit": [],
+      "protected": [],
+      "quoted": [],
+      "shout": [],
+      "silent_prose": [],
+      "single_quoted": [],
+      "stray_capitaliser": [],
+      "title_book": [],
+      "title_curly": [],
+      "title_is_relation": [],
+      "title_lower": [],
+      "title_nested": [],
+      "title_none": [],
+      "title_relation": [],
+      "two_marks": [],
+      "typo_capitaliser": [],
+      "wrapped": []
+    },
     "protected": {
       "accented": [],
       "allcaps": [],
@@ -7477,6 +8226,8 @@
       "one_mark": [],
       "orthographic_capitaliser": [],
       "particle": [],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [],
       "plain": [],
       "possessive": [],
       "possessive_lowercase_habit": [],
@@ -7658,6 +8409,17 @@
       ],
       "particle": [
         0
+      ],
+      "phonetic_one_spelling": [
+        0,
+        65
+      ],
+      "phonetic_register": [
+        0,
+        52,
+        60,
+        100,
+        137
       ],
       "plain": [
         0
@@ -7886,6 +8648,8 @@
       "one_mark": [],
       "orthographic_capitaliser": [],
       "particle": [],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [],
       "plain": [],
       "possessive": [],
       "possessive_lowercase_habit": [],
@@ -7958,6 +8722,8 @@
       "one_mark": [],
       "orthographic_capitaliser": [],
       "particle": [],
+      "phonetic_one_spelling": [],
+      "phonetic_register": [],
       "plain": [],
       "possessive": [],
       "possessive_lowercase_habit": [],
@@ -8044,6 +8810,115 @@
         [
           "Acme",
           "Inc."
+        ]
+      ],
+      "phonetic_alone": [
+        [
+          "Ai"
+        ]
+      ],
+      "phonetic_leading": [
+        [
+          "Den",
+          "Jake"
+        ]
+      ],
+      "phonetic_particle": [
+        [
+          "Maria",
+          "de",
+          "Cruz"
+        ]
+      ],
+      "school": [
+        [
+          "Westfield"
+        ]
+      ],
+      "settlement": [
+        [
+          "Akron"
+        ]
+      ],
+      "settlement_with_landmark_suffix": [
+        [
+          "Allen",
+          "Park"
+        ]
+      ],
+      "settlement_with_org_suffix": [
+        [
+          "Falls",
+          "Church"
+        ]
+      ],
+      "township": [
+        [
+          "Springfield",
+          "Township"
+        ]
+      ],
+      "two_names": [
+        [
+          "Terrence",
+          "Okonkwo"
+        ]
+      ]
+    },
+    "trim_phonetic": {
+      "allcaps_run": [
+        [
+          "Deshawn",
+          "Pritchard"
+        ]
+      ],
+      "bare_honorific": [],
+      "civic": [
+        [
+          "Akron",
+          "Public",
+          "Library"
+        ]
+      ],
+      "honorific_and_name": [
+        [
+          "Mrs.",
+          "Okonkwo"
+        ]
+      ],
+      "honorific_then_stop": [],
+      "interior_stop": [
+        [
+          "Coach",
+          "Ruiz"
+        ],
+        [
+          "Marisol"
+        ]
+      ],
+      "landmark": [
+        [
+          "Lincoln",
+          "Memorial"
+        ]
+      ],
+      "org_suffix": [
+        [
+          "Acme",
+          "Inc."
+        ]
+      ],
+      "phonetic_alone": [],
+      "phonetic_leading": [
+        [
+          "Jake"
+        ]
+      ],
+      "phonetic_particle": [
+        [
+          "Maria",
+          "de",
+          "Cruz"
         ]
       ],
       "school": [
@@ -9408,6 +10283,275 @@
           "years"
         ]
       ],
+      "phonetic_one_spelling": [
+        [
+          0,
+          5,
+          "after"
+        ],
+        [
+          6,
+          12,
+          "school"
+        ],
+        [
+          13,
+          14,
+          "i"
+        ],
+        [
+          15,
+          19,
+          "went"
+        ],
+        [
+          20,
+          22,
+          "to"
+        ],
+        [
+          23,
+          26,
+          "the"
+        ],
+        [
+          27,
+          31,
+          "park"
+        ],
+        [
+          32,
+          36,
+          "with"
+        ],
+        [
+          37,
+          40,
+          "mai"
+        ],
+        [
+          41,
+          47,
+          "nguyen"
+        ],
+        [
+          48,
+          51,
+          "and"
+        ],
+        [
+          52,
+          55,
+          "her"
+        ],
+        [
+          56,
+          63,
+          "brother"
+        ],
+        [
+          65,
+          67,
+          "we"
+        ],
+        [
+          68,
+          74,
+          "played"
+        ],
+        [
+          75,
+          78,
+          "til"
+        ],
+        [
+          79,
+          83,
+          "dark"
+        ]
+      ],
+      "phonetic_register": [
+        [
+          0,
+          3,
+          "dey"
+        ],
+        [
+          4,
+          7,
+          "sai"
+        ],
+        [
+          8,
+          10,
+          "ai"
+        ],
+        [
+          11,
+          15,
+          "smel"
+        ],
+        [
+          16,
+          18,
+          "an"
+        ],
+        [
+          19,
+          21,
+          "so"
+        ],
+        [
+          22,
+          24,
+          "ai"
+        ],
+        [
+          25,
+          29,
+          "dont"
+        ],
+        [
+          30,
+          33,
+          "get"
+        ],
+        [
+          34,
+          37,
+          "mai"
+        ],
+        [
+          38,
+          42,
+          "clos"
+        ],
+        [
+          43,
+          50,
+          "dirtier"
+        ],
+        [
+          52,
+          54,
+          "Ai"
+        ],
+        [
+          55,
+          58,
+          "cry"
+        ],
+        [
+          60,
+          62,
+          "Mi"
+        ],
+        [
+          63,
+          67,
+          "mama"
+        ],
+        [
+          68,
+          71,
+          "sai"
+        ],
+        [
+          72,
+          74,
+          "no"
+        ],
+        [
+          75,
+          77,
+          "an"
+        ],
+        [
+          78,
+          80,
+          "mi"
+        ],
+        [
+          81,
+          88,
+          "brother"
+        ],
+        [
+          89,
+          92,
+          "sai"
+        ],
+        [
+          93,
+          95,
+          "it"
+        ],
+        [
+          96,
+          98,
+          "to"
+        ],
+        [
+          100,
+          108,
+          "yestedei"
+        ],
+        [
+          109,
+          113,
+          "jeni"
+        ],
+        [
+          114,
+          117,
+          "sai"
+        ],
+        [
+          118,
+          120,
+          "mi"
+        ],
+        [
+          121,
+          125,
+          "hair"
+        ],
+        [
+          126,
+          128,
+          "is"
+        ],
+        [
+          129,
+          135,
+          "greasi"
+        ],
+        [
+          137,
+          142,
+          "Maria"
+        ],
+        [
+          143,
+          145,
+          "de"
+        ],
+        [
+          146,
+          150,
+          "Cruz"
+        ],
+        [
+          151,
+          154,
+          "sai"
+        ],
+        [
+          155,
+          160,
+          "sorri"
+        ]
+      ],
       "plain": [
         [
           0,
@@ -10459,6 +11603,7 @@
     "heading_max_chars": 60,
     "lowercase_min_tokens": 2,
     "marks_proper_nouns_min": 2,
+    "phonetic_register_min": 2,
     "relation_window": 90,
     "stop_words": 794,
     "stop_words_never_capitalised": 499,
@@ -10487,6 +11632,8 @@
     "one_mark": "I met Marisol today. She was nice.",
     "orthographic_capitaliser": "We stayed with the Alvarez family in July. On Friday Mrs. Ruiz took our class to Lincoln School and the Americans we met were kind.",
     "particle": "My inspiration, Vincent van Gogh, painted for years.",
+    "phonetic_one_spelling": "after school i went to the park with mai nguyen and her brother. we played til dark.",
+    "phonetic_register": "dey sai ai smel an so ai dont get mai clos dirtier. Ai cry. Mi mama sai no an mi brother sai it to. yestedei jeni sai mi hair is greasi. Maria de Cruz sai sorri.",
     "plain": "My cousin Terrence Okonkwo came over that summer.",
     "possessive": "Terrence's older brother, Narciso's friend, and Lincoln’s hat.",
     "possessive_lowercase_habit": "i saw Marisol's older brother. i waved back.",
@@ -10538,16 +11685,26 @@
       "vincent van gogh"
     ],
     "given_names": [
+      "ai",
       "deshawn",
+      "jeni",
+      "mai",
       "marguerite",
       "marisol",
+      "mi",
       "narciso",
       "renée",
+      "sai",
       "terrence",
       "vincent"
     ],
     "iconic_surnames": [
       "robinson"
+    ],
+    "phonetic": [
+      "ai",
+      "de",
+      "den"
     ],
     "settlements": [
       "acme inc.",
@@ -11049,6 +12206,18 @@
       "Acme",
       "Inc."
     ],
+    "phonetic_alone": [
+      "Ai"
+    ],
+    "phonetic_leading": [
+      "Den",
+      "Jake"
+    ],
+    "phonetic_particle": [
+      "Maria",
+      "de",
+      "Cruz"
+    ],
     "school": [
       "Westfield",
       "High",
@@ -11147,6 +12316,41 @@
       "of",
       "the",
       "y"
+    ],
+    "phonetic_function_words": [
+      "ai",
+      "becuz",
+      "bicuz",
+      "bot",
+      "cud",
+      "da",
+      "dan",
+      "dat",
+      "de",
+      "deir",
+      "dem",
+      "den",
+      "dere",
+      "dese",
+      "dey",
+      "dis",
+      "dose",
+      "frum",
+      "hiz",
+      "iz",
+      "mai",
+      "mi",
+      "sai",
+      "sed",
+      "shud",
+      "sum",
+      "tu",
+      "wat",
+      "wen",
+      "wud",
+      "wuz",
+      "yu",
+      "yur"
     ]
   }
 }

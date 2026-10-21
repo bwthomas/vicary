@@ -2,6 +2,52 @@
 
 ## Unreleased
 
+### Stop words spelled by ear are no longer names
+
+A safety reader downstream of vicary released a real neglect disclosure from a
+second grader, partly because the redactor had removed the words carrying it:
+"kids ... sai ai smel" arrived as "kids ... {NAME_3} smel", and "so ai dont get
+mai clos dirtier" as "so ai dont get {NAME_1} dirtier". `mai` and `sai` are
+given names at the generation floor; `ai`, `mi` and `de` are given names at the
+corroboration floor, which let the tier vouch for a sentence-initial "Ai", "Mi"
+or "De". On the 576-essay synthetic set where it surfaced, a child essay
+written in Spanish-influenced English carried **2.60 name placeholders against
+0.92 for the standard-English version of the same essay** (aave 1.17,
+ell_other 1.11).
+
+A spelling of a stop word is that stop word. A document that writes two or more
+different spellings from `PHONETIC_FUNCTION_WORDS` (33 entries, each paired
+with the stop word it spells, every target on the stoplist) now reads the ones
+it writes in lower case as stop words: they cannot seed a lowercase span and are
+trimmed from a capitalised run. Three things are left alone on purpose:
+
+- **One spelling is not a register.** A friend called Mai, or a Spanish "mi" in
+  a quotation, changes nothing.
+- **A mid-sentence capital wins.** A spelling the document also capitalises
+  mid-sentence is testimony that it is a name there.
+- **A spelled word may still follow a real seed**, so "jeni sai" masks as
+  before. Stopping there too bought 0.05 placeholders per essay and leaked
+  about ten lowercase children's names on a 3,360-essay set.
+
+Measured against 0.2.16:
+
+- child essays, Spanish-influenced: **2.60 → 1.18** placeholders per essay on
+  the 576 set; **2.18 → 1.56** on a 3,360-essay set the rule was not tuned on,
+  where ell_other sits at 1.56 and standard English at 1.21. Standard English,
+  ell_other and teen essays: unchanged to the span.
+- **no masked span lost** on ASAP-AES (12,976 essays), 75 elementary transcripts
+  and 35 NWP papers; every gate unchanged (held-out recall 16/16 and 19/19,
+  all-span 50/50, over-fire 6.70 spans/essay on persuade-20).
+- of the 637 spans it changes on the two synthetic sets, 633 are removed and
+  every one of those leads with a spelling; the other 4 are narrowed, not lost
+  ("Den Jake" → "Jake", "Den Uncle Bob" → "Uncle Bob", "HURTING DE" →
+  "HURTING", "De T" → "T").
+
+`conformance/primitives.json` carries the list, the floor, two corpus texts and
+two new sections (`phonetic_function_words`, `trim_phonetic`), and two parity
+probes carry the verbatim passages, so all three front doors are held to the
+same answer.
+
 ## 0.2.16 — 2026-10-19
 
 ### A host can assert that no placeholder reaches a reader

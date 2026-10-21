@@ -42,6 +42,8 @@ import {
   OVERRIDABLE_TIERS,
   PRECEDENCE,
   PARTICLES,
+  PHONETIC_FUNCTION_WORDS,
+  PHONETIC_REGISTER_MIN,
   NEVER_CAPITALISED,
   PROTECTED,
   PROXIMITY_CUES,
@@ -73,6 +75,7 @@ import {
   surnameForms,
   surnameTokens,
   titleIsTheWritersOwnRelation,
+  phoneticFunctionWords,
   trim,
   type Candidate,
   type Span,
@@ -200,6 +203,7 @@ test("the spec's constants are this build's constants", () => {
     heading_max_chars: HEADING_MAX_CHARS,
     lowercase_min_tokens: LOWERCASE_MIN_TOKENS,
     marks_proper_nouns_min: MARKS_PROPER_NOUNS_MIN,
+    phonetic_register_min: PHONETIC_REGISTER_MIN,
     relation_window: RELATION_WINDOW,
     stop_words: STOP_WORDS.size,
     stop_words_never_capitalised: NEVER_CAPITALISED.size,
@@ -214,6 +218,8 @@ section("is_never_capitalised", stopTokens, (token: string) =>
 );
 
 section("trim", lists, (tokens: string[]) => trim(tokens));
+const phoneticSet = new Set(spec.oracles.phonetic);
+section("trim_phonetic", lists, (tokens: string[]) => trim(tokens, phoneticSet));
 section("classify", lists, (tokens: string[]) => classify(tokens));
 section("classify_with_settlement", lists, (tokens: string[]) =>
   classify(tokens, isSettlement),
@@ -258,6 +264,11 @@ test("the spec's hand-typed word lists are this build's, in order", () => {
   assert.deepEqual([...HONORIFICS], spec.wordLists.honorifics);
   assert.deepEqual([...PARTICLES], spec.wordLists.particles);
   assert.deepEqual([...CLITICS], spec.wordLists.clitics);
+  // Keys in insertion order, which the reference keeps sorted.
+  assert.deepEqual(
+    Object.keys(PHONETIC_FUNCTION_WORDS),
+    spec.wordLists.phonetic_function_words,
+  );
 });
 
 section("names_someone_in_the_writers_life", spans, (c: SpanCase) =>
@@ -311,6 +322,9 @@ section("capitalisation_habit_with_headings", corpus, (text: string) =>
 
 section("mid_sentence_capitals", corpus, (text: string) =>
   [...midSentenceCapitals(text, sentenceStarts(text))].sort(),
+);
+section("phonetic_function_words", corpus, (text: string) =>
+  [...phoneticFunctionWords(text, midSentenceCapitals(text, sentenceStarts(text)))].sort(),
 );
 section("mid_sentence_capitals_with_headings", corpus, (text: string) =>
   [...midSentenceCapitals(text, sentenceStarts(text), headingSpans(text))].sort(),
@@ -376,7 +390,7 @@ test("every section the spec carries is checked by this file", () => {
   // would otherwise ship unchecked, which is the exact gap the file exists to
   // close.
   const checked = new Set([
-    "is_stop", "is_never_capitalised", "trim", "classify",
+    "is_stop", "is_never_capitalised", "trim", "trim_phonetic", "classify",
     "classify_with_settlement",
     "classify_tags", "classify_tags_with_settlement", "masks_with_settlement",
     "word_token", "lower_token", "any_token", "candidate_re", "protected",
@@ -387,6 +401,7 @@ test("every section the spec carries is checked by this file", () => {
     "title_spans", "title_spans_requires_capital",
     "capitalisation_habit", "capitalisation_habit_with_headings",
     "mid_sentence_capitals", "mid_sentence_capitals_with_headings",
+    "phonetic_function_words",
     "surname_tokens", "bare_surname_key", "surname_forms",
     "find_candidates", "find_candidates_without_oracles",
     "find_candidates_permissive_given",

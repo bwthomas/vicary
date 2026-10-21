@@ -138,6 +138,7 @@ class PrimitivesTest < Minitest::Test
       "heading_max_chars" => C::HEADING_MAX_CHARS,
       "lowercase_min_tokens" => C::LOWERCASE_MIN_TOKENS,
       "marks_proper_nouns_min" => C::MARKS_PROPER_NOUNS_MIN,
+      "phonetic_register_min" => C::PHONETIC_REGISTER_MIN,
       "relation_window" => C::RELATION_WINDOW,
       "stop_words" => C.stop_words.size,
       "stop_words_never_capitalised" => C.never_capitalised.size,
@@ -178,6 +179,8 @@ class PrimitivesTest < Minitest::Test
     assert_equal SPEC["word_lists"]["honorifics"], C::HONORIFICS
     assert_equal SPEC["word_lists"]["particles"], C::PARTICLES
     assert_equal SPEC["word_lists"]["clitics"], C::CLITICS
+    # Keys in insertion order, which the reference keeps sorted.
+    assert_equal SPEC["word_lists"]["phonetic_function_words"], C::PHONETIC_FUNCTION_WORDS.keys
   end
 
   def test_the_specs_relation_word_lists_are_this_builds
@@ -208,6 +211,8 @@ class PrimitivesTest < Minitest::Test
   section("is_never_capitalised", STOP_TOKENS) { |token| C.never_capitalised?(token) }
 
   section("trim", LISTS) { |tokens| C.trim(tokens) }
+  PHONETIC_SET = Set.new(SPEC["oracles"]["phonetic"])
+  section("trim_phonetic", LISTS) { |tokens| C.trim(tokens, PHONETIC_SET) }
   section("classify", LISTS) { |tokens| C.classify(tokens) }
   section("classify_with_settlement", LISTS) { |tokens| C.classify(tokens, IS_SETTLEMENT) }
   section("classify_tags", LISTS) { |tokens| C.classify_tags(tokens).to_a.sort }
@@ -255,6 +260,9 @@ class PrimitivesTest < Minitest::Test
 
   section("mid_sentence_capitals", CORPUS) do |text|
     C.mid_sentence_capitals(text, C.sentence_starts(text)).to_a.sort
+  end
+  section("phonetic_function_words", CORPUS) do |text|
+    C.phonetic_function_words(text, C.mid_sentence_capitals(text, C.sentence_starts(text))).to_a.sort
   end
   section("mid_sentence_capitals_with_headings", CORPUS) do |text|
     C.mid_sentence_capitals(text, C.sentence_starts(text), C.heading_spans(text)).to_a.sort

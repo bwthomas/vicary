@@ -300,6 +300,39 @@ module Vicary
       most much many few several enough
     ]).freeze
 
+    # Phonetic spellings of English stop words, each with the stop word it
+    # spells. Young writers, and young Spanish-L1 writers most of all,
+    # spell the closed-class words by ear — "dey sai ai smel", "so ai dont get
+    # mai clos dirtier" — and several of those spellings are given names the
+    # tier knows, so the lowercase route masked "sai ai" and "mai clos" and the
+    # sentence-initial rule let the tier vouch for "Ai", "Mi" and "De". A
+    # spelling of a stop word is the same word, so in a document that writes
+    # this way it is a stop word too. Only the spellings are read; the pairing
+    # is documentation. See `phonetic_function_words` for when a document
+    # qualifies.
+    PHONETIC_FUNCTION_WORDS = {
+      "ai" => "i", "becuz" => "because", "bicuz" => "because", "bot" => "but",
+      "cud" => "could", "da" => "the", "dan" => "than", "dat" => "that",
+      "de" => "the", "deir" => "their", "dem" => "them", "den" => "then",
+      "dere" => "there", "dese" => "these", "dey" => "they", "dis" => "this",
+      "dose" => "those", "frum" => "from", "hiz" => "his", "iz" => "is",
+      "mai" => "my", "mi" => "me", "sai" => "say", "sed" => "said",
+      "shud" => "should", "sum" => "some", "tu" => "to", "wat" => "what",
+      "wen" => "when", "wud" => "would", "wuz" => "was", "yu" => "you",
+      "yur" => "your",
+    }.freeze
+
+    # Distinct phonetic spellings a document must write in lower case before
+    # any of them is read as a word rather than a name. One is a coincidence —
+    # a friend called Mai — two different ones is a writer spelling by ear.
+    PHONETIC_REGISTER_MIN = 2
+
+    PHONETIC_TOKEN = Regexp.new(
+      "(?<![A-Za-z'’-])(?:" +
+        PHONETIC_FUNCTION_WORDS.keys.sort_by { |w| [-w.length, w] }.join("|") +
+        ")(?![A-Za-z'’-])"
+    )
+
     HONORIFIC_SET = Set.new(HONORIFICS.map(&:downcase)).freeze
 
     # One capitalised word, hyphens and apostrophes included so
@@ -742,6 +775,20 @@ module Vicary
         strip(without_clitic(strip(token.downcase, ".,")), "'’")
       end
 
+      # The phonetic spellings this document uses as words, to be read as
+      # stops. Empty unless the document writes at least PHONETIC_REGISTER_MIN
+      # distinct spellings in lower case. When it does, the spellings it writes
+      # in lower case — the writer's own testimony that the token is a word to
+      # them — less any it also capitalises mid-sentence, which is the opposite
+      # testimony and wins.
+      def phonetic_function_words(text, written_as_a_capital = Set.new)
+        seen = Set.new
+        each_match(text, PHONETIC_TOKEN) { |m| seen << m[0] }
+        return Set.new if seen.size < PHONETIC_REGISTER_MIN
+
+        Set.new(seen.reject { |w| written_as_a_capital.include?(w) })
+      end
+
       # Whether a capital on `token` mid-sentence is a mistake rather than a
       # construction — the narrow half of the stoplist.
       #
@@ -846,7 +893,11 @@ module Vicary
       # the stoplist so that a bare "Mrs." cannot become a candidate on its own,
       # but "Mrs. Okonkwo" has to stay whole: masking only the surname leaves the
       # relationship and the surname's position in the text.
-      def trim(tokens)
+      #
+      # `phonetic` is `phonetic_function_words` for the document: spellings read
+      # as stop words here. Except a particle *inside* a run — "Maria de Cruz"
+      # keeps its `de` however the rest of the document spells "the".
+      def trim(tokens, phonetic = Set.new)
         runs = []
         current = []
         tokens.each_with_index do |token, index|
@@ -854,7 +905,10 @@ module Vicary
             HONORIFIC_SET.include?(strip(token.downcase, ".,")) &&
             index + 1 < tokens.length &&
             !stop?(tokens[index + 1])
-          if stop?(token) && !introduces_a_name
+          spelled_stop = !phonetic.empty? && phonetic.include?(fold(token)) &&
+                         !(index.positive? && index < tokens.length - 1 &&
+                           PARTICLES.include?(token))
+          if (stop?(token) || spelled_stop) && !introduces_a_name
             unless current.empty?
               runs << current
               current = []
@@ -1849,7 +1903,7 @@ module Vicary
       #   capitalisation signal, and the seed stands on the given-name tier
       #   alone.
       def find_lowercase_candidates(text, is_given, protected_span, corroborate = nil,
-                                    settlement = nil)
+                                    settlement = nil, phonetic = Set.new)
         tokens = each_match(text, LOWER_TOKEN).map do |m|
           [m[0], m.begin(0), m.begin(0) + m[0].length]
         end
@@ -1857,7 +1911,10 @@ module Vicary
         index = 0
         while index < tokens.length
           word, start, = tokens[index]
-          if stop?(word) || !is_given.call(word)
+          # A phonetic spelling may not SEED a span ("sai ai smel"), but may
+          # still be the token a real seed reaches ("jeni sai") — see the
+          # reference.
+          if stop?(word) || phonetic.include?(word) || !is_given.call(word)
             index += 1
             next
           end
@@ -1996,6 +2053,10 @@ module Vicary
         )
         written_as_a_capital = casing.written_as_a_capital
         lower_cased = casing.written_in_lower_case
+        # Read off the same casing pass, so a spelling the writer capitalises
+        # mid-sentence is never one of them; and only where a given-name oracle
+        # exists, because it only withdraws what the tier proposed or vouched for.
+        phonetic = given_name.nil? ? Set.new : phonetic_function_words(text, written_as_a_capital)
         stray_capitals = mid_sentence_corroboration && !given_name.nil? &&
                          capitalises_ordinary_words?(text, headings)
 
@@ -2007,7 +2068,7 @@ module Vicary
           tokens = words(span)
           # A long all-caps run means the capitalisation told us nothing, so the
           # stoplist is carrying the whole decision.
-          trim(tokens).each do |run|
+          trim(tokens, phonetic).each do |run|
             next if run.empty?
 
             joined = run.join(" ")
@@ -2078,7 +2139,7 @@ module Vicary
           # evidence to offer and is better served by it.
           find_lowercase_candidates(
             text, given_name, is_protected,
-            habit == LOWERCASE ? nil : written_as_a_capital, settlement
+            habit == LOWERCASE ? nil : written_as_a_capital, settlement, phonetic
           ).each do |candidate|
             next if claimed.any? { |s, e| candidate.start < e && candidate.end > s }
 

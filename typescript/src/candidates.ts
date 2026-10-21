@@ -352,6 +352,64 @@ export const DETERMINERS: ReadonlySet<string> = new Set(
     .filter((word) => word !== ""),
 );
 
+/**
+ * Phonetic spellings of English stop words, each with the stop word it spells
+ *. Young writers, and young Spanish-L1 writers most of all, spell the
+ * closed-class words by ear — "dey sai ai smel", "so ai dont get mai clos
+ * dirtier" — and several of those spellings are given names the tier knows, so
+ * the lowercase route masked "sai ai" and "mai clos" and the sentence-initial
+ * rule let the tier vouch for "Ai", "Mi" and "De". A spelling of a stop word is
+ * the same word, so in a document that writes this way it is a stop word too.
+ * Only the spellings are read; the pairing is documentation, and the reference's
+ * test holds every target on the stoplist. See {@link phoneticFunctionWords} for
+ * when a document qualifies.
+ */
+export const PHONETIC_FUNCTION_WORDS: Readonly<Record<string, string>> = {
+  ai: "i", becuz: "because", bicuz: "because", bot: "but",
+  cud: "could", da: "the", dan: "than", dat: "that", de: "the",
+  deir: "their", dem: "them", den: "then", dere: "there",
+  dese: "these", dey: "they", dis: "this", dose: "those",
+  frum: "from", hiz: "his", iz: "is", mai: "my", mi: "me",
+  sai: "say", sed: "said", shud: "should", sum: "some", tu: "to",
+  wat: "what", wen: "when", wud: "would", wuz: "was", yu: "you",
+  yur: "your",
+};
+
+/**
+ * Distinct phonetic spellings a document must write in lower case before any of
+ * them is read as a word rather than a name. One is a coincidence — a friend
+ * called Mai — two different ones is a writer spelling by ear.
+ */
+export const PHONETIC_REGISTER_MIN = 2;
+
+const PHONETIC_TOKEN = new RegExp(
+  "(?<![A-Za-z'’-])(?:" +
+    Object.keys(PHONETIC_FUNCTION_WORDS)
+      .sort((a, b) => b.length - a.length || (a < b ? -1 : a > b ? 1 : 0))
+      .join("|") +
+    ")(?![A-Za-z'’-])",
+  "g",
+);
+
+/**
+ * The phonetic spellings this document uses as words, to be read as stops.
+ *
+ * Empty unless the document writes at least {@link PHONETIC_REGISTER_MIN}
+ * distinct spellings in lower case. When it does, the answer is the spellings it
+ * writes in lower case — the writer's own testimony that the token is a word to
+ * them — less any it also capitalises mid-sentence, which is the opposite
+ * testimony and wins.
+ */
+export function phoneticFunctionWords(
+  text: string,
+  writtenAsACapital: ReadonlySet<string> = new Set(),
+): Set<string> {
+  const seen = new Set<string>();
+  for (const match of text.matchAll(PHONETIC_TOKEN)) seen.add(match[0]);
+  if (seen.size < PHONETIC_REGISTER_MIN) return new Set();
+  return new Set([...seen].filter((word) => !writtenAsACapital.has(word)));
+}
+
 /** What a candidate masks as. */
 export type CandidateKind = "NAME" | "ORGANIZATION" | "LOCATION";
 
@@ -680,7 +738,10 @@ export function isPublicLandmark(name: string): boolean {
  * Okonkwo" has to stay whole: masking only the surname leaves the relationship and
  * the surname's position in the text.
  */
-export function trim(tokens: readonly string[]): string[][] {
+export function trim(
+  tokens: readonly string[],
+  phonetic: ReadonlySet<string> = new Set(),
+): string[][] {
   const runs: string[][] = [];
   let current: string[] = [];
   for (let index = 0; index < tokens.length; index += 1) {
@@ -689,7 +750,13 @@ export function trim(tokens: readonly string[]): string[][] {
       HONORIFIC_SET.has(strip(token.toLowerCase(), ".,")) &&
       index + 1 < tokens.length &&
       !isStop(tokens[index + 1]!);
-    if (isStop(token) && !introducesAName) {
+    // A spelled stop word, except a particle INSIDE a run: "Maria de Cruz" keeps
+    // its `de` however the rest of the document spells "the".
+    const spelledStop =
+      phonetic.size > 0 &&
+      phonetic.has(fold(token)) &&
+      !(index > 0 && index < tokens.length - 1 && PARTICLES.includes(token));
+    if ((isStop(token) || spelledStop) && !introducesAName) {
       if (current.length > 0) {
         runs.push(current);
         current = [];
@@ -2131,6 +2198,7 @@ export function findLowercaseCandidates(
   protectedSpan: (start: number, end: number) => boolean,
   corroborate?: ReadonlySet<string>,
   settlement?: SettlementOracle,
+  phonetic: ReadonlySet<string> = new Set(),
 ): Candidate[] {
   const tokens = [...text.matchAll(LOWER_TOKEN)].map(
     (match) => [match[0], match.index, match.index + match[0].length] as const,
@@ -2139,7 +2207,9 @@ export function findLowercaseCandidates(
   let index = 0;
   while (index < tokens.length) {
     const [word, start] = tokens[index]!;
-    if (isStop(word) || !isGiven(word)) {
+    // A phonetic spelling may not SEED a span ("sai ai smel"), but may still be
+    // the token a real seed reaches ("jeni sai") — see the reference.
+    if (isStop(word) || phonetic.has(word) || !isGiven(word)) {
       index += 1;
       continue;
     }
@@ -2328,6 +2398,13 @@ export function findCandidates(
     true,
     caseVariance && givenName !== undefined && marksProperNouns(habit),
   );
+  // Read off the same casing pass, so a spelling the writer capitalises
+  // mid-sentence is never one of them; and only where a given-name oracle exists,
+  // because it only withdraws what the tier proposed or vouched for.
+  const phonetic =
+    givenName !== undefined
+      ? phoneticFunctionWords(text, writtenAsACapital)
+      : new Set<string>();
   const strayCapitals =
     midSentenceCorroboration &&
     givenName !== undefined &&
@@ -2341,7 +2418,7 @@ export function findCandidates(
     // A long all-caps run means the capitalisation told us nothing, so the
     // stoplist is carrying the whole decision. Recorded here rather than
     // silently: this is where the allcaps frame's misses come from.
-    for (const run of trim(tokens)) {
+    for (const run of trim(tokens, phonetic)) {
       if (run.length === 0) continue;
       const joined = run.join(" ");
       // Locate the run inside the original span so offsets stay exact.
@@ -2423,6 +2500,7 @@ export function findCandidates(
       isProtected,
       habit === LOWERCASE ? undefined : writtenAsACapital,
       settlement,
+      phonetic,
     )) {
       if (
         claimed.some(([start, end]) => candidate.start < end! && candidate.end > start!)

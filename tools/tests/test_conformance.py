@@ -113,7 +113,7 @@ def test_every_primitive_case_covers_the_whole_corpus() -> None:
     spans = set(document["span_cases"])
     names = set(document["name_forms"])
     over_lists = {
-        "trim", "classify", "classify_with_settlement",
+        "trim", "trim_phonetic", "classify", "classify_with_settlement",
         "classify_tags", "classify_tags_with_settlement", "masks_with_settlement",
     }
     # The surname functions take a name, not a text, a token list or a span — a

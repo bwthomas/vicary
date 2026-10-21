@@ -355,6 +355,74 @@ _DETERMINERS: frozenset[str] = frozenset(
     """.split()
 )
 
+#: Phonetic spellings of English stop words, each paired with the stop word it
+#: spells. Young writers, and young writers whose first language is Spanish in
+#: particular, spell the closed-class words by ear: "dey sai ai smel", "so ai dont
+#: get mai clos dirtier". Several of those spellings are also given names the
+#: tier knows — ``mai`` and ``sai`` at the generation floor, ``ai``, ``mi``,
+#: ``de``, ``da`` and ``dat`` at the corroboration floor — so the lowercase route
+#: seeded on them and masked "sai ai" and "mai clos", and the sentence-initial
+#: rule let the tier vouch for "Ai", "Mi" and "De". On a synthetic child-writing draw
+#: that put 3.05 name placeholders in a child ``ell_es`` essay against 0.86 in
+#: its standard-English twin, and the words it removed were the content words
+#: ("smell", "clothes") a reader downstream needed.
+#:
+#: The rule this list serves is the one the stoplist already states: a stop word
+#: is never a candidate. A spelling of a stop word is the same word, so in a
+#: document that writes this way it is a stop word too. Every target is on the
+#: stoplist (``test_every_phonetic_spelling_targets_a_stop_word`` holds it
+#: there), which is what keeps this from growing into a list of words someone
+#: once saw masked.
+#:
+#: Not applied everywhere, because ``Mai``, ``Sai``, ``Dan`` and ``Ai`` are
+#: people. See :func:`phonetic_function_words` for when a document qualifies.
+#: Sorted for the conformance spec; the pairing is documentation and the
+#: spelling is what is read.
+_PHONETIC_FUNCTION_WORDS: dict[str, str] = {
+    "ai": "i", "becuz": "because", "bicuz": "because", "bot": "but",
+    "cud": "could", "da": "the", "dan": "than", "dat": "that", "de": "the",
+    "deir": "their", "dem": "them", "den": "then", "dere": "there",
+    "dese": "these", "dey": "they", "dis": "this", "dose": "those",
+    "frum": "from", "hiz": "his", "iz": "is", "mai": "my", "mi": "me",
+    "sai": "say", "sed": "said", "shud": "should", "sum": "some", "tu": "to",
+    "wat": "what", "wen": "when", "wud": "would", "wuz": "was", "yu": "you",
+    "yur": "your",
+}
+
+#: Distinct phonetic spellings a document must write in lower case before any of
+#: them is read as a word rather than a name. One is a coincidence — a friend
+#: called Mai, a Spanish "mi" in a quotation; two different ones is a writer
+#: spelling by ear. On a synthetic child-writing draw (576 essays, 144 per dialect) no
+#: standard-English essay writes more than one, 71 of 144 ``ell_es`` essays
+#: write two or more, and 7 of 144 ``aave`` essays do (``dem``, ``dat``, ``dis``,
+#: which are that dialect's own function words and safe to read as such).
+_PHONETIC_REGISTER_MIN: int = 2
+
+_PHONETIC_ALT = "|".join(
+    sorted(_PHONETIC_FUNCTION_WORDS, key=lambda w: (-len(w), w))
+)
+_PHONETIC_TOKEN = re.compile(rf"(?<![A-Za-z'’-])(?:{_PHONETIC_ALT})(?![A-Za-z'’-])")
+
+
+def phonetic_function_words(
+    text: str, written_as_a_capital: frozenset[str] | set[str] = frozenset(),
+) -> frozenset[str]:
+    """The phonetic spellings this document uses as words, to be read as stops.
+
+    Empty unless the document writes at least :data:`_PHONETIC_REGISTER_MIN`
+    distinct spellings from :data:`_PHONETIC_FUNCTION_WORDS` in lower case. When
+    it does, the answer is the spellings it writes in lower case — the writer's
+    own testimony, the same kind :func:`written_in_lower_case` reads, that the
+    token is a word to them — less any the document also capitalises
+    mid-sentence, which is the opposite testimony and wins. So "Mai" survives in
+    a document that writes "dey sai" if it never writes "mai" in lower case, and
+    survives in one that does if it also writes "and Mai came" somewhere.
+    """
+    seen = frozenset(m.group(0) for m in _PHONETIC_TOKEN.finditer(text))
+    if len(seen) < _PHONETIC_REGISTER_MIN:
+        return frozenset()
+    return frozenset(w for w in seen if w not in written_as_a_capital)
+
 
 @dataclass(frozen=True)
 class Candidate:
@@ -603,7 +671,9 @@ def _classify(
     return _resolve(classify_tags(tokens, settlement)).kind or "NAME"
 
 
-def _trim(tokens: list[str]) -> list[list[str]]:
+def _trim(
+    tokens: list[str], phonetic: frozenset[str] = frozenset(),
+) -> list[list[str]]:
     """Drop stoplisted tokens, splitting the span where one sits inside it.
 
     "MY BEST FRIEND DESHAWN PRITCHARD WOULD NEVER" is one match, because in an
@@ -615,6 +685,10 @@ def _trim(tokens: list[str]) -> list[list[str]]:
     the stoplist so that a bare "Mrs." cannot become a candidate on its own, but
     "Mrs. Okonkwo" has to stay whole: masking only the surname leaves the
     relationship and the surname's position in the text.
+
+    ``phonetic`` is :func:`phonetic_function_words` for the document: spellings
+    read as stop words here. Except a particle *inside* a run — "Maria de Cruz"
+    keeps its ``de`` however the rest of the document spells "the".
     """
     runs: list[list[str]] = []
     current: list[str] = []
@@ -624,7 +698,10 @@ def _trim(tokens: list[str]) -> list[list[str]]:
             and index + 1 < len(tokens)
             and not _is_stop(tokens[index + 1])
         )
-        if _is_stop(token) and not introduces_a_name:
+        spelled_stop = bool(phonetic) and _fold(token) in phonetic and not (
+            0 < index < len(tokens) - 1 and token in _PARTICLES
+        )
+        if (_is_stop(token) or spelled_stop) and not introduces_a_name:
             if current:
                 runs.append(current)
                 current = []
@@ -1557,6 +1634,7 @@ def _find_lowercase_candidates(
     protected: Callable[[int, int], bool],
     corroborate: frozenset[str] | None = None,
     settlement: SettlementOracle | None = None,
+    phonetic: frozenset[str] = frozenset(),
 ) -> list[Candidate]:
     """Names written in lowercase, seeded on the gazetteer's given-name tier.
 
@@ -1597,6 +1675,16 @@ def _find_lowercase_candidates(
     That replaced suppressing the route outright, which cost every uncapitalised
     occurrence of a name in a document that capitalises the rest. Both legs are in
     ``eval_recall`` and in the student-prose audit rather than argued.
+
+    ``phonetic`` (:func:`phonetic_function_words`) may not SEED a span: "sai ai
+    smel" is "say I smell", and "mai clos" is "my clothes", and a stop word is no
+    more a name for being spelled by ear. It may still be the token a real seed
+    reaches, and that half is deliberate. The second token has never had to be a
+    surname, only a non-stop word ("jake laughed" masks), and on a synthetic LE
+    stress set the phonetic word was the only second token reachable for 27
+    lowercase spans — "jeni sai", "sam mi", "jake sed" — about ten of them real
+    children's names. Breaking there as well bought 0.05 placeholders per essay
+    and leaked those names, so the seed is the whole of the change.
     """
     tokens = [(m.group(0), m.start(), m.end()) for m in _LOWER_TOKEN.finditer(text)]
     particles = frozenset(_PARTICLES)
@@ -1604,7 +1692,7 @@ def _find_lowercase_candidates(
     index = 0
     while index < len(tokens):
         word, start, _ = tokens[index]
-        if _is_stop(word) or not is_given(word):
+        if _is_stop(word) or word in phonetic or not is_given(word):
             index += 1
             continue
         if index and tokens[index - 1][0] in _DETERMINERS:
@@ -1769,6 +1857,14 @@ def find_candidates(
         lower_case=(case_variance and given_name is not None
                     and habit.marks_proper_nouns),
     )
+    # Read off the same casing pass, so a spelling the writer capitalises
+    # mid-sentence is never one of them. Needs ``given_name`` for the reason the
+    # sentence-initial rule does: it only ever withdraws what the tier proposed or
+    # vouched for, and the no-oracle arm keeps its recall-maximal character.
+    phonetic = (
+        phonetic_function_words(text, written_as_a_capital)
+        if given_name is not None else frozenset()
+    )
     stray_capitals = (
         mid_sentence_corroboration
         and given_name is not None
@@ -1784,7 +1880,7 @@ def find_candidates(
         # A long all-caps run means the capitalisation told us nothing, so the
         # stoplist is carrying the whole decision. Recorded here rather than
         # silently: this is where the allcaps frame's misses come from.
-        for run in _trim(tokens):
+        for run in _trim(tokens, phonetic):
             if not run:
                 continue
             joined = " ".join(run)
@@ -1856,6 +1952,7 @@ def find_candidates(
         # offer and is better served by it. See :class:`CapitalisationHabit`.
         for candidate in _find_lowercase_candidates(
             text, given_name, _protected, settlement=settlement,
+            phonetic=phonetic,
             corroborate=(
                 None
                 if habit is CapitalisationHabit.LOWERCASE
