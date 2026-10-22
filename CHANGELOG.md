@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.18 — 2026-10-22
+
 ### Question words and lone letters in feedback are no longer names
 
 A host that masks its generated feedback before a student reads it removed 39
