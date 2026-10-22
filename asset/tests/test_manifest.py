@@ -44,7 +44,7 @@ def test_both_assets_are_described(tmp_path: Path) -> None:
     }
     # The two halves of one stoplist, and 499 + 295 is the 794 that shipped
     # as a single file through 0.2.9.
-    assert payload["assets"]["stop_words_never_capitalised.txt"]["entries"] == 499
+    assert payload["assets"]["stop_words_never_capitalised.txt"]["entries"] == 511
     assert payload["assets"]["stop_words_sometimes_capitalised.txt"]["entries"] == 295
 
 

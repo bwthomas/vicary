@@ -961,6 +961,40 @@ _TITLE_ABBREVIATIONS: frozenset[str] = frozenset({
 #: Matches the abbreviation a break candidate sits directly behind.
 _TRAILING_WORD = re.compile(r"([A-Za-z]+)\.\s*\Z")
 
+#: Words that name the letter after them as a letter: "a capital C", "a big M".
+#: Feedback on spelling and capitals says this all the time, and the letter then
+#: stood alone mid-sentence with nothing to tell it from an initial. Measured on
+#: 696 generated replies: 4 of the 39 placeholders a host's guard had to remove.
+LETTER_NAMING_WORDS: frozenset[str] = frozenset({
+    "capital", "big", "small", "lowercase", "uppercase", "letter",
+})
+
+#: The word directly before a span, read back over whitespace and an opening quote.
+_PRECEDING_WORD = re.compile(r"([A-Za-z]+)[\s'\"‘“]*\Z")
+
+
+def is_a_letter_not_a_name(text: str, start: int, end: int) -> bool:
+    """A lone capital that is a label or a letter, never an initial.
+
+    Two shapes, both read off the characters around the span:
+
+    * **Glued to a digit** — ``E9``, ``B12``: a quote or paragraph label. The
+      word pattern stops at the digit, so the letter used to stand alone as a
+      candidate and was masked as ``{NAME_1}9``.
+    * **Named as a letter** — the word before it is one of
+      :data:`LETTER_NAMING_WORDS`.
+
+    Only a single character is ever released. A longer word glued to digits
+    (``Jake2009``) is a handle and stays a candidate, and an initial with a
+    period (``J. R. Tolkien``) never reaches here as a lone letter.
+    """
+    if end - start != 1:
+        return False
+    if end < len(text) and text[end].isdigit():
+        return True
+    preceding = _PRECEDING_WORD.search(text[:start])
+    return preceding is not None and preceding.group(1).lower() in LETTER_NAMING_WORDS
+
 
 def _sentence_starts(text: str) -> frozenset[int]:
     """Offsets at which a sentence begins.
@@ -1890,6 +1924,8 @@ def find_candidates(
                 continue
             start = match.start() + offset
             if _protected(start, start + len(joined)):
+                continue
+            if is_a_letter_not_a_name(text, start, start + len(joined)):
                 continue
             # Cheapest of the three capital-discounting rules and the only
             # one that reads neither position nor list, so it goes first.

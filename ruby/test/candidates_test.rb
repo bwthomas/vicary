@@ -43,7 +43,7 @@ class CandidatesTest < Minitest::Test
   # -------------------------------------------------------------------------
 
   def test_the_stoplist_is_the_shipped_794_words_not_a_transliteration
-    assert_equal 794, C.stop_words.size
+    assert_equal 806, C.stop_words.size
   end
 
   def test_a_clitic_is_stripped_before_the_stoplist_is_consulted
@@ -889,6 +889,28 @@ end
 #
 # Same cases as `python/tests/test_name_candidates.py` and
 # `typescript/test/candidates.test.ts`, value for value.
+class LetterNotANameTest < Minitest::Test
+  C = Vicary::Candidates
+
+  def test_a_lone_letter_that_is_a_label_or_a_letter_is_not_a_name
+    [["Look at the text message in E9 and fix it.", "E"],
+     ["you wrote 'Christmas' with a capital C.", "C"],
+     ["starts with a big M.", "M"],
+     ["the letter 'B' is", "B"]].each do |text, word|
+      start = text.rindex(word)
+      assert C.letter_not_a_name?(text, start, start + 1), text
+    end
+  end
+
+  def test_an_initial_or_a_handle_stays_a_candidate
+    [["Ask Mr. B about it.", "B"], ["my friend J said so", "J"],
+     ["tell Jake2009 too", "Jake"]].each do |text, word|
+      start = text.index(word)
+      refute C.letter_not_a_name?(text, start, start + word.length), text
+    end
+  end
+end
+
 class CaseVarianceTest < Minitest::Test
   C = Vicary::Candidates
 

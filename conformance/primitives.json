@@ -11605,8 +11605,8 @@
     "marks_proper_nouns_min": 2,
     "phonetic_register_min": 2,
     "relation_window": 90,
-    "stop_words": 794,
-    "stop_words_never_capitalised": 499,
+    "stop_words": 806,
+    "stop_words_never_capitalised": 511,
     "stop_words_sometimes_capitalised": 295,
     "title_max_tokens": 8
   },

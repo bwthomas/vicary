@@ -7,7 +7,7 @@
  * does that for the two Python readers, and this file holds the third to the same
  * numbers, against the same shipped bytes.
  *
- * The count is checked twice on purpose: once against the literal 794, and once
+ * The count is checked twice on purpose: once against the literal 806, and once
  * against the manifest's own `entries` field. The literal catches a truncated
  * vendored file; the manifest cross-check catches the case the literal cannot —
  * an asset cut that changed the list, where a hand-updated constant in one
@@ -41,7 +41,7 @@ function probe(body: string, name = "probe"): Set<string> {
   return parseLexicon(name, body, "probe.txt");
 }
 
-test("the two halves of the stoplist partition its 794 words", () => {
+test("the two halves of the stoplist partition its 806 words", () => {
   // The union is the veto and it is word for word the single list that shipped
   // through 0.2.9. Overlap would put a word English capitalises back into the
   // sloppy-capitaliser signal, which is the defect the split closes; a gap would
@@ -50,7 +50,7 @@ test("the two halves of the stoplist partition its 794 words", () => {
   const never = load(NEVER_CAPITALISED);
   const sometimes = load(SOMETIMES_CAPITALISED);
   for (const word of never) assert.ok(!sometimes.has(word), word);
-  assert.equal(STOP_WORDS.size, 794);
+  assert.equal(STOP_WORDS.size, 806);
   assert.equal(never.size + sometimes.size, STOP_WORDS.size);
   // Spot-checks at the two ends of each file, so a truncated read fails here and
   // not only on the count. The same words the Python suite checks.

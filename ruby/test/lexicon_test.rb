@@ -23,7 +23,7 @@ class LexiconTest < Minitest::Test
     never = Vicary::Lexicon.load(Vicary::Lexicon::NEVER_CAPITALISED)
     sometimes = Vicary::Lexicon.load(Vicary::Lexicon::SOMETIMES_CAPITALISED)
     assert_empty never & sometimes
-    assert_equal 794, Vicary::Lexicon.stop_words.size
+    assert_equal 806, Vicary::Lexicon.stop_words.size
     assert_equal Vicary::Lexicon.stop_words, Vicary::Candidates.stop_words
     # Spot-checks at the two ends of each file, so a truncated read fails here
     # and not only on the count. The same words the Python suite checks.

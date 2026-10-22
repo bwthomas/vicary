@@ -298,6 +298,32 @@ export const TITLE_ABBREVIATIONS: ReadonlySet<string> = new Set([
 const TRAILING_WORD = /([A-Za-z]+)\.\s*$/;
 
 /**
+ * Words that name the letter after them as a letter: "a capital C", "a big M".
+ * Feedback on spelling and capitals says this all the time, and the letter then
+ * stood alone mid-sentence with nothing to tell it from an initial. Measured on
+ * 696 generated replies: 4 of the 39 placeholders a host's guard had to remove.
+ */
+export const LETTER_NAMING_WORDS: ReadonlySet<string> = new Set([
+  "capital", "big", "small", "lowercase", "uppercase", "letter",
+]);
+
+/** The word directly before a span, read back over whitespace and an opening quote. */
+const PRECEDING_WORD = /([A-Za-z]+)[\s'"‘“]*$/;
+
+/**
+ * A lone capital that is a label or a letter, never an initial: glued to a digit
+ * (`E9`, a quote label the word pattern used to cut at the digit) or named as a
+ * letter by the word before it ({@link LETTER_NAMING_WORDS}). Only a single
+ * character is ever released; `Jake2009` stays a candidate.
+ */
+export function isALetterNotAName(text: string, start: number, end: number): boolean {
+  if (end - start !== 1) return false;
+  if (/[0-9]/.test(text.charAt(end))) return true;
+  const word = PRECEDING_WORD.exec(text.slice(0, start))?.[1];
+  return word !== undefined && LETTER_NAMING_WORDS.has(word.toLowerCase());
+}
+
+/**
  * {@link SENTENCE_BREAK} with the `^` arm removed, so it cannot match empty.
  *
  * A dialect difference, and it moved a number. `SENTENCE_BREAK` matches the
@@ -2426,6 +2452,7 @@ export function findCandidates(
       if (offset < 0) continue;
       const start = match.index + offset;
       if (isProtected(start, start + joined.length)) continue;
+      if (isALetterNotAName(text, start, start + joined.length)) continue;
       // Cheapest of the three capital-discounting rules and the only one that
       // reads neither position nor list, so it goes first.
       if (

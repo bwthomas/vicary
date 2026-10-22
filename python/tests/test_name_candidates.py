@@ -1663,7 +1663,7 @@ def test_the_two_lexicons_partition_the_stoplist() -> None:
 
     assert not (_NEVER_CAPITALISED & _SOMETIMES_CAPITALISED)
     assert _NEVER_CAPITALISED | _SOMETIMES_CAPITALISED == _STOP_WORDS
-    assert len(_STOP_WORDS) == 794
+    assert len(_STOP_WORDS) == 806
     # Spot-checks on the line itself, at the three shapes it has to get right.
     for orthographic in ("july", "friday", "mrs", "americans", "school", "dad"):
         assert orthographic in _SOMETIMES_CAPITALISED
@@ -2022,3 +2022,32 @@ def test_every_phonetic_spelling_targets_a_stop_word() -> None:
 def test_the_list_is_sorted_and_the_floor_is_two() -> None:
     assert list(nc._PHONETIC_FUNCTION_WORDS) == sorted(nc._PHONETIC_FUNCTION_WORDS)
     assert nc._PHONETIC_REGISTER_MIN == 2
+
+
+# A lone capital that is a label or a letter (row 277: 8 of the 39 placeholders
+# a host's guard removed from 696 generated replies were these).
+@pytest.mark.parametrize("text, word", [
+    ("Look at the text message in E9 and fix it.", "E"),
+    ("you wrote 'Christmas' with a capital C.", "C"),
+    ("starts with a big M.", "M"),
+    ("the letter 'B' is", "B"),
+])
+def test_a_lone_letter_that_is_a_label_or_a_letter_is_not_a_name(text, word):
+    start = text.rindex(word)
+    assert nc.is_a_letter_not_a_name(text, start, start + 1)
+
+
+@pytest.mark.parametrize("text, word", [
+    ("Ask Mr. B about it.", "B"),
+    ("my friend J said so", "J"),
+    ("tell Jake2009 too", "Jake"),
+])
+def test_an_initial_or_a_handle_stays_a_candidate(text, word):
+    start = text.index(word)
+    assert not nc.is_a_letter_not_a_name(text, start, start + len(word))
+
+
+def test_question_words_after_a_colon_are_not_masked_outbound():
+    red = build_redactor_if_enabled("local")
+    text = "You could answer: How did he beat you? Why is it better? Where do they stay?"
+    assert red.redact_outbound_batch([text]).texts == [text]

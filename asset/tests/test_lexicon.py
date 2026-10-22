@@ -26,11 +26,11 @@ def test_the_shipped_stoplist_parses() -> None:
     """
     never = lexicon.load(lexicon.NEVER_CAPITALISED)
     sometimes = lexicon.load(lexicon.SOMETIMES_CAPITALISED)
-    assert len(never) == 499
+    assert len(never) == 511
     assert len(sometimes) == 295
     # 499 + 295 is the 794 that shipped as one file through 0.2.9, word for word.
     words = lexicon.stop_words()
-    assert len(words) == 794
+    assert len(words) == 806
     # Disjoint, or a word English capitalises is back in the signal — which is
     # the defect the split closes.
     assert not (never & sometimes)

@@ -257,6 +257,16 @@ module Vicary
     # Matches the abbreviation a break candidate sits directly behind.
     TRAILING_WORD = /([A-Za-z]+)\.\s*\z/
 
+    # Words that name the letter after them as a letter: "a capital C", "a big M".
+    # Feedback on spelling and capitals says this all the time, and the letter
+    # then stood alone mid-sentence with nothing to tell it from an initial.
+    # Measured on 696 generated replies: 4 of the 39 placeholders a host's guard
+    # had to remove.
+    LETTER_NAMING_WORDS = Set.new(%w[capital big small lowercase uppercase letter]).freeze
+
+    # The word directly before a span, read back over whitespace and an opening quote.
+    PRECEDING_WORD = /([A-Za-z]+)[\s'"‘“]*\z/
+
     # {SENTENCE_BREAK} with the `\A` arm removed, so it cannot match empty.
     #
     # A dialect difference, and it moved a number. `SENTENCE_BREAK` matches the
@@ -924,6 +934,18 @@ module Vicary
       # ---------------------------------------------------------------------
       # Reading the document's own orthography
       # ---------------------------------------------------------------------
+
+      # A lone capital that is a label or a letter, never an initial: glued to a
+      # digit (`E9`, a quote label the word pattern used to cut at the digit) or
+      # named as a letter by the word before it ({LETTER_NAMING_WORDS}). Only a
+      # single character is ever released; `Jake2009` stays a candidate.
+      def letter_not_a_name?(text, start, finish)
+        return false unless finish - start == 1
+        return true if finish < text.length && text[finish].match?(/[0-9]/)
+
+        preceding = PRECEDING_WORD.match(text[0...start])
+        !preceding.nil? && LETTER_NAMING_WORDS.include?(preceding[1].downcase)
+      end
 
       # Offsets at which a sentence begins.
       #
@@ -2078,6 +2100,7 @@ module Vicary
 
             start = m.begin(0) + offset
             next if is_protected.call(start, start + joined.length)
+            next if letter_not_a_name?(text, start, start + joined.length)
 
             # Cheapest of the three capital-discounting rules and the only one
             # that reads neither position nor list, so it goes first.

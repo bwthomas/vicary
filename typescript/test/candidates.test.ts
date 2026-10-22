@@ -22,6 +22,7 @@ import { test } from "node:test";
 
 import {
   ALLCAPS_RUN,
+  isALetterNotAName,
   capitalisesInsideAWord,
   capitalisesOrdinaryWords,
   hasInteriorCapital,
@@ -88,9 +89,9 @@ function plain(spans: Span[]): [number, number][] {
 // The stoplist, and what a stop word is
 // ---------------------------------------------------------------------------
 
-test("the stoplist is the shipped 794 words, not a transliteration", () => {
+test("the stoplist is the shipped 806 words, not a transliteration", () => {
   // Both halves, unioned. See `lexicon.test.ts` for the partition itself.
-  assert.equal(STOP_WORDS.size, 794);
+  assert.equal(STOP_WORDS.size, 806);
 });
 
 test("a clitic is stripped before the stoplist is consulted", () => {
@@ -1149,4 +1150,24 @@ test("the given-name tier still rescues a word written lower case", () => {
     suppressedAsAWordTheWriterAlsoWritesLowerCase(["Bill"], new Set(["bill"]), always),
     false,
   );
+});
+
+test("a lone letter that is a label or a letter is not a name", () => {
+  for (const [text, word] of [
+    ["Look at the text message in E9 and fix it.", "E"],
+    ["you wrote 'Christmas' with a capital C.", "C"],
+    ["starts with a big M.", "M"],
+    ["the letter 'B' is", "B"],
+  ] as const) {
+    const start = text.lastIndexOf(word);
+    assert.equal(isALetterNotAName(text, start, start + 1), true, text);
+  }
+  for (const [text, word] of [
+    ["Ask Mr. B about it.", "B"],
+    ["my friend J said so", "J"],
+    ["tell Jake2009 too", "Jake"],
+  ] as const) {
+    const start = text.indexOf(word);
+    assert.equal(isALetterNotAName(text, start, start + word.length), false, text);
+  }
 });

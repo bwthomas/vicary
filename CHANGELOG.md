@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+### Question words and lone letters in feedback are no longer names
+
+A host that masks its generated feedback before a student reads it removed 39
+placeholders from 696 replies, dropping the sentence each sat in. Fifteen were
+words that identify nobody:
+
+- `How`, `Why` and `Where` opening a suggested answer ("You could answer: How
+  did he beat you?"). The stoplist carried `when`, `who`, `what` and `which` but
+  not these; `how`, `why`, `where`, `wherever`, `whatever` and `whoever` join
+  the never-capitalised half (511 words; the stoplist is now 806).
+- A single capital glued to a digit, which is a quote or paragraph label: `E9`
+  used to reach the reader as `{NAME_1}9`.
+- A single capital named as a letter by the word before it ("a capital C", "a
+  big M"; `LETTER_NAMING_WORDS`).
+
+Only a single character is released by the letter rule: `Jake2009` stays a
+candidate, and `Mr. B` and "my friend J" are still masked. On the same 696
+replies the host now removes 24 placeholders from 22 replies, down from 39 from
+34. Gates: held-out and all-span recall unchanged at 100%, stoplist surname
+exposure 0.50% (≤ 0.60%), prose over-fire 6.7 → 6.6 spans per essay.
+
 ## 0.2.17 — 2026-10-21
 
 ### Stop words spelled by ear are no longer names
