@@ -1786,6 +1786,41 @@ def _find_lowercase_candidates(
     return out
 
 
+#: A title abbreviation and the word it introduces, the title in any case. With a
+#: period every title in the set counts; without one only ``mr`` and ``mrs``,
+#: because a bare ``ms`` or ``dr`` is as often "ms paint" or "dr" for drive.
+_TITLED_WORD_RE = re.compile(
+    r"\b(?:(?:mrs|mr|ms|dr|prof)\.[ \t]+|(?:mrs|mr)[ \t]+)"
+    r"([A-Za-z][A-Za-z'’]*(?:-[A-Za-z][A-Za-z'’]*)*)",
+    re.IGNORECASE,
+)
+
+
+def _find_titled_lowercase_candidates(
+    text: str,
+    protected: Callable[[int, int], bool],
+    settlement: SettlementOracle | None = None,
+) -> list[Candidate]:
+    """A surname written in lowercase behind a title: "mr. kowalski".
+
+    The lowercase route seeds on the given-name tier, so a surname alone never
+    reaches it, and the capitalised route needs the capital the writer left off.
+    A title is the one place the word after it is a name whatever its case, so
+    the title stands in for both: the span is the title and that one word, as the
+    capitalised route masks "Mrs. Alvarez" whole. A stop word or a single letter
+    after the title ("mr. and mrs. smith") is not a name, and the scan moves on.
+    """
+    out: list[Candidate] = []
+    for match in _TITLED_WORD_RE.finditer(text):
+        word = match.group(1)
+        if len(word) < 2 or _is_stop(word.lower()) or protected(match.start(), match.end()):
+            continue
+        joined = match.group(0)
+        out.append(Candidate(text=joined, start=match.start(), end=match.end(),
+                             kind=_classify(joined.split(), settlement)))
+    return out
+
+
 def find_candidates(
     text: str,
     *,
@@ -1995,6 +2030,12 @@ def find_candidates(
                 else written_as_a_capital
             ),
         ):
+            if any(candidate.start < end and candidate.end > start
+                   for start, end in claimed):
+                continue
+            out.append(candidate)
+        claimed = [(c.start, c.end) for c in out]
+        for candidate in _find_titled_lowercase_candidates(text, _protected, settlement):
             if any(candidate.start < end and candidate.end > start
                    for start, end in claimed):
                 continue

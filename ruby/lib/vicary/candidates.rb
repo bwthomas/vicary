@@ -1993,6 +1993,30 @@ module Vicary
         out
       end
 
+      # A title abbreviation and the word it introduces, the title in any case.
+      # With a period every title in the set counts; without one only `mr` and
+      # `mrs`, because a bare `ms` or `dr` is as often "ms paint" or "dr" for drive.
+      TITLED_WORD_RE = /\b(?:(?:mrs|mr|ms|dr|prof)\.[ \t]+|(?:mrs|mr)[ \t]+)([A-Za-z][A-Za-z'’]*(?:-[A-Za-z][A-Za-z'’]*)*)/i
+
+      # A surname written in lowercase behind a title: "mr. kowalski". The
+      # lowercase route seeds on the given-name tier, so a surname alone never
+      # reaches it, and the capitalised route needs the capital the writer left
+      # off. A title is the one place the word after it is a name whatever its
+      # case, so the span is the title and that one word. A stop word or a single
+      # letter after the title is skipped.
+      def find_titled_lowercase_candidates(text, protected_span, settlement = nil)
+        out = []
+        each_match(text, TITLED_WORD_RE) do |m|
+          word = m[1]
+          start = m.begin(0)
+          stop = start + m[0].length
+          next if word.length < 2 || stop?(word.downcase) || protected_span.call(start, stop)
+
+          out << Candidate.new(m[0], start, stop, classify(words(m[0]), settlement))
+        end
+        out
+      end
+
       # Every name-shaped span, before any notability decision.
       #
       # High recall and deliberately poor precision — precision is what the
@@ -2164,6 +2188,12 @@ module Vicary
             text, given_name, is_protected,
             habit == LOWERCASE ? nil : written_as_a_capital, settlement, phonetic
           ).each do |candidate|
+            next if claimed.any? { |s, e| candidate.start < e && candidate.end > s }
+
+            out << candidate
+          end
+          claimed = out.map { |candidate| [candidate.start, candidate.end] }
+          find_titled_lowercase_candidates(text, is_protected, settlement).each do |candidate|
             next if claimed.any? { |s, e| candidate.start < e && candidate.end > s }
 
             out << candidate

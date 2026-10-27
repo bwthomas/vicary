@@ -70,6 +70,7 @@ import {
   withoutClitic,
   type CapitalisationHabit,
   type Span,
+  findTitledLowercaseCandidates,
 } from "../src/candidates.js";
 
 /** `[start, end, matched]` for every match, the shape the reference probe dumped. */
@@ -1169,5 +1170,24 @@ test("a lone letter that is a label or a letter is not a name", () => {
   ] as const) {
     const start = text.indexOf(word);
     assert.equal(isALetterNotAName(text, start, start + word.length), false, text);
+  }
+});
+
+// A surname written in lowercase behind a title, which neither the capitalised
+// route nor the given-name-seeded lowercase route can reach.
+const TITLED_LOWERCASE_CASES: [string, string[]][] = [
+  ["I talked to mr. kowalski after class.", ["mr. kowalski"]],
+  ["Mr. kowalski was nice.", ["Mr. kowalski"]],
+  ["mrs smith gave us homework", ["mrs smith"]],
+  ["mr. and mrs. smith came", ["mrs. smith"]],
+  ["I used ms paint for it.", []],
+  ["we met at 10 dr. so", []],
+  ["dr. feldman read it", ["dr. feldman"]],
+];
+
+test("a title makes the lowercase word after it a name", () => {
+  for (const [text, spans] of TITLED_LOWERCASE_CASES) {
+    const found = findTitledLowercaseCandidates(text, () => false);
+    assert.deepEqual(found.map((c) => c.text), spans, text);
   }
 });

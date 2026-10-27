@@ -2305,6 +2305,44 @@ export function findLowercaseCandidates(
   return out;
 }
 
+/**
+ * A title abbreviation and the word it introduces, the title in any case. With a
+ * period every title in the set counts; without one only `mr` and `mrs`, because
+ * a bare `ms` or `dr` is as often "ms paint" or "dr" for drive.
+ */
+const TITLED_WORD_RE =
+  /\b(?:(?:mrs|mr|ms|dr|prof)\.[ \t]+|(?:mrs|mr)[ \t]+)([A-Za-z][A-Za-z'’]*(?:-[A-Za-z][A-Za-z'’]*)*)/gi;
+
+/**
+ * A surname written in lowercase behind a title: "mr. kowalski". The lowercase
+ * route seeds on the given-name tier, so a surname alone never reaches it, and
+ * the capitalised route needs the capital the writer left off. A title is the one
+ * place the word after it is a name whatever its case, so the span is the title
+ * and that one word. A stop word or a single letter after the title is skipped.
+ */
+export function findTitledLowercaseCandidates(
+  text: string,
+  isProtected: (start: number, end: number) => boolean,
+  settlement?: SettlementOracle,
+): Candidate[] {
+  const out: Candidate[] = [];
+  for (const match of text.matchAll(TITLED_WORD_RE)) {
+    const word = match[1]!;
+    const start = match.index!;
+    const end = start + match[0].length;
+    if (word.length < 2 || isStop(word.toLowerCase()) || isProtected(start, end)) {
+      continue;
+    }
+    out.push({
+      text: match[0],
+      start,
+      end,
+      kind: classify(match[0].split(/\s+/).filter(Boolean), settlement),
+    });
+  }
+  return out;
+}
+
 /** The oracles and arms {@link findCandidates} takes, all of them optional. */
 export interface CandidateOptions {
   /** Turns on the lowercase route. Absent, this keys on capitalisation alone and
@@ -2531,6 +2569,15 @@ export function findCandidates(
     )) {
       if (
         claimed.some(([start, end]) => candidate.start < end! && candidate.end > start!)
+      ) {
+        continue;
+      }
+      out.push(candidate);
+    }
+    const claimedAll = out.map((candidate) => [candidate.start, candidate.end]);
+    for (const candidate of findTitledLowercaseCandidates(text, isProtected, settlement)) {
+      if (
+        claimedAll.some(([start, end]) => candidate.start < end! && candidate.end > start!)
       ) {
         continue;
       }

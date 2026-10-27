@@ -1001,4 +1001,21 @@ class CaseVarianceTest < Minitest::Test
       ["Bill"], Set.new(["bill"]), always
     )
   end
+
+  TITLED_LOWERCASE_CASES = [
+    ["I talked to mr. kowalski after class.", ["mr. kowalski"]],
+    ["Mr. kowalski was nice.", ["Mr. kowalski"]],
+    ["mrs smith gave us homework", ["mrs smith"]],
+    ["mr. and mrs. smith came", ["mrs. smith"]],
+    ["I used ms paint for it.", []],
+    ["we met at 10 dr. so", []],
+    ["dr. feldman read it", ["dr. feldman"]],
+  ].freeze
+
+  def test_a_title_makes_the_lowercase_word_after_it_a_name
+    TITLED_LOWERCASE_CASES.each do |text, spans|
+      found = C.find_titled_lowercase_candidates(text, ->(_s, _e) { false })
+      assert_equal spans, found.map(&:text), text
+    end
+  end
 end

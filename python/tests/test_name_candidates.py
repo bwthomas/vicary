@@ -2051,3 +2051,28 @@ def test_question_words_after_a_colon_are_not_masked_outbound():
     red = build_redactor_if_enabled("local")
     text = "You could answer: How did he beat you? Why is it better? Where do they stay?"
     assert red.redact_outbound_batch([text]).texts == [text]
+
+
+# A surname written in lowercase behind a title, which neither the capitalised
+# route nor the given-name-seeded lowercase route can reach.
+TITLED_LOWERCASE_CASES = [
+    ('I talked to mr. kowalski after class.', ['mr. kowalski']),
+    ('Mr. kowalski was nice.', ['Mr. kowalski']),
+    ('mrs smith gave us homework', ['mrs smith']),
+    ('mr. and mrs. smith came', ['mrs. smith']),
+    ('I used ms paint for it.', []),
+    ('we met at 10 dr. so', []),
+    ('dr. feldman read it', ['dr. feldman']),
+]
+
+
+@pytest.mark.parametrize("text, spans", TITLED_LOWERCASE_CASES)
+def test_a_title_makes_the_lowercase_word_after_it_a_name(text, spans):
+    found = nc._find_titled_lowercase_candidates(text, lambda start, end: False)
+    assert [c.text for c in found] == spans
+
+
+def test_a_lowercase_titled_surname_is_masked_end_to_end():
+    redactor = build_redactor_if_enabled("local")
+    out = redactor.redact_inbound("I talked to mr. kowalski after class.")
+    assert "kowalski" not in getattr(out, "text", out)
