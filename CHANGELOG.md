@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.19 — 2026-10-27
+
+### A surname written in lowercase behind a title is a name
+
+"I talked to mr. kowalski after class" left the surname unmasked: the capitalised route needs the capital the writer left off, and the lowercase route seeds only on given names. A title abbreviation now introduces a name whatever the case of either word. With a period, any of mr, mrs, ms, dr, prof counts; without one, only mr and mrs, since a bare "ms paint" or "dr" is not a title. A stop word or a single letter after the title is skipped ("mr. and mrs. smith" masks "mrs. smith"). Runs at the lowercase name-detection level, which is the default.
+
 ## 0.2.18 — 2026-10-22
 
 ### Question words and lone letters in feedback are no longer names
