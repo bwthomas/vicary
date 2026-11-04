@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 — 2026-11-04
+
 ### Adlib: a redacted essay can read as prose, every kind invented
 
 `render="adlib"` (`VICARY_RENDER=adlib`, seed `adlib_seed` / `VICARY_ADLIB_SEED`) replaces each redacted span with an invented value of its kind instead of a `{KIND_n}` placeholder. It renders over the placeholder pass's spans, so what is redacted is unchanged, and placeholders stay the default. Local mode, inbound pass only.
