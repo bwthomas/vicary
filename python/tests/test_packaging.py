@@ -100,6 +100,12 @@ REQUIRED_PACKAGE_DATA = (
     "data/MANIFEST.json",
     "data/stop_words_never_capitalised.txt",
     "data/stop_words_sometimes_capitalised.txt",
+    "pools/given.txt",
+    "pools/surname.txt",
+    "pools/school.txt",
+    "pools/org.txt",
+    "pools/place.txt",
+    "pools/street.txt",
 )
 
 

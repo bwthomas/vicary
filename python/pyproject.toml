@@ -78,7 +78,8 @@ where = ["src"]
 # means redacting every public figure in every essay. Two guards, because this one
 # is worth two: `tests/test_packaging.py` asserts the files are present in the
 # working tree, and CI's python-build job greps the built wheel for them.
-vicary = ["data/*.txt.gz", "data/*.txt", "data/MANIFEST.json"]
+# `pools/` holds adlib's stand-in pools: tracked, and read at runtime.
+vicary = ["data/*.txt.gz", "data/*.txt", "data/MANIFEST.json", "pools/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
