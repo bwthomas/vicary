@@ -25,7 +25,7 @@ is: `vicary_build` is an installable package, and Python's convention is for a
 package's tests to sit beside it. `just tools` runs both directories; so does
 the `tools` CI job.
 
-Alongside the tests, four scripts that are **run by hand, never by a test**. Each
+Alongside the tests, five scripts that are **run by hand, never by a test**. Each
 writes something the repository then commits, so the thing under review is the
 diff rather than the run:
 
@@ -33,6 +33,7 @@ diff rather than the run:
 |---|---|---|
 | `census_build.py` | `conformance/census/` — the US surname table the bare-surname gate scores against | when the Census release changes |
 | `persuade_build.py` | `conformance/corpora/persuade-20/` — the shipped essay corpus | when the selection rule or its upstream changes |
+| `adlib_pools_build.py` | `python/src/vicary/pools/*.txt` — the adlib stand-in pools (given, surname, school, org, place, street) | when a pool's source or its filters change; by hand, the pool diff is what gets reviewed |
 | `version_sync.py` | the five files that must restate the version | every release; `just version 0.3.0` |
 | `coverage_board.py` | nothing — prints the coverage board | `just coverage` |
 
