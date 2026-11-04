@@ -1,0 +1,6979 @@
+{
+  "acronym": [
+    {
+      "acronym": "LHS",
+      "name": "Lincoln High School"
+    },
+    {
+      "acronym": "RCC",
+      "name": "Riverside Chess Club"
+    },
+    {
+      "acronym": "ORMS",
+      "name": "Oak Ridge Middle School"
+    },
+    {
+      "acronym": "SMA",
+      "name": "Saint Mary's Academy"
+    },
+    {
+      "acronym": "ABC",
+      "name": "a b c"
+    },
+    {
+      "acronym": "",
+      "name": ""
+    }
+  ],
+  "card_plug": [
+    {
+      "digits": "4012888888881881",
+      "plug": "4111111111111111",
+      "variant": 0
+    },
+    {
+      "digits": "4012888888881881",
+      "plug": "4111111111111103",
+      "variant": 1
+    },
+    {
+      "digits": "4012888888881881",
+      "plug": "4111111111111079",
+      "variant": 4
+    },
+    {
+      "digits": "371449635398431",
+      "plug": "378282246310005",
+      "variant": 0
+    },
+    {
+      "digits": "5105105105105100",
+      "plug": "5555555555554428",
+      "variant": 2
+    },
+    {
+      "digits": "6011000990139424",
+      "plug": "6011111111111117",
+      "variant": 0
+    },
+    {
+      "digits": "30000000000004",
+      "plug": "30569309025904",
+      "variant": 0
+    },
+    {
+      "digits": "3566002020360505",
+      "plug": "3530111333399978",
+      "variant": 3
+    },
+    {
+      "digits": "4000000000006",
+      "plug": "4222222222222",
+      "variant": 0
+    },
+    {
+      "digits": "9999888877776666",
+      "plug": "4111111111111111",
+      "variant": 0
+    },
+    {
+      "digits": "1111111111111111",
+      "plug": "4111111111111111",
+      "variant": 0
+    }
+  ],
+  "constants": {
+    "age_bands": [
+      [
+        0,
+        4
+      ],
+      [
+        5,
+        7
+      ],
+      [
+        8,
+        10
+      ],
+      [
+        11,
+        13
+      ],
+      [
+        14,
+        18
+      ],
+      [
+        19,
+        24
+      ],
+      [
+        25,
+        34
+      ],
+      [
+        35,
+        44
+      ],
+      [
+        45,
+        54
+      ],
+      [
+        55,
+        64
+      ],
+      [
+        65,
+        74
+      ],
+      [
+        75,
+        84
+      ],
+      [
+        85,
+        99
+      ]
+    ],
+    "card_plugs": [
+      [
+        [
+          "34",
+          "37"
+        ],
+        15,
+        "378282246310005"
+      ],
+      [
+        [
+          "4"
+        ],
+        16,
+        "4111111111111111"
+      ],
+      [
+        [
+          "4"
+        ],
+        13,
+        "4222222222222"
+      ],
+      [
+        [
+          "51",
+          "52",
+          "53",
+          "54",
+          "55",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27"
+        ],
+        16,
+        "5555555555554444"
+      ],
+      [
+        [
+          "6011",
+          "64",
+          "65"
+        ],
+        16,
+        "6011111111111117"
+      ],
+      [
+        [
+          "30",
+          "36",
+          "38"
+        ],
+        14,
+        "30569309025904"
+      ],
+      [
+        [
+          "35"
+        ],
+        16,
+        "3530111333300000"
+      ]
+    ],
+    "ip_ranges": [
+      "192.0.2.",
+      "198.51.100.",
+      "203.0.113."
+    ],
+    "max_bumps": 256,
+    "phone_area_code": "201",
+    "phone_plug": "201-555-0100",
+    "providers": [
+      "aol.com",
+      "comcast.net",
+      "gmail.com",
+      "hotmail.com",
+      "icloud.com",
+      "live.com",
+      "mac.com",
+      "me.com",
+      "msn.com",
+      "outlook.com",
+      "proton.me",
+      "protonmail.com",
+      "yahoo.com"
+    ],
+    "ssn_plug": "799-99-9999",
+    "url_reserved": [
+      "about",
+      "accounts",
+      "add",
+      "apps",
+      "c",
+      "channel",
+      "collections",
+      "compose",
+      "dashboard",
+      "developer",
+      "direct",
+      "directory",
+      "discover",
+      "enterprise",
+      "events",
+      "explore",
+      "features",
+      "gaming",
+      "groups",
+      "hashtag",
+      "help",
+      "home",
+      "i",
+      "ideas",
+      "intent",
+      "issues",
+      "join",
+      "legal",
+      "login",
+      "marketplace",
+      "messages",
+      "new",
+      "notifications",
+      "orgs",
+      "p",
+      "pages",
+      "people",
+      "permalink.php",
+      "photo.php",
+      "pin",
+      "policies",
+      "pricing",
+      "privacy",
+      "profile.php",
+      "pulls",
+      "reel",
+      "reels",
+      "register",
+      "search",
+      "settings",
+      "share",
+      "sharer.php",
+      "signup",
+      "sponsors",
+      "stories",
+      "stream",
+      "tagged",
+      "today",
+      "topics",
+      "tos",
+      "trending",
+      "tv",
+      "upload",
+      "user",
+      "videos",
+      "watch",
+      "you"
+    ],
+    "url_shapes": [
+      [
+        "youtube.com",
+        "/@{h}"
+      ],
+      [
+        "youtube.com",
+        "/c/{h}"
+      ],
+      [
+        "youtube.com",
+        "/channel/{i}"
+      ],
+      [
+        "youtube.com",
+        "/user/{h}"
+      ],
+      [
+        "instagram.com",
+        "/stories/{h}"
+      ],
+      [
+        "instagram.com",
+        "/{h}"
+      ],
+      [
+        "twitter.com",
+        "/{h}/status/{i}"
+      ],
+      [
+        "twitter.com",
+        "/{h}"
+      ],
+      [
+        "x.com",
+        "/{h}/status/{i}"
+      ],
+      [
+        "x.com",
+        "/{h}"
+      ],
+      [
+        "tiktok.com",
+        "/@{h}/video/{i}"
+      ],
+      [
+        "tiktok.com",
+        "/@{h}"
+      ],
+      [
+        "threads.net",
+        "/@{h}"
+      ],
+      [
+        "threads.com",
+        "/@{h}"
+      ],
+      [
+        "facebook.com",
+        "/profile.php?id={i}"
+      ],
+      [
+        "facebook.com",
+        "/people/{h}/{i}"
+      ],
+      [
+        "facebook.com",
+        "/{h}"
+      ],
+      [
+        "linkedin.com",
+        "/in/{h}"
+      ],
+      [
+        "linkedin.com",
+        "/pub/{h}"
+      ],
+      [
+        "github.com",
+        "/orgs/{h}"
+      ],
+      [
+        "github.com",
+        "/sponsors/{h}"
+      ],
+      [
+        "github.com",
+        "/{h}"
+      ],
+      [
+        "reddit.com",
+        "/user/{h}"
+      ],
+      [
+        "reddit.com",
+        "/u/{h}"
+      ],
+      [
+        "old.reddit.com",
+        "/user/{h}"
+      ],
+      [
+        "old.reddit.com",
+        "/u/{h}"
+      ],
+      [
+        "medium.com",
+        "/@{h}"
+      ],
+      [
+        "mastodon.social",
+        "/@{h}"
+      ],
+      [
+        "bsky.app",
+        "/profile/{h}"
+      ],
+      [
+        "snapchat.com",
+        "/add/{h}"
+      ],
+      [
+        "pinterest.com",
+        "/{h}"
+      ],
+      [
+        "twitch.tv",
+        "/{h}"
+      ],
+      [
+        "soundcloud.com",
+        "/{h}"
+      ],
+      [
+        "linktr.ee",
+        "/{h}"
+      ],
+      [
+        "vsco.co",
+        "/{h}"
+      ],
+      [
+        "patreon.com",
+        "/{h}"
+      ],
+      [
+        "tumblr.com",
+        "/{h}"
+      ],
+      [
+        "deviantart.com",
+        "/{h}"
+      ],
+      [
+        "codepen.io",
+        "/{h}"
+      ],
+      [
+        "replit.com",
+        "/@{h}"
+      ],
+      [
+        "scratch.mit.edu",
+        "/users/{h}"
+      ],
+      [
+        "roblox.com",
+        "/users/{i}"
+      ],
+      [
+        "khanacademy.org",
+        "/profile/{h}"
+      ],
+      [
+        "open.spotify.com",
+        "/user/{h}"
+      ],
+      [
+        "steamcommunity.com",
+        "/id/{h}"
+      ],
+      [
+        "steamcommunity.com",
+        "/profiles/{i}"
+      ],
+      [
+        "flickr.com",
+        "/people/{h}"
+      ],
+      [
+        "flickr.com",
+        "/photos/{h}"
+      ],
+      [
+        "wattpad.com",
+        "/user/{h}"
+      ],
+      [
+        "archiveofourown.org",
+        "/users/{h}"
+      ],
+      [
+        "quizlet.com",
+        "/user/{h}"
+      ],
+      [
+        "goodreads.com",
+        "/user/show/{h}"
+      ]
+    ],
+    "url_user_subdomains": [
+      "blogspot.com",
+      "carrd.co",
+      "github.io",
+      "neocities.org",
+      "substack.com",
+      "tumblr.com",
+      "weebly.com",
+      "wixsite.com",
+      "wordpress.com"
+    ],
+    "zip_plug": "99999"
+  },
+  "conventions": {
+    "document_digest": "sha256 hex of the original document's UTF-8",
+    "draw": "NUL-join seed, document digest, purpose, key and \"<bump>.<index>\"; sha256 the UTF-8; first 8 bytes big-endian unsigned, mod n",
+    "offsets": "render spans are [orig_start, orig_end, new_start, new_end, original] in code points, not UTF-16 code units",
+    "oracles": "\"production\": stop_words = lexicon stop words, given_name = gazetteer common given name, notable = gazetteer notable; \"none\": invent's defaults (no stop words, no oracles)",
+    "ordered_maps": "restore_map, placeholder_restore_map, adlib_map, adlib_tokens and tokens are [key, value] lists in insertion order, which restore's first-wins rule reads",
+    "render": "the reference arm's placeholder output over `original`, then render_adlib(result, original, seed) with no identity",
+    "seed": "an integer seed is drawn as its decimal string",
+    "spec": "README.md, section \"Adlib\", is the byte-level rule text"
+  },
+  "document_version": 1,
+  "draw": [
+    {
+      "args": [
+        "0",
+        "ec7dafcd351fe5964d3cc607a9e5b12d036ea6cac582fa22dc70a48330d8dd2f",
+        "given",
+        "maria",
+        0,
+        0,
+        1000
+      ],
+      "index": 885
+    },
+    {
+      "args": [
+        "0",
+        "ec7dafcd351fe5964d3cc607a9e5b12d036ea6cac582fa22dc70a48330d8dd2f",
+        "surname",
+        "lopez",
+        0,
+        0,
+        1000
+      ],
+      "index": 882
+    },
+    {
+      "args": [
+        "7",
+        "ec7dafcd351fe5964d3cc607a9e5b12d036ea6cac582fa22dc70a48330d8dd2f",
+        "scramble",
+        "12345",
+        2,
+        3,
+        10
+      ],
+      "index": 6
+    },
+    {
+      "args": [
+        "seed",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "age",
+        "14",
+        0,
+        0,
+        4
+      ],
+      "index": 0
+    },
+    {
+      "args": [
+        "0",
+        "ec7dafcd351fe5964d3cc607a9e5b12d036ea6cac582fa22dc70a48330d8dd2f",
+        "dob-offset",
+        "",
+        0,
+        0,
+        364
+      ],
+      "index": 62
+    },
+    {
+      "args": [
+        "3",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "given",
+        "maría",
+        5,
+        1,
+        97
+      ],
+      "index": 45
+    },
+    {
+      "args": [
+        "x",
+        "ec7dafcd351fe5964d3cc607a9e5b12d036ea6cac582fa22dc70a48330d8dd2f",
+        "url-id",
+        "100012345678",
+        255,
+        11,
+        10
+      ],
+      "index": 2
+    }
+  ],
+  "invent": [
+    {
+      "case_id": "name:person_consistency",
+      "document": "x",
+      "identity": [],
+      "oracles": "none",
+      "seed": 3,
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ],
+        [
+          "NAME",
+          "Maria"
+        ],
+        [
+          "NAME",
+          "Ms. Lopez"
+        ],
+        [
+          "NAME",
+          "lopez"
+        ],
+        [
+          "NAME",
+          "Maria's"
+        ],
+        [
+          "NAME",
+          "MARIA LOPEZ"
+        ],
+        [
+          "NAME",
+          "Lopez, Maria"
+        ]
+      ],
+      "stand_ins": [
+        "Charly Novak",
+        "Charly",
+        "Ms. Novak",
+        "novak",
+        "Charly's",
+        "CHARLY NOVAK",
+        "Novak, Charly"
+      ],
+      "tokens": [
+        [
+          "Charly",
+          "Maria"
+        ],
+        [
+          "Novak",
+          "Lopez"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:person_consistency_production",
+      "document": "Maria Lopez helped me study. Later Maria said Ms. Lopez was strict, but Maria's notes saved me. I yelled MARIA LOPEZ across the gym. My friend Terrence Okonkwo and Jane Quincy-Adams met mr. kowalski there. Abraham Lincoln was the topic.",
+      "identity": [],
+      "oracles": "production",
+      "seed": 3,
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ],
+        [
+          "NAME",
+          "Maria"
+        ],
+        [
+          "NAME",
+          "Ms. Lopez"
+        ],
+        [
+          "NAME",
+          "lopez"
+        ],
+        [
+          "NAME",
+          "Maria's"
+        ],
+        [
+          "NAME",
+          "MARIA LOPEZ"
+        ],
+        [
+          "NAME",
+          "Lopez, Maria"
+        ]
+      ],
+      "stand_ins": [
+        "Codi Fenwick",
+        "Codi",
+        "Ms. Fenwick",
+        "fenwick",
+        "Codi's",
+        "CODI FENWICK",
+        "Fenwick, Codi"
+      ],
+      "tokens": [
+        [
+          "Codi",
+          "Maria"
+        ],
+        [
+          "Fenwick",
+          "Lopez"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:hyphen_and_initials",
+      "document": "",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Jane Quincy-Adams"
+        ],
+        [
+          "NAME",
+          "J. Smith"
+        ],
+        [
+          "NAME",
+          "K. Smith"
+        ]
+      ],
+      "stand_ins": [
+        "Armoni Paredes-Olawale",
+        "L. Britton",
+        "Q. Britton"
+      ],
+      "tokens": [
+        [
+          "Armoni",
+          "Jane"
+        ],
+        [
+          "Paredes",
+          "Quincy"
+        ],
+        [
+          "Olawale",
+          "Adams"
+        ],
+        [
+          "Britton",
+          "Smith"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:possessive_after_s",
+      "document": "James' bag",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "James'"
+        ]
+      ],
+      "stand_ins": [
+        "Emerson's"
+      ],
+      "tokens": [
+        [
+          "Emerson",
+          "James"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:six_people",
+      "document": "Ann Lee Bo Diaz Cy Park Di Wu Ed Kim Fay Roe",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Ann Lee"
+        ],
+        [
+          "NAME",
+          "Bo Diaz"
+        ],
+        [
+          "NAME",
+          "Cy Park"
+        ],
+        [
+          "NAME",
+          "Di Wu"
+        ],
+        [
+          "NAME",
+          "Ed Kim"
+        ],
+        [
+          "NAME",
+          "Fay Roe"
+        ]
+      ],
+      "stand_ins": [
+        "Carsen Jessup",
+        "Kendell Grewal",
+        "Ren Grimaldi",
+        "Reece Velasquez",
+        "Lian Pendleton",
+        "Kayce Yoshida"
+      ],
+      "tokens": [
+        [
+          "Carsen",
+          "Ann"
+        ],
+        [
+          "Jessup",
+          "Lee"
+        ],
+        [
+          "Kendell",
+          "Bo"
+        ],
+        [
+          "Grewal",
+          "Diaz"
+        ],
+        [
+          "Ren",
+          "Cy"
+        ],
+        [
+          "Grimaldi",
+          "Park"
+        ],
+        [
+          "Reece",
+          "Di"
+        ],
+        [
+          "Velasquez",
+          "Wu"
+        ],
+        [
+          "Lian",
+          "Ed"
+        ],
+        [
+          "Pendleton",
+          "Kim"
+        ],
+        [
+          "Kayce",
+          "Fay"
+        ],
+        [
+          "Yoshida",
+          "Roe"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:six_people_production",
+      "document": "Ann Lee Bo Diaz Cy Park Di Wu Ed Kim Fay Roe",
+      "identity": [],
+      "oracles": "production",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Ann Lee"
+        ],
+        [
+          "NAME",
+          "Bo Diaz"
+        ],
+        [
+          "NAME",
+          "Cy Park"
+        ],
+        [
+          "NAME",
+          "Di Wu"
+        ],
+        [
+          "NAME",
+          "Ed Kim"
+        ],
+        [
+          "NAME",
+          "Fay Roe"
+        ]
+      ],
+      "stand_ins": [
+        "Carsen Jessup",
+        "Kendell Grewal",
+        "Ren Grimaldi",
+        "Reece Velasquez",
+        "Lian Pendleton",
+        "Kayce Yoshida"
+      ],
+      "tokens": [
+        [
+          "Carsen",
+          "Ann"
+        ],
+        [
+          "Jessup",
+          "Lee"
+        ],
+        [
+          "Kendell",
+          "Bo"
+        ],
+        [
+          "Grewal",
+          "Diaz"
+        ],
+        [
+          "Ren",
+          "Cy"
+        ],
+        [
+          "Grimaldi",
+          "Park"
+        ],
+        [
+          "Reece",
+          "Di"
+        ],
+        [
+          "Velasquez",
+          "Wu"
+        ],
+        [
+          "Lian",
+          "Ed"
+        ],
+        [
+          "Pendleton",
+          "Kim"
+        ],
+        [
+          "Kayce",
+          "Fay"
+        ],
+        [
+          "Yoshida",
+          "Roe"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:shared_given",
+      "document": "",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ],
+        [
+          "NAME",
+          "Maria Chen"
+        ]
+      ],
+      "stand_ins": [
+        "Caelan Ulloa",
+        "Caelan Kapoor"
+      ],
+      "tokens": [
+        [
+          "Caelan",
+          "Maria"
+        ],
+        [
+          "Ulloa",
+          "Lopez"
+        ],
+        [
+          "Kapoor",
+          "Chen"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:plural_possessive_with_singular",
+      "document": "x",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Smith"
+        ],
+        [
+          "NAME",
+          "Smiths'"
+        ],
+        [
+          "NAME",
+          "James'"
+        ]
+      ],
+      "stand_ins": [
+        "Reilly",
+        "Reillys'",
+        "Jordin's"
+      ],
+      "tokens": [
+        [
+          "Reilly",
+          "Smith"
+        ],
+        [
+          "Jordin",
+          "James"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:plural_possessive_alone",
+      "document": "x",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Smiths'"
+        ]
+      ],
+      "stand_ins": [
+        "Scottie's"
+      ],
+      "tokens": [
+        [
+          "Scottie",
+          "Smiths"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:identity_guard",
+      "document": "x",
+      "identity": [
+        "Quinn",
+        "Okafor Academy"
+      ],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ]
+      ],
+      "stand_ins": [
+        "Tristyn Fenwick"
+      ],
+      "tokens": [
+        [
+          "Tristyn",
+          "Maria"
+        ],
+        [
+          "Fenwick",
+          "Lopez"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:string_seed",
+      "document": "Maria Lopez helped me study. Later Maria said Ms. Lopez was strict, but Maria's notes saved me. I yelled MARIA LOPEZ across the gym. My friend Terrence Okonkwo and Jane Quincy-Adams met mr. kowalski there. Abraham Lincoln was the topic.",
+      "identity": [],
+      "oracles": "none",
+      "seed": "seed-α",
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ],
+        [
+          "NAME",
+          "Terrence"
+        ]
+      ],
+      "stand_ins": [
+        "Scottie Halvorsen",
+        "Kelby"
+      ],
+      "tokens": [
+        [
+          "Scottie",
+          "Maria"
+        ],
+        [
+          "Halvorsen",
+          "Lopez"
+        ],
+        [
+          "Kelby",
+          "Terrence"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:curly_and_modifier_apostrophes",
+      "document": "x",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Maria’s"
+        ],
+        [
+          "NAME",
+          "Lopezʼs"
+        ],
+        [
+          "NAME",
+          "Maria"
+        ]
+      ],
+      "stand_ins": [
+        "Tristyn’s",
+        "Jaidynʼs",
+        "Tristyn"
+      ],
+      "tokens": [
+        [
+          "Tristyn",
+          "Maria"
+        ],
+        [
+          "Jaidyn",
+          "Lopez"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:accented",
+      "document": "José Álvarez",
+      "identity": [],
+      "oracles": "production",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "José Álvarez"
+        ],
+        [
+          "NAME",
+          "José"
+        ]
+      ],
+      "stand_ins": [
+        "Gracen Vickery",
+        "Gracen"
+      ],
+      "tokens": [
+        [
+          "Gracen",
+          "José"
+        ],
+        [
+          "Vickery",
+          "Álvarez"
+        ]
+      ]
+    },
+    {
+      "case_id": "name:cues_render_as_school_or_org",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Lincoln Elementary"
+        ],
+        [
+          "NAME",
+          "Riverside Chess Club"
+        ],
+        [
+          "NAME",
+          "Lincoln High"
+        ]
+      ],
+      "stand_ins": [
+        "Stone Bridge Elementary",
+        "Starling Club",
+        "Stone Bridge High"
+      ],
+      "tokens": [
+        [
+          "Stone Bridge",
+          "Lincoln"
+        ],
+        [
+          "Starling",
+          "Riverside Chess"
+        ]
+      ]
+    },
+    {
+      "case_id": "case:all_caps_and_title",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "MARIA"
+        ],
+        [
+          "NAME",
+          "Maria"
+        ],
+        [
+          "SCHOOL",
+          "LINCOLN HIGH SCHOOL"
+        ],
+        [
+          "SCHOOL",
+          "Lincoln High School"
+        ]
+      ],
+      "stand_ins": [
+        "KAELIN",
+        "Kaelin",
+        "STONE BRIDGE HIGH SCHOOL",
+        "Stone Bridge High School"
+      ],
+      "tokens": [
+        [
+          "Kaelin",
+          "MARIA"
+        ],
+        [
+          "Stone Bridge",
+          "LINCOLN"
+        ]
+      ]
+    },
+    {
+      "case_id": "plug:ssn",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "US_SOCIAL_SECURITY_NUMBER",
+          "123-45-6789"
+        ],
+        [
+          "US_SOCIAL_SECURITY_NUMBER",
+          "987-65-4321"
+        ],
+        [
+          "US_SOCIAL_SECURITY_NUMBER",
+          "123456789"
+        ],
+        [
+          "US_SOCIAL_SECURITY_NUMBER",
+          "123-45-6789"
+        ]
+      ],
+      "stand_ins": [
+        "799-99-9999",
+        "799-99-9998",
+        "799999997",
+        "799-99-9999"
+      ],
+      "tokens": []
+    },
+    {
+      "case_id": "plug:zip",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "ZIP_CODE",
+          "94110"
+        ],
+        [
+          "ZIP_CODE",
+          "10001-1234"
+        ],
+        [
+          "ZIP_CODE",
+          "60614"
+        ]
+      ],
+      "stand_ins": [
+        "99999",
+        "99998-9999",
+        "99997"
+      ],
+      "tokens": []
+    },
+    {
+      "case_id": "plug:phone",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "PHONE",
+          "(973) 444-1234"
+        ],
+        [
+          "PHONE",
+          "+1 973-444-9999 ext. 12"
+        ],
+        [
+          "PHONE",
+          "973.444.0000"
+        ],
+        [
+          "PHONE",
+          "201-444-1234"
+        ],
+        [
+          "PHONE",
+          "555-444-1234"
+        ],
+        [
+          "PHONE",
+          "444-1234"
+        ]
+      ],
+      "stand_ins": [
+        "(201) 555-0100",
+        "+1 201-555-0101 ext. 12",
+        "201.555.0102",
+        "201-555-0103",
+        "201-555-0104",
+        "555-0105"
+      ],
+      "tokens": []
+    },
+    {
+      "case_id": "plug:ip",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "IP_ADDRESS",
+          "10.1.2.3"
+        ],
+        [
+          "IP_ADDRESS",
+          "172.16.0.9"
+        ]
+      ],
+      "stand_ins": [
+        "192.0.2.1",
+        "192.0.2.2"
+      ],
+      "tokens": []
+    },
+    {
+      "case_id": "plug:card",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "CREDIT_DEBIT_CARD_NUMBER",
+          "4012888888881881"
+        ],
+        [
+          "CREDIT_DEBIT_CARD_NUMBER",
+          "4000056655665556"
+        ],
+        [
+          "CREDIT_DEBIT_CARD_NUMBER",
+          "4242424242424242"
+        ],
+        [
+          "CREDIT_DEBIT_CARD_NUMBER",
+          "3714-496353-98431"
+        ],
+        [
+          "CREDIT_DEBIT_CARD_NUMBER",
+          "9999888877776666"
+        ]
+      ],
+      "stand_ins": [
+        "4111111111111111",
+        "4111111111111103",
+        "4111111111111095",
+        "3782-822463-09973",
+        "4111111111111079"
+      ],
+      "tokens": []
+    },
+    {
+      "case_id": "age:bands",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "AGE",
+          "5"
+        ],
+        [
+          "AGE",
+          "9"
+        ],
+        [
+          "AGE",
+          "14"
+        ],
+        [
+          "AGE",
+          "17"
+        ],
+        [
+          "AGE",
+          "26"
+        ],
+        [
+          "AGE",
+          "27"
+        ],
+        [
+          "AGE",
+          "28"
+        ],
+        [
+          "AGE",
+          "64"
+        ],
+        [
+          "AGE",
+          "90"
+        ],
+        [
+          "AGE",
+          "twelve"
+        ]
+      ],
+      "stand_ins": [
+        "7",
+        "10",
+        "16",
+        "18",
+        "33",
+        "34",
+        "25",
+        "60",
+        "94",
+        "xrwkyq"
+      ],
+      "tokens": []
+    },
+    {
+      "case_id": "age:tight_band",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "AGE",
+          "14"
+        ],
+        [
+          "AGE",
+          "15"
+        ],
+        [
+          "AGE",
+          "16"
+        ]
+      ],
+      "stand_ins": [
+        "17",
+        "18",
+        "14"
+      ],
+      "tokens": []
+    },
+    {
+      "case_id": "dob:month_of_dates",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "DATE_OF_BIRTH",
+          "03/01/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/02/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/03/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/04/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/05/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/06/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/07/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/08/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/09/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/10/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/11/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/12/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/13/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/14/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/15/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/16/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/17/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/18/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/19/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/20/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/21/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/22/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/23/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/24/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/25/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/26/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/27/2009"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "03/28/2009"
+        ]
+      ],
+      "stand_ins": [
+        "08/25/2009",
+        "08/26/2009",
+        "08/27/2009",
+        "08/28/2009",
+        "08/29/2009",
+        "08/30/2009",
+        "08/31/2009",
+        "09/01/2009",
+        "09/02/2009",
+        "09/03/2009",
+        "09/04/2009",
+        "09/05/2009",
+        "09/06/2009",
+        "09/07/2009",
+        "09/08/2009",
+        "09/09/2009",
+        "09/10/2009",
+        "09/11/2009",
+        "09/12/2009",
+        "09/13/2009",
+        "09/14/2009",
+        "09/15/2009",
+        "09/16/2009",
+        "09/17/2009",
+        "09/18/2009",
+        "09/19/2009",
+        "09/20/2009",
+        "09/21/2009"
+      ],
+      "tokens": []
+    },
+    {
+      "case_id": "dob:formats",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "DATE_OF_BIRTH",
+          "25-12-09"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "born 1/2/2010"
+        ],
+        [
+          "DATE_OF_BIRTH",
+          "May 3"
+        ]
+      ],
+      "stand_ins": [
+        "20-06-09",
+        "born 6/28/2010",
+        "May 3"
+      ],
+      "tokens": []
+    },
+    {
+      "case_id": "school:acronym_follows",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "SCHOOL",
+          "LHS"
+        ],
+        [
+          "SCHOOL",
+          "Lincoln High School"
+        ]
+      ],
+      "stand_ins": [
+        "SBHS",
+        "Stone Bridge High School"
+      ],
+      "tokens": [
+        [
+          "Stone Bridge",
+          "Lincoln"
+        ]
+      ]
+    },
+    {
+      "case_id": "school:acronym_alone",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "SCHOOL",
+          "RMS"
+        ]
+      ],
+      "stand_ins": [
+        "TIY"
+      ],
+      "tokens": []
+    },
+    {
+      "case_id": "place_and_org",
+      "document": "doc",
+      "identity": [],
+      "oracles": "production",
+      "seed": 0,
+      "spans": [
+        [
+          "LOCATION",
+          "North Dallas"
+        ],
+        [
+          "ORGANIZATION",
+          "Lincoln Robotics Team"
+        ],
+        [
+          "LOCATION",
+          "Lake Tahoe"
+        ],
+        [
+          "LOCATION",
+          "north dallas"
+        ]
+      ],
+      "stand_ins": [
+        "North Amberford",
+        "Redwood Team",
+        "Lake Clayvale",
+        "north amberford"
+      ],
+      "tokens": [
+        [
+          "Amberford",
+          "Dallas"
+        ],
+        [
+          "Redwood",
+          "Lincoln Robotics"
+        ],
+        [
+          "Clayvale",
+          "Tahoe"
+        ]
+      ]
+    },
+    {
+      "case_id": "email",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ],
+        [
+          "EMAIL",
+          "maria.lopez09@lincoln.org"
+        ],
+        [
+          "EMAIL",
+          "mlopez@gmail.com"
+        ],
+        [
+          "EMAIL",
+          "zz_top@school.k12.tx.us"
+        ]
+      ],
+      "stand_ins": [
+        "Kaelin Babatunde",
+        "kaelin.babatunde09@example.org",
+        "jody@gmail.com",
+        "zz_ellison@example.org"
+      ],
+      "tokens": [
+        [
+          "Kaelin",
+          "Maria"
+        ],
+        [
+          "Babatunde",
+          "Lopez"
+        ],
+        [
+          "Jody",
+          "mlopez"
+        ],
+        [
+          "Ellison",
+          "top"
+        ]
+      ]
+    },
+    {
+      "case_id": "username",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ],
+        [
+          "USERNAME",
+          "@maria_lopez"
+        ],
+        [
+          "USERNAME",
+          "@MariaLopez"
+        ],
+        [
+          "USERNAME",
+          "xX_gamer99_Xx"
+        ]
+      ],
+      "stand_ins": [
+        "Kaelin Babatunde",
+        "@kaelin_babatunde",
+        "@KaelinBabatunde",
+        "@X_kylin99_Xx"
+      ],
+      "tokens": [
+        [
+          "Kaelin",
+          "Maria"
+        ],
+        [
+          "Babatunde",
+          "Lopez"
+        ],
+        [
+          "Kylin",
+          "gamer"
+        ]
+      ]
+    },
+    {
+      "case_id": "url:kept_verbatim",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ],
+        [
+          "URL",
+          "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=42s"
+        ],
+        [
+          "URL",
+          "https://github.com/explore"
+        ],
+        [
+          "URL",
+          "https://docs.google.com/document/d/1AbCdEf/edit#heading=h.x1"
+        ],
+        [
+          "URL",
+          "https://en.wikipedia.org/wiki/Frida_Kahlo"
+        ],
+        [
+          "URL",
+          "instagram.com/p/C1x2y3z4"
+        ],
+        [
+          "URL",
+          "youtube.com/watch"
+        ],
+        [
+          "URL",
+          "https://twitter.com/search?q=lopezia"
+        ],
+        [
+          "URL",
+          "https://example.com:8080/user/mar"
+        ],
+        [
+          "URL",
+          "https://lopezia.org/marial"
+        ],
+        [
+          "URL",
+          "https://instagram.com/explore/tags/art"
+        ],
+        [
+          "URL",
+          "https://github.com/orgs"
+        ],
+        [
+          "URL",
+          "https://www.facebook.com/groups/12345"
+        ],
+        [
+          "URL",
+          "https://twitter.com/home"
+        ],
+        [
+          "URL",
+          "https://www.tiktok.com/discover"
+        ],
+        [
+          "URL",
+          "https://www.facebook.com/profile.php"
+        ]
+      ],
+      "stand_ins": [
+        "Kaelin Babatunde",
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=42s",
+        "https://github.com/explore",
+        "https://docs.google.com/document/d/1AbCdEf/edit#heading=h.x1",
+        "https://en.wikipedia.org/wiki/Frida_Kahlo",
+        "instagram.com/p/C1x2y3z4",
+        "youtube.com/watch",
+        "https://twitter.com/search?q=lopezia",
+        "https://example.com:8080/user/mar",
+        "https://lopezia.org/marial",
+        "https://instagram.com/explore/tags/art",
+        "https://github.com/orgs",
+        "https://www.facebook.com/groups/12345",
+        "https://twitter.com/home",
+        "https://www.tiktok.com/discover",
+        "https://www.facebook.com/profile.php"
+      ],
+      "tokens": [
+        [
+          "Kaelin",
+          "Maria"
+        ],
+        [
+          "Babatunde",
+          "Lopez"
+        ]
+      ]
+    },
+    {
+      "case_id": "url:prose_name_map",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ],
+        [
+          "URL",
+          "https://lincolnhs.org/staff/lopez"
+        ],
+        [
+          "URL",
+          "https://marialopez.net/about/maria"
+        ],
+        [
+          "URL",
+          "https://en.wikipedia.org/wiki/Maria_Lopez#early-life"
+        ],
+        [
+          "URL",
+          "https://twitter.com/search?q=Lopez&src=typed"
+        ],
+        [
+          "URL",
+          "https://example.com:8080/user/maria"
+        ],
+        [
+          "URL",
+          "https://lopez.com"
+        ]
+      ],
+      "stand_ins": [
+        "Kaelin Babatunde",
+        "https://lincolnhs.org/staff/babatunde",
+        "https://kaelinbabatunde.net/about/kaelin",
+        "https://en.wikipedia.org/wiki/Kaelin_Babatunde#early-life",
+        "https://twitter.com/search?q=Babatunde&src=typed",
+        "https://example.com:8080/user/kaelin",
+        "https://babatunde.com"
+      ],
+      "tokens": [
+        [
+          "Kaelin",
+          "Maria"
+        ],
+        [
+          "Babatunde",
+          "Lopez"
+        ]
+      ]
+    },
+    {
+      "case_id": "url:handle_before",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ],
+        [
+          "USERNAME",
+          "@zebediah"
+        ],
+        [
+          "URL",
+          "https://site.org/zebediah"
+        ]
+      ],
+      "stand_ins": [
+        "Kaelin Babatunde",
+        "@arin",
+        "https://site.org/zebediah"
+      ],
+      "tokens": [
+        [
+          "Kaelin",
+          "Maria"
+        ],
+        [
+          "Babatunde",
+          "Lopez"
+        ],
+        [
+          "Arin",
+          "zebediah"
+        ]
+      ]
+    },
+    {
+      "case_id": "url:handle_after",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ],
+        [
+          "URL",
+          "https://site.org/zebediah"
+        ],
+        [
+          "USERNAME",
+          "@zebediah"
+        ]
+      ],
+      "stand_ins": [
+        "Kaelin Babatunde",
+        "https://site.org/zebediah",
+        "@arin"
+      ],
+      "tokens": [
+        [
+          "Kaelin",
+          "Maria"
+        ],
+        [
+          "Babatunde",
+          "Lopez"
+        ],
+        [
+          "Arin",
+          "zebediah"
+        ]
+      ]
+    },
+    {
+      "case_id": "url:per_user_shapes",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "NAME",
+          "Maria Lopez"
+        ],
+        [
+          "URL",
+          "instagram.com/marialopez2009"
+        ],
+        [
+          "URL",
+          "https://www.youtube.com/@MariaLopez/videos"
+        ],
+        [
+          "URL",
+          "https://github.com/mlopez/essay-repo/blob/main/README.md#intro"
+        ],
+        [
+          "URL",
+          "https://www.facebook.com/profile.php?id=100012345678&ref=bm"
+        ],
+        [
+          "URL",
+          "https://x.com/maria_lopez/status/1234567890"
+        ],
+        [
+          "URL",
+          "https://maria.substack.com/p/my-essay"
+        ],
+        [
+          "URL",
+          "https://www.youtube.com/channel/UCabc123XYZ"
+        ]
+      ],
+      "stand_ins": [
+        "Kaelin Babatunde",
+        "instagram.com/kaelinbabatunde7666",
+        "https://www.youtube.com/@KaelinBabatunde/videos",
+        "https://github.com/jody/essay-repo/blob/main/README.md#intro",
+        "https://www.facebook.com/profile.php?id=438771254312&ref=bm",
+        "https://x.com/kaelin_babatunde/status/6852348214",
+        "https://kaelin.substack.com/p/my-essay",
+        "https://www.youtube.com/channel/TCzsa398JVI"
+      ],
+      "tokens": [
+        [
+          "Kaelin",
+          "Maria"
+        ],
+        [
+          "Babatunde",
+          "Lopez"
+        ],
+        [
+          "Jody",
+          "mlopez"
+        ]
+      ]
+    },
+    {
+      "case_id": "address",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "ADDRESS",
+          "1234 N Maple Ave Apt 5B"
+        ],
+        [
+          "ADDRESS",
+          "77 Elm Street"
+        ],
+        [
+          "ADDRESS",
+          "9 W. Oak Blvd #12"
+        ],
+        [
+          "ADDRESS",
+          "1600 Pennsylvania Avenue NW"
+        ]
+      ],
+      "stand_ins": [
+        "1540 N Oak Ave Apt 1I",
+        "48 Maple Street",
+        "6 W. Sassafras Blvd #00",
+        "1773 Hazel Avenue NW"
+      ],
+      "tokens": [
+        [
+          "Oak",
+          "Maple"
+        ],
+        [
+          "Maple",
+          "Elm"
+        ],
+        [
+          "Sassafras",
+          "Oak"
+        ],
+        [
+          "Hazel",
+          "Pennsylvania"
+        ]
+      ]
+    },
+    {
+      "case_id": "scramble",
+      "document": "doc",
+      "identity": [],
+      "oracles": "none",
+      "seed": 0,
+      "spans": [
+        [
+          "DRIVER_LICENSE",
+          "D123-4567-89"
+        ],
+        [
+          "PASSPORT",
+          "X12345678"
+        ],
+        [
+          "OTHER",
+          "Abc-9z"
+        ],
+        [
+          "STUDENT_ID",
+          "S-000042"
+        ]
+      ],
+      "stand_ins": [
+        "A489-1683-91",
+        "Q03084053",
+        "Ocs-3t",
+        "P-372431"
+      ],
+      "tokens": []
+    },
+    {
+      "case_id": "exhaustion",
+      "document": "",
+      "identity": [],
+      "oracles": "none",
+      "raises": "AdlibPoolExhausted",
+      "seed": 0,
+      "spans": {
+        "generator": "NAME 'Q{i}x Zz{i}' for i in 0..1999"
+      }
+    }
+  ],
+  "pools": {
+    "given": {
+      "entries": 181,
+      "sha256": "8197a75f38ae482f7474e796f4ad6ecc28779de2999d422691abebeae1d2be2f"
+    },
+    "org": {
+      "entries": 20,
+      "sha256": "4efa5e4f5fe9ceb23f2bdca990ba8a983c9099420497d99ea0aff33f99bb3ed1"
+    },
+    "place": {
+      "entries": 453,
+      "sha256": "b0d3829e78fbf293379444827b5fd42261e112bb34fb695dab79b99160a4c84a"
+    },
+    "school": {
+      "entries": 26,
+      "sha256": "7a5a08969c35f8a9c31e15d8d7d7811eaadf3e3233d01f2044b94c0221522a73"
+    },
+    "street": {
+      "entries": 27,
+      "sha256": "c3c6a3c8cba5bc4b161775b49dda77425b62223dc52655b94574e50e4817da65"
+    },
+    "surname": {
+      "entries": 291,
+      "sha256": "5302959a109e84468918d96a0312ed6ef8795a3f9197a8f0fd0a56ced7c4d3b3"
+    }
+  },
+  "render": [
+    {
+      "adlib_map": [
+        [
+          "Terrence Okonkwo",
+          "Ira Tesfaye"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Ira",
+          "Terrence"
+        ],
+        [
+          "Tesfaye",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:kinship-possessive@0",
+      "original": "My cousin Terrence Okonkwo came over that summer and never left.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "placeholder_text": "My cousin {NAME_1} came over that summer and never left.",
+      "restore_map": [
+        [
+          "Ira Tesfaye",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          10,
+          26,
+          10,
+          21,
+          "Terrence Okonkwo"
+        ]
+      ],
+      "text": "My cousin Ira Tesfaye came over that summer and never left."
+    },
+    {
+      "adlib_map": [
+        [
+          "Terrence Okonkwo",
+          "Kris Pacheco"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Kris",
+          "Terrence"
+        ],
+        [
+          "Pacheco",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:kinship-possessive@7",
+      "original": "My cousin Terrence Okonkwo came over that summer and never left.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "placeholder_text": "My cousin {NAME_1} came over that summer and never left.",
+      "restore_map": [
+        [
+          "Kris Pacheco",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          10,
+          26,
+          10,
+          22,
+          "Terrence Okonkwo"
+        ]
+      ],
+      "text": "My cousin Kris Pacheco came over that summer and never left."
+    },
+    {
+      "adlib_map": [
+        [
+          "Terrence",
+          "Rian"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Rian",
+          "Terrence"
+        ]
+      ],
+      "case_id": "frame:bare-first-name@0",
+      "original": "Terrence and I stayed up late finishing the whole thing.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Terrence"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} and I stayed up late finishing the whole thing.",
+      "restore_map": [
+        [
+          "Rian",
+          "Terrence"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          0,
+          8,
+          0,
+          4,
+          "Terrence"
+        ]
+      ],
+      "text": "Rian and I stayed up late finishing the whole thing."
+    },
+    {
+      "adlib_map": [
+        [
+          "Terrence",
+          "Finnley"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Finnley",
+          "Terrence"
+        ]
+      ],
+      "case_id": "frame:bare-first-name@7",
+      "original": "Terrence and I stayed up late finishing the whole thing.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Terrence"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} and I stayed up late finishing the whole thing.",
+      "restore_map": [
+        [
+          "Finnley",
+          "Terrence"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          0,
+          8,
+          0,
+          7,
+          "Terrence"
+        ]
+      ],
+      "text": "Finnley and I stayed up late finishing the whole thing."
+    },
+    {
+      "adlib_map": [
+        [
+          "Marisol",
+          "Kaidyn"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Kaidyn",
+          "Marisol"
+        ]
+      ],
+      "case_id": "frame:dialogue-attribution@0",
+      "original": "\"We should go back next year,\" said Marisol, and we did.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Marisol"
+        ]
+      ],
+      "placeholder_text": "\"We should go back next year,\" said {NAME_1}, and we did.",
+      "restore_map": [
+        [
+          "Kaidyn",
+          "Marisol"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          36,
+          43,
+          36,
+          42,
+          "Marisol"
+        ]
+      ],
+      "text": "\"We should go back next year,\" said Kaidyn, and we did."
+    },
+    {
+      "adlib_map": [
+        [
+          "Marisol",
+          "Jaiden"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Jaiden",
+          "Marisol"
+        ]
+      ],
+      "case_id": "frame:dialogue-attribution@7",
+      "original": "\"We should go back next year,\" said Marisol, and we did.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Marisol"
+        ]
+      ],
+      "placeholder_text": "\"We should go back next year,\" said {NAME_1}, and we did.",
+      "restore_map": [
+        [
+          "Jaiden",
+          "Marisol"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          36,
+          43,
+          36,
+          42,
+          "Marisol"
+        ]
+      ],
+      "text": "\"We should go back next year,\" said Jaiden, and we did."
+    },
+    {
+      "adlib_map": [
+        [
+          "Coach Bramwell",
+          "Coach Yilmaz"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Yilmaz",
+          "Bramwell"
+        ]
+      ],
+      "case_id": "frame:title-surname@0",
+      "original": "Coach Bramwell made us run laps until it got dark.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Coach Bramwell"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} made us run laps until it got dark.",
+      "restore_map": [
+        [
+          "Coach Yilmaz",
+          "Coach Bramwell"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          0,
+          14,
+          0,
+          12,
+          "Coach Bramwell"
+        ]
+      ],
+      "text": "Coach Yilmaz made us run laps until it got dark."
+    },
+    {
+      "adlib_map": [
+        [
+          "Coach Bramwell",
+          "Coach Mejia"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Mejia",
+          "Bramwell"
+        ]
+      ],
+      "case_id": "frame:title-surname@7",
+      "original": "Coach Bramwell made us run laps until it got dark.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Coach Bramwell"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} made us run laps until it got dark.",
+      "restore_map": [
+        [
+          "Coach Mejia",
+          "Coach Bramwell"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          0,
+          14,
+          0,
+          11,
+          "Coach Bramwell"
+        ]
+      ],
+      "text": "Coach Mejia made us run laps until it got dark."
+    },
+    {
+      "adlib_map": [
+        [
+          "Mrs. Okonkwo",
+          "Mrs. Ortega"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Ortega",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:honorific-surname@0",
+      "original": "Mrs. Okonkwo taught me the trick with the index cards.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Mrs. Okonkwo"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} taught me the trick with the index cards.",
+      "restore_map": [
+        [
+          "Mrs. Ortega",
+          "Mrs. Okonkwo"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          0,
+          12,
+          0,
+          11,
+          "Mrs. Okonkwo"
+        ]
+      ],
+      "text": "Mrs. Ortega taught me the trick with the index cards."
+    },
+    {
+      "adlib_map": [
+        [
+          "Mrs. Okonkwo",
+          "Mrs. Naidu"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Naidu",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:honorific-surname@7",
+      "original": "Mrs. Okonkwo taught me the trick with the index cards.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Mrs. Okonkwo"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} taught me the trick with the index cards.",
+      "restore_map": [
+        [
+          "Mrs. Naidu",
+          "Mrs. Okonkwo"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          0,
+          12,
+          0,
+          10,
+          "Mrs. Okonkwo"
+        ]
+      ],
+      "text": "Mrs. Naidu taught me the trick with the index cards."
+    },
+    {
+      "adlib_map": [
+        [
+          "terrence okonkwo",
+          "britton guerrero"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Britton",
+          "terrence"
+        ],
+        [
+          "Guerrero",
+          "okonkwo"
+        ]
+      ],
+      "case_id": "frame:lowercase-writing@0",
+      "original": "then terrence okonkwo showed up and everything changed for me.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "terrence okonkwo"
+        ]
+      ],
+      "placeholder_text": "then {NAME_1} showed up and everything changed for me.",
+      "restore_map": [
+        [
+          "britton guerrero",
+          "terrence okonkwo"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          5,
+          21,
+          5,
+          21,
+          "terrence okonkwo"
+        ]
+      ],
+      "text": "then britton guerrero showed up and everything changed for me."
+    },
+    {
+      "adlib_map": [
+        [
+          "terrence okonkwo",
+          "ollie ansah"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Ollie",
+          "terrence"
+        ],
+        [
+          "Ansah",
+          "okonkwo"
+        ]
+      ],
+      "case_id": "frame:lowercase-writing@7",
+      "original": "then terrence okonkwo showed up and everything changed for me.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "terrence okonkwo"
+        ]
+      ],
+      "placeholder_text": "then {NAME_1} showed up and everything changed for me.",
+      "restore_map": [
+        [
+          "ollie ansah",
+          "terrence okonkwo"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          5,
+          21,
+          5,
+          16,
+          "terrence okonkwo"
+        ]
+      ],
+      "text": "then ollie ansah showed up and everything changed for me."
+    },
+    {
+      "adlib_map": [
+        [
+          "DESHAWN PRITCHARD",
+          "JAYLYN ZHENG"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Jaylyn",
+          "DESHAWN"
+        ],
+        [
+          "Zheng",
+          "PRITCHARD"
+        ]
+      ],
+      "case_id": "frame:allcaps-writing@0",
+      "original": "MY BEST FRIEND DESHAWN PRITCHARD WOULD NEVER DO THAT TO ME.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "DESHAWN PRITCHARD"
+        ]
+      ],
+      "placeholder_text": "MY BEST FRIEND {NAME_1} WOULD NEVER DO THAT TO ME.",
+      "restore_map": [
+        [
+          "JAYLYN ZHENG",
+          "DESHAWN PRITCHARD"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          15,
+          32,
+          15,
+          27,
+          "DESHAWN PRITCHARD"
+        ]
+      ],
+      "text": "MY BEST FRIEND JAYLYN ZHENG WOULD NEVER DO THAT TO ME."
+    },
+    {
+      "adlib_map": [
+        [
+          "DESHAWN PRITCHARD",
+          "QUINN CHOI"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Quinn",
+          "DESHAWN"
+        ],
+        [
+          "Choi",
+          "PRITCHARD"
+        ]
+      ],
+      "case_id": "frame:allcaps-writing@7",
+      "original": "MY BEST FRIEND DESHAWN PRITCHARD WOULD NEVER DO THAT TO ME.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "DESHAWN PRITCHARD"
+        ]
+      ],
+      "placeholder_text": "MY BEST FRIEND {NAME_1} WOULD NEVER DO THAT TO ME.",
+      "restore_map": [
+        [
+          "QUINN CHOI",
+          "DESHAWN PRITCHARD"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          15,
+          32,
+          15,
+          25,
+          "DESHAWN PRITCHARD"
+        ]
+      ],
+      "text": "MY BEST FRIEND QUINN CHOI WOULD NEVER DO THAT TO ME."
+    },
+    {
+      "adlib_map": [
+        [
+          "Ayaan Chaudhary",
+          "Laken Akinola"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Laken",
+          "Ayaan"
+        ],
+        [
+          "Akinola",
+          "Chaudhary"
+        ]
+      ],
+      "case_id": "frame:appositive@0",
+      "original": "Ayaan Chaudhary, my next-door neighbor, drove us all the way there.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Ayaan Chaudhary"
+        ]
+      ],
+      "placeholder_text": "{NAME_1}, my next-door neighbor, drove us all the way there.",
+      "restore_map": [
+        [
+          "Laken Akinola",
+          "Ayaan Chaudhary"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          0,
+          15,
+          0,
+          13,
+          "Ayaan Chaudhary"
+        ]
+      ],
+      "text": "Laken Akinola, my next-door neighbor, drove us all the way there."
+    },
+    {
+      "adlib_map": [
+        [
+          "Ayaan Chaudhary",
+          "Bellamy Padilla"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Bellamy",
+          "Ayaan"
+        ],
+        [
+          "Padilla",
+          "Chaudhary"
+        ]
+      ],
+      "case_id": "frame:appositive@7",
+      "original": "Ayaan Chaudhary, my next-door neighbor, drove us all the way there.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Ayaan Chaudhary"
+        ]
+      ],
+      "placeholder_text": "{NAME_1}, my next-door neighbor, drove us all the way there.",
+      "restore_map": [
+        [
+          "Bellamy Padilla",
+          "Ayaan Chaudhary"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          0,
+          15,
+          0,
+          15,
+          "Ayaan Chaudhary"
+        ]
+      ],
+      "text": "Bellamy Padilla, my next-door neighbor, drove us all the way there."
+    },
+    {
+      "adlib_map": [
+        [
+          "Robinson",
+          "Tommie"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Tommie",
+          "Robinson"
+        ]
+      ],
+      "case_id": "frame:private-surname-shadowed-by-a-notable-one@0",
+      "original": "Jackie Robinson broke the color line in 1947. Robinson, who lives two doors down from us, taught me how to throw.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Robinson"
+        ]
+      ],
+      "placeholder_text": "Jackie Robinson broke the color line in 1947. {NAME_1}, who lives two doors down from us, taught me how to throw.",
+      "restore_map": [
+        [
+          "Tommie",
+          "Robinson"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          46,
+          54,
+          46,
+          52,
+          "Robinson"
+        ]
+      ],
+      "text": "Jackie Robinson broke the color line in 1947. Tommie, who lives two doors down from us, taught me how to throw."
+    },
+    {
+      "adlib_map": [
+        [
+          "Robinson",
+          "Jamey"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Jamey",
+          "Robinson"
+        ]
+      ],
+      "case_id": "frame:private-surname-shadowed-by-a-notable-one@7",
+      "original": "Jackie Robinson broke the color line in 1947. Robinson, who lives two doors down from us, taught me how to throw.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Robinson"
+        ]
+      ],
+      "placeholder_text": "Jackie Robinson broke the color line in 1947. {NAME_1}, who lives two doors down from us, taught me how to throw.",
+      "restore_map": [
+        [
+          "Jamey",
+          "Robinson"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          46,
+          54,
+          46,
+          51,
+          "Robinson"
+        ]
+      ],
+      "text": "Jackie Robinson broke the color line in 1947. Jamey, who lives two doors down from us, taught me how to throw."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:heading-capital-on-an-ordinary-word@0",
+      "original": "\n\nBreeds I Like\n\nI wrote about horses because I like to ride them every summer.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "\n\nBreeds I Like\n\nI wrote about horses because I like to ride them every summer.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "\n\nBreeds I Like\n\nI wrote about horses because I like to ride them every summer."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:heading-capital-on-an-ordinary-word@7",
+      "original": "\n\nBreeds I Like\n\nI wrote about horses because I like to ride them every summer.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "\n\nBreeds I Like\n\nI wrote about horses because I like to ride them every summer.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "\n\nBreeds I Like\n\nI wrote about horses because I like to ride them every summer."
+    },
+    {
+      "adlib_map": [
+        [
+          "Brother Terrence Okonkwo",
+          "Brother Kenyatta Thornbury"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Kenyatta",
+          "Terrence"
+        ],
+        [
+          "Thornbury",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:heading-that-actually-names-somebody@0",
+      "original": "\n\nMy Brother Terrence Okonkwo\n\nHe taught me how to ride a bike without training wheels.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Brother Terrence Okonkwo"
+        ]
+      ],
+      "placeholder_text": "\n\nMy {NAME_1}\n\nHe taught me how to ride a bike without training wheels.",
+      "restore_map": [
+        [
+          "Brother Kenyatta Thornbury",
+          "Brother Terrence Okonkwo"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          5,
+          29,
+          5,
+          31,
+          "Brother Terrence Okonkwo"
+        ]
+      ],
+      "text": "\n\nMy Brother Kenyatta Thornbury\n\nHe taught me how to ride a bike without training wheels."
+    },
+    {
+      "adlib_map": [
+        [
+          "Brother Terrence Okonkwo",
+          "Brother Micaiah Huang"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Micaiah",
+          "Terrence"
+        ],
+        [
+          "Huang",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:heading-that-actually-names-somebody@7",
+      "original": "\n\nMy Brother Terrence Okonkwo\n\nHe taught me how to ride a bike without training wheels.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Brother Terrence Okonkwo"
+        ]
+      ],
+      "placeholder_text": "\n\nMy {NAME_1}\n\nHe taught me how to ride a bike without training wheels.",
+      "restore_map": [
+        [
+          "Brother Micaiah Huang",
+          "Brother Terrence Okonkwo"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          5,
+          29,
+          5,
+          26,
+          "Brother Terrence Okonkwo"
+        ]
+      ],
+      "text": "\n\nMy Brother Micaiah Huang\n\nHe taught me how to ride a bike without training wheels."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-surname-in-a-first-person-appositive@0",
+      "original": "Richard Wright wrote about hunger without flinching. Wright, who taught me to look away from nothing, is why I write.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Richard Wright wrote about hunger without flinching. Wright, who taught me to look away from nothing, is why I write.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "Richard Wright wrote about hunger without flinching. Wright, who taught me to look away from nothing, is why I write."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-surname-in-a-first-person-appositive@7",
+      "original": "Richard Wright wrote about hunger without flinching. Wright, who taught me to look away from nothing, is why I write.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Richard Wright wrote about hunger without flinching. Wright, who taught me to look away from nothing, is why I write.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "Richard Wright wrote about hunger without flinching. Wright, who taught me to look away from nothing, is why I write."
+    },
+    {
+      "adlib_map": [
+        [
+          "Alice Adams",
+          "Laken Osgood"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Laken",
+          "Alice"
+        ],
+        [
+          "Osgood",
+          "Adams"
+        ]
+      ],
+      "case_id": "frame:private-person-shadowed-by-a-work-title@0",
+      "original": "My neighbor Alice Adams walked me to the bus stop every morning that whole year.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Alice Adams"
+        ]
+      ],
+      "placeholder_text": "My neighbor {NAME_1} walked me to the bus stop every morning that whole year.",
+      "restore_map": [
+        [
+          "Laken Osgood",
+          "Alice Adams"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          12,
+          23,
+          12,
+          24,
+          "Alice Adams"
+        ]
+      ],
+      "text": "My neighbor Laken Osgood walked me to the bus stop every morning that whole year."
+    },
+    {
+      "adlib_map": [
+        [
+          "Alice Adams",
+          "Jordin Pemberton"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Jordin",
+          "Alice"
+        ],
+        [
+          "Pemberton",
+          "Adams"
+        ]
+      ],
+      "case_id": "frame:private-person-shadowed-by-a-work-title@7",
+      "original": "My neighbor Alice Adams walked me to the bus stop every morning that whole year.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Alice Adams"
+        ]
+      ],
+      "placeholder_text": "My neighbor {NAME_1} walked me to the bus stop every morning that whole year.",
+      "restore_map": [
+        [
+          "Jordin Pemberton",
+          "Alice Adams"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          12,
+          23,
+          12,
+          28,
+          "Alice Adams"
+        ]
+      ],
+      "text": "My neighbor Jordin Pemberton walked me to the bus stop every morning that whole year."
+    },
+    {
+      "adlib_map": [
+        [
+          "Alvarez",
+          "Verma"
+        ],
+        [
+          "Vinny Delgado",
+          "Sidney Nwosu"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Verma",
+          "Alvarez"
+        ],
+        [
+          "Sidney",
+          "Vinny"
+        ],
+        [
+          "Nwosu",
+          "Delgado"
+        ]
+      ],
+      "case_id": "frame:relative-whose-phrase-is-also-a-film-title@0",
+      "original": "We stayed with the Alvarez family in July. My cousin Vinny Delgado came over that summer and never left.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Vinny Delgado"
+        ],
+        [
+          "{NAME_2}",
+          "Alvarez"
+        ]
+      ],
+      "placeholder_text": "We stayed with the {NAME_2} family in July. My cousin {NAME_1} came over that summer and never left.",
+      "restore_map": [
+        [
+          "Verma",
+          "Alvarez"
+        ],
+        [
+          "Sidney Nwosu",
+          "Vinny Delgado"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          19,
+          26,
+          19,
+          24,
+          "Alvarez"
+        ],
+        [
+          53,
+          66,
+          51,
+          63,
+          "Vinny Delgado"
+        ]
+      ],
+      "text": "We stayed with the Verma family in July. My cousin Sidney Nwosu came over that summer and never left."
+    },
+    {
+      "adlib_map": [
+        [
+          "Alvarez",
+          "Northcott"
+        ],
+        [
+          "Vinny Delgado",
+          "Jalyn Appiah"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Northcott",
+          "Alvarez"
+        ],
+        [
+          "Jalyn",
+          "Vinny"
+        ],
+        [
+          "Appiah",
+          "Delgado"
+        ]
+      ],
+      "case_id": "frame:relative-whose-phrase-is-also-a-film-title@7",
+      "original": "We stayed with the Alvarez family in July. My cousin Vinny Delgado came over that summer and never left.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Vinny Delgado"
+        ],
+        [
+          "{NAME_2}",
+          "Alvarez"
+        ]
+      ],
+      "placeholder_text": "We stayed with the {NAME_2} family in July. My cousin {NAME_1} came over that summer and never left.",
+      "restore_map": [
+        [
+          "Northcott",
+          "Alvarez"
+        ],
+        [
+          "Jalyn Appiah",
+          "Vinny Delgado"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          19,
+          26,
+          19,
+          28,
+          "Alvarez"
+        ],
+        [
+          53,
+          66,
+          55,
+          67,
+          "Vinny Delgado"
+        ]
+      ],
+      "text": "We stayed with the Northcott family in July. My cousin Jalyn Appiah came over that summer and never left."
+    },
+    {
+      "adlib_map": [
+        [
+          "Vinny",
+          "Shimizu"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Shimizu",
+          "Vinny"
+        ]
+      ],
+      "case_id": "frame:relation-led-film-title-with-no-capitalisation-tell@0",
+      "original": "My cousin Vinny came over that summer and never left.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Vinny"
+        ]
+      ],
+      "placeholder_text": "My cousin {NAME_1} came over that summer and never left.",
+      "restore_map": [
+        [
+          "Shimizu",
+          "Vinny"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          10,
+          15,
+          10,
+          17,
+          "Vinny"
+        ]
+      ],
+      "text": "My cousin Shimizu came over that summer and never left."
+    },
+    {
+      "adlib_map": [
+        [
+          "Vinny",
+          "Nwachukwu"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Nwachukwu",
+          "Vinny"
+        ]
+      ],
+      "case_id": "frame:relation-led-film-title-with-no-capitalisation-tell@7",
+      "original": "My cousin Vinny came over that summer and never left.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Vinny"
+        ]
+      ],
+      "placeholder_text": "My cousin {NAME_1} came over that summer and never left.",
+      "restore_map": [
+        [
+          "Nwachukwu",
+          "Vinny"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          10,
+          15,
+          10,
+          19,
+          "Vinny"
+        ]
+      ],
+      "text": "My cousin Nwachukwu came over that summer and never left."
+    },
+    {
+      "adlib_map": [
+        [
+          "Alan Ford",
+          "Devyn Uribe"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Devyn",
+          "Alan"
+        ],
+        [
+          "Uribe",
+          "Ford"
+        ]
+      ],
+      "case_id": "frame:private-person-shadowed-by-a-real-public-figure@0",
+      "original": "My best friend Alan Ford helped me study for the test last week.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Alan Ford"
+        ]
+      ],
+      "placeholder_text": "My best friend {NAME_1} helped me study for the test last week.",
+      "restore_map": [
+        [
+          "Devyn Uribe",
+          "Alan Ford"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          15,
+          24,
+          15,
+          26,
+          "Alan Ford"
+        ]
+      ],
+      "text": "My best friend Devyn Uribe helped me study for the test last week."
+    },
+    {
+      "adlib_map": [
+        [
+          "Alan Ford",
+          "Reilly Zhang"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Reilly",
+          "Alan"
+        ],
+        [
+          "Zhang",
+          "Ford"
+        ]
+      ],
+      "case_id": "frame:private-person-shadowed-by-a-real-public-figure@7",
+      "original": "My best friend Alan Ford helped me study for the test last week.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Alan Ford"
+        ]
+      ],
+      "placeholder_text": "My best friend {NAME_1} helped me study for the test last week.",
+      "restore_map": [
+        [
+          "Reilly Zhang",
+          "Alan Ford"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          15,
+          24,
+          15,
+          27,
+          "Alan Ford"
+        ]
+      ],
+      "text": "My best friend Reilly Zhang helped me study for the test last week."
+    },
+    {
+      "adlib_map": [
+        [
+          "Marisol Ybarra",
+          "Kodi Galvez"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Kodi",
+          "Marisol"
+        ],
+        [
+          "Galvez",
+          "Ybarra"
+        ]
+      ],
+      "case_id": "frame:full-name-midsentence@0",
+      "original": "I asked Marisol Ybarra what she thought about the ending.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Marisol Ybarra"
+        ]
+      ],
+      "placeholder_text": "I asked {NAME_1} what she thought about the ending.",
+      "restore_map": [
+        [
+          "Kodi Galvez",
+          "Marisol Ybarra"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          8,
+          22,
+          8,
+          19,
+          "Marisol Ybarra"
+        ]
+      ],
+      "text": "I asked Kodi Galvez what she thought about the ending."
+    },
+    {
+      "adlib_map": [
+        [
+          "Marisol Ybarra",
+          "Kalin Patil"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Kalin",
+          "Marisol"
+        ],
+        [
+          "Patil",
+          "Ybarra"
+        ]
+      ],
+      "case_id": "frame:full-name-midsentence@7",
+      "original": "I asked Marisol Ybarra what she thought about the ending.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Marisol Ybarra"
+        ]
+      ],
+      "placeholder_text": "I asked {NAME_1} what she thought about the ending.",
+      "restore_map": [
+        [
+          "Kalin Patil",
+          "Marisol Ybarra"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          8,
+          22,
+          8,
+          19,
+          "Marisol Ybarra"
+        ]
+      ],
+      "text": "I asked Kalin Patil what she thought about the ending."
+    },
+    {
+      "adlib_map": [
+        [
+          "Priya Raghunathan-Bell",
+          "Charly Okada-Cordova"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Charly",
+          "Priya"
+        ],
+        [
+          "Okada",
+          "Raghunathan"
+        ],
+        [
+          "Cordova",
+          "Bell"
+        ]
+      ],
+      "case_id": "frame:hyphenated-surname@0",
+      "original": "Priya Raghunathan-Bell lent me her notes for the whole week.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Priya Raghunathan-Bell"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} lent me her notes for the whole week.",
+      "restore_map": [
+        [
+          "Charly Okada-Cordova",
+          "Priya Raghunathan-Bell"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          0,
+          22,
+          0,
+          20,
+          "Priya Raghunathan-Bell"
+        ]
+      ],
+      "text": "Charly Okada-Cordova lent me her notes for the whole week."
+    },
+    {
+      "adlib_map": [
+        [
+          "Priya Raghunathan-Bell",
+          "Lakota Gallardo-Maldonado"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Lakota",
+          "Priya"
+        ],
+        [
+          "Gallardo",
+          "Raghunathan"
+        ],
+        [
+          "Maldonado",
+          "Bell"
+        ]
+      ],
+      "case_id": "frame:hyphenated-surname@7",
+      "original": "Priya Raghunathan-Bell lent me her notes for the whole week.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Priya Raghunathan-Bell"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} lent me her notes for the whole week.",
+      "restore_map": [
+        [
+          "Lakota Gallardo-Maldonado",
+          "Priya Raghunathan-Bell"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          0,
+          22,
+          0,
+          25,
+          "Priya Raghunathan-Bell"
+        ]
+      ],
+      "text": "Lakota Gallardo-Maldonado lent me her notes for the whole week."
+    },
+    {
+      "adlib_map": [
+        [
+          "Terrence's",
+          "Kelby's"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Kelby",
+          "Terrence"
+        ]
+      ],
+      "case_id": "frame:possessive-third-party@0",
+      "original": "Terrence's older brother drove us to the game on Friday.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Terrence's"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} older brother drove us to the game on Friday.",
+      "restore_map": [
+        [
+          "Kelby's",
+          "Terrence's"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          0,
+          10,
+          0,
+          7,
+          "Terrence's"
+        ]
+      ],
+      "text": "Kelby's older brother drove us to the game on Friday."
+    },
+    {
+      "adlib_map": [
+        [
+          "Terrence's",
+          "Braylin's"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Braylin",
+          "Terrence"
+        ]
+      ],
+      "case_id": "frame:possessive-third-party@7",
+      "original": "Terrence's older brother drove us to the game on Friday.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Terrence's"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} older brother drove us to the game on Friday.",
+      "restore_map": [
+        [
+          "Braylin's",
+          "Terrence's"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          0,
+          10,
+          0,
+          9,
+          "Terrence's"
+        ]
+      ],
+      "text": "Braylin's older brother drove us to the game on Friday."
+    },
+    {
+      "adlib_map": [
+        [
+          "J. Okonkwo",
+          "G. Asante"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Asante",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:initial-plus-surname@0",
+      "original": "J. Okonkwo sat behind me in that class all year long.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "J. Okonkwo"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} sat behind me in that class all year long.",
+      "restore_map": [
+        [
+          "G. Asante",
+          "J. Okonkwo"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          0,
+          10,
+          0,
+          9,
+          "J. Okonkwo"
+        ]
+      ],
+      "text": "G. Asante sat behind me in that class all year long."
+    },
+    {
+      "adlib_map": [
+        [
+          "J. Okonkwo",
+          "W. Iversen"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Iversen",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:initial-plus-surname@7",
+      "original": "J. Okonkwo sat behind me in that class all year long.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "J. Okonkwo"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} sat behind me in that class all year long.",
+      "restore_map": [
+        [
+          "W. Iversen",
+          "J. Okonkwo"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          0,
+          10,
+          0,
+          10,
+          "J. Okonkwo"
+        ]
+      ],
+      "text": "W. Iversen sat behind me in that class all year long."
+    },
+    {
+      "adlib_map": [
+        [
+          "Terry",
+          "Harley"
+        ],
+        [
+          "Terrence Okonkwo",
+          "Shae Estrada"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Harley",
+          "Terry"
+        ],
+        [
+          "Shae",
+          "Terrence"
+        ],
+        [
+          "Estrada",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:nickname-and-full-name@0",
+      "original": "Everyone called him Terry, but Terrence Okonkwo hated that name.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ],
+        [
+          "{NAME_2}",
+          "Terry"
+        ]
+      ],
+      "placeholder_text": "Everyone called him {NAME_2}, but {NAME_1} hated that name.",
+      "restore_map": [
+        [
+          "Harley",
+          "Terry"
+        ],
+        [
+          "Shae Estrada",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          20,
+          25,
+          20,
+          26,
+          "Terry"
+        ],
+        [
+          31,
+          47,
+          32,
+          44,
+          "Terrence Okonkwo"
+        ]
+      ],
+      "text": "Everyone called him Harley, but Shae Estrada hated that name."
+    },
+    {
+      "adlib_map": [
+        [
+          "Terry",
+          "Kamari"
+        ],
+        [
+          "Terrence Okonkwo",
+          "Elisha Jessop"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Kamari",
+          "Terry"
+        ],
+        [
+          "Elisha",
+          "Terrence"
+        ],
+        [
+          "Jessop",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:nickname-and-full-name@7",
+      "original": "Everyone called him Terry, but Terrence Okonkwo hated that name.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ],
+        [
+          "{NAME_2}",
+          "Terry"
+        ]
+      ],
+      "placeholder_text": "Everyone called him {NAME_2}, but {NAME_1} hated that name.",
+      "restore_map": [
+        [
+          "Kamari",
+          "Terry"
+        ],
+        [
+          "Elisha Jessop",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          20,
+          25,
+          20,
+          26,
+          "Terry"
+        ],
+        [
+          31,
+          47,
+          32,
+          45,
+          "Terrence Okonkwo"
+        ]
+      ],
+      "text": "Everyone called him Kamari, but Elisha Jessop hated that name."
+    },
+    {
+      "adlib_map": [
+        [
+          "Marguerite Delacroix-Whitfield",
+          "Jael Dlamini-Brightwell"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Jael",
+          "Marguerite"
+        ],
+        [
+          "Dlamini",
+          "Delacroix"
+        ],
+        [
+          "Brightwell",
+          "Whitfield"
+        ]
+      ],
+      "case_id": "frame:student-own-name@0",
+      "original": "I am Marguerite Delacroix-Whitfield and this is my final essay.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Marguerite Delacroix-Whitfield"
+        ]
+      ],
+      "placeholder_text": "I am {NAME_1} and this is my final essay.",
+      "restore_map": [
+        [
+          "Jael Dlamini-Brightwell",
+          "Marguerite Delacroix-Whitfield"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          5,
+          35,
+          5,
+          28,
+          "Marguerite Delacroix-Whitfield"
+        ]
+      ],
+      "text": "I am Jael Dlamini-Brightwell and this is my final essay."
+    },
+    {
+      "adlib_map": [
+        [
+          "Marguerite Delacroix-Whitfield",
+          "Kendall Patil-Nishimura"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Kendall",
+          "Marguerite"
+        ],
+        [
+          "Patil",
+          "Delacroix"
+        ],
+        [
+          "Nishimura",
+          "Whitfield"
+        ]
+      ],
+      "case_id": "frame:student-own-name@7",
+      "original": "I am Marguerite Delacroix-Whitfield and this is my final essay.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Marguerite Delacroix-Whitfield"
+        ]
+      ],
+      "placeholder_text": "I am {NAME_1} and this is my final essay.",
+      "restore_map": [
+        [
+          "Kendall Patil-Nishimura",
+          "Marguerite Delacroix-Whitfield"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          5,
+          35,
+          5,
+          28,
+          "Marguerite Delacroix-Whitfield"
+        ]
+      ],
+      "text": "I am Kendall Patil-Nishimura and this is my final essay."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-possessive@0",
+      "original": "My inspiration, Vincent van Gogh, painted through his worst years.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "My inspiration, Vincent van Gogh, painted through his worst years.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "My inspiration, Vincent van Gogh, painted through his worst years."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-possessive@7",
+      "original": "My inspiration, Vincent van Gogh, painted through his worst years.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "My inspiration, Vincent van Gogh, painted through his worst years.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "My inspiration, Vincent van Gogh, painted through his worst years."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-bare-surname@0",
+      "original": "Lincoln held the country together in the middle of a war.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Lincoln held the country together in the middle of a war.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "Lincoln held the country together in the middle of a war."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-bare-surname@7",
+      "original": "Lincoln held the country together in the middle of a war.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Lincoln held the country together in the middle of a war.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "Lincoln held the country together in the middle of a war."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-name-is-also-a-place@0",
+      "original": "Washington crossed the Delaware in the dead of winter.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Washington crossed the Delaware in the dead of winter.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "Washington crossed the Delaware in the dead of winter."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-name-is-also-a-place@7",
+      "original": "Washington crossed the Delaware in the dead of winter.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Washington crossed the Delaware in the dead of winter.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "Washington crossed the Delaware in the dead of winter."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-full-name@0",
+      "original": "Henry David Thoreau wrote about disobedience before it had a name.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Henry David Thoreau wrote about disobedience before it had a name.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "Henry David Thoreau wrote about disobedience before it had a name."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-full-name@7",
+      "original": "Henry David Thoreau wrote about disobedience before it had a name.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Henry David Thoreau wrote about disobedience before it had a name.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "Henry David Thoreau wrote about disobedience before it had a name."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-in-kinship-shaped-frame@0",
+      "original": "I read Toni Morrison the way my cousin reads box scores.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "I read Toni Morrison the way my cousin reads box scores.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "I read Toni Morrison the way my cousin reads box scores."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-in-kinship-shaped-frame@7",
+      "original": "I read Toni Morrison the way my cousin reads box scores.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "I read Toni Morrison the way my cousin reads box scores.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "I read Toni Morrison the way my cousin reads box scores."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-single-name@0",
+      "original": "Joan of Arc led an army when she was barely seventeen.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Joan of Arc led an army when she was barely seventeen.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "Joan of Arc led an army when she was barely seventeen."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-single-name@7",
+      "original": "Joan of Arc led an army when she was barely seventeen.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Joan of Arc led an army when she was barely seventeen.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "Joan of Arc led an army when she was barely seventeen."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:source-author-cited@0",
+      "original": "As Malcolm Gladwell argues, the trend is older than it looks.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "As Malcolm Gladwell argues, the trend is older than it looks.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "As Malcolm Gladwell argues, the trend is older than it looks."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:source-author-cited@7",
+      "original": "As Malcolm Gladwell argues, the trend is older than it looks.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "As Malcolm Gladwell argues, the trend is older than it looks.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "As Malcolm Gladwell argues, the trend is older than it looks."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:prompt-context-figure@0",
+      "original": "Rosa Parks did not plan to be the story, and that is the point.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Rosa Parks did not plan to be the story, and that is the point.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "Rosa Parks did not plan to be the story, and that is the point."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:prompt-context-figure@7",
+      "original": "Rosa Parks did not plan to be the story, and that is the point.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Rosa Parks did not plan to be the story, and that is the point.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "Rosa Parks did not plan to be the story, and that is the point."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:work-title-with-interior-stopword@0",
+      "original": "I read To Kill a Mockingbird in ninth grade and it changed how I read everything after it.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "I read To Kill a Mockingbird in ninth grade and it changed how I read everything after it.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "I read To Kill a Mockingbird in ninth grade and it changed how I read everything after it."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:work-title-with-interior-stopword@7",
+      "original": "I read To Kill a Mockingbird in ninth grade and it changed how I read everything after it.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "I read To Kill a Mockingbird in ninth grade and it changed how I read everything after it.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "I read To Kill a Mockingbird in ninth grade and it changed how I read everything after it."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-surname-established-in-document@0",
+      "original": "Richard Wright wrote about hunger without flinching. Wright never lets the reader look away from what it costs.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Richard Wright wrote about hunger without flinching. Wright never lets the reader look away from what it costs.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "Richard Wright wrote about hunger without flinching. Wright never lets the reader look away from what it costs."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:notable-surname-established-in-document@7",
+      "original": "Richard Wright wrote about hunger without flinching. Wright never lets the reader look away from what it costs.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Richard Wright wrote about hunger without flinching. Wright never lets the reader look away from what it costs.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "Richard Wright wrote about hunger without flinching. Wright never lets the reader look away from what it costs."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:fictional-character@0",
+      "original": "My favorite character is Atticus Finch, because he does the right thing when it costs him something.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "My favorite character is Atticus Finch, because he does the right thing when it costs him something.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "My favorite character is Atticus Finch, because he does the right thing when it costs him something."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:fictional-character@7",
+      "original": "My favorite character is Atticus Finch, because he does the right thing when it costs him something.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "My favorite character is Atticus Finch, because he does the right thing when it costs him something.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "My favorite character is Atticus Finch, because he does the right thing when it costs him something."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:admiration-invocation-before-a-public-figure@0",
+      "original": "My hero Abraham Lincoln held the country together in the middle of a war.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "My hero Abraham Lincoln held the country together in the middle of a war.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "My hero Abraham Lincoln held the country together in the middle of a war."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:admiration-invocation-before-a-public-figure@7",
+      "original": "My hero Abraham Lincoln held the country together in the middle of a war.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "My hero Abraham Lincoln held the country together in the middle of a war.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "My hero Abraham Lincoln held the country together in the middle of a war."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:fictional-character-described-by-a-relation@0",
+      "original": "Atticus Finch is the kind of father who does the right thing even when it costs him everything.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Atticus Finch is the kind of father who does the right thing even when it costs him everything.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "Atticus Finch is the kind of father who does the right thing even when it costs him everything."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:fictional-character-described-by-a-relation@7",
+      "original": "Atticus Finch is the kind of father who does the right thing even when it costs him everything.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "Atticus Finch is the kind of father who does the right thing even when it costs him everything.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "Atticus Finch is the kind of father who does the right thing even when it costs him everything."
+    },
+    {
+      "adlib_map": [
+        [
+          "Alvarez",
+          "Osgood"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Osgood",
+          "Alvarez"
+        ]
+      ],
+      "case_id": "frame:relation-led-title-written-as-a-title@0",
+      "original": "We stayed with the Alvarez family in July. My Cousin Vinny is my favorite movie and I have seen it four times.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Alvarez"
+        ]
+      ],
+      "placeholder_text": "We stayed with the {NAME_1} family in July. My Cousin Vinny is my favorite movie and I have seen it four times.",
+      "restore_map": [
+        [
+          "Osgood",
+          "Alvarez"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          19,
+          26,
+          19,
+          25,
+          "Alvarez"
+        ]
+      ],
+      "text": "We stayed with the Osgood family in July. My Cousin Vinny is my favorite movie and I have seen it four times."
+    },
+    {
+      "adlib_map": [
+        [
+          "Alvarez",
+          "Nishimura"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Nishimura",
+          "Alvarez"
+        ]
+      ],
+      "case_id": "frame:relation-led-title-written-as-a-title@7",
+      "original": "We stayed with the Alvarez family in July. My Cousin Vinny is my favorite movie and I have seen it four times.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Alvarez"
+        ]
+      ],
+      "placeholder_text": "We stayed with the {NAME_1} family in July. My Cousin Vinny is my favorite movie and I have seen it four times.",
+      "restore_map": [
+        [
+          "Nishimura",
+          "Alvarez"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          19,
+          26,
+          19,
+          28,
+          "Alvarez"
+        ]
+      ],
+      "text": "We stayed with the Nishimura family in July. My Cousin Vinny is my favorite movie and I have seen it four times."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:work-title-near-an-unattached-first-person-relation@0",
+      "original": "I read Harry Potter out loud with my little brother almost every night that winter.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "I read Harry Potter out loud with my little brother almost every night that winter.",
+      "restore_map": [],
+      "seed": 0,
+      "spans": [],
+      "text": "I read Harry Potter out loud with my little brother almost every night that winter."
+    },
+    {
+      "adlib_map": [],
+      "adlib_tokens": [],
+      "case_id": "frame:work-title-near-an-unattached-first-person-relation@7",
+      "original": "I read Harry Potter out loud with my little brother almost every night that winter.",
+      "placeholder_restore_map": [],
+      "placeholder_text": "I read Harry Potter out loud with my little brother almost every night that winter.",
+      "restore_map": [],
+      "seed": 7,
+      "spans": [],
+      "text": "I read Harry Potter out loud with my little brother almost every night that winter."
+    },
+    {
+      "adlib_map": [
+        [
+          "Mrs. Okonkwo's",
+          "Mrs. Tesfaye's"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Tesfaye",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:intersect-notable-beside-private@0",
+      "original": "I wrote about Vincent van Gogh for Mrs. Okonkwo's class last spring.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Mrs. Okonkwo's"
+        ]
+      ],
+      "placeholder_text": "I wrote about Vincent van Gogh for {NAME_1} class last spring.",
+      "restore_map": [
+        [
+          "Mrs. Tesfaye's",
+          "Mrs. Okonkwo's"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          35,
+          49,
+          35,
+          49,
+          "Mrs. Okonkwo's"
+        ]
+      ],
+      "text": "I wrote about Vincent van Gogh for Mrs. Tesfaye's class last spring."
+    },
+    {
+      "adlib_map": [
+        [
+          "Mrs. Okonkwo's",
+          "Mrs. Tremblay's"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Tremblay",
+          "Okonkwo"
+        ]
+      ],
+      "case_id": "frame:intersect-notable-beside-private@7",
+      "original": "I wrote about Vincent van Gogh for Mrs. Okonkwo's class last spring.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Mrs. Okonkwo's"
+        ]
+      ],
+      "placeholder_text": "I wrote about Vincent van Gogh for {NAME_1} class last spring.",
+      "restore_map": [
+        [
+          "Mrs. Tremblay's",
+          "Mrs. Okonkwo's"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          35,
+          49,
+          35,
+          50,
+          "Mrs. Okonkwo's"
+        ]
+      ],
+      "text": "I wrote about Vincent van Gogh for Mrs. Tremblay's class last spring."
+    },
+    {
+      "adlib_map": [
+        [
+          "Terrence Okonkwo",
+          "Shia Ostrowski"
+        ],
+        [
+          "Akron",
+          "Thornwick"
+        ],
+        [
+          "Progressive Insurance",
+          "Open Door"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Shia",
+          "Terrence"
+        ],
+        [
+          "Ostrowski",
+          "Okonkwo"
+        ],
+        [
+          "Thornwick",
+          "Akron"
+        ],
+        [
+          "Open Door",
+          "Progressive Insurance"
+        ]
+      ],
+      "case_id": "frame:intersect-person-org-location@0",
+      "original": "Terrence Okonkwo moved to Akron and got a job at Progressive Insurance.",
+      "placeholder_restore_map": [
+        [
+          "{ORGANIZATION_1}",
+          "Progressive Insurance"
+        ],
+        [
+          "{LOCATION_1}",
+          "Akron"
+        ],
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} moved to {LOCATION_1} and got a job at {ORGANIZATION_1}.",
+      "restore_map": [
+        [
+          "Shia Ostrowski",
+          "Terrence Okonkwo"
+        ],
+        [
+          "Thornwick",
+          "Akron"
+        ],
+        [
+          "Open Door",
+          "Progressive Insurance"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          0,
+          16,
+          0,
+          14,
+          "Terrence Okonkwo"
+        ],
+        [
+          26,
+          31,
+          24,
+          33,
+          "Akron"
+        ],
+        [
+          49,
+          70,
+          51,
+          60,
+          "Progressive Insurance"
+        ]
+      ],
+      "text": "Shia Ostrowski moved to Thornwick and got a job at Open Door."
+    },
+    {
+      "adlib_map": [
+        [
+          "Terrence Okonkwo",
+          "Kymani Peng"
+        ],
+        [
+          "Akron",
+          "Briarleigh"
+        ],
+        [
+          "Progressive Insurance",
+          "Clover Leaf"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Kymani",
+          "Terrence"
+        ],
+        [
+          "Peng",
+          "Okonkwo"
+        ],
+        [
+          "Briarleigh",
+          "Akron"
+        ],
+        [
+          "Clover Leaf",
+          "Progressive Insurance"
+        ]
+      ],
+      "case_id": "frame:intersect-person-org-location@7",
+      "original": "Terrence Okonkwo moved to Akron and got a job at Progressive Insurance.",
+      "placeholder_restore_map": [
+        [
+          "{ORGANIZATION_1}",
+          "Progressive Insurance"
+        ],
+        [
+          "{LOCATION_1}",
+          "Akron"
+        ],
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} moved to {LOCATION_1} and got a job at {ORGANIZATION_1}.",
+      "restore_map": [
+        [
+          "Kymani Peng",
+          "Terrence Okonkwo"
+        ],
+        [
+          "Briarleigh",
+          "Akron"
+        ],
+        [
+          "Clover Leaf",
+          "Progressive Insurance"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          0,
+          16,
+          0,
+          11,
+          "Terrence Okonkwo"
+        ],
+        [
+          26,
+          31,
+          21,
+          31,
+          "Akron"
+        ],
+        [
+          49,
+          70,
+          49,
+          60,
+          "Progressive Insurance"
+        ]
+      ],
+      "text": "Kymani Peng moved to Briarleigh and got a job at Clover Leaf."
+    },
+    {
+      "adlib_map": [
+        [
+          "Marguerite",
+          "Shiloh"
+        ],
+        [
+          "Deshawn",
+          "Alexi"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Shiloh",
+          "Marguerite"
+        ],
+        [
+          "Alexi",
+          "Deshawn"
+        ]
+      ],
+      "case_id": "frame:intersect-self-and-third-party@0",
+      "original": "Marguerite and Deshawn both stayed after class to finish it.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Marguerite"
+        ],
+        [
+          "{NAME_2}",
+          "Deshawn"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} and {NAME_2} both stayed after class to finish it.",
+      "restore_map": [
+        [
+          "Shiloh",
+          "Marguerite"
+        ],
+        [
+          "Alexi",
+          "Deshawn"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          0,
+          10,
+          0,
+          6,
+          "Marguerite"
+        ],
+        [
+          15,
+          22,
+          11,
+          16,
+          "Deshawn"
+        ]
+      ],
+      "text": "Shiloh and Alexi both stayed after class to finish it."
+    },
+    {
+      "adlib_map": [
+        [
+          "Marguerite",
+          "Tatum"
+        ],
+        [
+          "Deshawn",
+          "Kelby"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Tatum",
+          "Marguerite"
+        ],
+        [
+          "Kelby",
+          "Deshawn"
+        ]
+      ],
+      "case_id": "frame:intersect-self-and-third-party@7",
+      "original": "Marguerite and Deshawn both stayed after class to finish it.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "Marguerite"
+        ],
+        [
+          "{NAME_2}",
+          "Deshawn"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} and {NAME_2} both stayed after class to finish it.",
+      "restore_map": [
+        [
+          "Tatum",
+          "Marguerite"
+        ],
+        [
+          "Kelby",
+          "Deshawn"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          0,
+          10,
+          0,
+          5,
+          "Marguerite"
+        ],
+        [
+          15,
+          22,
+          10,
+          15,
+          "Deshawn"
+        ]
+      ],
+      "text": "Tatum and Kelby both stayed after class to finish it."
+    },
+    {
+      "adlib_map": [
+        [
+          "Deshawn",
+          "Camdyn"
+        ],
+        [
+          "Westfield High School",
+          "Briar Glen High School"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Camdyn",
+          "Deshawn"
+        ],
+        [
+          "Briar Glen",
+          "Westfield"
+        ]
+      ],
+      "case_id": "frame:intersect-school-and-friend@0",
+      "original": "Deshawn and I both go to Westfield High School on the east side.",
+      "placeholder_restore_map": [
+        [
+          "{SCHOOL_1}",
+          "Westfield High School"
+        ],
+        [
+          "{NAME_1}",
+          "Deshawn"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} and I both go to {SCHOOL_1} on the east side.",
+      "restore_map": [
+        [
+          "Camdyn",
+          "Deshawn"
+        ],
+        [
+          "Briar Glen High School",
+          "Westfield High School"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          0,
+          7,
+          0,
+          6,
+          "Deshawn"
+        ],
+        [
+          25,
+          46,
+          24,
+          46,
+          "Westfield High School"
+        ]
+      ],
+      "text": "Camdyn and I both go to Briar Glen High School on the east side."
+    },
+    {
+      "adlib_map": [
+        [
+          "Deshawn",
+          "Quinn"
+        ],
+        [
+          "Westfield High School",
+          "Sage Canyon High School"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Quinn",
+          "Deshawn"
+        ],
+        [
+          "Sage Canyon",
+          "Westfield"
+        ]
+      ],
+      "case_id": "frame:intersect-school-and-friend@7",
+      "original": "Deshawn and I both go to Westfield High School on the east side.",
+      "placeholder_restore_map": [
+        [
+          "{SCHOOL_1}",
+          "Westfield High School"
+        ],
+        [
+          "{NAME_1}",
+          "Deshawn"
+        ]
+      ],
+      "placeholder_text": "{NAME_1} and I both go to {SCHOOL_1} on the east side.",
+      "restore_map": [
+        [
+          "Quinn",
+          "Deshawn"
+        ],
+        [
+          "Sage Canyon High School",
+          "Westfield High School"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          0,
+          7,
+          0,
+          5,
+          "Deshawn"
+        ],
+        [
+          25,
+          46,
+          23,
+          46,
+          "Westfield High School"
+        ]
+      ],
+      "text": "Quinn and I both go to Sage Canyon High School on the east side."
+    },
+    {
+      "adlib_map": [
+        [
+          "Akron",
+          "Ashstead"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Ashstead",
+          "Akron"
+        ]
+      ],
+      "case_id": "frame:intersect-landmark-and-hometown@0",
+      "original": "We drove from Akron all the way to see the Lincoln Memorial.",
+      "placeholder_restore_map": [
+        [
+          "{LOCATION_1}",
+          "Akron"
+        ]
+      ],
+      "placeholder_text": "We drove from {LOCATION_1} all the way to see the Lincoln Memorial.",
+      "restore_map": [
+        [
+          "Ashstead",
+          "Akron"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          14,
+          19,
+          14,
+          22,
+          "Akron"
+        ]
+      ],
+      "text": "We drove from Ashstead all the way to see the Lincoln Memorial."
+    },
+    {
+      "adlib_map": [
+        [
+          "Akron",
+          "Stonemont"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Stonemont",
+          "Akron"
+        ]
+      ],
+      "case_id": "frame:intersect-landmark-and-hometown@7",
+      "original": "We drove from Akron all the way to see the Lincoln Memorial.",
+      "placeholder_restore_map": [
+        [
+          "{LOCATION_1}",
+          "Akron"
+        ]
+      ],
+      "placeholder_text": "We drove from {LOCATION_1} all the way to see the Lincoln Memorial.",
+      "restore_map": [
+        [
+          "Stonemont",
+          "Akron"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          14,
+          19,
+          14,
+          23,
+          "Akron"
+        ]
+      ],
+      "text": "We drove from Stonemont all the way to see the Lincoln Memorial."
+    },
+    {
+      "adlib_map": [
+        [
+          "Allen Park",
+          "Heathercrest Park"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Heathercrest",
+          "Allen"
+        ]
+      ],
+      "case_id": "frame:intersect-hometown-that-ends-in-a-landmark-suffix@0",
+      "original": "We moved from Allen Park to be closer to the Lincoln Memorial.",
+      "placeholder_restore_map": [
+        [
+          "{LOCATION_1}",
+          "Allen Park"
+        ]
+      ],
+      "placeholder_text": "We moved from {LOCATION_1} to be closer to the Lincoln Memorial.",
+      "restore_map": [
+        [
+          "Heathercrest Park",
+          "Allen Park"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          14,
+          24,
+          14,
+          31,
+          "Allen Park"
+        ]
+      ],
+      "text": "We moved from Heathercrest Park to be closer to the Lincoln Memorial."
+    },
+    {
+      "adlib_map": [
+        [
+          "Allen Park",
+          "Sagegate Park"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Sagegate",
+          "Allen"
+        ]
+      ],
+      "case_id": "frame:intersect-hometown-that-ends-in-a-landmark-suffix@7",
+      "original": "We moved from Allen Park to be closer to the Lincoln Memorial.",
+      "placeholder_restore_map": [
+        [
+          "{LOCATION_1}",
+          "Allen Park"
+        ]
+      ],
+      "placeholder_text": "We moved from {LOCATION_1} to be closer to the Lincoln Memorial.",
+      "restore_map": [
+        [
+          "Sagegate Park",
+          "Allen Park"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          14,
+          24,
+          14,
+          27,
+          "Allen Park"
+        ]
+      ],
+      "text": "We moved from Sagegate Park to be closer to the Lincoln Memorial."
+    },
+    {
+      "adlib_map": [
+        [
+          "Terrence Okonkwo",
+          "Darrian Camacho"
+        ],
+        [
+          "(330) 555-0148",
+          "(201) 555-0100"
+        ],
+        [
+          "m.delacroix2011@westfieldhigh.k12.oh.us",
+          "m.marion2537@example.org"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Darrian",
+          "Terrence"
+        ],
+        [
+          "Camacho",
+          "Okonkwo"
+        ],
+        [
+          "Marion",
+          "delacroix"
+        ]
+      ],
+      "case_id": "frame:intersect-name-beside-structured@0",
+      "original": "Call Terrence Okonkwo at (330) 555-0148 or m.delacroix2011@westfieldhigh.k12.oh.us.",
+      "placeholder_restore_map": [
+        [
+          "{EMAIL_1}",
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ],
+        [
+          "{PHONE_1}",
+          "(330) 555-0148"
+        ],
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "placeholder_text": "Call {NAME_1} at {PHONE_1} or {EMAIL_1}.",
+      "restore_map": [
+        [
+          "Darrian Camacho",
+          "Terrence Okonkwo"
+        ],
+        [
+          "(201) 555-0100",
+          "(330) 555-0148"
+        ],
+        [
+          "m.marion2537@example.org",
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          5,
+          21,
+          5,
+          20,
+          "Terrence Okonkwo"
+        ],
+        [
+          25,
+          39,
+          24,
+          38,
+          "(330) 555-0148"
+        ],
+        [
+          43,
+          82,
+          42,
+          66,
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "text": "Call Darrian Camacho at (201) 555-0100 or m.marion2537@example.org."
+    },
+    {
+      "adlib_map": [
+        [
+          "Terrence Okonkwo",
+          "Kodi Matsuda"
+        ],
+        [
+          "(330) 555-0148",
+          "(201) 555-0100"
+        ],
+        [
+          "m.delacroix2011@westfieldhigh.k12.oh.us",
+          "m.kaelin8283@example.org"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Kodi",
+          "Terrence"
+        ],
+        [
+          "Matsuda",
+          "Okonkwo"
+        ],
+        [
+          "Kaelin",
+          "delacroix"
+        ]
+      ],
+      "case_id": "frame:intersect-name-beside-structured@7",
+      "original": "Call Terrence Okonkwo at (330) 555-0148 or m.delacroix2011@westfieldhigh.k12.oh.us.",
+      "placeholder_restore_map": [
+        [
+          "{EMAIL_1}",
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ],
+        [
+          "{PHONE_1}",
+          "(330) 555-0148"
+        ],
+        [
+          "{NAME_1}",
+          "Terrence Okonkwo"
+        ]
+      ],
+      "placeholder_text": "Call {NAME_1} at {PHONE_1} or {EMAIL_1}.",
+      "restore_map": [
+        [
+          "Kodi Matsuda",
+          "Terrence Okonkwo"
+        ],
+        [
+          "(201) 555-0100",
+          "(330) 555-0148"
+        ],
+        [
+          "m.kaelin8283@example.org",
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          5,
+          21,
+          5,
+          17,
+          "Terrence Okonkwo"
+        ],
+        [
+          25,
+          39,
+          21,
+          35,
+          "(330) 555-0148"
+        ],
+        [
+          43,
+          82,
+          39,
+          63,
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "text": "Call Kodi Matsuda at (201) 555-0100 or m.kaelin8283@example.org."
+    },
+    {
+      "adlib_map": [
+        [
+          "1147 Beaumont Terrace",
+          "3202 Quail Run Terrace"
+        ],
+        [
+          "Akron",
+          "Elmbury"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Quail Run",
+          "Beaumont"
+        ],
+        [
+          "Elmbury",
+          "Akron"
+        ]
+      ],
+      "case_id": "frame:structured-address@0",
+      "original": "We moved to 1147 Beaumont Terrace, Akron, Ohio 44305 that fall.",
+      "placeholder_restore_map": [
+        [
+          "{ADDRESS_1}",
+          "1147 Beaumont Terrace"
+        ],
+        [
+          "{LOCATION_1}",
+          "Akron"
+        ]
+      ],
+      "placeholder_text": "We moved to {ADDRESS_1}, {LOCATION_1}, Ohio 44305 that fall.",
+      "restore_map": [
+        [
+          "3202 Quail Run Terrace",
+          "1147 Beaumont Terrace"
+        ],
+        [
+          "Elmbury",
+          "Akron"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          12,
+          33,
+          12,
+          34,
+          "1147 Beaumont Terrace"
+        ],
+        [
+          35,
+          40,
+          36,
+          43,
+          "Akron"
+        ]
+      ],
+      "text": "We moved to 3202 Quail Run Terrace, Elmbury, Ohio 44305 that fall."
+    },
+    {
+      "adlib_map": [
+        [
+          "1147 Beaumont Terrace",
+          "1811 Willow Terrace"
+        ],
+        [
+          "Akron",
+          "Fernmere"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Willow",
+          "Beaumont"
+        ],
+        [
+          "Fernmere",
+          "Akron"
+        ]
+      ],
+      "case_id": "frame:structured-address@7",
+      "original": "We moved to 1147 Beaumont Terrace, Akron, Ohio 44305 that fall.",
+      "placeholder_restore_map": [
+        [
+          "{ADDRESS_1}",
+          "1147 Beaumont Terrace"
+        ],
+        [
+          "{LOCATION_1}",
+          "Akron"
+        ]
+      ],
+      "placeholder_text": "We moved to {ADDRESS_1}, {LOCATION_1}, Ohio 44305 that fall.",
+      "restore_map": [
+        [
+          "1811 Willow Terrace",
+          "1147 Beaumont Terrace"
+        ],
+        [
+          "Fernmere",
+          "Akron"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          12,
+          33,
+          12,
+          31,
+          "1147 Beaumont Terrace"
+        ],
+        [
+          35,
+          40,
+          33,
+          41,
+          "Akron"
+        ]
+      ],
+      "text": "We moved to 1811 Willow Terrace, Fernmere, Ohio 44305 that fall."
+    },
+    {
+      "adlib_map": [
+        [
+          "(330) 555-0148",
+          "(201) 555-0100"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-phone@0",
+      "original": "You can reach my mom at (330) 555-0148 most afternoons.",
+      "placeholder_restore_map": [
+        [
+          "{PHONE_1}",
+          "(330) 555-0148"
+        ]
+      ],
+      "placeholder_text": "You can reach my mom at {PHONE_1} most afternoons.",
+      "restore_map": [
+        [
+          "(201) 555-0100",
+          "(330) 555-0148"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          24,
+          38,
+          24,
+          38,
+          "(330) 555-0148"
+        ]
+      ],
+      "text": "You can reach my mom at (201) 555-0100 most afternoons."
+    },
+    {
+      "adlib_map": [
+        [
+          "(330) 555-0148",
+          "(201) 555-0100"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-phone@7",
+      "original": "You can reach my mom at (330) 555-0148 most afternoons.",
+      "placeholder_restore_map": [
+        [
+          "{PHONE_1}",
+          "(330) 555-0148"
+        ]
+      ],
+      "placeholder_text": "You can reach my mom at {PHONE_1} most afternoons.",
+      "restore_map": [
+        [
+          "(201) 555-0100",
+          "(330) 555-0148"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          24,
+          38,
+          24,
+          38,
+          "(330) 555-0148"
+        ]
+      ],
+      "text": "You can reach my mom at (201) 555-0100 most afternoons."
+    },
+    {
+      "adlib_map": [
+        [
+          "m.delacroix2011@westfieldhigh.k12.oh.us",
+          "m.dru7722@example.org"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Dru",
+          "delacroix"
+        ]
+      ],
+      "case_id": "frame:structured-email@0",
+      "original": "I sent it to m.delacroix2011@westfieldhigh.k12.oh.us by mistake.",
+      "placeholder_restore_map": [
+        [
+          "{EMAIL_1}",
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "placeholder_text": "I sent it to {EMAIL_1} by mistake.",
+      "restore_map": [
+        [
+          "m.dru7722@example.org",
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          13,
+          52,
+          13,
+          34,
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "text": "I sent it to m.dru7722@example.org by mistake."
+    },
+    {
+      "adlib_map": [
+        [
+          "m.delacroix2011@westfieldhigh.k12.oh.us",
+          "m.karsen9277@example.org"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Karsen",
+          "delacroix"
+        ]
+      ],
+      "case_id": "frame:structured-email@7",
+      "original": "I sent it to m.delacroix2011@westfieldhigh.k12.oh.us by mistake.",
+      "placeholder_restore_map": [
+        [
+          "{EMAIL_1}",
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "placeholder_text": "I sent it to {EMAIL_1} by mistake.",
+      "restore_map": [
+        [
+          "m.karsen9277@example.org",
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          13,
+          52,
+          13,
+          37,
+          "m.delacroix2011@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "text": "I sent it to m.karsen9277@example.org by mistake."
+    },
+    {
+      "adlib_map": [
+        [
+          "marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us",
+          "jessie.michel-arin@example.org"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Jessie",
+          "marguerite"
+        ],
+        [
+          "Michel",
+          "delacroix"
+        ],
+        [
+          "Arin",
+          "whitfield"
+        ]
+      ],
+      "case_id": "frame:structured-email-is-the-writers-own-name@0",
+      "original": "I sent it to marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us by mistake.",
+      "placeholder_restore_map": [
+        [
+          "{EMAIL_1}",
+          "marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "placeholder_text": "I sent it to {EMAIL_1} by mistake.",
+      "restore_map": [
+        [
+          "jessie.michel-arin@example.org",
+          "marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          13,
+          67,
+          13,
+          43,
+          "marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "text": "I sent it to jessie.michel-arin@example.org by mistake."
+    },
+    {
+      "adlib_map": [
+        [
+          "marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us",
+          "kayce.ramsey-jan@example.org"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Kayce",
+          "marguerite"
+        ],
+        [
+          "Ramsey",
+          "delacroix"
+        ],
+        [
+          "Jan",
+          "whitfield"
+        ]
+      ],
+      "case_id": "frame:structured-email-is-the-writers-own-name@7",
+      "original": "I sent it to marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us by mistake.",
+      "placeholder_restore_map": [
+        [
+          "{EMAIL_1}",
+          "marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "placeholder_text": "I sent it to {EMAIL_1} by mistake.",
+      "restore_map": [
+        [
+          "kayce.ramsey-jan@example.org",
+          "marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          13,
+          67,
+          13,
+          41,
+          "marguerite.delacroix-whitfield@westfieldhigh.k12.oh.us"
+        ]
+      ],
+      "text": "I sent it to kayce.ramsey-jan@example.org by mistake."
+    },
+    {
+      "adlib_map": [
+        [
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield",
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-url-ends-in-the-writers-own-name@0",
+      "original": "My page is https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield now.",
+      "placeholder_restore_map": [
+        [
+          "{URL_1}",
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield"
+        ]
+      ],
+      "placeholder_text": "My page is {URL_1} now.",
+      "restore_map": [
+        [
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield",
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          11,
+          82,
+          11,
+          82,
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield"
+        ]
+      ],
+      "text": "My page is https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield now."
+    },
+    {
+      "adlib_map": [
+        [
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield",
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-url-ends-in-the-writers-own-name@7",
+      "original": "My page is https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield now.",
+      "placeholder_restore_map": [
+        [
+          "{URL_1}",
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield"
+        ]
+      ],
+      "placeholder_text": "My page is {URL_1} now.",
+      "restore_map": [
+        [
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield",
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          11,
+          82,
+          11,
+          82,
+          "https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield"
+        ]
+      ],
+      "text": "My page is https://westfieldhigh.k12.oh.us/students/marguerite-delacroix-whitfield now."
+    },
+    {
+      "adlib_map": [
+        [
+          "14",
+          "18"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-age@0",
+      "original": "I am 14 years old and this is the first thing I finished.",
+      "placeholder_restore_map": [
+        [
+          "{AGE_1}",
+          "14"
+        ]
+      ],
+      "placeholder_text": "I am {AGE_1} years old and this is the first thing I finished.",
+      "restore_map": [
+        [
+          "18",
+          "14"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          5,
+          7,
+          5,
+          7,
+          "14"
+        ]
+      ],
+      "text": "I am 18 years old and this is the first thing I finished."
+    },
+    {
+      "adlib_map": [
+        [
+          "14",
+          "15"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-age@7",
+      "original": "I am 14 years old and this is the first thing I finished.",
+      "placeholder_restore_map": [
+        [
+          "{AGE_1}",
+          "14"
+        ]
+      ],
+      "placeholder_text": "I am {AGE_1} years old and this is the first thing I finished.",
+      "restore_map": [
+        [
+          "15",
+          "14"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          5,
+          7,
+          5,
+          7,
+          "14"
+        ]
+      ],
+      "text": "I am 15 years old and this is the first thing I finished."
+    },
+    {
+      "adlib_map": [
+        [
+          "287-44-9163",
+          "799-99-9999"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-ssn@0",
+      "original": "The form wanted 287-44-9163 which I should not have written down.",
+      "placeholder_restore_map": [
+        [
+          "{US_SOCIAL_SECURITY_NUMBER_1}",
+          "287-44-9163"
+        ]
+      ],
+      "placeholder_text": "The form wanted {US_SOCIAL_SECURITY_NUMBER_1} which I should not have written down.",
+      "restore_map": [
+        [
+          "799-99-9999",
+          "287-44-9163"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          16,
+          27,
+          16,
+          27,
+          "287-44-9163"
+        ]
+      ],
+      "text": "The form wanted 799-99-9999 which I should not have written down."
+    },
+    {
+      "adlib_map": [
+        [
+          "287-44-9163",
+          "799-99-9999"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-ssn@7",
+      "original": "The form wanted 287-44-9163 which I should not have written down.",
+      "placeholder_restore_map": [
+        [
+          "{US_SOCIAL_SECURITY_NUMBER_1}",
+          "287-44-9163"
+        ]
+      ],
+      "placeholder_text": "The form wanted {US_SOCIAL_SECURITY_NUMBER_1} which I should not have written down.",
+      "restore_map": [
+        [
+          "799-99-9999",
+          "287-44-9163"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          16,
+          27,
+          16,
+          27,
+          "287-44-9163"
+        ]
+      ],
+      "text": "The form wanted 799-99-9999 which I should not have written down."
+    },
+    {
+      "adlib_map": [
+        [
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix",
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-url@0",
+      "original": "It is posted at https://westfieldhigh.k12.oh.us/students/mdelacroix now.",
+      "placeholder_restore_map": [
+        [
+          "{URL_1}",
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix"
+        ]
+      ],
+      "placeholder_text": "It is posted at {URL_1} now.",
+      "restore_map": [
+        [
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix",
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          16,
+          67,
+          16,
+          67,
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix"
+        ]
+      ],
+      "text": "It is posted at https://westfieldhigh.k12.oh.us/students/mdelacroix now."
+    },
+    {
+      "adlib_map": [
+        [
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix",
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-url@7",
+      "original": "It is posted at https://westfieldhigh.k12.oh.us/students/mdelacroix now.",
+      "placeholder_restore_map": [
+        [
+          "{URL_1}",
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix"
+        ]
+      ],
+      "placeholder_text": "It is posted at {URL_1} now.",
+      "restore_map": [
+        [
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix",
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          16,
+          67,
+          16,
+          67,
+          "https://westfieldhigh.k12.oh.us/students/mdelacroix"
+        ]
+      ],
+      "text": "It is posted at https://westfieldhigh.k12.oh.us/students/mdelacroix now."
+    },
+    {
+      "adlib_map": [
+        [
+          "@margie_dw2011",
+          "@sidney_dw0208"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Sidney",
+          "margie"
+        ]
+      ],
+      "case_id": "frame:structured-username@0",
+      "original": "My handle is @margie_dw2011 if you ever want to look it up.",
+      "placeholder_restore_map": [
+        [
+          "{USERNAME_1}",
+          "@margie_dw2011"
+        ]
+      ],
+      "placeholder_text": "My handle is {USERNAME_1} if you ever want to look it up.",
+      "restore_map": [
+        [
+          "@sidney_dw0208",
+          "@margie_dw2011"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          13,
+          27,
+          13,
+          27,
+          "@margie_dw2011"
+        ]
+      ],
+      "text": "My handle is @sidney_dw0208 if you ever want to look it up."
+    },
+    {
+      "adlib_map": [
+        [
+          "@margie_dw2011",
+          "@shayne_dw9382"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Shayne",
+          "margie"
+        ]
+      ],
+      "case_id": "frame:structured-username@7",
+      "original": "My handle is @margie_dw2011 if you ever want to look it up.",
+      "placeholder_restore_map": [
+        [
+          "{USERNAME_1}",
+          "@margie_dw2011"
+        ]
+      ],
+      "placeholder_text": "My handle is {USERNAME_1} if you ever want to look it up.",
+      "restore_map": [
+        [
+          "@shayne_dw9382",
+          "@margie_dw2011"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          13,
+          27,
+          13,
+          27,
+          "@margie_dw2011"
+        ]
+      ],
+      "text": "My handle is @shayne_dw9382 if you ever want to look it up."
+    },
+    {
+      "adlib_map": [
+        [
+          "4532 7891 2345 6789",
+          "4111 1111 1111 1111"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-card@0",
+      "original": "She read out 4532 7891 2345 6789 and I typed it in wrong.",
+      "placeholder_restore_map": [
+        [
+          "{CREDIT_DEBIT_CARD_NUMBER_1}",
+          "4532 7891 2345 6789"
+        ]
+      ],
+      "placeholder_text": "She read out {CREDIT_DEBIT_CARD_NUMBER_1} and I typed it in wrong.",
+      "restore_map": [
+        [
+          "4111 1111 1111 1111",
+          "4532 7891 2345 6789"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          13,
+          32,
+          13,
+          32,
+          "4532 7891 2345 6789"
+        ]
+      ],
+      "text": "She read out 4111 1111 1111 1111 and I typed it in wrong."
+    },
+    {
+      "adlib_map": [
+        [
+          "4532 7891 2345 6789",
+          "4111 1111 1111 1111"
+        ]
+      ],
+      "adlib_tokens": [],
+      "case_id": "frame:structured-card@7",
+      "original": "She read out 4532 7891 2345 6789 and I typed it in wrong.",
+      "placeholder_restore_map": [
+        [
+          "{CREDIT_DEBIT_CARD_NUMBER_1}",
+          "4532 7891 2345 6789"
+        ]
+      ],
+      "placeholder_text": "She read out {CREDIT_DEBIT_CARD_NUMBER_1} and I typed it in wrong.",
+      "restore_map": [
+        [
+          "4111 1111 1111 1111",
+          "4532 7891 2345 6789"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          13,
+          32,
+          13,
+          32,
+          "4532 7891 2345 6789"
+        ]
+      ],
+      "text": "She read out 4111 1111 1111 1111 and I typed it in wrong."
+    },
+    {
+      "adlib_map": [
+        [
+          "Maria Lopez",
+          "Azariah Nordahl"
+        ],
+        [
+          "Later Maria",
+          "Taylen Azariah"
+        ],
+        [
+          "Ms. Lopez",
+          "Ms. Nordahl"
+        ],
+        [
+          "Maria's",
+          "Azariah's"
+        ],
+        [
+          "MARIA LOPEZ",
+          "AZARIAH NORDAHL"
+        ],
+        [
+          "Terrence Okonkwo",
+          "Charley Coldwell"
+        ],
+        [
+          "Jane Quincy-Adams",
+          "Kaidyn Guerrero-Vickers"
+        ],
+        [
+          "mr. kowalski",
+          "mr. bergstrom"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Azariah",
+          "Maria"
+        ],
+        [
+          "Nordahl",
+          "Lopez"
+        ],
+        [
+          "Taylen",
+          "Later"
+        ],
+        [
+          "Charley",
+          "Terrence"
+        ],
+        [
+          "Coldwell",
+          "Okonkwo"
+        ],
+        [
+          "Kaidyn",
+          "Jane"
+        ],
+        [
+          "Guerrero",
+          "Quincy"
+        ],
+        [
+          "Vickers",
+          "Adams"
+        ],
+        [
+          "Bergstrom",
+          "kowalski"
+        ]
+      ],
+      "case_id": "essay@0",
+      "original": "Maria Lopez helped me study. Later Maria said Ms. Lopez was strict, but Maria's notes saved me. I yelled MARIA LOPEZ across the gym. My friend Terrence Okonkwo and Jane Quincy-Adams met mr. kowalski there. Abraham Lincoln was the topic.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "mr. kowalski"
+        ],
+        [
+          "{NAME_2}",
+          "Jane Quincy-Adams"
+        ],
+        [
+          "{NAME_3}",
+          "Terrence Okonkwo"
+        ],
+        [
+          "{NAME_4}",
+          "MARIA LOPEZ"
+        ],
+        [
+          "{NAME_5}",
+          "Maria's"
+        ],
+        [
+          "{NAME_6}",
+          "Ms. Lopez"
+        ],
+        [
+          "{NAME_7}",
+          "Later Maria"
+        ],
+        [
+          "{NAME_8}",
+          "Maria Lopez"
+        ]
+      ],
+      "placeholder_text": "{NAME_8} helped me study. {NAME_7} said {NAME_6} was strict, but {NAME_5} notes saved me. I yelled {NAME_4} across the gym. My friend {NAME_3} and {NAME_2} met {NAME_1} there. Abraham Lincoln was the topic.",
+      "restore_map": [
+        [
+          "Azariah Nordahl",
+          "Maria Lopez"
+        ],
+        [
+          "Taylen Azariah",
+          "Later Maria"
+        ],
+        [
+          "Ms. Nordahl",
+          "Ms. Lopez"
+        ],
+        [
+          "Azariah's",
+          "Maria's"
+        ],
+        [
+          "AZARIAH NORDAHL",
+          "MARIA LOPEZ"
+        ],
+        [
+          "Charley Coldwell",
+          "Terrence Okonkwo"
+        ],
+        [
+          "Kaidyn Guerrero-Vickers",
+          "Jane Quincy-Adams"
+        ],
+        [
+          "mr. bergstrom",
+          "mr. kowalski"
+        ]
+      ],
+      "seed": 0,
+      "spans": [
+        [
+          0,
+          11,
+          0,
+          15,
+          "Maria Lopez"
+        ],
+        [
+          29,
+          40,
+          33,
+          47,
+          "Later Maria"
+        ],
+        [
+          46,
+          55,
+          53,
+          64,
+          "Ms. Lopez"
+        ],
+        [
+          72,
+          79,
+          81,
+          90,
+          "Maria's"
+        ],
+        [
+          105,
+          116,
+          116,
+          131,
+          "MARIA LOPEZ"
+        ],
+        [
+          143,
+          159,
+          158,
+          174,
+          "Terrence Okonkwo"
+        ],
+        [
+          164,
+          181,
+          179,
+          202,
+          "Jane Quincy-Adams"
+        ],
+        [
+          186,
+          198,
+          207,
+          220,
+          "mr. kowalski"
+        ]
+      ],
+      "text": "Azariah Nordahl helped me study. Taylen Azariah said Ms. Nordahl was strict, but Azariah's notes saved me. I yelled AZARIAH NORDAHL across the gym. My friend Charley Coldwell and Kaidyn Guerrero-Vickers met mr. bergstrom there. Abraham Lincoln was the topic."
+    },
+    {
+      "adlib_map": [
+        [
+          "Maria Lopez",
+          "Darrian Varga"
+        ],
+        [
+          "Later Maria",
+          "Karol Darrian"
+        ],
+        [
+          "Ms. Lopez",
+          "Ms. Varga"
+        ],
+        [
+          "Maria's",
+          "Darrian's"
+        ],
+        [
+          "MARIA LOPEZ",
+          "DARRIAN VARGA"
+        ],
+        [
+          "Terrence Okonkwo",
+          "Monroe Mishra"
+        ],
+        [
+          "Jane Quincy-Adams",
+          "Amiri Cordova-Ortega"
+        ],
+        [
+          "mr. kowalski",
+          "mr. odhiambo"
+        ]
+      ],
+      "adlib_tokens": [
+        [
+          "Darrian",
+          "Maria"
+        ],
+        [
+          "Varga",
+          "Lopez"
+        ],
+        [
+          "Karol",
+          "Later"
+        ],
+        [
+          "Monroe",
+          "Terrence"
+        ],
+        [
+          "Mishra",
+          "Okonkwo"
+        ],
+        [
+          "Amiri",
+          "Jane"
+        ],
+        [
+          "Cordova",
+          "Quincy"
+        ],
+        [
+          "Ortega",
+          "Adams"
+        ],
+        [
+          "Odhiambo",
+          "kowalski"
+        ]
+      ],
+      "case_id": "essay@7",
+      "original": "Maria Lopez helped me study. Later Maria said Ms. Lopez was strict, but Maria's notes saved me. I yelled MARIA LOPEZ across the gym. My friend Terrence Okonkwo and Jane Quincy-Adams met mr. kowalski there. Abraham Lincoln was the topic.",
+      "placeholder_restore_map": [
+        [
+          "{NAME_1}",
+          "mr. kowalski"
+        ],
+        [
+          "{NAME_2}",
+          "Jane Quincy-Adams"
+        ],
+        [
+          "{NAME_3}",
+          "Terrence Okonkwo"
+        ],
+        [
+          "{NAME_4}",
+          "MARIA LOPEZ"
+        ],
+        [
+          "{NAME_5}",
+          "Maria's"
+        ],
+        [
+          "{NAME_6}",
+          "Ms. Lopez"
+        ],
+        [
+          "{NAME_7}",
+          "Later Maria"
+        ],
+        [
+          "{NAME_8}",
+          "Maria Lopez"
+        ]
+      ],
+      "placeholder_text": "{NAME_8} helped me study. {NAME_7} said {NAME_6} was strict, but {NAME_5} notes saved me. I yelled {NAME_4} across the gym. My friend {NAME_3} and {NAME_2} met {NAME_1} there. Abraham Lincoln was the topic.",
+      "restore_map": [
+        [
+          "Darrian Varga",
+          "Maria Lopez"
+        ],
+        [
+          "Karol Darrian",
+          "Later Maria"
+        ],
+        [
+          "Ms. Varga",
+          "Ms. Lopez"
+        ],
+        [
+          "Darrian's",
+          "Maria's"
+        ],
+        [
+          "DARRIAN VARGA",
+          "MARIA LOPEZ"
+        ],
+        [
+          "Monroe Mishra",
+          "Terrence Okonkwo"
+        ],
+        [
+          "Amiri Cordova-Ortega",
+          "Jane Quincy-Adams"
+        ],
+        [
+          "mr. odhiambo",
+          "mr. kowalski"
+        ]
+      ],
+      "seed": 7,
+      "spans": [
+        [
+          0,
+          11,
+          0,
+          13,
+          "Maria Lopez"
+        ],
+        [
+          29,
+          40,
+          31,
+          44,
+          "Later Maria"
+        ],
+        [
+          46,
+          55,
+          50,
+          59,
+          "Ms. Lopez"
+        ],
+        [
+          72,
+          79,
+          76,
+          85,
+          "Maria's"
+        ],
+        [
+          105,
+          116,
+          111,
+          124,
+          "MARIA LOPEZ"
+        ],
+        [
+          143,
+          159,
+          151,
+          164,
+          "Terrence Okonkwo"
+        ],
+        [
+          164,
+          181,
+          169,
+          189,
+          "Jane Quincy-Adams"
+        ],
+        [
+          186,
+          198,
+          194,
+          206,
+          "mr. kowalski"
+        ]
+      ],
+      "text": "Darrian Varga helped me study. Karol Darrian said Ms. Varga was strict, but Darrian's notes saved me. I yelled DARRIAN VARGA across the gym. My friend Monroe Mishra and Amiri Cordova-Ortega met mr. odhiambo there. Abraham Lincoln was the topic."
+    }
+  ],
+  "restore": [
+    {
+      "case_id": "essay_round_trip",
+      "restore_map": [
+        [
+          "Azariah Nordahl",
+          "Maria Lopez"
+        ],
+        [
+          "Taylen Azariah",
+          "Later Maria"
+        ],
+        [
+          "Ms. Nordahl",
+          "Ms. Lopez"
+        ],
+        [
+          "Azariah's",
+          "Maria's"
+        ],
+        [
+          "AZARIAH NORDAHL",
+          "MARIA LOPEZ"
+        ],
+        [
+          "Charley Coldwell",
+          "Terrence Okonkwo"
+        ],
+        [
+          "Kaidyn Guerrero-Vickers",
+          "Jane Quincy-Adams"
+        ],
+        [
+          "mr. bergstrom",
+          "mr. kowalski"
+        ]
+      ],
+      "restored": "Maria Lopez helped me study. Later Maria said Ms. Lopez was strict, but Maria's notes saved me. I yelled MARIA LOPEZ across the gym. My friend Terrence Okonkwo and Jane Quincy-Adams met mr. kowalski there. Abraham Lincoln was the topic.",
+      "text": "Azariah Nordahl helped me study. Taylen Azariah said Ms. Nordahl was strict, but Azariah's notes saved me. I yelled AZARIAH NORDAHL across the gym. My friend Charley Coldwell and Kaidyn Guerrero-Vickers met mr. bergstrom there. Abraham Lincoln was the topic.",
+      "tokens": [
+        [
+          "Azariah",
+          "Maria"
+        ],
+        [
+          "Nordahl",
+          "Lopez"
+        ],
+        [
+          "Taylen",
+          "Later"
+        ],
+        [
+          "Charley",
+          "Terrence"
+        ],
+        [
+          "Coldwell",
+          "Okonkwo"
+        ],
+        [
+          "Kaidyn",
+          "Jane"
+        ],
+        [
+          "Guerrero",
+          "Quincy"
+        ],
+        [
+          "Vickers",
+          "Adams"
+        ],
+        [
+          "Bergstrom",
+          "kowalski"
+        ]
+      ]
+    },
+    {
+      "case_id": "essay_lone_given",
+      "restore_map": [
+        [
+          "Azariah Nordahl",
+          "Maria Lopez"
+        ],
+        [
+          "Taylen Azariah",
+          "Later Maria"
+        ],
+        [
+          "Ms. Nordahl",
+          "Ms. Lopez"
+        ],
+        [
+          "Azariah's",
+          "Maria's"
+        ],
+        [
+          "AZARIAH NORDAHL",
+          "MARIA LOPEZ"
+        ],
+        [
+          "Charley Coldwell",
+          "Terrence Okonkwo"
+        ],
+        [
+          "Kaidyn Guerrero-Vickers",
+          "Jane Quincy-Adams"
+        ],
+        [
+          "mr. bergstrom",
+          "mr. kowalski"
+        ]
+      ],
+      "restored": "Maria wrote well.",
+      "text": "Azariah wrote well.",
+      "tokens": [
+        [
+          "Azariah",
+          "Maria"
+        ],
+        [
+          "Nordahl",
+          "Lopez"
+        ],
+        [
+          "Taylen",
+          "Later"
+        ],
+        [
+          "Charley",
+          "Terrence"
+        ],
+        [
+          "Coldwell",
+          "Okonkwo"
+        ],
+        [
+          "Kaidyn",
+          "Jane"
+        ],
+        [
+          "Guerrero",
+          "Quincy"
+        ],
+        [
+          "Vickers",
+          "Adams"
+        ],
+        [
+          "Bergstrom",
+          "kowalski"
+        ]
+      ]
+    },
+    {
+      "case_id": "essay_lone_given_upper",
+      "restore_map": [],
+      "restored": "MARIA!",
+      "text": "AZARIAH!",
+      "tokens": [
+        [
+          "Azariah",
+          "Maria"
+        ],
+        [
+          "Nordahl",
+          "Lopez"
+        ],
+        [
+          "Taylen",
+          "Later"
+        ],
+        [
+          "Charley",
+          "Terrence"
+        ],
+        [
+          "Coldwell",
+          "Okonkwo"
+        ],
+        [
+          "Kaidyn",
+          "Jane"
+        ],
+        [
+          "Guerrero",
+          "Quincy"
+        ],
+        [
+          "Vickers",
+          "Adams"
+        ],
+        [
+          "Bergstrom",
+          "kowalski"
+        ]
+      ]
+    },
+    {
+      "case_id": "lone_token_title",
+      "restore_map": [],
+      "restored": "Maria wrote well.",
+      "text": "Quinn wrote well.",
+      "tokens": [
+        [
+          "Quinn",
+          "Maria"
+        ]
+      ]
+    },
+    {
+      "case_id": "lone_token_upper",
+      "restore_map": [],
+      "restored": "MARIA!",
+      "text": "QUINN!",
+      "tokens": [
+        [
+          "Quinn",
+          "Maria"
+        ]
+      ]
+    },
+    {
+      "case_id": "lone_token_lower",
+      "restore_map": [],
+      "restored": "maria said so",
+      "text": "quinn said so",
+      "tokens": [
+        [
+          "Quinn",
+          "Maria"
+        ]
+      ]
+    },
+    {
+      "case_id": "single_letter_upper",
+      "restore_map": [],
+      "restored": "M was here",
+      "text": "Q was here",
+      "tokens": [
+        [
+          "Q",
+          "M"
+        ]
+      ]
+    },
+    {
+      "case_id": "span_beats_token",
+      "restore_map": [
+        [
+          "Quinn Okafor",
+          "Maria Lopez"
+        ]
+      ],
+      "restored": "Maria Lopez and Maria.",
+      "text": "Quinn Okafor and Quinn.",
+      "tokens": [
+        [
+          "Quinn",
+          "Maria"
+        ],
+        [
+          "Okafor",
+          "Lopez"
+        ]
+      ]
+    },
+    {
+      "case_id": "inside_a_word_is_not_a_token",
+      "restore_map": [],
+      "restored": "Quinnton stayed.",
+      "text": "Quinnton stayed.",
+      "tokens": [
+        [
+          "Quinn",
+          "Maria"
+        ]
+      ]
+    },
+    {
+      "case_id": "empty",
+      "restore_map": [],
+      "restored": "",
+      "text": "",
+      "tokens": []
+    }
+  ],
+  "shift_date": [
+    {
+      "date": "12/31/2008",
+      "offset": 1,
+      "shifted": "01/01/2008"
+    },
+    {
+      "date": "2/29/2024",
+      "offset": 365,
+      "shifted": "2/28/2024"
+    },
+    {
+      "date": "25-12-09",
+      "offset": 7,
+      "shifted": "01-01-09"
+    },
+    {
+      "date": "03/01/2009",
+      "offset": 100,
+      "shifted": "06/09/2009"
+    },
+    {
+      "date": "1/1/2000",
+      "offset": 0,
+      "shifted": "1/1/2000"
+    },
+    {
+      "date": "02/28/2023",
+      "offset": 1,
+      "shifted": "03/01/2023"
+    },
+    {
+      "date": "02/28/2024",
+      "offset": 1,
+      "shifted": "02/29/2024"
+    },
+    {
+      "date": "7-4-1776",
+      "offset": 200,
+      "shifted": "1-20-1776"
+    },
+    {
+      "date": "31/12/2010",
+      "offset": 364,
+      "shifted": "30/12/2010"
+    },
+    {
+      "date": "13/01/99",
+      "offset": 45,
+      "shifted": "27/02/99"
+    }
+  ]
+}

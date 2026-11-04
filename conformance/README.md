@@ -1,6 +1,6 @@
 # conformance — the spec all three front doors run against
 
-Five files, generated from the Python implementation and consumed by every port:
+Six files, generated from the Python implementation and consumed by every port:
 
 | file | what it is |
 |---|---|
@@ -9,8 +9,9 @@ Five files, generated from the Python implementation and consumed by every port:
 | `primitives.json` | the tokenisation and capitalisation answers underneath a frame: 18 primitives over 27 texts and 12 token lists |
 | `spans.json` | the offset-translation answers: where each replacement came from, and what a given offset is in the other coordinate system, over 53 cases |
 | `placeholders.json` | the host-boundary guard: the placeholder pattern's source text, which every port compiles byte for byte, and 40 hand-built positive and negative cases with the reference's matches, kinds, code-point offsets and both scrubs |
+| `adlib.json` | adlib rendering: pool digests, the tables a port copies verbatim, the draw, date-shift, card-plug and acronym primitives, 37 whole-document `invent` cases, 10 `restore` cases, and every fixture frame plus the test essay rendered at seeds 0 and 7 over the reference arm's placeholder output |
 
-Regenerate with `just sync-conformance`. Never hand-edit them: all five are
+Regenerate with `just sync-conformance`. Never hand-edit them: all six are
 compared byte-for-byte against a fresh export by
 `tools/tests/test_conformance.py`, so an edit that is not a regeneration fails
 the build — which is the point. `placeholders.json` adds a fifth direction: each
