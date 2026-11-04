@@ -148,6 +148,13 @@ module Vicary
       relation_refusal = options.fetch(:relation_refusal, true)
       title_relation_refusal = options.fetch(:title_relation_refusal, true)
 
+      # Adlib renders over the numbered restore map, so it refuses without one
+      # rather than ship placeholders under a setting that promised prose.
+      rendering = render_mode(options[:render])
+      if rendering == RENDER_ADLIB && !number_placeholders
+        raise ArgumentError, "adlib rendering needs local mode with numbered placeholders"
+      end
+
       minter = PlaceholderMinter.new(number: number_placeholders)
       return [text, 0, minter.assigned] if text.nil? || text.empty?
 
@@ -169,6 +176,14 @@ module Vicary
           ),
         )
         n += count
+      end
+
+      if rendering == RENDER_ADLIB
+        # A fourth element, so `masked, n, map = ...` callers keep working; the
+        # map is the adlib inverse, `{stand-in: original}`, as in the reference.
+        adlib = render_adlib(masked, minter.assigned, text,
+                             seed: resolve_adlib_seed(options[:adlib_seed]), identity: identity)
+        return [adlib.text, n, adlib.restore_map, adlib]
       end
 
       [masked, n, minter.assigned]

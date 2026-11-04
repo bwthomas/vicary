@@ -58,6 +58,23 @@ PAYLOAD.each { |dir, name| FileUtils.cp(dir.join(name), TARGET.join(name)) }
 # manifest check below cannot see it — it compares the manifest against the
 # payload, and a file in neither is invisible to both.
 carried = PAYLOAD.map { |_, name| name }
+# The adlib pools ride in assets/pools/, verified against conformance/adlib.json.
+POOLS_DIR = REPO_ROOT.join("python", "src", "vicary", "pools")
+FileUtils.mkdir_p(TARGET.join("pools"))
+pool_digests = JSON.parse(REPO_ROOT.join("conformance", "adlib.json").read).fetch("pools")
+pool_digests.sort.each do |name, entry|
+  FileUtils.cp(POOLS_DIR.join("#{name}.txt"), TARGET.join("pools", "#{name}.txt"))
+  digest = Digest::SHA256.hexdigest(TARGET.join("pools", "#{name}.txt").binread)
+  abort "vendored pool #{name} sha256 #{digest} does not match adlib.json #{entry['sha256']}" if digest != entry["sha256"]
+end
+TARGET.join("pools").children.each do |stale|
+  next if pool_digests.key?(stale.basename(".txt").to_s)
+
+  stale.delete
+  warn "pruned stale pools/#{stale.basename}"
+end
+warn "vendored #{pool_digests.size} adlib pools — sha256 verified against conformance/adlib.json"
+
 TARGET.children.select(&:file?).sort.each do |stale|
   next if carried.include?(stale.basename.to_s)
 
