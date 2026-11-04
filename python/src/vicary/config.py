@@ -55,6 +55,15 @@ NAME_DETECTION_ENV_VAR: str = "VICARY_NAME_DETECTION"
 #: setting cannot express both.
 NAME_DETECTION_OUTBOUND_ENV_VAR: str = "VICARY_NAME_DETECTION_OUTBOUND"
 
+#: How a redacted name is written back into the text: ``placeholder`` (the
+#: default, ``{NAME_1}``) or ``adlib`` (an invented, document-consistent name).
+#: See :func:`vicary.redaction.render_mode`. It changes the rendering, never which
+#: spans are redacted.
+RENDER_ENV_VAR: str = "VICARY_RENDER"
+
+#: Seed for ``adlib`` rendering. Same document and seed, same invented names.
+ADLIB_SEED_ENV_VAR: str = "VICARY_ADLIB_SEED"
+
 #: Bedrock Guardrail wiring, used only by the optional ``guardrail`` mode.
 GUARDRAIL_ID_ENV_VAR: str = "VICARY_BEDROCK_GUARDRAIL_ID"
 GUARDRAIL_VERSION_ENV_VAR: str = "VICARY_BEDROCK_GUARDRAIL_VERSION"

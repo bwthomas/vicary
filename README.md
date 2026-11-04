@@ -249,6 +249,246 @@ baseline the eval scores `local` against — a library whose only benchmark is
 itself has no benchmark. `guardrail` is Python-only; the ports implement `local`
 and `stub`, which are the two that need no network.
 
+### Adlib: invented values instead of placeholders
+
+`render="adlib"` (or `VICARY_RENDER=adlib`) writes every redacted span as an
+invented value of its kind instead of `{KIND_n}`, so the result reads as prose — for
+a human grader, or for an arm that compares scoring with and without placeholders.
+
+```python
+redactor = build_redactor_if_enabled("local", render="adlib", adlib_seed=7)
+result = redactor.redact_inbound(
+    "Maria Lopez helped me. Later Ms. Lopez said Maria's notes were the best.")
+result.text          # "Aven Xiao helped me. Later Ms. Xiao said Aven's notes were the best."
+result.adlib_map     # {"Maria Lopez": "Aven Xiao", "Lopez": "Xiao", "Maria's": "Aven's"}
+result.adlib_tokens  # {"Aven": "Maria", "Xiao": "Lopez"}
+# placeholder:         "{NAME_3} helped me. Later Ms. {NAME_2} said {NAME_1} notes were the best."
+restore_adlib("Aven wrote it.", result.restore_map, result.adlib_tokens)  # "Maria wrote it."
+```
+
+- **Same spans as placeholders.** It renders over the placeholder pass's output, so
+  what is redacted is identical; only what stands in the span changes.
+- **One person, one stand-in.** Tokens map, not spans: `maria` to one invented given
+  name, `lopez` to one surname, so "Maria Lopez", "Maria", "Ms. Lopez", "lopez" and
+  "Maria's" stay one person, and an email, handle or link built from the name reuses
+  the same stand-ins. Titles, possessives and each token's case are kept.
+- **No collisions, nothing real-looking.** A stand-in is never a word already in the
+  document, a word of the writer's own identity, a stop word, or a public figure.
+  Given names come from a unisex pool, surnames from a separate one, and every given
+  name is in the asset's given-name tier, so running vicary again over adlib output
+  redacts the stand-ins. Structured identifiers become standard plugs that are
+  valid in form and obviously fake (test card numbers, 555-01xx phones), and also
+  redetect on a second pass.
+- **Seeded and portable.** Same document and seed, same output in every port; the
+  draw keys on the document too, so one name in two essays gets different stand-ins.
+- **Reversible, never logged.** `result.adlib_map` is original → stand-in,
+  `result.restore_map` the inverse, `result.adlib_tokens` invented token → original
+  token; `result.original()` is exact. `restore_adlib(text, restore_map, token_map)`
+  puts originals back into a model reply, a lone token included.
+
+Adlib needs `local` mode and applies to the inbound pass only. `render_adlib(result,
+original, seed=…, identity=…)` renders any numbered `local` result after the fact.
+
+#### The algorithm, byte for byte
+
+This is the spec the TypeScript and Ruby ports reproduce. Python
+(`python/src/vicary/adlib.py`) is the reference; `python/tests/test_adlib.py` pins
+the values.
+
+**Definitions.** `fold(s)` = NFC-normalise, Unicode casefold, then map `’` and `ʼ` to
+`'`. A *word* is a maximal run of Unicode letters (`[^\W\d_]+`). `cased(v, like)`:
+if `like`'s letters are all lower case, `lower(v)`; if all upper case and more than
+one letter, `upper(v)`; else `v` as written. Pools are `pools/<name>.txt` (given,
+surname, school, org, place, street): one entry per non-blank line, stripped, file
+order, never re-sorted.
+
+**The draw** is the only randomness:
+
+```
+draw(seed, doc, purpose, key, bump, index, n) =
+    uint64_be(sha256(utf8(seed ␀ doc ␀ purpose ␀ key ␀ "<bump>.<index>"))[0:8]) mod n
+```
+
+`␀` is U+0000, `seed` is the seed as a string (default `"0"`), `doc` is the lower-case
+hex sha256 of the original document's UTF-8. Test vector: seed `"0"`, doc
+`sha256("Maria Lopez")` =
+`ec7dafcd351fe5964d3cc607a9e5b12d036ea6cac582fa22dc70a48330d8dd2f`, purpose
+`"given"`, key `"maria"`, bump 0, index 0, n 1000 → **885** (surname/`lopez` → 882).
+A *pool walk* from a draw `s` tries `pool[(s + step) mod len]` for `step = 0, 1, …`
+and takes the first acceptable entry; an exhausted walk raises
+`AdlibPoolExhausted`.
+
+**Taken words.** `fold` of every word of the document, every stop word, and every
+word of the writer's identity strings (first, last, school, extra names). No
+invented name or stem may be one.
+
+**Walk order.**
+
+1. *Kinds.* `PERSON` reads `NAME`. A `NAME` span whose folded words (trailing `.`
+   stripped) include `elementary`, `school`, `academy`, `college` or `university`,
+   or end in `high` or `middle`, reads `SCHOOL`; else one including `inc`, `llc`,
+   `ltd`, `corp`, `corporation`, `company`, `club`, `church`, `foundation`,
+   `library`, `museum`, `society`, `association`, `league`, `council`, `center` or
+   `centre` reads `ORGANIZATION`.
+2. *Possessive pull-in* (`render_adlib`). A bare `'` or `’` right after a NAME,
+   PERSON, SCHOOL, ORGANIZATION or LOCATION placeholder, not followed by a letter,
+   and present in the original at the span's end, joins the span ("James'").
+3. *Names*, all at once, before anything else (below).
+4. *DOB offset*: `offset = 1 + draw(seed, doc, "dob-offset", "", bump, 0, 364)` for
+   bump 0, 1, … (at most 256) until no shifted DATE_OF_BIRTH date equals an original
+   one.
+5. *Every other span* in document order. A repeated `(kind, original)` reuses its
+   stand-in. For each new one, bump runs from 0 (from the kind's variant counter for
+   plugs) and the first candidate is taken unless its fold equals the fold of
+   another span's original, or of a different original of the same kind's stand-in,
+   or of its own original; then the bump goes up (at most 256). Run kinds, AGE and
+   DATE_OF_BIRTH take the first candidate. A URL whose candidate equals its original
+   is kept as is. A plug kind's variant counter becomes `bump + 1`.
+6. *School acronyms* last: a SCHOOL span of 3–6 capitals takes the acronym (first
+   letter of each word, upper case) of the first SCHOOL stand-in whose original's
+   acronym it is, when that differs from the original; else it is scrambled.
+
+**Names.** Each span splits on whitespace and commas (separators kept). Per chunk,
+leading/trailing non-word characters are kept verbatim, as is a possessive tail
+(`'s`, or `'` after an s, any of `'’ʼ`). A chunk that folds to a title (`mr`, `ms`,
+`dr`, `coach`, … and kinship words like `aunt`) before any name token is kept. A
+hyphenated chunk maps part by part. A one-letter token is an initial.
+
+- *Plurals.* A token ending in `s` with a bare apostrophe tail ("Smiths'") maps
+  through its singular key when that key occurs elsewhere ("Smith", or "Jones" for
+  "Joneses'" via `-es`), and renders the stand-in's plural (`+es` after s, x, z, ch,
+  sh, else `+s`) plus `'`. With no singular present it maps as its own token
+  (known gap: "Smiths'" alone reads as one name, like "Jones'").
+- *Roles.* Per span, a formal title votes the last chunk surname (+2) and earlier
+  chunks given (+1); otherwise a multi-chunk span votes its last chunk surname (its
+  first, if the span has a comma) and the others given. More votes wins; a tie goes
+  surname if the gazetteer says the token is not a common given name, else given.
+- *Assignment.* Tokens in first-appearance order, each walked from
+  `draw(seed, doc, role, key, bump, 0, len(pool))` over its role's pool, rejecting
+  taken words and stand-ins already used. If any multi-token span's stand-in is a
+  notable name, its last token's bump goes up by one and the assignment reruns
+  (at most `len(surname pool)` times).
+- *Initials.* Walk `a`–`z` from `draw(seed, doc, "initial", letter, 0, 0, 26)`,
+  skipping every initial letter in the document and letters already used (none
+  left: keep the letter), cased like the original letter, in place.
+- *Rendering.* `lead + cased(stand-in, token) + tail`; a possessive `'` after a
+  token whose stand-in does not end in s becomes `'s` (`'S` in caps).
+
+A token first seen in an email, handle or URL takes a given name the same way
+(`draw(…, "given", key, 0, 0, len)`), avoiding taken words and used names.
+
+**Per kind.**
+
+| kind | rule |
+|---|---|
+| `SCHOOL`, `ORGANIZATION`, `LOCATION` | each maximal run of non-descriptive words becomes one stem from the `school` / `org` / `place` pool, walked from `draw(seed, doc, pool, folded run joined by spaces, 0, 0, len)`, rejecting a stem already used in that pool or containing a taken word, and memoised per (pool, run); descriptive words (`elementary`, `high`, `school`, `club`, `lake`, `north`, `the`, `of`, …) are kept; punctuation after a word ends its run |
+| `US_SOCIAL_SECURITY_NUMBER` | digits `79999` + `(9999 − k) mod 10000`, four digits, into the original's digit positions: `799-99-9999`, `799-99-9998`, … |
+| `ZIP_CODE` | `(99999 − k) mod 100000`, five digits, then `9999` for a +4: `99999`, `99998-9999`, … |
+| `PHONE` | an extension (`x`, `ext`, `ext.`, `extension` + digits) is kept; the last 7 digits become `55501` + `k mod 100`, two digits; with 10 or more digits the 3 before them become **`201`**; any country code and all formatting kept: `(201) 555-0100`, `+1 201-555-0101 ext. 12` |
+| `IP_ADDRESS` | `["192.0.2.", "198.51.100.", "203.0.113."][k div 254 mod 3]` + `(k mod 254 + 1)` |
+| `CREDIT_DEBIT_CARD_NUMBER` | by prefix and length: Amex 34/37 ×15 `378282246310005`; Visa 4 ×16 `4111111111111111`, ×13 `4222222222222`; Mastercard 51–55, 22–27 ×16 `5555555555554444`; Discover 6011/64/65 ×16 `6011111111111117`; Diners 30/36/38 ×14 `30569309025904`; JCB 35 ×16 `3530111333300000`; otherwise `4` + `1`s + Luhn digit. Variant k > 0 subtracts k from the last four payload digits (mod 10000) and recomputes the Luhn digit; formatting kept |
+| `EMAIL` | the local part goes through *labels*; then `bump + 1` is appended when bump > 0; a domain on the provider list (gmail.com, yahoo.com, outlook.com, …) is kept, otherwise `example.` + its TLD if com/net/org, else `example.org` |
+| `USERNAME` | `@` + *labels* of the rest, `bump + 1` appended when bump > 0 |
+| `URL` | split into scheme (`letters://`, may be empty), host, path, `?query`, `#fragment`; one leading `www.`, `m.` or `mobile.` is set aside, kept as written. The bare host (folded) and the path are tried against each *URL shape* in order; the first match changes only its handle and id segments. Failing that, a host of the form `label.suffix` with `suffix` in the *user subdomain* list and `label` neither `www` nor reserved takes *labels*(label). Anything else (Blake, 2026-11-04): the bare host splits at its last `.` into stem and TLD (no `.`: kept whole), and the stem, path, `?query` and `#fragment` each take *mapped words*; the set-aside lead, the scheme, the TLD with any `:port`, and every non-letter character are kept. `bump + 1` appended when bump > 0 |
+| `ADDRESS` | a trailing unit (`Apt`, `Apartment`, `Suite`, `Ste`, `Unit`, `#` + id) is split off and its id scrambled; a leading house number becomes `1 + draw(…, "address-number", digits, bump, 0, 9)` then `draw(…, i, 10)` per further digit; street words become one stem from the `street` pool (as for run kinds), directions (`N`, `NE`, `north`, …) and suffixes (`St`, `Ave`, `Blvd`, …) kept |
+| `AGE` (all digits) | its band from `(0,4) (5,7) (8,10) (11,13) (14,18) (19,24) (25,34) (35,44) (45,54) (55,64) (65,74) (75,84) (85,99)`; *pool* = the band minus the age; *free* = pool minus every original age (or pool, if empty); walk free from `draw(…, "age", age, 0, 0, len(free))`, then the rest of the pool ascending, taking the first value no earlier age received (none: `free[start]`); zero-padded to the original's width |
+| `DATE_OF_BIRTH` | the first `m/d/y` or `m-d-y` date (day first when the first field > 12) moves forward `offset` days within its own year, wrapping at year end; a 2-digit year is 20yy for the leap rule; an impossible day is clamped first; field order, separator, padding and the year are kept |
+| anything else | *scramble* |
+
+**Helpers.** *Scramble*(s, bump): per character at index i, a digit becomes
+`draw(…, "scramble", s, bump, i, 10)`, an ASCII lower-case letter
+`a + draw(…, 26)`, an upper-case one `A + draw(…, 26)`; everything else is kept.
+*Labels*(s): split on ASCII letter runs and digit runs; a digit run of 3+ is
+scrambled (bump 0), shorter kept; a letter run that folds to a mapped name takes
+`cased(stand-in)`, one that splits into two mapped names (first cut ≥ 2 letters,
+second ≥ 2) takes both stand-ins joined, one of ≤ 2 letters is kept, and anything
+else takes a name token.
+*Mapped words*(text), for a URL off the shape list: split text on runs of ASCII
+letters (`[A-Za-z]+`). A run whose fold has ≥ 3 letters and is a key of the
+*prose name map* takes that stand-in, cased like the run; otherwise the first cut
+c from 3 to len − 3 (both halves ≥ 3 letters) where both halves are keys takes the
+two stand-ins joined, each cased like its half; otherwise the run is kept. The
+prose name map is the name map exactly as the NAME spans leave it, before any
+email, handle or URL adds a token, so a URL's output never depends on document
+order. `lincolnhs.org/staff/lopez` becomes `lincolnhs.org/staff/<Lopez's stand-in>`;
+`lopezia.org` is kept.
+
+*URL shapes* (`URL_SHAPES`): only these URLs are per-user, so only these change
+(Blake, 2026-11-04). Split the path on `/` and match the pattern's segments
+against its leading ones; later segments are kept. `{h}` is a handle and becomes
+*labels*(segment); `@{h}` needs a leading `@`, kept, and the rest is the handle;
+`{i}` is an id and becomes *scramble*(segment, 0); a `{h}`, `@{h}` or `{i}`
+segment that is empty or folds to a reserved word does not match; any other
+segment is a literal compared folded. `?key={i}` requires the path to have exactly
+the pattern's segments and a non-empty `key=` value in the query (pairs split on
+`&`/`;`, keys folded); each such value is scrambled, the rest of the query kept.
+
+| host | pattern |
+|---|---|
+| `youtube.com` | `/@{h}` |
+| `youtube.com` | `/c/{h}` |
+| `youtube.com` | `/channel/{i}` |
+| `youtube.com` | `/user/{h}` |
+| `instagram.com` | `/stories/{h}` |
+| `instagram.com` | `/{h}` |
+| `twitter.com` | `/{h}/status/{i}` |
+| `twitter.com` | `/{h}` |
+| `x.com` | `/{h}/status/{i}` |
+| `x.com` | `/{h}` |
+| `tiktok.com` | `/@{h}/video/{i}` |
+| `tiktok.com` | `/@{h}` |
+| `threads.net` | `/@{h}` |
+| `threads.com` | `/@{h}` |
+| `facebook.com` | `/profile.php?id={i}` |
+| `facebook.com` | `/people/{h}/{i}` |
+| `facebook.com` | `/{h}` |
+| `linkedin.com` | `/in/{h}` |
+| `linkedin.com` | `/pub/{h}` |
+| `github.com` | `/orgs/{h}` |
+| `github.com` | `/sponsors/{h}` |
+| `github.com` | `/{h}` |
+| `reddit.com` | `/user/{h}` |
+| `reddit.com` | `/u/{h}` |
+| `old.reddit.com` | `/user/{h}` |
+| `old.reddit.com` | `/u/{h}` |
+| `medium.com` | `/@{h}` |
+| `mastodon.social` | `/@{h}` |
+| `bsky.app` | `/profile/{h}` |
+| `snapchat.com` | `/add/{h}` |
+| `pinterest.com` | `/{h}` |
+| `twitch.tv` | `/{h}` |
+| `soundcloud.com` | `/{h}` |
+| `linktr.ee` | `/{h}` |
+| `vsco.co` | `/{h}` |
+| `patreon.com` | `/{h}` |
+| `tumblr.com` | `/{h}` |
+| `deviantart.com` | `/{h}` |
+| `codepen.io` | `/{h}` |
+| `replit.com` | `/@{h}` |
+| `scratch.mit.edu` | `/users/{h}` |
+| `roblox.com` | `/users/{i}` |
+| `khanacademy.org` | `/profile/{h}` |
+| `open.spotify.com` | `/user/{h}` |
+| `steamcommunity.com` | `/id/{h}` |
+| `steamcommunity.com` | `/profiles/{i}` |
+| `flickr.com` | `/people/{h}` |
+| `flickr.com` | `/photos/{h}` |
+| `wattpad.com` | `/user/{h}` |
+| `archiveofourown.org` | `/users/{h}` |
+| `quizlet.com` | `/user/{h}` |
+| `goodreads.com` | `/user/show/{h}` |
+
+**Reserved** (`URL_RESERVED`, whole segment, folded): about, accounts, add, apps, c, channel, collections, compose, dashboard, developer, direct, directory, discover, enterprise, events, explore, features, gaming, groups, hashtag, help, home, i, ideas, intent, issues, join, legal, login, marketplace, messages, new, notifications, orgs, p, pages, people, permalink.php, photo.php, pin, policies, pricing, privacy, profile.php, pulls, reel, reels, register, search, settings, share, sharer.php, signup, sponsors, stories, stream, tagged, today, topics, tos, trending, tv, upload, user, videos, watch, you.
+
+**User subdomains** (`URL_USER_SUBDOMAINS`): blogspot.com, carrd.co, github.io, neocities.org, substack.com, tumblr.com, weebly.com, wixsite.com, wordpress.com.
+
+**Restoring.** `restore_adlib` builds one table from `fold(key) → original`, whole
+spans first so they win over a token of the same text, and replaces every key
+longest first, case-insensitive, not inside a word; the original comes back ALL
+CAPS if the match's letters are (more than one), lower case if they are lower,
+else as written. `adlib_tokens` holds each name token and each school, org, place
+and street stem.
+
 ## Configuration
 
 Every variable vicary reads, resolved in `vicary/config.py` and by each port's
@@ -259,6 +499,8 @@ equivalent:
 | `VICARY_REDACTION` | mode: `off` / `local` / `stub` / `guardrail` |
 | `VICARY_NAME_DETECTION` | how hard `local` looks for names it was not handed: `identity` / `gazetteer` / `gazetteer-lowercase` |
 | `VICARY_NAME_DETECTION_OUTBOUND` | the same dial for the outbound pass. Unset, it inherits the inbound one |
+| `VICARY_RENDER` | how the inbound pass writes a redacted span: `placeholder` (default) / `adlib` |
+| `VICARY_ADLIB_SEED` | seed for `adlib` stand-ins; default `0` |
 | `VICARY_DEPLOY_ENV` | environment name; a production one defaults the mode to `local` |
 | `VICARY_ASSET_PATH` | load a different gazetteer asset (file or directory) |
 | `VICARY_BEDROCK_GUARDRAIL_ID` | Guardrail identifier, `guardrail` mode only |
