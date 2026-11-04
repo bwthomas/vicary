@@ -112,4 +112,26 @@ export {
 } from "./spans.js";
 export type { RedactionSpan } from "./spans.js";
 
+export {
+  AdlibPoolExhausted,
+  acronym,
+  cardPlug,
+  draw,
+  fold,
+  invent,
+  inventNames,
+  loadPool,
+  renderAdlib,
+  restoreAdlib,
+  shiftDate,
+} from "./adlib.js";
+export type {
+  AdlibSpan,
+  InventOptions,
+  Invented,
+  Oracle,
+  RenderAdlibOptions,
+  Seed,
+} from "./adlib.js";
+
 export { VERSION } from "./version.js";

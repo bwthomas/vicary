@@ -49,6 +49,8 @@ import {
 } from "./gazetteer.js";
 import { PlaceholderMinter, restore } from "./minter.js";
 import { maskStructured, type StudentIdentity } from "./structured.js";
+import { renderAdlib, type Seed } from "./adlib.js";
+import type { RedactionSpan } from "./spans.js";
 
 /**
  * Whether this build detects third-party names.
@@ -207,8 +209,17 @@ export interface RedactionResult {
   text: string;
   /** How many spans were replaced. */
   nMasked: number;
-  /** `{placeholder: original}` — what restore needs, in discovery order. */
+  /** `{placeholder: original}` — what restore needs, in discovery order. Under
+   * adlib, `{stand-in: original}` instead. */
   restoreMap: Map<string, string>;
+  /** `"adlib"` when invented values stand in; absent for placeholders. */
+  render?: "adlib";
+  /** Under adlib, `{original: stand-in}`. The de-identification key: never log it. */
+  adlibMap?: Map<string, string>;
+  /** Under adlib, each span in both texts and the original it stands in for. */
+  adlibSpans?: { readonly span: RedactionSpan; readonly original: string }[];
+  /** Under adlib, `{invented token: original token}` for {@link restoreAdlib}. */
+  adlibTokens?: Map<string, string>;
 }
 
 export interface RedactOptions {
@@ -235,6 +246,11 @@ export interface RedactOptions {
   /** Refuse a title-tier keep where a first-person relation is attached to the
    * name. On; overridable so the arm stays measurable. */
   readonly titleRelationRefusal?: boolean;
+  /** `"placeholder"` (default) or `"adlib"`: invented values in place of every
+   * placeholder (see `adlib.ts`). Adlib needs numbered placeholders. */
+  readonly render?: "placeholder" | "adlib";
+  /** Varies adlib's draw. Default 0. */
+  readonly adlibSeed?: Seed;
 }
 
 function toStudentIdentity(identity: Identity): StudentIdentity {
@@ -264,8 +280,40 @@ export function redactWithReport(
     corroborate = true,
     relationRefusal = true,
     titleRelationRefusal = true,
+    render = "placeholder",
+    adlibSeed = 0,
   } = options;
+  if (render !== "placeholder" && render !== "adlib") {
+    throw new Error(`render must be "placeholder" or "adlib", got ${JSON.stringify(render)}`);
+  }
+  // The TypeScript redactor is always local, so numbering is the one condition left.
+  if (render === "adlib" && !numberPlaceholders) {
+    throw new Error("adlib rendering needs local mode with numbered placeholders");
+  }
+  const placeholders = redactPlaceholders(text, identity, {
+    names, keep, numberPlaceholders, headingsAreOrthographic, corroborate,
+    relationRefusal, titleRelationRefusal,
+  });
+  if (render !== "adlib") return placeholders;
+  return renderAdlib(placeholders, text, {
+    seed: adlibSeed,
+    identity: [identity.firstName, identity.lastName, identity.schoolName],
+  });
+}
 
+function redactPlaceholders(
+  text: string,
+  identity: Identity,
+  resolved: {
+    names: string | undefined; keep: ReadonlySet<string>; numberPlaceholders: boolean;
+    headingsAreOrthographic: boolean; corroborate: boolean; relationRefusal: boolean;
+    titleRelationRefusal: boolean;
+  },
+): RedactionResult {
+  const {
+    names, keep, numberPlaceholders, headingsAreOrthographic, corroborate,
+    relationRefusal, titleRelationRefusal,
+  } = resolved;
   const minter = new PlaceholderMinter({ number: numberPlaceholders });
   if (!text) return { text, nMasked: 0, restoreMap: minter.assigned };
 
@@ -356,6 +404,8 @@ export function redactBatchWithReport(
   identity: Identity,
   options: RedactOptions = {},
 ): BatchReport {
+  // Adlib is Python's inbound pass alone; a batch is placeholder-only.
+  if (options.render === "adlib") throw new Error("adlib renders one inbound text, not a batch");
   if (texts.length === 0) return { texts: [], nMasked: 0, restoreMaps: [], batched: true };
 
   const emptyMaps = (): Map<string, string>[] =>
