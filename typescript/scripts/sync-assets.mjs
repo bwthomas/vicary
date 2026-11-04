@@ -35,11 +35,15 @@ const packageRoot = resolve(here, "..");
 const repoRoot = resolve(packageRoot, "..");
 const builtDir = join(repoRoot, "asset", "data");
 const lexiconDir = join(repoRoot, "asset", "lexicon");
+// Adlib's stand-in pools, vendored from the Python package and checked against
+// the sha256 `conformance/adlib.json` records.
+const poolDir = join(repoRoot, "python", "src", "vicary", "pools");
+const POOLS = "pools";
 const target = join(packageRoot, "assets");
 
 const MANIFEST = "MANIFEST.json";
 
-for (const dir of [builtDir, lexiconDir]) {
+for (const dir of [builtDir, lexiconDir, poolDir]) {
   if (!existsSync(dir)) {
     console.error(
       `no asset source at ${dir}\n` +
@@ -72,7 +76,27 @@ for (const [dir, name] of payload) {
 // `stop_words.txt` in two left every vendored directory carrying all three. The
 // manifest check below cannot see it — it compares the manifest against the
 // payload, and a file in neither is invisible to both.
-const carried = new Set(payload.map(([, name]) => name));
+mkdirSync(join(target, POOLS), { recursive: true });
+const poolNames = readdirSync(poolDir).filter((name) => name.endsWith(".txt")).sort();
+for (const name of poolNames) copyFileSync(join(poolDir, name), join(target, POOLS, name));
+for (const stale of readdirSync(join(target, POOLS)).sort()) {
+  if (!poolNames.includes(stale)) {
+    unlinkSync(join(target, POOLS, stale));
+    console.error(`pruned stale ${POOLS}/${stale}`);
+  }
+}
+const adlibSpec = JSON.parse(readFileSync(join(repoRoot, "conformance", "adlib.json"), "utf8"));
+for (const [pool, entry] of Object.entries(adlibSpec.pools)) {
+  const bytes = readFileSync(join(target, POOLS, `${pool}.txt`));
+  const digest = createHash("sha256").update(bytes).digest("hex");
+  if (digest !== entry.sha256) {
+    console.error(`vendored ${POOLS}/${pool}.txt sha256 ${digest} does not match adlib.json ${entry.sha256}`);
+    process.exit(1);
+  }
+  console.error(`vendored ${POOLS}/${pool}.txt (${bytes.length} bytes) — sha256 verified`);
+}
+
+const carried = new Set([...payload.map(([, name]) => name), POOLS]);
 for (const stale of readdirSync(target).sort()) {
   if (!carried.has(stale)) {
     unlinkSync(join(target, stale));
