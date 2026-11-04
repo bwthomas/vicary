@@ -289,6 +289,9 @@ NEW_SINCE_EXTRACTION = {
     # identity-only detector unconditionally, with no way to ask for anything
     # else. There is nothing to stay compatible with.
     config.NAME_DETECTION_ENV_VAR,
+    # Adlib rendering is new in this release; unset means placeholders, as before.
+    config.RENDER_ENV_VAR,
+    config.ADLIB_SEED_ENV_VAR,
     # Newer still, and inert unset: outbound inherits inbound, so there is no
     # prior behaviour for a legacy name to preserve.
     config.NAME_DETECTION_OUTBOUND_ENV_VAR,

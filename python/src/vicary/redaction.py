@@ -79,6 +79,7 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from vicary import config
+from vicary.adlib import invent
 from vicary.local_classifier import LocalNameClassifier, StudentIdentity
 from vicary.name_candidates import (
     GivenNameOracle,
@@ -89,6 +90,7 @@ from vicary.name_candidates import (
     established_name_tokens,
     find_candidates,
 )
+from vicary.placeholders import placeholder_kind
 
 logger = logging.getLogger(__name__)
 
@@ -304,6 +306,51 @@ def name_detection_outbound(
     if not raw:
         return inbound if inbound is not None else name_detection()
     return name_detection(raw)
+
+
+# How a redacted name is written back. A third dial, orthogonal to the other two:
+# it changes what stands in a span, never which spans there are.
+#
+#: ``{NAME_1}`` — the default, and the only rendering before adlib existed.
+RENDER_PLACEHOLDER: str = "placeholder"
+#: An invented name, consistent per person within the document, so the text
+#: reads as prose. See :mod:`vicary.adlib`. Inbound only, ``local`` mode only.
+RENDER_ADLIB: str = "adlib"
+#: Code default for :func:`render_mode`: placeholders, as every release shipped.
+DEFAULT_RENDER: str = RENDER_PLACEHOLDER
+
+_RENDER_ALIASES = {
+    RENDER_PLACEHOLDER: {"placeholder", "placeholders", "default"},
+    RENDER_ADLIB: {"adlib", "invented", "names"},
+}
+
+
+def render_mode(kwarg_value: str | None = None) -> str:
+    """Resolve how redacted names are rendered: placeholder or adlib.
+
+    Call-site argument, then ``VICARY_RENDER``, then :data:`DEFAULT_RENDER`. An
+    unrecognised value falls back to the default with a warning, like
+    :func:`name_detection` — placeholders are the conservative direction, since
+    adlib output carries no marker that anything was redacted.
+    """
+    raw = (kwarg_value or config.get(config.RENDER_ENV_VAR)).strip().lower()
+    if not raw:
+        return DEFAULT_RENDER
+    for mode, aliases in _RENDER_ALIASES.items():
+        if raw in aliases:
+            return mode
+    logger.warning(
+        "Unrecognised %s value %r; rendering %r.",
+        config.RENDER_ENV_VAR, raw, DEFAULT_RENDER,
+    )
+    return DEFAULT_RENDER
+
+
+def resolve_adlib_seed(kwarg_value: int | str | None = None) -> str:
+    """The adlib seed: call-site argument, then ``VICARY_ADLIB_SEED``, then ``0``."""
+    if kwarg_value is not None and str(kwarg_value).strip():
+        return str(kwarg_value).strip()
+    return config.get(config.ADLIB_SEED_ENV_VAR) or "0"
 
 
 def guardrail_identifier() -> str | None:
@@ -555,6 +602,23 @@ class RedactionResult:
     #: one (local mode with numbering on). Empty otherwise, and an empty map is
     #: not a claim that nothing was masked — see :meth:`spans`.
     restore_map: Mapping[str, str] = field(default_factory=dict)
+    #: :data:`RENDER_PLACEHOLDER` or :data:`RENDER_ADLIB` — how names were written.
+    render: str = RENDER_PLACEHOLDER
+    #: ``{original name span: invented stand-in}`` under adlib rendering, empty
+    #: otherwise. The de-identification key: kept out of ``repr`` and never
+    #: logged. Under adlib, :attr:`restore_map` holds the inverse,
+    #: ``{stand-in: original}``, so a host can put names back the same way it
+    #: restores placeholders.
+    adlib_map: Mapping[str, str] = field(default_factory=dict, repr=False)
+    #: Adlib text has no placeholders to locate, so its spans are recorded at
+    #: render time rather than derived. Paired with the original of each.
+    adlib_spans: tuple[tuple[RedactionSpan, str], ...] = field(
+        default=(), repr=False)
+    #: ``{invented token: original token}`` under adlib: each name token and
+    #: school/org/place/street stem, so a lone "Quincy" in a model reply
+    #: restores to "Maria". Pass it to :func:`vicary.adlib.restore_adlib` with
+    #: :attr:`restore_map`. Part of the key, so out of ``repr`` too.
+    adlib_tokens: Mapping[str, str] = field(default_factory=dict, repr=False)
 
     def spans(self) -> tuple[RedactionSpan, ...]:
         """Where every replacement sits, in BOTH coordinate systems.
@@ -563,6 +627,8 @@ class RedactionResult:
         a map from placeholder back to original text there is no way to know
         how wide the replaced span was, so no offset can be translated.
         """
+        if self.adlib_spans:
+            return tuple(span for span, _ in self.adlib_spans)
         return derive_spans(self.text, self.restore_map)
 
     def to_original(self, offset: int) -> int:
@@ -582,9 +648,13 @@ class RedactionResult:
         round-trip is testable and so `restore` has a total-document form.
         """
         out, prev = [], 0
-        for span in self.spans():
+        pairs = self.adlib_spans or tuple(
+            (span, self.restore_map[self.text[span.new_start:span.new_end]])
+            for span in self.spans()
+        )
+        for span, original in pairs:
             out.append(self.text[prev:span.new_start])
-            out.append(self.restore_map[self.text[span.new_start:span.new_end]])
+            out.append(original)
             prev = span.new_end
         out.append(self.text[prev:])
         return "".join(out)
@@ -654,7 +724,25 @@ class Redactor:
         title_relation_refusal: bool = True,
         outbound_oracles: dict | None = None,
         carry_notable_keeps: bool = True,
+        render: str = RENDER_PLACEHOLDER,
+        adlib_seed: int | str = 0,
     ) -> None:
+        if render not in (RENDER_PLACEHOLDER, RENDER_ADLIB):
+            raise ValueError(f"render must be {RENDER_PLACEHOLDER!r} or "
+                             f"{RENDER_ADLIB!r}, not {render!r}")
+        if render == RENDER_ADLIB and not (local and number_placeholders):
+            # Adlib renders over the restore map, and only the local classifier
+            # with numbering on produces one. Without it there is nothing to say
+            # which placeholder was which person — fail at construction rather
+            # than ship placeholders under a setting that promised prose.
+            raise ValueError(
+                "adlib rendering needs local mode with numbered placeholders"
+            )
+        #: Inbound only. Outbound text is a model's reply, already written over
+        #: whatever stood in the inbound text; inventing a second set of names
+        #: for it would give one person two aliases.
+        self.render = render
+        self.adlib_seed = adlib_seed
         self.simulate = simulate
         self.local = local
         self.identity = identity
@@ -831,7 +919,11 @@ class Redactor:
         """
         if self.carry_notable_keeps and self._classifier is not None:
             self._carried_keeps = self.carried_keeps(text)
-        return self._apply(text, source="OUTPUT")
+        result = self._apply(text, source="OUTPUT")
+        if self.render == RENDER_ADLIB:
+            return render_adlib(result, text, seed=self.adlib_seed,
+                                identity=self.identity)
+        return result
 
     def carried_keeps(self, composition: str) -> frozenset[str]:
         """Bare tokens the outbound pass may keep, given what this essay named.
@@ -1013,6 +1105,97 @@ class Redactor:
         return OutboundBatch(out, result.char_units, True, tuple(maps))
 
 
+#: Kinds whose trailing bare apostrophe is a possessive adlib must re-form.
+_ADLIB_POSSESSIVE_KINDS = frozenset({"NAME", "PERSON", "SCHOOL", "ORGANIZATION",
+                                     "LOCATION"})
+
+
+def render_adlib(
+    result: RedactionResult,
+    original: str,
+    *,
+    seed: int | str = 0,
+    identity: StudentIdentity | None = None,
+) -> RedactionResult:
+    """Rewrite a placeholder result with invented values in place of every placeholder.
+
+    Covers exactly the spans ``result`` covers — it is a rendering of them, so
+    recall and over-firing are the placeholder mode's. Every kind is rendered:
+    names, schools, orgs and places from the vendored pools; SSNs, cards,
+    phones, IPs and ZIPs as standard obviously-fake plugs; emails, handles and
+    URLs through the name map; addresses, ages and dates of birth by their own
+    rules; anything else as a shape-preserving scramble. See
+    :mod:`vicary.adlib` for the rules.
+
+    ``original`` is the text ``result`` was redacted from: every word in it is
+    off-limits as an invented token, and it keys the draw together with
+    ``seed``. ``identity``'s words are off-limits too.
+
+    Raises :class:`ValueError` when ``result`` carries placeholders its restore
+    map cannot place — an unnumbered or Guardrail result.
+    """
+    spans = list(derive_spans(result.text, result.restore_map))
+    if not spans:
+        if _PLACEHOLDER.search(result.text):
+            raise ValueError("adlib needs a numbered restore map to render over")
+        return RedactionResult(text=result.text, intervened=result.intervened,
+                               char_units=result.char_units,
+                               restore_map=dict(result.restore_map),
+                               render=RENDER_ADLIB)
+    tokens = [result.text[span.new_start:span.new_end] for span in spans]
+    kinded = [(placeholder_kind(token), result.restore_map[token])
+              for token in tokens]
+    # A bare possessive apostrophe the detector left outside a name-like span
+    # ("{NAME_3}' cat") joins the span, so "James'" reads "Quincy's" and
+    # "Smiths'" can take the plural of Smith's stand-in.
+    for i, span in enumerate(spans):
+        after = result.text[span.new_end:span.new_end + 2]
+        if (kinded[i][0] in _ADLIB_POSSESSIVE_KINDS and after[:1] in ("'", "’")
+                and not after[1:2].isalpha()
+                and original[span.orig_end:span.orig_end + 1] == after[:1]):
+            spans[i] = RedactionSpan(span.orig_start, span.orig_end + 1,
+                                     span.new_start, span.new_end + 1)
+            kinded[i] = (kinded[i][0], kinded[i][1] + after[:1])
+    from vicary import gazetteer
+    from vicary.lexicon import stop_words
+    identity_values: tuple[str, ...] = ()
+    if identity is not None:
+        identity_values = tuple(v for v in (identity.first_name, identity.last_name,
+                                            identity.school_name, *identity.extra_names)
+                                if v)
+    invented = invent(
+        kinded, document=original, seed=seed, stop_words=stop_words(),
+        given_name=gazetteer.is_common_given_name, notable=gazetteer.is_notable,
+        identity=identity_values,
+    )
+    out: list[str] = []
+    rendered: list[tuple[RedactionSpan, str]] = []
+    restore: dict[str, str] = {}
+    adlib_map: dict[str, str] = {}
+    prev = 0
+    for span, (_, source), stand_in in zip(spans, kinded, invented.stand_ins,
+                                           strict=True):
+        out.append(result.text[prev:span.new_start])
+        new_start = sum(map(len, out))
+        out.append(stand_in)
+        rendered.append((RedactionSpan(span.orig_start, span.orig_end,
+                                       new_start, new_start + len(stand_in)),
+                         source))
+        # First original wins if two spans render alike ("McDonald" and
+        # "Mcdonald" both read "Okafor"); `original()` is exact regardless,
+        # because it reads the per-span originals.
+        restore.setdefault(stand_in, source)
+        adlib_map.setdefault(source, stand_in)
+        prev = span.new_end
+    out.append(result.text[prev:])
+    return RedactionResult(
+        text="".join(out), intervened=result.intervened,
+        char_units=result.char_units, restore_map=restore, render=RENDER_ADLIB,
+        adlib_map=adlib_map, adlib_spans=tuple(rendered),
+        adlib_tokens=dict(invented.tokens),
+    )
+
+
 def _extract_masked_text(response: dict[str, Any], *, fallback: str) -> str:
     """Pull the masked text out of an ``apply_guardrail`` response.
 
@@ -1083,6 +1266,8 @@ def build_redactor_if_enabled(
     identity: StudentIdentity | None = None,
     names: str | None = None,
     names_outbound: str | None = None,
+    render: str | None = None,
+    adlib_seed: int | str | None = None,
 ) -> Redactor | None:
     """Return a :class:`Redactor` for the resolved mode, or ``None`` (off).
 
@@ -1104,8 +1289,17 @@ def build_redactor_if_enabled(
     the identity-only classifier unconditionally, so every deployment that
     turned redaction "on" got a detector with **0% recall on third-party names**
     and no signal anywhere that it had.
+
+    ``render`` (``VICARY_RENDER``) picks how the inbound pass writes a redacted
+    name — ``placeholder`` (default) or ``adlib`` — and ``adlib_seed``
+    (``VICARY_ADLIB_SEED``) seeds the invented names. See :func:`render_mode`.
+    Adlib applies to ``local`` mode only; any other mode raises when asked for it.
     """
     mode = redaction_mode(kwarg_value)
+    rendering = render_mode(render)
+    seed = resolve_adlib_seed(adlib_seed)
+    if rendering == RENDER_ADLIB and mode not in (MODE_LOCAL, MODE_OFF):
+        raise ValueError(f"adlib rendering needs local mode, not {mode!r}")
     if mode == MODE_OFF:
         return None
     if mode == MODE_LOCAL:
@@ -1119,6 +1313,7 @@ def build_redactor_if_enabled(
             # number would move with nothing in the config to explain it.
             outbound_oracles=(_gazetteer_oracles(outbound)
                               if outbound != level else None),
+            render=rendering, adlib_seed=seed,
         )
     if mode == MODE_STUB:
         return Redactor(client=client, simulate=True)

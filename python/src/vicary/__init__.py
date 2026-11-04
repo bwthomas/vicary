@@ -50,6 +50,7 @@ mechanism, shared by all three front doors and owned by none of them, so
 """
 
 from vicary._version import __version__
+from vicary.adlib import AdlibPoolExhausted, restore_adlib
 from vicary.local_classifier import (
     LocalNameClassifier,
     LocalRedactionResult,
@@ -71,6 +72,7 @@ from vicary.placeholders import (
 )
 from vicary.redaction import (
     DEFAULT_NAME_DETECTION,
+    DEFAULT_RENDER,
     MODE_GUARDRAIL,
     MODE_LOCAL,
     MODE_OFF,
@@ -78,6 +80,8 @@ from vicary.redaction import (
     NAMES_GAZETTEER,
     NAMES_IDENTITY,
     NAMES_LOWERCASE,
+    RENDER_ADLIB,
+    RENDER_PLACEHOLDER,
     OutboundBatch,
     RedactionResult,
     RedactionSpan,
@@ -87,12 +91,23 @@ from vicary.redaction import (
     name_detection,
     redaction_enabled,
     redaction_mode,
+    render_adlib,
+    render_mode,
+    resolve_adlib_seed,
     to_original,
     to_redacted,
 )
 
 __all__ = [
+    "AdlibPoolExhausted",
     "DEFAULT_NAME_DETECTION",
+    "DEFAULT_RENDER",
+    "RENDER_ADLIB",
+    "RENDER_PLACEHOLDER",
+    "render_adlib",
+    "restore_adlib",
+    "render_mode",
+    "resolve_adlib_seed",
     "GENERIC_STAND_INS",
     "LocalNameClassifier",
     "LocalRedactionResult",
