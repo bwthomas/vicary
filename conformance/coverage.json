@@ -103,6 +103,18 @@
       "python": "tests/test_lexicon_exposure.py",
       "typescript": null,
       "ruby": null
+    },
+    "adlib": {
+      "why": "Adlib rendering: invented values of every kind over the placeholder pass's exact spans, names per-person-consistent, structured ids as standard plugs, seeded and collision-free.",
+      "python": "tests/test_adlib.py",
+      "typescript": "test/adlib.test.ts",
+      "ruby": "test/adlib_test.rb"
+    },
+    "adlib_conformance": {
+      "why": "Adlib against conformance/adlib.json: pools, constants, draw, date shift, card plugs, acronyms, whole-document invent, render over the reference arm's placeholder input (map order included), the port's own placeholder pass reproducing that input, and restore's first-wins order.",
+      "python": null,
+      "typescript": "test/adlibConformance.test.ts",
+      "ruby": "test/adlib_conformance_test.rb"
     }
   },
   "accepted_divergences": [
@@ -145,6 +157,11 @@
       "concern": "lexicon_exposure",
       "port": "ruby",
       "reason": "JUSTIFIED. The probe scores a PROPOSAL against the census table before anything ships; it is reference-side, like the recall harness, and reads no vendored asset a port carries. If a veto is ever adopted, the veto is the thing the ports must agree on and it gets its own concern \u2014 this one stays Python-only."
+    },
+    {
+      "concern": "adlib_conformance",
+      "port": "python",
+      "reason": "JUSTIFIED. Python IS the reference that writes conformance/adlib.json, so its side is that the committed file still equals a fresh export, which is tools/tests/test_conformance.py."
     }
   ]
 }
