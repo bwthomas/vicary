@@ -16,6 +16,7 @@ end
 desc "Score this port against the shared conformance suite"
 task :conformance do
   ruby "-Ilib -Itest test/conformance_test.rb"
+  ruby "-Ilib -Itest test/adlib_conformance_test.rb"
 end
 
 desc "Measure the gates this port can measure without operator-supplied data"

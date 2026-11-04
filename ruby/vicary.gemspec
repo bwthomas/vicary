@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
   # cost" is the product claim, and a build-time fetch puts a fetch back in the
   # story. `rake sync_assets` populates assets/ from the one tracked copy in the
   # repository, and `rake build` runs it first.
-  spec.files = Dir["lib/**/*.rb", "assets/*", "README.md", "LICENSE"]
+  spec.files = Dir["lib/**/*.rb", "assets/*", "assets/pools/*.txt", "README.md", "LICENSE"]
   spec.require_paths = ["lib"]
 
   # No runtime dependencies, deliberately, matching the Python package. The
