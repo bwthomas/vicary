@@ -433,6 +433,38 @@ def test_the_committed_placeholders_file_is_a_current_export(
     )
 
 
+def test_the_committed_adlib_file_is_a_current_export(
+    conformance_directory: Path,
+) -> None:
+    from vicary.eval import adlib_conformance
+
+    on_disk = (conformance_directory / adlib_conformance.ADLIB_FILENAME).read_text("utf-8")
+    fresh = conformance.dumps(adlib_conformance.build_adlib_document())
+    assert on_disk == fresh, (
+        "conformance/adlib.json is stale — an adlib rule, a pool, a constant or "
+        "the case table changed and the file the TypeScript and Ruby ports check "
+        "their adlib against did not. Regenerate with `just sync-conformance` and "
+        "READ THE DIFF: every changed stand-in is a change every port must make."
+    )
+
+
+def test_every_adlib_render_case_restores_its_original() -> None:
+    """The render layer is only an answer if it is a faithful rendering: each
+    span's original sits at its offsets, and the stand-in at the new ones."""
+    from vicary.eval import adlib_conformance
+
+    document = adlib_conformance.build_adlib_document()
+    with_spans = 0
+    for case in document["render"]:
+        adlib_map, restore_map = dict(case["adlib_map"]), dict(case["restore_map"])
+        for orig_start, orig_end, new_start, new_end, source in case["spans"]:
+            assert case["original"][orig_start:orig_end] == source, case["case_id"]
+            assert adlib_map[source] == case["text"][new_start:new_end] or \
+                restore_map[case["text"][new_start:new_end]] != source, case["case_id"]
+        with_spans += bool(case["spans"])
+    assert with_spans >= 40, f"only {with_spans} render cases redact anything"
+
+
 def test_every_placeholder_case_answers_its_written_intent() -> None:
     """The reference agrees with the intent written beside each case.
 

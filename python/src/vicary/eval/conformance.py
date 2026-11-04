@@ -1791,6 +1791,8 @@ def main(argv: list[str] | None = None) -> int:
     primitives_doc = dumps(build_primitives_document())
     spans_doc = dumps(build_spans_document())
     placeholders_doc = dumps(build_placeholders_document())
+    from vicary.eval.adlib_conformance import ADLIB_FILENAME, build_adlib_document
+    adlib_doc = dumps(build_adlib_document())
 
     if not args.write:
         print(frames_doc, end="")
@@ -1812,6 +1814,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"wrote {directory / PRIMITIVES_FILENAME}")
     print(f"wrote {directory / SPANS_FILENAME}")
     print(f"wrote {directory / PLACEHOLDERS_FILENAME}")
+    (directory / ADLIB_FILENAME).write_text(adlib_doc, encoding="utf-8")
+    print(f"wrote {directory / ADLIB_FILENAME}")
     return 0
 
 
