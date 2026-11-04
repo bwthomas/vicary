@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Adlib: a redacted essay can read as prose, every kind invented
+
+`render="adlib"` (`VICARY_RENDER=adlib`, seed `adlib_seed` / `VICARY_ADLIB_SEED`) replaces each redacted span with an invented value of its kind instead of a `{KIND_n}` placeholder. It renders over the placeholder pass's spans, so what is redacted is unchanged, and placeholders stay the default. Local mode, inbound pass only.
+
+- Names: every mention of one person maps to one stand-in, given name and surname separately, from vendored unisex given-name and diverse surname pools; titles, possessives (including "James'" and a plural "Smiths'" beside "Smith") and case are kept. No stand-in repeats a word in the document, a word of the writer's identity, a stop word or a public figure. A name with school or org cues renders as a school or org.
+- Schools, orgs, places and streets take pool stems with descriptive words kept; a school acronym follows its full name.
+- SSN, ZIP, phone, IP and card numbers become standard plugs that are valid in form, obviously fake, and still detected on a second pass: `799-99-9999` counting down, ZIP `99999` counting down, phones `201-555-0100` up, the RFC 5737 IP ranges, Luhn-valid test cards by brand.
+- Emails and handles reuse the name map, and an unknown mail host becomes `example.*`. A URL changes only when it is a per-user shape from a curated list (social profiles and handles, YouTube channels, user pages, per-user subdomains such as `name.substack.com`), and then only in its handle or id. Every other URL is kept as written except whole words (or two joined) that the essay's prose name map already covers, in the host before its TLD, the path, the query and the fragment, so `lincolnhs.org/staff/lopez` does not keep the surname the prose lost.
+- Addresses keep their shape; an age is redrawn within its band; dates of birth move by one per-document day offset within their year.
+- `RedactionResult.adlib_map`, `adlib_tokens` and `restore_adlib(text, restore_map, token_map)` put originals back into a model reply, a lone first name included; `original()` stays exact.
+- Every choice is one portable sha256 draw over the seed, the document and the key, specified byte for byte in the README, so the TypeScript and Ruby ports reproduce Python exactly.
+- TypeScript (`render: "adlib"`, `adlibSeed`) and Ruby (`render: "adlib"`, `adlib_seed:`, or `VICARY_RENDER` / `VICARY_ADLIB_SEED`) render adlib byte for byte with Python, checked by `conformance/adlib.json`: pools, draw, plugs, whole-document invent, render over the reference placeholder input, each port's own placeholder pass, and restore. Its maps ship as ordered `[key, value]` lists, because restore is first-wins on insertion order. TypeScript reads neither environment variable, and its batch call refuses adlib.
+
 ## 0.2.19 — 2026-10-27
 
 ### A surname written in lowercase behind a title is a name

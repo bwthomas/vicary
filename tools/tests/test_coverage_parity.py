@@ -231,6 +231,8 @@ def test_the_open_gaps_are_the_ones_currently_known(coverage: dict) -> None:
         for entry in coverage["accepted_divergences"]
         if entry["reason"].lstrip().startswith(("OPEN GAP", "PARTIALLY JUSTIFIED"))
     }
+    # Adlib's two port gaps (2026-11-04) closed the same day, when both ports
+    # matched conformance/adlib.json on every layer.
     assert open_gaps == set(), (
         "the open coverage gaps moved. This set was emptied on 2026-08-12, when the "
         "last four — candidates/ruby, redact/ruby, packaging/typescript and "
